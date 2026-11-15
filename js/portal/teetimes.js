@@ -296,6 +296,53 @@
   }
   let feeSeq = 0;
 
+  /* ---------------- Friends leagues (Club.friendLeagues, js/core/friendleagues.js) ----------------
+     The booking member's own player entry can carry friendLeagueId: the round then counts toward that league once they
+     post a score for it (js/portal/scores.js copies it onto the post). One league per round; off unless chosen. */
+  function FL() { return Club.friendLeagues || null; }
+  /** [{ league, check }] for every league the member is in that runs on that date (countableFor). */
+  function leaguesFor(mid, date, holes, excludeId) { return FL() && mid ? FL().countableFor(mid, date, +holes || 18, excludeId || null) : []; }
+  /** What the round would be in the league: "Counts as your week 2 game (catching up)", or why it cannot count. */
+  function leagueWeekText(x, on) {
+    const c = x.check; if (!c.ok) return c.reason || 'This round cannot count';
+    const g = x.league.perWeek > 1 ? 'game ' + c.game + ' of week ' + c.week : 'your week ' + c.week + ' game';
+    return (on === false ? 'Would count as ' : 'Counts as ') + g + (c.late ? ' (catching up)' : '');
+  }
+  /** The member's choice, kept only while that league can still take this round. */
+  function validLeague(list, id) { const x = id ? list.find(function (y) { return y.league.id === id; }) : null; return x && x.check.ok ? x : null; }
+  /** The switch (one league) or the picker row (several). '' when the member is in no league running that day.
+      uid: unique per control; current: the league id chosen now (or null). */
+  function leagueHTML(list, current, uid) {
+    if (!list.length) return '';
+    const cur = validLeague(list, current);
+    if (list.length === 1) {
+      const x = list[0], on = !!cur, id = 'tt-lg-' + uid;
+      return '<div class="tt-lg"><label class="tt-lg-sw' + (x.check.ok ? '' : ' is-off') + '" for="' + id + '">' +
+        '<span class="tt-lg-text"><span class="tt-lg-l">' + esc('Counts toward ' + x.league.name) + '</span><span class="tt-lg-s">' + esc(leagueWeekText(x, on)) + '</span></span>' +
+        '<span class="toggle"><input type="checkbox" role="switch" id="' + id + '" data-act="tt-lg-sw" data-lg="' + esc(x.league.id) + '"' + (on ? ' checked' : '') + (x.check.ok ? '' : ' disabled') + '><span></span></span></label></div>';
+    }
+    return '<div class="tt-lg"><button type="button" class="tt-lg-pick" data-act="tt-lg-pick" aria-haspopup="dialog">' + Club.icon('trophy', 'tt-lg-icon') +
+      '<span class="tt-lg-text"><span class="tt-lg-k">Friends league</span><span class="tt-lg-l">' + esc(cur ? 'Counts toward ' + cur.league.name : 'Does not count') + '</span>' +
+      (cur ? '<span class="tt-lg-s">' + esc(leagueWeekText(cur)) + '</span>' : '') + '</span>' + Club.icon('chevronRight', 'tt-go') + '</button></div>';
+  }
+  /** The several-leagues picker: "Does not count" plus each league (greyed out with the reason when it cannot count). */
+  function pickLeague(list, current, done) {
+    const cur = validLeague(list, current);
+    Portal.openSheet({ title: 'Count this round toward', selected: cur ? cur.league.id : '',
+      rows: [{ value: '', label: 'Does not count', sub: 'A round on its own' }].concat(list.map(function (x) {
+        return { value: x.league.id, label: x.league.name, sub: leagueWeekText(x), disabled: !x.check.ok };
+      })),
+      onPick: function (v) { done(v || null); } });
+  }
+  /** Wires a league control inside root. get(): the current id; set(id): save it (null for none). */
+  function wireLeague(root, list, get, set) {
+    root.addEventListener('change', function (e) {
+      const sw = e.target.closest && e.target.closest('[data-act=tt-lg-sw]'); if (!sw) return;
+      set(sw.checked ? sw.dataset.lg : null);
+    });
+    ui.on(root, 'click', '[data-act=tt-lg-pick]', function () { pickLeague(list(), get(), set); });
+  }
+
   /* ---------------- Group editor (booking sheet and change sheet) ---------------- */
   /**
    * model: { holes, notes, players: [{ memberId, name, type, cart, paid }], existing: [players already in the group] }
@@ -343,14 +390,32 @@
           (cr !== 'Normal' ? '<p class="tt-hint tt-rule">' + Club.icon('info') + '<span>' + esc(cartInfo(cr).label + '. ' + cartInfo(cr).text) + '</span></p>' : '') +
         '</div>' +
         (opts.showHoles ? '<div class="tt-holes-row"><span class="pk-label">Holes</span>' + ui.segmented([{ value: '18', label: '18 holes' }, { value: '9', label: '9 holes' }], String(model.holes), 'tt-holes-ed') + '</div>' : '') +
+        (opts.league ? '<div class="tt-lg-host"></div>' : '') +
         addsHTML(accOpen['tt-adds-acc']) +
         (opts.hideNotes ? '' : Portal.accordion({ id: 'tt-notes-acc', icon: 'edit', title: 'Notes for the golf shop', summary: model.notes && model.notes.trim() ? model.notes.trim() : 'Optional', open: accOpen['tt-notes-acc'],
           body: '<label class="sr-only" for="tt-notes-' + opts.uid + '">Notes for the golf shop</label><textarea class="textarea tt-notes" id="tt-notes-' + opts.uid + '" maxlength="240" placeholder="An occasion, a pull cart, rental clubs for a guest">' + esc(model.notes || '') + '</textarea>' })) +
         (promoHost ? '<div class="tt-promo-slot"></div>' : '') +
         '<div class="tt-fees-host"></div>';
       if (promoHost) ui.$('.tt-promo-slot', root).replaceWith(promoHost);   /* the same box, moved into the fresh markup */
+      drawLeague();
       fees();
     }
+    /* ---- Friends league (opts.league): the booking member's own entry only; guests and other players are not affected ---- */
+    function selfP() { return model.players.find(function (p) { return p.memberId === me.id; }) || null; }
+    function leagueList() { return opts.league && selfP() ? leaguesFor(me.id, opts.date, model.holes, opts.excludeId) : []; }
+    function drawLeague() {
+      const host = ui.$('.tt-lg-host', root); if (!host) return;
+      const p = selfP(), list = leagueList();
+      /* A choice the round can no longer take (9 holes now, or the week filled elsewhere) is dropped */
+      if (p && p.friendLeagueId && !validLeague(list, p.friendLeagueId)) delete p.friendLeagueId;
+      host.innerHTML = leagueHTML(list, p && p.friendLeagueId, opts.uid);
+    }
+    if (opts.league) wireLeague(root, leagueList, function () { const p = selfP(); return p ? p.friendLeagueId || null : null; }, function (id) {
+      const p = selfP(); if (!p) return;
+      if (id) p.friendLeagueId = id; else delete p.friendLeagueId;
+      drawLeague();
+      const sw = ui.$('[data-act=tt-lg-sw]', root), pk = ui.$('[data-act=tt-lg-pick]', root); if (sw) sw.focus(); else if (pk) pk.focus();
+    });
     /* ---- Add-ons the club offers members (Club.addons, memberOk): per player, or for the group on the booking member ---- */
     function offered() { return Club.addons && opts.addons !== false ? Club.addons.active('member') : []; }
     function booker() { return model.players.find(function (p) { return p.memberId === me.id; }) || model.players[0] || null; }
@@ -428,7 +493,7 @@
     ui.on(root, 'click', '.segmented[data-name=tt-holes-ed] button', function (e, b) {
       model.holes = +b.dataset.value; ui.$$('button', b.parentNode).forEach(function (x) { x.classList.toggle('active', x === b); });
       if (offered().length && model.players.some(function (p) { return p.addons && p.addons.length; })) { model.players.forEach(function (p) { p.addons = repriceAdds(p.addons, model.holes); }); render(); }
-      else fees();
+      else { drawLeague(); fees(); }
     });
     ui.on(root, 'click', '.tt-pays-seg button', function (e, btn) {
       const seg = btn.closest('.tt-pays-seg'); model.players[+seg.dataset.i].pays = btn.dataset.value === 'shop' ? 'shop' : 'host'; setSeg(seg, btn.dataset.value); fees();
@@ -664,8 +729,21 @@
     const jt = ctx.joinId ? S.find('teeTimes', ctx.joinId) : null;
     const errs = validateMembers(ctx.players, d, t, null, m, undefined, jt ? jt.holes : ctx.holes);
     if (ctx.players.some(function (p) { return p.type === 'guest' && !p.name; })) errs.push('Please enter a name for each guest.');
+    /* 4. A friends league chosen for the member's own round: it must still be able to take this round. */
+    const mine = ctx.players.find(function (p) { return p.memberId === m.id; });
+    if (mine && mine.friendLeagueId) {
+      const lc = leagueCheck(m.id, mine.friendLeagueId, d, jt ? jt.holes : ctx.holes, null);
+      if (!lc.ok) errs.push(lc.msg);
+    }
     if (errs.length) return no('players', errs, { existing: existing });
     return { ok: true, code: 'open', errs: [], target: target, existing: existing };
+  }
+  /** Can the member's round on `date` still count toward league `id`? { ok, msg } (msg names the league and why not). */
+  function leagueCheck(mid, id, date, holes, excludeId) {
+    const lg = FL() && FL().get(id);
+    if (!lg) return { ok: false, msg: 'That friends league is no longer running. Please choose again.' };
+    const c = FL().canCount(lg, mid, date, +holes || 18, excludeId || null);
+    return c.ok ? { ok: true, msg: '' } : { ok: false, msg: 'This round cannot count toward ' + lg.name + '. ' + c.reason + '.' };
   }
   /** A guest's contact details for the golf shop: phone, email and optional handicap index. */
   function guestContact(o, p) {
@@ -689,6 +767,7 @@
       const ad = repriceAdds(p.addons, holes); if (ad) o.addons = ad;
       if (p.type === 'guest') { o.hostId = p.hostId || m.id; o.pays = p.pays === 'shop' ? 'shop' : 'host'; guestContact(o, p); }
       if (p.type === 'member' && p.memberId !== m.id && chk.target) o.addedBy = m.id;
+      if (p.type === 'member' && p.memberId === m.id && p.friendLeagueId) o.friendLeagueId = p.friendLeagueId;   /* checked in checkBooking */
       return o;
     });
     const note = String(ctx.notes || '').trim();
@@ -720,6 +799,7 @@
     if (isIn(tt, m.id)) return { ok: false, errs: ['You are already in this group.'] };
     const self = { memberId: m.id, name: m.firstName + ' ' + m.lastName, type: 'member', cart: !!opts.cart };
     if (Array.isArray(opts.addons) && opts.addons.length) self.addons = opts.addons;   /* the joiner's own add-ons (editor with addons: true) */
+    if (opts.friendLeagueId) self.friendLeagueId = opts.friendLeagueId;   /* the joiner's friends league (editor with league: true) */
     const players = [self].concat((opts.players || []).filter(function (p) { return p.memberId !== m.id; }));
     const ctx = { date: tt.date, time: tt.time, joinId: tt.id, existing: opts.existing || (tt.players || []).slice(), players: players, holes: tt.holes, notes: '' };
     const c = checkBooking(m, ctx);
@@ -730,8 +810,12 @@
     cartDefault: function (m, date) { if (noCarts(date)) return false; const pr = (m.preferences || {}).cart; return Portal.prefs.get('tt.cart', pr ? pr === 'Cart' : true); },
     noCarts: noCarts,
     /** The Book flow's player editor (rows, walk or cart, add a member or guest, fees) for another page's sheet. Add-ons are
-        off unless opts.addons is true: then pass the joiner's picks to join as opts.addons (model.players[0].addons). */
-    editor: function (root, model, opts) { return groupEditor(root, model, Object.assign({}, opts, { addons: !!(opts && opts.addons === true) })); },
+        off unless opts.addons is true: then pass the joiner's picks to join as opts.addons (model.players[0].addons).
+        The friends league choice is off unless opts.league is true: then pass it to join as opts.friendLeagueId
+        (model.players[0].friendLeagueId). */
+    editor: function (root, model, opts) { return groupEditor(root, model, Object.assign({}, opts, { addons: !!(opts && opts.addons === true), league: !!(opts && opts.league === true) })); },
+    /** Leagues a round could count toward: [{ league, check }] (Club.friendLeagues.countableFor). */
+    leaguesFor: leaguesFor,
     /** Add member m, plus anyone they bring (opts.players), to the existing group. All or nothing. { ok, errs, doc } */
     join: function (m, ttId, opts) {
       opts = opts || {};
@@ -1132,7 +1216,7 @@
         } });
         const editor = groupEditor(ui.$('.tt-editor', sh.body), state.model, {
           me: m, date: state.date, time: state.time, excludeId: state.joinId, uid: 'b' + (++uidN), target: state.players,
-          allowGuests: true, promo: true,
+          allowGuests: true, promo: true, league: true,
           hostId: function () { return m.id; }   /* guests you bring are always yours, also when joining a group */
         });
         ui.on(sh.body, 'click', '[data-act=reload]', function () { location.reload(); });
@@ -1162,6 +1246,8 @@
           '<p class="tt-done-d">' + esc(longDate(tt.date)) + ' · ' + tt.holes + ' holes</p>' +
           '<p class="tt-done-p">' + esc((tt.players || []).map(function (p) { return p.memberId === m.id ? 'You' : p.type === 'member' ? otherLabel(p) : p.type === 'guest' && state.model && state.model.players.some(function (x) { return x.type === 'guest' && x.name === p.name; }) ? p.name + ' (guest)' : otherLabel(p); }).join(', ')) + '</p>' +
           '<p class="tt-done-p">' + (q.total ? fmt.money(q.total) + ' due on your account at check-in.' : 'No fees due on your account.') + ' Please check in at the golf shop 15 minutes before.</p>' +
+          (function () { const mine = (tt.players || []).find(function (p) { return p.memberId === m.id; }); const lg = mine && mine.friendLeagueId && FL() ? FL().get(mine.friendLeagueId) : null;
+            return lg ? '<p class="tt-done-p tt-done-promo">' + Club.icon('trophy') + '<span>' + esc('Counts toward ' + lg.name + ' once you post your score') + '</span></p>' : ''; })() +
           (q.promo ? '<p class="tt-done-p tt-done-promo">' + Club.icon('tag') + '<span>' + esc('Promo code ' + q.promo.code + ' saved you ' + fmt.money(q.promo.discount)) + '</span></p>' : '') +
         '</div>');
         sh.setFooter('<div class="tt-done-acts"><button type="button" class="btn" data-act="ics">' + Club.icon('calendar') + '<span>Add to calendar</span></button><button type="button" class="btn btn-primary" data-act="done">Done</button></div>');
@@ -1298,7 +1384,18 @@
         const locked = tt.status !== 'booked' || minutesUntil(tt) < CUTOFF_MIN;
         const tp = timeParts(tt.time);
         const status = tt.status === 'on-course' ? 'On course' : tt.status === 'checked-in' ? 'Checked in' : 'Confirmed';
-        const detailHTML = '<div class="tt-sheet"><div class="tt-sum"><span class="tt-sum-t">' + tp.t + '<small>' + tp.ap + '</small></span><span class="tt-sum-d">' + esc(longDate(tt.date)) + '<br>' + tt.holes + ' holes · <span class="tt-pill">' + status + '</span></span></div>' +
+        /* Friends league: shown, and changeable until a score is posted for this round (scores.js copies it then) */
+        const posted = S.where('scorePosts', function (x) { return x.teeTimeId === tt.id && x.memberId === m.id; }).length > 0;
+        const lgList = function () { return leaguesFor(m.id, tt.date, tt.holes, tt.id); };
+        const lgNow = function () { const t = S.find('teeTimes', tt.id) || tt; const p = (t.players || []).find(function (x) { return x.memberId === m.id; }); return p && p.friendLeagueId || null; };
+        const lgLive = ['booked', 'checked-in', 'on-course'].indexOf(tt.status) >= 0 && !posted;
+        function leagueBlock() {
+          const id = lgNow(), list = lgLive ? lgList() : [];
+          if (list.length && (!id || validLeague(list, id))) return '<div class="tt-lg-host tt-lg-detail">' + leagueHTML(list, id, 'd' + tt.id) + '</div>';
+          const lg = id && FL() ? FL().get(id) : null;
+          return lg ? '<p class="tt-lg-note">' + Club.icon('trophy') + '<span>' + esc('Counts toward ' + lg.name) + '</span></p>' : '';
+        }
+        const detailHTML = function () { return '<div class="tt-sheet"><div class="tt-sum"><span class="tt-sum-t">' + tp.t + '<small>' + tp.ap + '</small></span><span class="tt-sum-d">' + esc(longDate(tt.date)) + '<br>' + tt.holes + ' holes · <span class="tt-pill">' + status + '</span></span></div>' +
           '<ul class="tt-pl-list tt-detail-pl">' + (tt.players || []).map(function (p) {
             const self = p.memberId === m.id;
             const adds = (self || (p.type === 'guest' && p.hostId === m.id)) && realAdds(p.addons).length && Club.addons ? Club.addons.summary(realAdds(p.addons)) : '';
@@ -1306,14 +1403,30 @@
             return '<li class="tt-pl"><div class="tt-pl-who"><span class="tt-pl-name">' + esc(self ? 'You' : otherLabel(p)) + '</span><span class="tt-pl-sub">' + (p.type === 'guest' ? 'Guest · ' : isPublic(p) ? '' : 'Member · ') + (p.cart ? 'Cart' : 'Walking') + '</span>' +
               (adds ? '<span class="tt-pl-adds">' + Club.icon('box') + '<span>' + esc(adds) + '</span></span>' : '') +
               (pr ? '<span class="tt-pl-adds">' + Club.icon('tag') + '<span>' + esc('Promo code ' + pr.code + ', ' + fmt.money(-pr.price) + ' off') + '</span></span>' : '') + '</div></li>';
-          }).join('') + '</ul>' +
+          }).join('') + '</ul>' + leagueBlock() +
           (tt.notes && mgr ? '<p class="tt-cond-note"><span class="tt-cond-k">Notes:</span> ' + esc(tt.notes) + '</p>' : '') +
           (locked && tt.status === 'booked' ? '<p class="tt-hint tt-rule">' + Club.icon('clock') + '<span>Less than 2 hours to go. To make changes, call the golf shop on <a href="tel:' + esc(Club.info.phone.replace(/[^\d+]/g, '')) + '">' + esc(Club.info.phone) + '</a>.</span></p>' : '') +
-          '</div>';
+          '</div>'; };
         const actsHTML = '<div class="tt-detail-acts">' + (Portal.scores ? Portal.scores.detailAction(tt, m) : '') +
           (!locked ? '<button type="button" class="btn" data-act="d-modify">' + (mgr ? 'Modify' : 'Change') + '</button><button type="button" class="btn btn-danger" data-act="d-cancel">' + (mgr ? 'Cancel' : 'Withdraw') + '</button>' : '') +
           '<button type="button" class="btn" data-act="d-ics">' + Club.icon('calendar') + '<span>Calendar</span></button></div>';
-        const sh = Portal.openSheet({ title: 'Your tee time', content: detailHTML, footer: actsHTML });
+        const sh = Portal.openSheet({ title: 'Your tee time', content: detailHTML(), footer: actsHTML });
+        /* Changing the league choice saves at once: the switch (or "Does not count") is its own way back. */
+        if (lgLive) wireLeague(sh.body, lgList, lgNow, function (id) {
+          const fresh = S.find('teeTimes', tt.id);
+          if (!fresh || !isIn(fresh, m.id)) { ui.toast('This tee time has changed. Please check with the golf shop', 'bad'); sh.close(); rerenderMine(); return; }
+          const was = lgNow();
+          if (id) { const lc = leagueCheck(m.id, id, fresh.date, fresh.holes, fresh.id); if (!lc.ok) { ui.toast(lc.msg, 'bad'); redrawLeague(); return; } }
+          S.update('teeTimes', fresh.id, { players: (fresh.players || []).map(function (p) {
+            if (p.memberId !== m.id) return p;
+            const o = Object.assign({}, p); if (id) o.friendLeagueId = id; else delete o.friendLeagueId; return o;
+          }) });
+          redrawLeague();
+          const lg = FL().get(id || was);
+          ui.toast(id ? 'This round now counts toward ' + (lg ? lg.name : 'your league') : 'This round no longer counts toward ' + (lg ? lg.name : 'a league'));
+          const sw = ui.$('[data-act=tt-lg-sw]', sh.body), pk = ui.$('[data-act=tt-lg-pick]', sh.body); if (sw) sw.focus(); else if (pk) pk.focus();
+        });
+        function redrawLeague() { const h = ui.$('.tt-lg-detail', sh.body); if (h) h.outerHTML = leagueBlock() || '<div class="tt-lg-host tt-lg-detail"></div>'; }
         function wire() {
           const ics = ui.$('[data-act=d-ics]', sh.foot); if (ics) ics.addEventListener('click', function () { downloadIcs(tt); });
           const mod = ui.$('[data-act=d-modify]', sh.foot); if (mod) mod.addEventListener('click', function () { const f = guard(tt); if (!f) { sh.close(); return; } sh.close(); if (parent) parent.close(); openModify(f); });
@@ -1327,7 +1440,7 @@
             ? 'Your ' + fmt.time(f.time) + ' tee time on ' + longDate(f.date) + ' will be released' + (n > 1 ? ' for all ' + n + ' players in the group' : '') + '. The golf shop will let anyone you invited know.'
             : 'You will be removed from the ' + fmt.time(f.time) + ' group on ' + longDate(f.date) + (myGuests(f) ? ', along with ' + (myGuests(f) === 1 ? 'the guest' : 'the ' + myGuests(f) + ' guests') + ' you brought' : '') + '. The rest of the group keeps its tee time.') + '</p></div>');
           sh.setFooter('<div class="tt-detail-acts"><button type="button" class="btn" data-act="d-keep">Keep tee time</button><button type="button" class="btn btn-danger" data-act="d-yes">' + (mgr ? 'Cancel tee time' : 'Withdraw') + '</button></div>');
-          ui.$('[data-act=d-keep]', sh.foot).addEventListener('click', function () { sh.setContent(detailHTML); sh.setFooter(actsHTML); wire(); });
+          ui.$('[data-act=d-keep]', sh.foot).addEventListener('click', function () { sh.setContent(detailHTML()); sh.setFooter(actsHTML); wire(); });
           ui.$('[data-act=d-yes]', sh.foot).addEventListener('click', function () {
             const fresh = guard(S.find('teeTimes', tt.id)); if (!fresh) { sh.close(); return; }
             if (mgr) {
@@ -1369,7 +1482,7 @@
           content: '<div class="tt-sheet tt-modify"><p class="tt-hint">' + esc(longDate(tt.date)) + '</p><div class="tt-alert" role="alert" hidden></div><div class="tt-editor"></div></div>',
           footer: '<button type="button" class="btn btn-primary tt-full" data-act="save">Save changes</button>' });
         const editor = groupEditor(ui.$('.tt-editor', sh.body), model, {
-          me: m, date: tt.date, time: tt.time, excludeId: tt.id, uid: 'm' + (++uidN), showHoles: mgr, hideNotes: !mgr,
+          me: m, date: tt.date, time: tt.time, excludeId: tt.id, uid: 'm' + (++uidN), showHoles: mgr, hideNotes: !mgr, league: true,
           allowGuests: mgr && !!host && host.memberId === m.id,
           guestNote: mgr ? 'Guests settle on the host’s account. Please ask the golf shop to add guests to this group.' : 'Only the member who booked can add guests to this group.',
           hostId: function () { const all = model.existing.concat(model.players); const h = all.find(function (p) { return p.type === 'member' && p.memberId; }); return h ? h.memberId : m.id; }
@@ -1385,6 +1498,9 @@
           const errs = validateMembers(added, fresh.date, fresh.time, fresh.id, m, undefined, mgr ? model.holes : fresh.holes);
           if (model.existing.length + model.players.length > 4) errs.push('A group can have at most four players.');
           if (mgr && !model.players.some(function (p) { return p.memberId === m.id; })) errs.push('You cannot remove yourself here. Cancel the tee time instead.');
+          const mineM = model.players.find(function (p) { return p.memberId === m.id; });
+          const newHoles = mgr ? model.holes : fresh.holes;
+          if (mineM && mineM.friendLeagueId) { const lc = leagueCheck(m.id, mineM.friendLeagueId, fresh.date, newHoles, fresh.id); if (!lc.ok) errs.push(lc.msg); }
           if (errs.length) { al.innerHTML = Club.icon('alert') + '<div>' + errs.map(function (x) { return '<p>' + esc(x) + '</p>'; }).join('') + '</div>'; al.hidden = false; al.scrollIntoView({ block: 'nearest' }); return; }
           const keepPaid = function (p) { const prev = before.find(function (q) { return q.type === p.type && (p.type === 'member' ? q.memberId === p.memberId : q.name === p.name); }); return prev ? !!prev.paid : false; };
           const clean = function (p) {
@@ -1397,6 +1513,11 @@
               o.hostId = stays ? host : m.id; o.pays = p.pays === 'shop' ? 'shop' : 'host'; guestContact(o, p);
             }   // keep who brought, who pays and contact
             if (p.type === 'member' && p.addedBy) o.addedBy = p.addedBy;
+            /* Friends league: the member's own choice from the editor; another member keeps theirs while the length still fits */
+            if (p.type === 'member' && p.friendLeagueId) {
+              const lg = FL() && FL().get(p.friendLeagueId);
+              if (p.memberId === m.id || (lg && +lg.holes === +newHoles)) o.friendLeagueId = p.friendLeagueId;
+            }
             return o;
           };
           if (mgr) {

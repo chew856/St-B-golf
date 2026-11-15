@@ -193,7 +193,8 @@
   }
   function markRead(me, other) { unreadFrom(me, other).forEach(function (m) { S.update('memberMessages', m.id, { readAt: now() }); }); }
   function preview(t) { t = String(t || ''); return t.length > 90 ? t.slice(0, 90).replace(/\s+\S*$/, '') + '…' : t; }
-  function badgeCount(me) { return incoming(me).length + unreadCount(me) + joinInbox(me).length; }
+  function leagueInvites(me) { return Portal.friendLeagues ? Portal.friendLeagues.inviteCount(me) : 0; }
+  function badgeCount(me) { return incoming(me).length + unreadCount(me) + joinInbox(me).length + leagueInvites(me); }
 
   /* ---------------- Results (real data only) ---------------- */
   const COURSE = { rating: 73.1, slope: 135 };
@@ -564,8 +565,8 @@
   const draft = {};
   let query = '';
   function tabs(sub, me) {
-    const inc = incoming(me).length + joinInbox(me).length, un = unreadCount(me);
-    const items = [['', 'Friends', 0], ['requests', 'Requests', inc], ['messages', 'Messages', un]];
+    const inc = incoming(me).length + joinInbox(me).length + leagueInvites(me), un = unreadCount(me);
+    const items = [['', 'Friends', 0], ['requests', 'Requests', inc], ['messages', 'Messages', un]].concat(Portal.friendLeagues ? [['leagues', 'Leagues', 0]] : []);
     return '<nav class="fr-tabs" aria-label="Friends">' + items.map(function (i) {
       const on = i[0] === sub;
       return '<a href="#/friends' + (i[0] ? '/' + i[0] : '') + '"' + (on ? ' class="active" aria-current="page"' : '') + '>' + esc(i[1]) + (i[2] ? '<span class="fr-count" aria-label="' + i[2] + (i[0] === 'messages' ? ' unread' : ' waiting') + '">' + i[2] + '</span>' : '') + '</a>';
@@ -642,7 +643,7 @@
       return '<li>' + ui.avatar(m.firstName + ' ' + m.lastName, 'sm', true) + '<span class="fr-row-main"><span class="fr-row-name">' + esc(m.firstName + ' ' + m.lastName) + '</span><span class="fr-row-sub">' + esc((t ? t.name : 'Member') + ' · Sent ' + ago(f.createdAt)) + '</span></span><span class="fr-act">' + acts + '</span></li>';
     };
     const jr = joinInbox(me);
-    host.innerHTML =
+    host.innerHTML = (Portal.friendLeagues ? Portal.friendLeagues.invitesHTML(me) : '') +
       (jr.length ? '<section class="fr-block"><h2 class="fr-h">Join requests</h2><ul class="p-list fr-golf fr-jrs">' + jr.map(function (r) { return requestRowHTML(me, r); }).join('') + '</ul></section>' : '') +
       '<section class="fr-block"><h2 class="fr-h">Friend requests</h2>' +
         (inc.length ? '<ul class="p-list fr-req">' + inc.map(function (f) { return row(f, f.from, '<button type="button" class="btn btn-primary btn-sm" data-fr="accept" data-doc="' + esc(f.id) + '">Accept</button><button type="button" class="btn btn-sm" data-fr="decline" data-doc="' + esc(f.id) + '">Decline</button>'); }).join('') + '</ul>'
@@ -732,6 +733,12 @@
 
   function render(view, params, mem) {
     const me = mem.id;
+    if (params[0] === 'leagues' && Portal.friendLeagues) {   /* Friends leagues: js/portal/fleagues.js */
+      view.innerHTML = (params[1] ? '' : '<header class="fr-title"><h1>Friends</h1><p>Tee times, handicaps and results, shared only between friends.</p></header>' + tabs('leagues', me)) + '<div class="fr-body"></div>';
+      const lgDone = Portal.friendLeagues.render(ui.$('.fr-body', view), me, params.slice(1), function () { const t = ui.$('.fr-tabs', view); if (t) t.outerHTML = tabs('leagues', me); updateBadge(); });
+      updateBadge();
+      return lgDone;
+    }
     const sub = params[0] === 'requests' || params[0] === 'messages' ? params[0] : '';
     const pick = !sub && params[0] && member(params[0]) ? params[0] : null;
     const other = sub === 'messages' ? params[1] : null;
@@ -772,6 +779,7 @@
     });
     if (wide()) wireActions(view, function () { selected = null; draw(); });
     wireJoin(view, me, draw);
+    if (Portal.friendLeagues) Portal.friendLeagues.wire(view, me, draw);
     ui.on(view, 'click', '[data-fr=all-golf]', function () { openAllGolfing(me, draw); });
     ui.on(view, 'click', '[data-golf-view]', function (e, b) { Portal.prefs.set('fr.golfView', b.dataset.golfView); draw(); const n = ui.$('[data-golf-view="' + b.dataset.golfView + '"].active', view); if (n) n.focus(); });
     ui.on(view, 'click', '[data-fr=back-golf]', function () { selected = null; draw(); });
@@ -793,7 +801,7 @@
       const ta = ui.$('.fr-composer textarea', view); if (ta) ta.focus();
     });
     const ta = ui.$('.fr-composer textarea', view); if (ta && draft[other]) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
-    const unsub = [S.subscribe('friendships', updateBadge), S.subscribe('memberMessages', updateBadge), S.subscribe('joinRequests', updateBadge)];
+    const unsub = [S.subscribe('friendships', updateBadge), S.subscribe('memberMessages', updateBadge), S.subscribe('joinRequests', updateBadge), S.subscribe('friendLeagues', updateBadge)];
     return function () { unsub.forEach(function (u) { u(); }); };
   }
 

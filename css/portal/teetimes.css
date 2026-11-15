@@ -297,3 +297,24 @@ body.portal .tt-add-qty { align-self: center; }
 .tt-done-promo { display: flex; align-items: center; justify-content: center; gap: 6px; color: var(--forest-800); }
 .tt-done-promo .icon { width: 16px; height: 16px; flex: none; color: var(--forest-500); }
 .tt-add-note { font-size: 0.8125rem; color: var(--text-3); margin-top: 2px; }
+
+/* Friends league on a booking (js/core/friendleagues.js): a switch for one league, a picker row for several.
+   Quiet, in the same row language as the player list; the whole row is the tap target. */
+.tt-lg-host:empty { display: none; }
+.tt-lg { margin: 12px 0 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.tt-lg-sw, .tt-lg-pick { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 8px 0; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+@media (hover: hover) { .tt-lg-sw:hover, .tt-lg-pick:hover { background: var(--sage-50); } }
+.tt-lg-sw.is-off { cursor: default; }
+@media (hover: hover) { .tt-lg-sw.is-off:hover { background: none; } }
+.tt-lg-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.tt-lg-k { font-size: 0.75rem; letter-spacing: 0.02em; color: var(--text-3); }
+.tt-lg-l { font-size: 1rem; font-weight: 500; overflow-wrap: break-word; }
+.tt-lg-s { font-size: 0.8125rem; line-height: 1.4; color: var(--text-2); }
+.tt-lg-sw.is-off .tt-lg-l { color: var(--text-3); font-weight: 400; }
+.tt-lg-sw .toggle { display: inline-block; flex: none; }
+.tt-lg-sw input:disabled + span { opacity: 0.45; cursor: default; }
+.tt-lg-icon { width: 20px; height: 20px; color: var(--forest-500); flex: none; }
+.tt-lg-note { display: flex; align-items: center; gap: 8px; margin: 12px 0 0; font-size: 0.875rem; color: var(--text-2); }
+.tt-lg-note .icon { width: 16px; height: 16px; flex: none; color: var(--forest-500); }
+/* Straight after the player list (whose last row has its own rule): no double line */
+.tt-party + .tt-lg-host .tt-lg, .tt-lg-detail .tt-lg { margin-top: 0; border-top: 0; }

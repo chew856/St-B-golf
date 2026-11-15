@@ -92,6 +92,22 @@ others). The same breakdown is the Spending tab on the staff member page.
   golfers only have green fees on record.
 - Tested in Chromium only: check in Safari before deploying.
 
+## Client ideas, Growth plan and demo history (built Nov 15, NOT DEPLOYED YET)
+- Client spending has an "Ideas to grow revenue" list of 13 ideas (`js/modules/reports-clients.js`), each with the
+  clients behind it. Short periods (under 28 days of records) show none.
+- Reports has a Growth plan tab, second after Overview (`js/modules/reports-plan.js`): every section's ideas in one
+  list ranked by yearly value, with Mark done / Dismiss / Move back to open and Undo. Marks live in the `growthPlan`
+  collection under stable keys (`<section>:<idea id or title slug>`). Overview leaves out done and dismissed ideas.
+- Demo history (`js/shared/clients-history-data.js`, runs once, marker `clientHistory1`, loaded by index.html only):
+  about 2,220 made-up house charges from Dec 2025 to Aug 2026 with about 540 matching payments, 28 public green fee
+  payments, four new demo members (Marcus Oyelaran, Colette Arsenault, Sophie Lachance, Henri Beaulieu) and two new
+  demo public golfers (Isabelle Gauthier, Devon Sinclair), plus planted patterns so each idea has people behind it.
+  What members owe today is unchanged; "Billed" and "Collected in period" on Unpaid accounts rose because they
+  count period activity.
+- Language is a setting now (deployed? no): out of the top bars; portal Profile, public My account, and a switch on
+  signed-out pages.
+- Tested in Chromium only: check in Safari before deploying.
+
 ## Still to do or decide
 1. **Resolved Nov 13**: run alone, `xpo-test.mjs` (Group outings) passes all 192 checks and `xe-checkout.mjs`
    passes 418. The one failure is the outside weather service answering 503, not the site.

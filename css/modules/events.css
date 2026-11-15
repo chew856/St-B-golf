@@ -562,3 +562,26 @@ body.staff .ev-invite-inner { outline: 0; }
 
 /* Touch screens (Nov 12): no hover, so the day add button is always shown. */
 @media (hover: none) { .ev-day-add { opacity: 1; } }
+
+/* ---------- Friends leagues (read-only list; members run them from the portal) ---------- */
+.fl-intro { margin: 0 0 var(--s4); font-size: var(--fs-13); color: var(--text-2); max-width: 70ch; }
+.fl-card { cursor: pointer; }
+.fl-card:focus-visible { outline: 2px solid var(--forest-500); outline-offset: 2px; }
+.fl-card.s-cancelled h3 { color: var(--text-3); text-decoration: line-through; text-decoration-thickness: 1px; }
+.fl-card.s-active { border-color: var(--forest-500); }
+.fl-card .person-sub { overflow-wrap: anywhere; }
+.fl-inv { display: block; margin-top: 4px; font-size: var(--fs-11); color: var(--text-2); white-space: nowrap; }
+.fl-wait { color: var(--text-2); font-weight: 400; white-space: normal; }
+.fl-sub { display: block; font-size: var(--fs-11); color: var(--text-3); margin-top: 2px; font-weight: 400; white-space: normal; }
+.fl-member { color: var(--text); font-weight: 500; text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 3px; }
+@media (hover: hover) { .fl-member:hover { text-decoration-color: var(--forest-500); } }
+.fl-drawer .kv.fl-kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: var(--s2) var(--s5); margin: 0; }   /* reports-extra.css turns every .kv into a flex column */
+.fl-kv dd { overflow-wrap: anywhere; }
+.fl-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s3); font-size: var(--fs-13); color: var(--text-2); }
+.fl-probs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--s2); }
+.fl-probs li { display: flex; gap: var(--s2); align-items: flex-start; font-size: var(--fs-13); color: var(--text); background: var(--ochre-tint); padding: var(--s3); border-radius: var(--r-control); }
+.fl-probs svg { width: 16px; height: 16px; color: var(--warn); flex: none; margin-top: 2px; }
+.fl-readonly { display: flex; gap: var(--s2); align-items: flex-start; margin: 0; font-size: var(--fs-13); color: var(--text-2); }
+.fl-readonly svg { width: 16px; height: 16px; flex: none; margin-top: 2px; color: var(--forest-500); }
+.fl-drawer .dd-table td { vertical-align: top; }
+.fl-ell { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

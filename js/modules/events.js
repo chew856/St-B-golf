@@ -308,8 +308,9 @@
     ui.tabs(ui.$('.ev-tabs-host', view), [
       { id: 'calendar', label: 'Calendar', render: renderCalendar },
       { id: 'tournaments', label: 'Tournaments', render: renderTournamentList },
-      { id: 'league', label: "Members' league", render: renderLeague }
-    ], tab, function (id) { try { history.replaceState(null, '', id === 'tournaments' ? '#/events/tournaments' : id === 'league' ? '#/events/league' : '#/events'); } catch (e) { /* file:// may refuse */ } });
+      { id: 'league', label: "Members' league", render: renderLeague },
+      { id: 'friends', label: 'Friends leagues', render: renderFriendLeagues }
+    ], tab, function (id) { try { history.replaceState(null, '', id === 'tournaments' ? '#/events/tournaments' : id === 'league' ? '#/events/league' : id === 'friends' ? '#/events/friends' : '#/events'); } catch (e) { /* file:// may refuse */ } });
     const strip = ui.$('.ev-tabs-host .tabs', view), act = strip && ui.$('.tab.active', strip);
     if (act && act.offsetLeft + act.offsetWidth > strip.clientWidth) strip.scrollLeft = act.offsetLeft - 16;
   }
@@ -1232,6 +1233,119 @@
     } catch (e) { ui.toast('Could not create the CSV file', 'bad'); }
   }
 
+  /* ---------------- Friends leagues (read-only: members run them from the portal, js/core/friendleagues.js) ---------------- */
+  const FL_ORDER = { active: 0, waiting: 1, forming: 2, complete: 3, cancelled: 4 };
+  const FL_BADGE = { active: 'good', waiting: 'warn', forming: 'info', complete: 'dark', cancelled: 'bad' };
+  function flBadge(lg) { return ui.badge(Club.friendLeagues.statusLabel(lg), FL_BADGE[Club.friendLeagues.status(lg)] || 'plain'); }
+  function flPlay(lg) { return lg.mode === 'teams' ? 'Teams of ' + lg.teamSize : 'Individual'; }
+  function flDates(lg) { return fmt.dateShort(lg.start) + ' – ' + fmt.dateShort(Club.friendLeagues.endDate(lg)); }
+  function flLink(id) { return Club.store.find('members', id) ? '<a href="#/members/' + esc(id) + '" class="fl-member">' + esc(Club.members.name(id)) + '</a>' : '<span class="muted">Former member</span>'; }
+  function flSorted() {
+    const FLx = Club.friendLeagues;
+    return S.all('friendLeagues').slice().sort(function (a, b) {
+      const sa = FL_ORDER[FLx.status(a)], sb = FL_ORDER[FLx.status(b)];
+      return (sa - sb) || (sa >= 3 ? String(b.start).localeCompare(String(a.start)) : String(a.start).localeCompare(String(b.start)));
+    });
+  }
+  /** Leader line for a card: the top team (team leagues) or player, once anyone has a score. */
+  function flLeader(lg) {
+    const sd = Club.friendLeagues.standings(lg);
+    if (lg.mode === 'teams') { const t = sd.teams[0]; return t && t.played ? { name: t.name, value: t.members.map(function (m) { return Club.members.name(m); }).join(', ') } : null; }
+    const r = sd.rows[0]; if (!r || !r.played) return null;
+    return { name: Club.members.name(r.memberId), value: lg.format === 'weekly' ? Club.friendLeagues.valueText(lg, r.total) : Club.friendLeagues.valueText(lg, r.avg) + ' a game' };
+  }
+
+  function renderFriendLeagues(panel) {
+    const FLx = Club.friendLeagues;
+    const list = FLx ? flSorted() : [];
+    if (!list.length) {
+      panel.innerHTML = '<div class="panel">' + ui.empty({ icon: 'members', title: 'No friends leagues yet', text: "Members can start a league with their friends from the members' portal. Their leagues will be listed here." }) + '</div>';
+      return;
+    }
+    panel.innerHTML = '<p class="fl-intro">Leagues members run with their friends from the members\' portal. Staff can view them here but not change them.</p>' +
+      '<div class="ev-trn-grid fl-grid">' + list.map(function (lg) {
+        const st = FLx.status(lg), acc = FLx.accepted(lg).length, inv = (lg.members || []).filter(function (x) { return x.status === 'invited'; }).length;
+        const lead = st === 'active' || st === 'complete' ? flLeader(lg) : null, probs = st === 'forming' || st === 'waiting' ? FLx.problems(lg) : [];
+        let foot;
+        if (lead) foot = '<span class="label-caps">' + (st === 'complete' ? 'Winner' : 'Leading') + '</span><span class="ev-trn-leader">' + esc(lead.name) + '</span><span class="fl-sub fl-ell">' + esc(lead.value) + '</span>';
+        else if (probs.length) foot = '<span class="label-caps">Before it starts</span><span class="ev-trn-leader fl-wait">' + esc(probs[0]) + '</span>';
+        else if (st === 'forming') foot = '<span class="label-caps">Ready</span><span class="ev-trn-leader">Starts ' + esc(fmt.dateShort(lg.start)) + '</span>';
+        else foot = '<span class="label-caps">' + (st === 'cancelled' ? 'Cancelled' : 'Scores') + '</span><span class="ev-trn-leader"><span class="muted">' + (st === 'cancelled' ? 'No longer running' : 'No scores yet') + '</span></span>';
+        return '<div class="panel ev-trn-card fl-card s-' + st + '" role="button" tabindex="0" data-fl="' + esc(lg.id) + '" aria-haspopup="dialog" data-reveal>' +
+          '<div class="row between"><span class="eyebrow">' + esc(FLx.formatOf(lg).label) + '</span>' + flBadge(lg) + '</div>' +
+          '<h3>' + esc(lg.name) + '</h3>' +
+          '<div class="person-sub">' + esc(flPlay(lg) + ' · ' + flDates(lg)) + '</div>' +
+          '<div class="person-sub">Started by ' + esc(Club.members.name(lg.createdBy)) + '</div>' +
+          '<div class="ev-trn-card-foot"><div><span class="label-caps">Players</span><span class="serif ev-trn-n">' + acc + '</span>' + (inv ? '<span class="fl-inv">+' + inv + ' invited</span>' : '') + '</div>' +
+          '<div style="min-width:0">' + foot + '</div></div></div>';
+      }).join('') + '</div>';
+    ui.on(panel, 'click', '[data-fl]', function (e, card) { openFriendLeague(card.dataset.fl); });
+    ui.on(panel, 'keydown', '[data-fl]', function (e, card) { if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') { e.preventDefault(); openFriendLeague(card.dataset.fl); } });
+  }
+
+  function openFriendLeague(id) {
+    const FLx = Club.friendLeagues, DR = Club.drill, lg = FLx && FLx.get(id);
+    if (!lg) { ui.toast('This league could not be found', 'bad'); return; }
+    const st = FLx.status(lg), f = FLx.formatOf(lg), sd = FLx.standings(lg), teams = lg.mode === 'teams';
+    const teamName = function (tid) { const t = (lg.teams || []).find(function (x) { return x.id === tid; }); return t ? t.name : ''; };
+    const played = sd.rows.some(function (r) { return r.played; });
+    const weekly = lg.format === 'weekly';
+    let html = '<div class="fl-head" data-reveal>' + flBadge(lg) + '<span>' + esc(f.label + ' · ' + flPlay(lg)) + '</span></div>' + DR.kpis([
+      { label: 'Weeks', value: String(lg.weeks), sub: st === 'active' ? 'Now in week ' + sd.weekNow : st === 'complete' ? 'Finished' : st === 'cancelled' ? 'Cancelled' : 'Not started' },
+      { label: 'Players', value: String(sd.rows.length), sub: teams ? (lg.teams || []).length + ' teams' : 'Individual' },
+      { label: 'Games each', value: String(lg.weeks * lg.perWeek), sub: lg.perWeek + ' a week' },
+      { label: 'Ends', value: fmt.dateShort(FLx.endDate(lg)), sub: (today() < lg.start ? 'Starts ' : 'Started ') + fmt.dateShort(lg.start) }
+    ]);
+    html += DR.sec('Setup', '', '<dl class="kv fl-kv">' +
+      '<dt>Format</dt><dd>' + esc(f.label) + '<span class="fl-sub">' + esc(f.text) + '</span></dd>' +
+      '<dt>Play</dt><dd>' + esc(flPlay(lg)) + (teams ? ' · ' + esc((lg.teams || []).map(function (t) { return t.name; }).join(', ')) : '') + '</dd>' +
+      '<dt>Weeks</dt><dd>' + lg.weeks + ' weeks, ' + esc(flDates(lg)) + '</dd>' +
+      '<dt>Games per week</dt><dd>' + lg.perWeek + '</dd>' +
+      '<dt>Holes</dt><dd>' + lg.holes + '-hole rounds only</dd>' +
+      '<dt>Started by</dt><dd>' + flLink(lg.createdBy) + (lg.createdAt ? ' <span class="muted">on ' + esc(fmt.dateShort(String(lg.createdAt).slice(0, 10))) + '</span>' : '') + '</dd>' +
+      (lg.cancelled && lg.cancelledAt ? '<dt>Cancelled</dt><dd>' + esc(fmt.dateShort(String(lg.cancelledAt).slice(0, 10))) + '</dd>' : '') +
+      '</dl>');
+    const probs = st === 'forming' || st === 'waiting' ? FLx.problems(lg) : [];
+    if (st === 'forming' || st === 'waiting') {
+      html += DR.sec(st === 'waiting' ? 'Why it has not started' : 'Before it starts', '', probs.length
+        ? '<ul class="fl-probs">' + probs.map(function (p) { return '<li>' + Club.icon('alert') + '<span>' + esc(p) + '</span></li>'; }).join('') + '</ul>'
+        : DR.note('Everyone is in. The league starts ' + fmt.dateLong(lg.start) + '.'));
+    }
+    if (st === 'active' || st === 'complete' || played) {
+      const valCol = weekly ? 'Points' : (lg.format === 'stableford' ? 'Avg points' : 'Avg score');
+      if (teams) {
+        html += DR.sec('Team standings', sd.teams.length + ' teams', DR.table([{ label: 'Pos' }, { label: 'Team' }, { label: 'Games', num: true }, { label: 'Total', num: true }],
+          sd.teams.map(function (t) {
+            return [esc(t.pos), '<span class="primary-cell">' + esc(t.name) + '</span><span class="fl-sub">' + esc(t.members.map(function (m) { return Club.members.name(m); }).join(', ')) + '</span>', t.played + ' of ' + t.of, '<strong>' + esc(FLx.valueText(lg, t.total)) + '</strong>'];
+          })));
+      }
+      html += DR.sec(teams ? 'Players' : 'Standings', sd.rows.length + ' players', DR.table(
+        [{ label: 'Pos' }, { label: 'Member' }, { label: 'Games', num: true }, { label: valCol, num: true }].concat(weekly ? [] : [{ label: 'Total', num: true }]),
+        sd.rows.map(function (r) {
+          const cells = [esc(r.pos), flLink(r.memberId) + (teams ? '<span class="fl-sub">' + esc(teamName(r.teamId)) + '</span>' : ''), r.played + ' of ' + r.of + (r.missed ? '<span class="fl-sub">' + r.missed + ' missed</span>' : ''),
+            '<strong>' + esc(FLx.valueText(lg, weekly ? r.total : r.avg)) + '</strong>'];
+          if (!weekly) cells.push(esc(FLx.valueText(lg, r.total)));
+          return cells;
+        })) + DR.note(sd.done ? 'Final standings. Missed games took the worst score of that week.' : (weekly ? 'Points by weekly finish, added up for weeks everyone has played.' : 'Ranked on the average per game, so catching up on missed weeks never hurts.')));
+    } else {
+      html += DR.sec('Players', sd.rows.length + ' in', (lg.members || []).filter(function (x) { return x.status === 'accepted'; }).length
+        ? DR.table([{ label: 'Member' }].concat(teams ? [{ label: 'Team' }] : []),
+          FLx.accepted(lg).map(function (x) { return [flLink(x.memberId)].concat(teams ? [esc(teamName(x.teamId) || 'No team')] : []); }))
+        : DR.note('No one has joined yet.'));
+    }
+    const others = (lg.members || []).filter(function (x) { return x.status === 'invited' || x.status === 'declined'; });
+    if (others.length) {
+      html += DR.sec('Invites', others.filter(function (x) { return x.status === 'invited'; }).length + ' waiting', DR.table([{ label: 'Member' }].concat(teams ? [{ label: 'Team' }] : []).concat([{ label: 'Reply' }]),
+        others.map(function (x) {
+          return [flLink(x.memberId) + (x.invitedAt ? '<span class="fl-sub">Invited ' + esc(fmt.dateShort(String(x.invitedAt).slice(0, 10))) + '</span>' : '')].concat(teams ? [esc(teamName(x.teamId) || 'No team')] : [])
+            .concat([x.status === 'invited' ? ui.badge('Not answered', 'warn') : ui.badge('Declined', 'plain')]);
+        })));
+    }
+    html += '<p class="fl-readonly">' + Club.icon('info') + '<span>Members run these leagues from the members\' portal. Staff can view them but not change them.</span></p>';
+    const api = DR.open({ title: lg.name, body: html }, 'Friends league');
+    if (api && api.el) api.el.classList.add('fl-drawer');
+  }
+
   /* ---------------- Register module ---------------- */
   Club.register({
     id: 'events', label: 'Events & Tournaments', icon: 'trophy', section: 'Golf', order: 30,
@@ -1247,13 +1361,16 @@
         .map(function (t) { return { label: t.name, sub: 'Tournament · ' + fmt.date(t.date), href: 'events/tournaments/' + t.id, icon: 'trophy' }; });
       const lg = S.all('leagues').filter(function (l) { return String(l.name).toLowerCase().indexOf(q) >= 0 || (q.length > 3 && 'league'.indexOf(q) === 0); })
         .map(function (l) { return { label: l.name, sub: "Members' league · " + (l.season ? l.season.start.slice(0, 4) : ''), href: 'events/league', icon: 'trophy' }; });
-      return ev.concat(tr).concat(lg);
+      const fl = S.all('friendLeagues').filter(function (l) { return String(l.name).toLowerCase().indexOf(q) >= 0; })
+        .map(function (l) { return { label: l.name, sub: 'Friends league · ' + fmt.date(l.start), href: 'events/friends/' + l.id, icon: 'members' }; });
+      return ev.concat(tr).concat(lg).concat(fl);
     },
     render: function (view, params) {
       view.classList.add('ev-view');
       if (params[0] === 'tournaments' && params[1]) renderTournament(view, params[1]);
       else if (params[0] === 'tournaments') renderIndex(view, 'tournaments');
       else if (params[0] === 'league') renderIndex(view, 'league');
+      else if (params[0] === 'friends') { renderIndex(view, 'friends'); if (params[1]) openFriendLeague(params[1]); }
       else if (params[0]) renderEvent(view, params[0]);
       else renderIndex(view, 'calendar');
     }

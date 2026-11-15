@@ -78,6 +78,19 @@ week; no playing ahead); games never played take the worst score of that week wh
   teams rank on players' average per game mid-season while the table also shows totals.
 - Tested in Chromium only: check in Safari before deploying.
 
+## Client analytics (built Nov 15, NOT DEPLOYED YET)
+Staff Reports has a Clients tab (`js/modules/reports-clients.js`, `Club.clientStats`): every member and public golfer
+ranked by spend, filters for Everyone / Members / Public golfers and Including / Excluding dues, spend by department
+and by membership category, and a breakdown per client (department, by month, visits and habits, compared with
+others). The same breakdown is the Spending tab on the staff member page.
+- Spend = house-account charges plus card or cash purchases, less credits; account payments, balance brought forward,
+  reversed charges and gift card amounts do not count. A visit = a day with a purchase, round, dining visit or lesson.
+- Public golfers: receipts with a publicPlayerId plus paid `publicPayments`. Walk-ins with no account and wedding or
+  outing deposits are left out.
+- Demo data limits: client spend starts Sep 1, so longer periods have no previous period to compare with; public
+  golfers only have green fees on record.
+- Tested in Chromium only: check in Safari before deploying.
+
 ## Still to do or decide
 1. **Resolved Nov 13**: run alone, `xpo-test.mjs` (Group outings) passes all 192 checks and `xe-checkout.mjs`
    passes 418. The one failure is the outside weather service answering 503, not the site.

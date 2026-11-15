@@ -276,6 +276,7 @@
       { id: 'overview', label: 'Overview', render: function (p) { tabOverview(p, m); } },
       { id: 'golf', label: 'Golf', render: function (p) { tabGolf(p, m, hist); } },
       { id: 'activity', label: 'Activity', render: function (p) { tabActivity(p, m); } },
+      { id: 'spending', label: 'Spending', render: function (p) { tabSpending(p, m); } },
       { id: 'account', label: 'Account', render: function (p) { tabAccount(p, m); } }
     ], profileTab, function (tid) { profileTab = tid; if (history.replaceState) history.replaceState(null, '', '#/members/' + encodeURIComponent(m.id) + (tid === 'overview' ? '' : '/' + tid)); });
 
@@ -395,6 +396,12 @@
       const rest = ui.$('.mem-act-rest', b.closest('.mem-act')); if (!rest) return;
       rest.hidden = !rest.hidden; b.textContent = rest.hidden ? 'View all (' + b.dataset.n + ')' : 'Show fewer';
     });
+  }
+
+  /* Spending: the client breakdown shared with Reports, Clients (Club.clientStats, js/modules/reports-clients.js) */
+  function tabSpending(p, m) {
+    if (Club.clientStats && Club.clientStats.memberTab) Club.clientStats.memberTab(p, m);
+    else p.innerHTML = ui.empty({ icon: 'billing', title: 'Spending is not available', text: 'The spending breakdown comes from Reports, which is not loaded.' });
   }
 
   function tabAccount(p, m) {
@@ -812,7 +819,7 @@
         return out;
       }
       if (p === 'new') { renderDirectory(view); openMemberForm(null); return; }
-      if (['overview', 'golf', 'activity', 'account'].indexOf(params[1]) >= 0) profileTab = params[1];
+      if (['overview', 'golf', 'activity', 'spending', 'account'].indexOf(params[1]) >= 0) profileTab = params[1];
       else if (p !== (renderProfile.lastId || '')) profileTab = 'overview';
       renderProfile.lastId = p;
       return renderProfile(view, p);

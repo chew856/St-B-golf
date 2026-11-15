@@ -1,0 +1,36 @@
+/* Reports, Clients (js/modules/reports-clients.js): the filter row, the table of every client, and the Spending tab on
+   the staff member page. Everything else reuses css/modules/reports.css and reports-extra.css. Tokens only. */
+
+/* ---- Filter row: who is shown, and whether dues count ---- */
+.cl-filters { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s3); min-width: 0; }
+.cl-filters .segmented { max-width: 100%; }
+.cl-bar { margin: 0 0 var(--s5); }
+
+/* ---- Every client by spend ---- */
+.cl-table td { vertical-align: top; }
+.cl-table td.num { white-space: nowrap; }
+.cl-table .cl-rank { width: 3.5rem; color: var(--text-3); }
+.cl-table tfoot td { font-weight: 600; border-top: 1px solid var(--border-strong); }
+.cl-table tbody tr:focus-visible { outline: 2px solid var(--forest-700); outline-offset: -2px; }
+@media (hover: hover) { .cl-table tbody tr.clickable:hover { background: var(--sage-50); } }
+.cl-show-s { display: none; }
+.cl-more { padding-top: var(--s3); }
+
+/* ---- Drawers: a client's name as a button, and who they are ---- */
+.cl-name { appearance: none; background: none; border: 0; padding: 0; margin: 0; font: inherit; font-weight: 500; color: var(--text); text-align: left; cursor: pointer; border-radius: 2px; text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 4px; }
+@media (hover: hover) { .cl-name:hover { text-decoration-color: currentColor; } }
+.cl-who { margin: 0; font-size: 0.9375rem; color: var(--text-2); }
+
+/* ---- Spending tab on the member page ---- */
+.cl-tab-head { flex-wrap: wrap; gap: var(--s3); }
+.cl-tab-range { margin: 2px 0 0; font-size: 0.8125rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.cl-tab-foot { margin: var(--s5) 0 0; font-size: 0.875rem; }
+.cl-rd .chart text { font-size: 0.75rem; }
+
+@media (max-width: 640px) {
+  .cl-hide-s { display: none; }
+  .cl-show-s { display: block; }
+  .cl-table .cl-rank { width: 2rem; }
+  .cl-bar { margin-bottom: var(--s4); }
+}
+@media print { .cl-bar, .cl-more { display: none !important; } }

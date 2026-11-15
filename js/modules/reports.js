@@ -1,7 +1,7 @@
 /* Reports: club performance across departments, history plus live month to date.
    This file holds the period selector, the data model (context, buildRows), the shared drill drawers, the CSV
    builders and the page itself. Sections register through Club.reports.addSection (see the Sections comment below):
-   reports-overview.js, reports-members.js, reports-growth.js, reports-golf.js, reports-food.js, plus Revenue and
+   reports-overview.js, reports-members.js, reports-growth.js, reports-golf.js, reports-food.js, reports-clients.js, plus Revenue and
    Accounts in this file. Charts come from js/core/charts.js. */
 (function () {
   'use strict';
@@ -1190,7 +1190,7 @@
       SECS.forEach(function (s) {
         if (!s.wire || !ctx) return;
         const el = host.querySelector('#rp-sec-' + s.id);
-        if (el) { try { s.wire(el, ctx, { drill: function (key, arg) { openDrill(s.id, key, arg); }, open: function (d, asOf) { openDrawer(d, asOf); } }); } catch (e) { console.error(e); } }
+        if (el) { try { s.wire(el, ctx, { drill: function (key, arg) { openDrill(s.id, key, arg); }, open: function (d, asOf) { openDrawer(d, asOf); }, redraw: function () { redraw(false); } }); } catch (e) { console.error(e); } }
       });
     }
     wireSections();

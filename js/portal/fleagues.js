@@ -119,7 +119,7 @@
   /* ---------------- League page ---------------- */
   function memberStatusText(lg, x, me) {
     if (x.memberId === lg.createdBy) return 'Organiser';
-    return x.status === 'accepted' ? 'In' : x.status === 'invited' ? 'Invited' : x.status === 'declined' ? 'Declined' : '';
+    return x.status === 'accepted' ? 'Joined' : x.status === 'invited' ? 'Invited' : x.status === 'declined' ? 'Declined' : '';
   }
   function personRow(lg, x, me) {
     const editable = FL.editable(lg) && isCreator(lg, me) && x.memberId !== me && (x.status === 'accepted' || x.status === 'invited');
@@ -157,14 +157,14 @@
       kv('Games', (lg.perWeek === 1 ? '1 game' : lg.perWeek + ' games') + ' a week, ' + lg.holes + ' holes') +
       kv('Players', lg.mode === 'teams' ? 'Teams of ' + lg.teamSize : 'Individual') +
       kv('Organiser', fullName(lg.createdBy)) +
-      '</dl><p class="fl-note">Each week starts on the ' + fmt.toDate(lg.start).toLocaleDateString('en-US', { weekday: 'long' }) + '. Missed a week? Play an extra round later and it counts for the week you missed. Games still missing at the end count as the worst score of that week. Until the end, players are ranked on their average per game.</p>';
+      '</dl><p class="fl-note">Each week starts on a ' + fmt.toDate(lg.start).toLocaleDateString('en-US', { weekday: 'long' }) + '. Missed a week? Play an extra round later and it counts for the week you missed. Games still missing at the end count as the worst score of that week. Until the end, players are ranked on their average per game.</p>';
   }
 
   /** Standings tables and the week by week grid. */
   function standingsHTML(lg, me) {
     const s = FL.standings(lg), f = FL.formatOf(lg), weekly = lg.format === 'weekly';
-    const head = weekly ? '<th scope="col" class="fl-num">Points</th>' : '<th scope="col" class="fl-num">Per game</th><th scope="col" class="fl-num">Total</th>';
-    const vals = function (r) { return weekly ? '<td class="fl-num fl-strong">' + esc(valText(lg, r.total)) + '</td>' : '<td class="fl-num fl-strong">' + esc(valText(lg, r.key)) + '</td><td class="fl-num">' + esc(valText(lg, r.total)) + '</td>'; };
+    const head = weekly ? '<th scope="col" class="fl-num">Points</th>' : '<th scope="col" class="fl-num">Per game</th><th scope="col" class="fl-num fl-col-tot">Total</th>';
+    const vals = function (r) { return weekly ? '<td class="fl-num fl-strong">' + esc(valText(lg, r.total)) + '</td>' : '<td class="fl-num"><span class="fl-strong">' + esc(valText(lg, r.key)) + '</span>' + (r.total != null ? '<span class="fl-tot-sub">' + esc('Total ' + valText(lg, r.total)) + '</span>' : '') + '</td><td class="fl-num fl-col-tot">' + esc(valText(lg, r.total)) + '</td>'; };
     let h = '';
     if (lg.mode === 'teams' && s.teams.length) {
       h += '<section class="fl-sec fl-sec-teams"><h2 class="eyebrow fl-eb">Team standings</h2><div class="fl-tbox"><table class="fl-table"><caption class="fr-sr">Team standings</caption><thead><tr><th scope="col" class="fl-pos">Pos</th><th scope="col">Team</th>' + head + '<th scope="col" class="fl-num">Games</th></tr></thead><tbody>' +

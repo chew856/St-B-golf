@@ -736,6 +736,7 @@
     if (params[0] === 'leagues' && Portal.friendLeagues) {   /* Friends leagues: js/portal/fleagues.js */
       view.innerHTML = (params[1] ? '' : '<header class="fr-title"><h1>Friends</h1><p>Tee times, handicaps and results, shared only between friends.</p></header>' + tabs('leagues', me)) + '<div class="fr-body"></div>';
       const lgDone = Portal.friendLeagues.render(ui.$('.fr-body', view), me, params.slice(1), function () { const t = ui.$('.fr-tabs', view); if (t) t.outerHTML = tabs('leagues', me); updateBadge(); });
+      const tab = ui.$('.fr-tabs a.active', view); if (tab) { const nav = tab.parentNode; nav.scrollLeft += tab.getBoundingClientRect().right - nav.getBoundingClientRect().right + 4; }
       updateBadge();
       return lgDone;
     }

@@ -202,6 +202,25 @@
     document.getElementById('portal').innerHTML = '';
     current = null;
     render();
+    askHand();
+  }
+  /* Which hand the member plays: asked once, at sign-in, when the club has no answer on record. It cannot be skipped
+     (no close button, Escape or tap outside); it can be changed later in Profile > Golf. */
+  let askingHand = false;
+  function askHand() {
+    const m = Portal.member();
+    if (!m || askingHand || Club.members.hand(m)) return;
+    askingHand = true;
+    const sh = Portal.openSheet({ title: 'Which hand do you play?', locked: true, content:
+      '<div class="p-hand-ask"><p class="p-hand-q">Welcome, ' + esc(m.firstName) + '. One quick question before you start.</p>' +
+        '<div class="p-hand-opts">' + Club.members.HANDS.map(function (h) { return '<button type="button" class="btn p-hand-btn" data-hand="' + h.value + '">' + esc(h.label) + '</button>'; }).join('') + '</div>' +
+        '<p class="p-hand-note">Your friends at the club and the golf shop can see this. You can change it in Profile.</p></div>' });
+    ui.on(sh.body, 'click', '[data-hand]', function (e, b) {
+      const fresh = Portal.member(); if (fresh) Club.store.update('members', fresh.id, { hand: b.dataset.hand });
+      askingHand = false; sh.close(true);
+      ui.toast('Saved: ' + Club.members.hand({ hand: b.dataset.hand }));
+    });
+    const first = ui.$('[data-hand]', sh.body); if (first) setTimeout(function () { first.focus(); }, 50);
   }
   window.addEventListener('hashchange', function () { if (Portal.member()) render(); });
   /* Signed in or out in another tab: this tab follows straight away rather than mixing two members. */

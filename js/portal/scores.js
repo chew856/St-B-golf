@@ -240,7 +240,7 @@
         '<div><dt>Course handicap</dt><dd>' + p.courseHandicap + ' ' + demoPill() + '</dd></div>' +
         '<div><dt>Course rating / slope</dt><dd>' + esc(p.rating.toFixed(1) + ' / ' + p.slope) + ' ' + demoPill('Placeholder') + '</dd></div>' +
         '<div><dt>Playing conditions</dt><dd>Calculated by Golf Canada</dd></div>' +
-        '<div><dt>Played with</dt><dd>' + esc(p.playedWith && p.playedWith.length ? niceList(p.playedWith) : tt ? 'Just you' : 'Not recorded') + '</dd></div>' +
+        '<div><dt>Played with</dt><dd>' + esc(p.playedWith && p.playedWith.length ? niceList(p.playedWith) : tt ? (Portal.member() && Portal.member().id !== p.memberId ? 'Played alone' : 'Just you') : 'Not recorded') + '</dd></div>' +
         '<div><dt>Attested by</dt><dd>' + esc(att || 'Not attested') + '</dd></div>' +
         (p.estimate ? '<div><dt>Index after this score</dt><dd>' + esc(fmt.handicap(p.estimate.index)) + ' ' + demoPill('Demo estimate') + '</dd></div>' : '') +
       '</dl>' + bannerHTML(true) + '</div>' });

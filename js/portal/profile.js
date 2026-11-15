@@ -97,7 +97,7 @@
     const allPos = vals.every(function (v) { return v >= 0; });
     const demoChart = Portal.scores ? Portal.scores.indexChart(m, hist) : null;   /* score posting demo (js/portal/scores.js) */
     return '<div class="pp-golf-top"><span class="pp-golf-l">Handicap index</span><span class="pp-hcp">' + esc(fmt.handicap(m.handicap)) + '</span>' + (trend ? '<span class="pp-trend">' + esc(trend) + '</span>' : '') + '</div>' +
-      '<dl class="pp-kv"><div><dt>Golf Canada no.</dt><dd class="num">' + (m.ghin ? esc(m.ghin) : 'Not recorded') + '</dd></div><div><dt>Locker</dt><dd>' + (m.locker ? 'No. ' + esc(m.locker) : 'None assigned') + '</dd></div></dl>' +
+      '<dl class="pp-kv"><div><dt>Plays</dt><dd class="pp-hand"><span class="pp-hand-v">' + esc(Club.members.hand(m) || 'Not recorded') + '</span><button type="button" class="p-link" data-act="hand" aria-haspopup="dialog">Change</button></dd></div><div><dt>Golf Canada no.</dt><dd class="num">' + (m.ghin ? esc(m.ghin) : 'Not recorded') + '</dd></div><div><dt>Locker</dt><dd>' + (m.locker ? 'No. ' + esc(m.locker) : 'None assigned') + '</dd></div></dl>' +
       (Portal.scores ? Portal.scores.golfRowsHTML(m) : '') +
       (demoChart || (vals.length > 1 && allPos ? '<div class="pp-chart"><h3 class="pp-chart-h">Your index over time</h3>' + Club.charts.line({ labels: hist.map(function (h) { return fmt.toDate(h.date).toLocaleDateString('en-US', { month: 'short' }); }), series: [{ name: 'Index', values: vals, color: 'var(--forest-800)' }], height: 180 }) + '</div>'
         : vals.length > 1 ? '<div class="pp-chart pp-spark">' + Club.charts.sparkline(vals.map(function (v) { return -v; }), { width: 320, height: 60, color: 'var(--forest-800)' }) + '</div>'
@@ -248,6 +248,15 @@
       } else if (go === 'golf') {
         const sh = Portal.openSheet({ title: 'Golf', size: 'full', content: golfBody(m) });
         if (Portal.scores) Portal.scores.wireGolf(sh, m);
+        ui.on(sh.body, 'click', '[data-act=hand]', function () {
+          const cur = Portal.member() || m;
+          Portal.openSheet({ title: 'Which hand do you play?', rows: Club.members.HANDS, selected: cur.hand || null, onPick: function (v) {
+            if (v === cur.hand) return;
+            S.update('members', cur.id, { hand: v });
+            const out = ui.$('.pp-hand-v', sh.body); if (out) out.textContent = Club.members.hand({ hand: v });
+            ui.toast('Saved: ' + Club.members.hand({ hand: v }));
+          } });
+        });
       }
     });
   }

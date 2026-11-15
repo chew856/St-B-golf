@@ -31,10 +31,10 @@
     const id = 'ps' + (++seq);
     const lastFocus = document.activeElement;
     const scrim = ui.el('<div class="ps-scrim"></div>');
-    const sheet = ui.el('<div class="ps-sheet' + (o.size === 'full' ? ' is-full' : '') + '" role="dialog" aria-modal="true" aria-labelledby="' + id + '-t">' +
-      '<div class="ps-grab" aria-hidden="true"><span></span></div>' +
+    const sheet = ui.el('<div class="ps-sheet' + (o.size === 'full' ? ' is-full' : '') + (o.locked ? ' is-locked' : '') + '" role="dialog" aria-modal="true" aria-labelledby="' + id + '-t">' +
+      (o.locked ? '' : '<div class="ps-grab" aria-hidden="true"><span></span></div>') +
       '<div class="ps-head"><h2 id="' + id + '-t">' + esc(o.title || '') + '</h2>' +
-        '<button type="button" class="ps-x" aria-label="Close">' + Club.icon('close') + '</button></div>' +
+        (o.locked ? '' : '<button type="button" class="ps-x" aria-label="Close">' + Club.icon('close') + '</button>') + '</div>' +
       '<div class="ps-body"></div><div class="ps-foot"' + (o.footer ? '' : ' hidden') + '></div></div>');
     const body = ui.$('.ps-body', sheet), foot = ui.$('.ps-foot', sheet);
     let closed = false;
@@ -87,7 +87,7 @@
     }
     function onKey(e) {
       if (stack[stack.length - 1] !== api) return;
-      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); return; }
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); if (!o.locked) close(); return; }
       if (e.key === 'Tab') {                                   /* focus trap */
         const f = ui.$$('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])', sheet).filter(function (x) { return x.offsetParent !== null; });
         if (!f.length) return;
@@ -101,8 +101,8 @@
       }
     }
     document.addEventListener('keydown', onKey, true);
-    scrim.addEventListener('click', function () { close(); });
-    ui.$('.ps-x', sheet).addEventListener('click', function () { close(); });
+    scrim.addEventListener('click', function () { if (!o.locked) close(); });
+    if (!o.locked) ui.$('.ps-x', sheet).addEventListener('click', function () { close(); });
     ui.on(sheet, 'click', 'button.ps-row', function (e, b) {
       if (b.disabled) return;
       const r = (o.rows || []).find(function (x) { return String(x.value) === b.dataset.v; });
@@ -116,7 +116,7 @@
     /* Only a bottom sheet (phones) can be dragged down, and never from a button: on wider screens the sheet is a centred
        dialog, and a drag there replaced its centring transform, so the dialog jumped under the pointer mid-click and the
        close button never received the click (Safari, where a click carries a little pointer movement). */
-    function draggable(e) { return !e.target.closest('button, a, input, select, textarea') && !window.matchMedia('(min-width: 768px)').matches; }
+    function draggable(e) { return !o.locked && !e.target.closest('button, a, input, select, textarea') && !window.matchMedia('(min-width: 768px)').matches; }
     let dragging = false;
     function down(e) { if (!draggable(e)) { y0 = null; return; } y0 = (e.touches ? e.touches[0] : e).clientY; dy = 0; dragging = false; }
     function move(e) {
@@ -126,7 +126,7 @@
       sheet.style.transform = 'translateY(' + dy + 'px)';
     }
     function up() { if (y0 == null) return; if (dragging) { sheet.style.transition = ''; sheet.style.transform = ''; if (dy > 80) close(); } y0 = null; dragging = false; }
-    [ui.$('.ps-grab', sheet), ui.$('.ps-head', sheet)].forEach(function (h) { h.addEventListener('touchstart', down, { passive: true }); h.addEventListener('mousedown', down); });
+    [ui.$('.ps-grab', sheet), ui.$('.ps-head', sheet)].filter(Boolean).forEach(function (h) { h.addEventListener('touchstart', down, { passive: true }); h.addEventListener('mousedown', down); });
     sheet.addEventListener('touchmove', move, { passive: true }); document.addEventListener('mousemove', move);
     sheet.addEventListener('touchend', up); document.addEventListener('mouseup', up);
 

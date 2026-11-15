@@ -124,3 +124,6 @@ body.staff.has-bar .view { padding-bottom: 96px; }
 /* Staff: pickers often open from inside a dialog (overlay z 140), so the sheet sits above it */
 body.staff .ps-scrim { z-index: 150; }
 body.staff .ps-sheet { z-index: 151; }
+
+/* A sheet that must be answered (no handle or close button): keep the title clear of the top edge */
+.ps-sheet.is-locked .ps-head { padding-top: 18px; padding-bottom: 12px; }

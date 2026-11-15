@@ -1846,8 +1846,16 @@
     'Plays right-handed': 'Joue en droitier',
     'Plays left-handed': 'Joue en gaucher',
     'Recent rounds': 'Parties récentes',
-    'League and tournaments': 'Ligue et tournois'
+    'League and tournaments': 'Ligue et tournois',
+    'Which hand do you play?': 'De quelle main jouez-vous?',
+    'Right-handed': 'Droitier',
+    'Left-handed': 'Gaucher',
+    'Your friends at the club and the golf shop can see this. You can change it in Profile.': 'Vos amis au club et la boutique du pro peuvent voir ce renseignement. Vous pouvez le modifier dans Profil.',
+    'Plays': 'Joue',
+    'Played alone': 'Joué seul'
   });
+  pat(/^Welcome, (.+)\. One quick question before you start\.$/, 'Bienvenue, $1. Une petite question avant de commencer.');
+  pat(/^Saved: (Right|Left)-handed$/, function (m) { return 'Enregistré' + NB + ': ' + (m[1] === 'Right' ? 'droitier' : 'gaucher'); });
   pat(/^(Black|Green|Silver) tees · (\d+) holes · Differential (.+)$/, function (m) { return 'Tertres ' + tee(m[1]).toLowerCase() + ' · ' + m[2] + ' trous · Différentiel ' + dec(m[3]); });
   pat(/^(.+), (Black|Green|Silver) tees · (\d+) holes · Differential (.+), score (\d+)\. Open scorecard$/, function (m) {
     return m[1] + ', tertres ' + tee(m[2]).toLowerCase() + ' · ' + m[3] + ' trous · différentiel ' + dec(m[4]) + ', score ' + m[5] + '. Ouvrir la carte de score';

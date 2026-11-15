@@ -132,6 +132,12 @@ week; no playing ahead); games never played take the worst score of that week wh
    processor. This replaces the "no saved cards" rule for this one purpose: the processor holds the card or bank
    details, the site keeps only a reference. Needs a server and real database (charges must run with no browser
    open), signed consent for recurring charges, and handling for declined or expired payments.
+11. **Apple Pay and Google Pay (owner decided Nov 15, waiting on the club's payment processor)**: wherever someone
+   pays right away (beverage cart orders, golf shop, lessons, takeout and the other checkouts), show Apple Pay on
+   Apple devices and Google Pay on Android or Chrome, with the card form as the fallback. For both public golfers
+   and members (members can pay right away instead of charging their account). Do not build until the club
+   chooses a processor. The card stays in the phone wallet, so the "no saved cards" rule still holds. First step
+   when building: list how each checkout takes payment today.
 
 
 ## Test on a real iPhone and Android phone

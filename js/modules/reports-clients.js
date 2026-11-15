@@ -670,7 +670,8 @@
        no-events        active members with no event charge and no event entry in the period
        one-weekday      clients with ONE_DAY_VISITS visits or more, all on the same day of the week
        below-category   active members under half their membership category's average spend
-       dropping         clients whose spend fell by a tenth or more two full months running (needs three full months)
+       dropping         clients whose spend fell by a tenth or more two full months running (needs three full months;
+                        someone who stopped outright after the first month is not counted, that is "gone quiet")
        low-per-visit    frequent visitors under half their category's spend per visit
        public-spenders  public golfers who spent half or more of the lowest adult dues as listed, prorated
        new-members      members who joined 14 to 90 days before the period ends, under a quarter of the usual spend
@@ -767,7 +768,7 @@
         (by[e.key] = by[e.key] || [0, 0, 0])[i] += e.amount;
       });
       const rows = Object.keys(by).map(function (k) { return { c: Object.assign(blank(k), { who: who(k) }), v: by[k].map(r2) }; })
-        .filter(function (r) { return audOK(r.c) && reachable(r.c) && r.v[0] > 0 && r.v[1] <= r.v[0] * 0.9 && r.v[2] <= r.v[1] * 0.9; })
+        .filter(function (r) { return audOK(r.c) && reachable(r.c) && r.v[0] > 0 && r.v[1] > 0 && r.v[1] <= r.v[0] * 0.9 && r.v[2] <= r.v[1] * 0.9; })
         .sort(function (a, b) { return (b.v[0] - b.v[2]) - (a.v[0] - a.v[2]); });
       const drop = sum(rows, function (r) { return r.v[0] - Math.max(0, r.v[2]); });
       return { rows: rows, months: m, labels: m.map(function (k) { return H.monthLabel(k); }), winter: winter, drop: drop, amount: drop / 2 };
@@ -858,7 +859,7 @@
       amount: d5.amount, per: 'a month', year: d5.amount * 12, drill: 'idea-list', drillArg: 'below-category', drillLabel: seeLabel(n, 'members') }); }
     if (d6 && d6.rows.length) { const n = d6.rows.length; out.push({ id: 'dropping', title: 'Check in with clients whose spending keeps falling',
       text: n + ' ' + audPhrase(n) + ' spent less in ' + d6.labels[1] + ' than in ' + d6.labels[0] + ', and less again in ' + d6.labels[2] + ': ' + money0(d6.drop) + ' a month lower in all. A call to ask how things are going, before the habit goes, that wins back half would add about ' + money0(d6.amount) + ' a month.',
-      assume: 'Counts clients whose spend fell by a tenth or more in each of the last two full months, dues excluded.' + (d6.winter ? ' Green fees and the beverage cart are left out, because one of the months is outside the golf season.' : '') + ' Assumes half the fall comes back, for twelve months.',
+      assume: 'Counts clients who spent in the first two of the last three full months and whose spend fell by a tenth or more in each of the last two, dues excluded.' + (d6.winter ? ' Green fees and the beverage cart are left out, because one of the months is outside the golf season.' : '') + ' Assumes half the fall comes back, for twelve months.',
       amount: d6.amount, per: 'a month', year: d6.amount * 12, drill: 'idea-list', drillArg: 'dropping', drillLabel: seeLabel(n) }); }
     if (d7 && d7.rows.length) { const n = d7.rows.length; out.push({ id: 'low-per-visit', title: 'Raise the spend of frequent visitors who spend little',
       text: n + ' of the ' + d7.pool + ' ' + plural(d7.pool, 'client') + ' with ' + d7.need + ' visits or more since ' + F.dateShort(d7.w.from) + ' spent less than half of what their membership category spends a visit. They are already here: a drink after the round or a lunch offer that closes half the gap would add about ' + money0(d7.amount) + ' a month.',

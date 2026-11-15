@@ -1,0 +1,28 @@
+/* Reports, Growth plan (js/modules/reports-plan.js), plus the links under an idea in every section's ideas list and the
+   "Show all" control of long lists. The list itself reuses .ideas from css/modules/reports-extra.css. Tokens only. */
+
+/* ---- Links under an idea (every section): the list behind it, more ideas ---- */
+.idea-main > .rp-link { margin-right: var(--s4); }
+.ideas-more { padding-top: var(--s3); margin-top: var(--s3); border-top: 1px solid var(--border); }
+
+/* ---- Growth plan rows ---- */
+.gp-list li { padding: var(--s4) 0; }
+.gp-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px var(--s4); margin-top: 6px; font-size: 0.8125rem; color: var(--text-3); }
+.gp-meta .rp-link { margin-top: 0; font-size: 0.8125rem; }
+.gp-acts { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s3); }
+.gp-each { display: block; }
+.gp-marked li { grid-template-columns: minmax(0, 1fr) auto; }
+.gp-marked li::before { content: none; }
+.gp-marked h3 { color: var(--text-2); }
+
+@media (max-width: 768px) {
+  .gp-marked li { grid-template-columns: minmax(0, 1fr); }
+  .gp-marked .idea-est { grid-column: 1; }
+  .gp-each { display: inline; }
+  /* Tap targets: links under an idea and the filter buttons */
+  .ideas .rp-link, .ideas-more .rp-link { min-height: 40px; display: inline-flex; align-items: center; }
+  .gp-meta { align-items: center; }
+  #rp-sec-plan .rp-chip { min-height: 40px; padding: 0 14px; }
+  .gp-acts .btn { min-height: 44px; }
+}
+@media print { .gp-acts, .ideas-more { display: none !important; } }

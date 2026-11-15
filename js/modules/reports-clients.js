@@ -549,7 +549,7 @@
   }
 
   /* ---------------- Ideas to grow revenue ----------------
-     Three ideas, each with the list of clients behind it (a drill drawer). They follow the Show filter (everyone,
+     Thirteen ideas: three here, ten more below (see "Ten more ideas"), each with the list of clients behind it (a drill drawer). They follow the Show filter (everyone,
      members, public golfers) and always leave dues out: dues are billed, not a sign of anyone using the club.
        quiet     Big spenders gone quiet. "Earlier" runs from the start of the period (or of client records) to 31 days
                  before the period ends; "recent" is the last 30 days of the period. A big spender is in the top quarter
@@ -557,7 +557,8 @@
                  When the recent days fall outside April to October, green fees and the beverage cart are left out of
                  both sides, so the course closing does not make every golfer look quiet.
        nodine    Members who play often but never dine: rounds at or above the threshold (three, or two a month over the
-                 tee sheet days in the period, whichever is more) with no dining charge and no dining visit.
+                 tee sheet days in the period, whichever is more) with no dining charge and no dining visit. Needs 14
+                 tee sheet days and 28 days of spending records in the period.
        onedept   Clients who spent in one department only, against the second-largest department of clients in the same
                  membership category (public golfers together) who spent in two or more.
      An idea is left out when the records are too short to support it (see the MIN_ constants). */
@@ -598,7 +599,7 @@
       const L = ledger(ctx), tf = L.first.tee;
       if (!tf || tf > ctx.to || !L.first.spend || L.first.spend > ctx.to) return null;
       const from = tf > ctx.from ? tf : ctx.from, days = H.spanDays(from, ctx.to);
-      if (days < MIN_TEE_DAYS) return null;
+      if (days < MIN_TEE_DAYS || H.spanDays(spendFrom(ctx), ctx.to) < MIN_SPEND_DAYS) return null;
       const need = Math.max(3, Math.round(days / 15)), months = H.spanDays(spendFrom(ctx), ctx.to) / MONTH;
       const cur = current(ctx), members = Object.keys(cur).map(function (k) { return cur[k]; }).filter(function (c) { return c.who.kind === 'member' && reachable(c); });
       const diners = members.filter(function (c) { return c.depts.Dining > 0; });
@@ -655,12 +656,260 @@
       const since = od.from > ctx.from ? ' since ' + F.dateShort(od.from) : ' in this period';
       const text = [n + ' ' + audPhrase(n) + ' spent in one department only' + since + (od.lead ? ', ' + (od.leadN === n ? (n === 1 ? '' : 'all ') + 'in ' : od.leadN + ' of them in ') + od.lead.toLowerCase() : '') + '.'];
       if (od.est) text.push('Clients in the same membership category who use more of the club spent ' + money0(od.each) + ' a month in their second department. If one in four of ' + (rest ? 'the ' + od.est + ' with clients to compare' : 'them') + ' did the same, it would add about ' + money0(od.amount) + ' a month.');
-      if (rest) text.push((od.est ? 'The other ' + rest + ' ' + (rest === 1 ? 'has' : 'have') : n === 1 ? 'There is' : 'There are') + ' no' + (od.est ? '' : ' similar') + ' clients on file who spent in two departments' + (od.est ? ' to compare with' : ', so there is nothing to estimate from') + '. An offer in a second department, such as a dining credit with a green fee, is the place to start.');
+      if (rest) text.push(od.est ? 'For the other ' + rest + ' there are too few similar clients on file to estimate from.' : 'Too few similar clients on file spent in two departments, so there is no estimate. An offer in a second department, such as a dining credit with a green fee, is the place to start.');
       out.push({ id: 'one-department', title: 'Offer a second department to one-department clients', text: H.sents(text),
         assume: 'Dues are never counted as a department. A similar client is in the same membership category (public golfers together) and spent in two or more departments; the figure is the average of their second-largest department a month, used when a category has ' + MIN_PEERS + ' or more of them.' + (od.est ? ' Assumes one in four adds a second department at that average, for twelve months.' : ' No estimate: no category has enough of them.'),
         amount: od.est ? od.amount : null, per: 'a month', year: od.est ? od.amount * 12 : 0, drill: 'idea-onedept', drillLabel: n === 1 ? 'See who it is' : 'See the ' + n + ' ' + audPhrase(n) });
     }
+    return out.concat(moreIdeas(ctx));
+  }
+
+  /* ---- Ten more ideas (members' habits, spending levels, public golfers and new members). Same rules. ----
+       dine-only        members with regular dining visits and no pro shop or lesson spend (and no lesson taken)
+       no-extras        frequent golfers with no power cart and no guest green fee charge
+       no-events        active members with no event charge and no event entry in the period
+       one-weekday      clients with ONE_DAY_VISITS visits or more, all on the same day of the week
+       below-category   active members under half their membership category's average spend
+       dropping         clients whose spend fell by a tenth or more two full months running (needs three full months)
+       low-per-visit    frequent visitors under half their category's spend per visit
+       public-spenders  public golfers who spent half or more of the lowest adult dues as listed, prorated
+       new-members      members who joined 14 to 90 days before the period ends, under a quarter of the usual spend
+       came-once        public golfers with one paid round on file and nothing in the 30 days or more since */
+  const ONE_DAY_VISITS = 4, NEW_MIN_DAYS = 14, NEW_MAX_DAYS = 90, ONCE_DAYS = 30, EXTRA_ITEM = /^(power )?cart\b|guest green fee/i;
+  function spendWindow(ctx) { const f = ledger(ctx).first.spend; if (!f || f > ctx.to) return null; const from = spendFrom(ctx), days = H.spanDays(from, ctx.to); return { from: from, days: days, months: days / MONTH, ok: days >= MIN_SPEND_DAYS }; }
+  /** Every active member, with their figures for the period (zeros when nothing is on file). */
+  function activeMembers(ctx) {
+    return H.memo(ctx, 'cl-active', function () {
+      const cur = current(ctx);
+      return all('members').filter(function (m) { return m.status === 'active'; }).map(function (m) { const k = 'm:' + m.id; return cur[k] || Object.assign(blank(k), { spend: 0, visits: 0, diningVisits: 0, who: who(k) }); });
+    });
+  }
+  function reachableClients(ctx) { const cur = current(ctx); return Object.keys(cur).map(function (k) { return cur[k]; }).filter(reachable); }
+  function dv(c, d) { return Math.max(0, num(c.depts[d])); }
+  function freqNeed(days) { return Math.max(3, Math.round(days / 15)); }
+
+  function dineOnlyData(ctx) {
+    return H.memo(ctx, 'cl-dineonly', function () {
+      const w = spendWindow(ctx);
+      if (flt.aud === 'public' || !w || !w.ok) return null;
+      const need = freqNeed(w.days), regular = activeMembers(ctx).filter(function (c) { return c.diningVisits >= need; });
+      const other = function (c) { return dv(c, 'Pro Shop') + dv(c, 'Lessons'); };
+      const rows = regular.filter(function (c) { return !other(c) && !c.lessons; }).sort(function (a, b) { return b.diningVisits - a.diningVisits || a.who.name.localeCompare(b.who.name); });
+      const buyers = regular.filter(function (c) { return other(c) > 0; });
+      if (buyers.length < MIN_PEERS) return null;
+      const avg = sum(buyers, other) / buyers.length / w.months;
+      return { rows: rows, need: need, w: w, regular: regular.length, buyers: buyers.length, avg: avg, amount: rows.length * avg / 4 };
+    });
+  }
+  function extrasOf(c) { return sum(Object.keys(c.items).filter(function (k) { return EXTRA_ITEM.test(k); }), function (k) { return Math.max(0, c.items[k].amount); }); }
+  function noExtrasData(ctx) {
+    return H.memo(ctx, 'cl-noextras', function () {
+      const L = ledger(ctx), tf = L.first.tee, w = spendWindow(ctx);
+      if (flt.aud === 'public' || !w || !w.ok || !tf || tf > ctx.to) return null;
+      const from = tf > ctx.from ? tf : ctx.from, days = H.spanDays(from, ctx.to);
+      if (days < MIN_TEE_DAYS) return null;
+      const need = freqNeed(days), golfers = activeMembers(ctx).filter(function (c) { return c.rounds >= need; });
+      const rows = golfers.filter(function (c) { return !extrasOf(c); }).sort(function (a, b) { return b.rounds - a.rounds || a.who.name.localeCompare(b.who.name); });
+      const users = golfers.filter(function (c) { return extrasOf(c) > 0; });
+      if (users.length < MIN_PEERS) return null;
+      const avg = sum(users, extrasOf) / users.length / w.months;
+      return { rows: rows, need: need, from: from, days: days, w: w, golfers: golfers.length, users: users.length, avg: avg, amount: rows.length * avg / 4 };
+    });
+  }
+  function noEventsData(ctx) {
+    return H.memo(ctx, 'cl-noevents', function () {
+      const w = spendWindow(ctx);
+      if (flt.aud === 'public' || !w || !w.ok) return null;
+      const entered = {};
+      all('events').forEach(function (e) { if (e.date && e.date >= ctx.from && e.date <= ctx.to && e.status !== 'cancelled') (e.registrations || []).forEach(function (g) { if (g && g.memberId && !g.cancelled) entered[g.memberId] = 1; }); });
+      const members = activeMembers(ctx), goers = members.filter(function (c) { return dv(c, 'Events') > 0; });
+      if (goers.length < MIN_PEERS) return null;
+      const rows = members.filter(function (c) { return !dv(c, 'Events') && !entered[c.who.id]; }).sort(function (a, b) { return b.spend - a.spend || a.who.name.localeCompare(b.who.name); });
+      const avg = sum(goers, function (c) { return dv(c, 'Events'); }) / goers.length / w.months;
+      return { rows: rows, w: w, members: members.length, goers: goers.length, avg: avg, amount: rows.length * avg / 4 };
+    });
+  }
+  function oneDayData(ctx) {
+    return H.memo(ctx, 'cl-oneday-' + flt.aud, function () {
+      const w = spendWindow(ctx);
+      if (!w || !w.ok) return null;
+      const rows = reachableClients(ctx).filter(function (c) { return audOK(c) && c.visits >= ONE_DAY_VISITS; }).map(function (c) {
+        const wd = {}; Object.keys(c.days).forEach(function (d) { wd[F.toDate(d).getDay()] = 1; });
+        const ks = Object.keys(wd);
+        return ks.length === 1 ? { c: c, day: WEEKDAYS[+ks[0]], per: c.spend > 0 ? c.spend / c.visits : 0 } : null;
+      }).filter(Boolean).sort(function (a, b) { return b.c.visits - a.c.visits || a.c.who.name.localeCompare(b.c.who.name); });
+      return { rows: rows, w: w, amount: sum(rows, function (r) { return r.per; }) / 2 };
+    });
+  }
+  function belowCatData(ctx) {
+    return H.memo(ctx, 'cl-below', function () {
+      const w = spendWindow(ctx);
+      if (flt.aud === 'public' || !w || !w.ok) return null;
+      const cats = {};
+      activeMembers(ctx).forEach(function (c) { const g = cats[c.who.cat] || (cats[c.who.cat] = { n: 0, total: 0 }); g.n++; g.total += Math.max(0, c.spend); });
+      const rows = activeMembers(ctx).map(function (c) { const g = cats[c.who.cat]; return g.n >= MIN_PEERS && g.total > 0 ? { c: c, avg: g.total / g.n, spend: Math.max(0, c.spend) } : null; })
+        .filter(function (r) { return r && r.spend < r.avg / 2; }).sort(function (a, b) { return (b.avg - b.spend) - (a.avg - a.spend) || a.c.who.name.localeCompare(b.c.who.name); });
+      const gap = sum(rows, function (r) { return r.avg - r.spend; });
+      return { rows: rows, w: w, members: activeMembers(ctx).length, gap: gap, amount: gap / 2 / w.months };
+    });
+  }
+  function droppingData(ctx) {
+    return H.memo(ctx, 'cl-dropping-' + flt.aud, function () {
+      const L = ledger(ctx), w = spendWindow(ctx);
+      if (!w) return null;
+      const ks = [];
+      for (let k = w.from.slice(0, 7); k <= ctx.to.slice(0, 7); k = H.shiftKey(k, 1)) if (k + '-01' >= w.from && monthEnd(k) <= ctx.to) ks.push(k);
+      if (ks.length < 3) return null;
+      const m = ks.slice(-3), winter = m.some(function (k) { return !H.inSeasonKey(k); }), by = {};
+      L.entries.forEach(function (e) {
+        const k = e.date.slice(0, 7), i = m.indexOf(k);
+        if (i < 0 || e.dept === 'Dues' || (winter && COURSE_DEPTS[e.dept])) return;
+        (by[e.key] = by[e.key] || [0, 0, 0])[i] += e.amount;
+      });
+      const rows = Object.keys(by).map(function (k) { return { c: Object.assign(blank(k), { who: who(k) }), v: by[k].map(r2) }; })
+        .filter(function (r) { return audOK(r.c) && reachable(r.c) && r.v[0] > 0 && r.v[1] <= r.v[0] * 0.9 && r.v[2] <= r.v[1] * 0.9; })
+        .sort(function (a, b) { return (b.v[0] - b.v[2]) - (a.v[0] - a.v[2]); });
+      const drop = sum(rows, function (r) { return r.v[0] - Math.max(0, r.v[2]); });
+      return { rows: rows, months: m, labels: m.map(function (k) { return H.monthLabel(k); }), winter: winter, drop: drop, amount: drop / 2 };
+    });
+  }
+  function lowVisitData(ctx) {
+    return H.memo(ctx, 'cl-lowvisit-' + flt.aud, function () {
+      const w = spendWindow(ctx);
+      if (!w || !w.ok) return null;
+      const need = Math.max(ONE_DAY_VISITS, freqNeed(w.days)), pool = reachableClients(ctx).filter(function (c) { return c.visits >= need && c.spend > 0; }), cats = {};
+      pool.forEach(function (c) { const g = cats[c.who.cat] || (cats[c.who.cat] = { n: 0, spend: 0, visits: 0 }); g.n++; g.spend += c.spend; g.visits += c.visits; });
+      const rows = pool.filter(audOK).map(function (c) { const g = cats[c.who.cat]; return g.n >= MIN_PEERS ? { c: c, per: c.spend / c.visits, cat: g.spend / g.visits } : null; })
+        .filter(function (r) { return r && r.per < r.cat / 2; }).sort(function (a, b) { return (b.cat - b.per) * b.c.visits - (a.cat - a.per) * a.c.visits; });
+      const gap = sum(rows, function (r) { return (r.cat - r.per) * r.c.visits; });
+      return { rows: rows, need: need, w: w, pool: pool.length, gap: gap, amount: gap / 2 / w.months };
+    });
+  }
+  function adultTier() { const AR = (Club.membership && Club.membership.AGE_RULES) || {}; return all('membershipTiers').filter(function (t) { return !AR[t.id] && num(t.annualDues) > 0; }).sort(function (a, b) { return num(a.annualDues) - num(b.annualDues); })[0] || null; }
+  /** Public golfers the Growth section already knows: who has applied or joined, and who its rounds-based invitation names. */
+  function growthGolfers(ctx) {
+    const g = Club.reports.get('growth'), out = { off: {}, invited: {} };
+    let list = []; try { list = g && g.data && g.data.golfers ? g.data.golfers(ctx) || [] : []; } catch (e) { console.error(e); }
+    list.forEach(function (x) { if (!x || !x.p) return; if (x.group !== 'invite') out.off[x.p.id] = 1; else if (x.inP && x.p.marketingOptIn) out.invited[x.p.id] = 1; });
     return out;
+  }
+  function publicSpendData(ctx) {
+    return H.memo(ctx, 'cl-pubspend', function () {
+      const w = spendWindow(ctx), t = adultTier();
+      if (flt.aud === 'member' || !w || !w.ok || !t) return null;
+      const dues = num(t.annualDues), bar = dues * w.days / 365 / 2, gg = growthGolfers(ctx);
+      const rows = reachableClients(ctx).filter(function (c) { return c.who.kind === 'public' && !gg.off[c.who.id] && c.spend >= bar; }).sort(function (a, b) { return b.spend - a.spend; });
+      /* The Growth section's "Invite regular public golfers to join" may already name every one of them. */
+      return { rows: rows, w: w, tier: t, dues: dues, prorated: dues * w.days / 365, bar: bar, covered: rows.length > 0 && rows.every(function (c) { return gg.invited[c.who.id]; }), amount: dues };
+    });
+  }
+  function newMemberData(ctx) {
+    return H.memo(ctx, 'cl-newmembers', function () {
+      const L = ledger(ctx), w = spendWindow(ctx);
+      if (flt.aud === 'public' || !w || !w.ok) return null;
+      const lo = Dt.addDays(ctx.to, -NEW_MAX_DAYS), hi = Dt.addDays(ctx.to, -NEW_MIN_DAYS), cats = {};
+      activeMembers(ctx).forEach(function (c) { const g = cats[c.who.cat] || (cats[c.who.cat] = { n: 0, total: 0 }); g.n++; g.total += Math.max(0, c.spend); });
+      const joined = activeMembers(ctx).filter(function (c) { const d = String(c.who.m.memberSince || '').slice(0, 10); return d >= lo && d <= hi && d >= L.first.spend; });
+      if (!joined.length) return null;
+      const rows = joined.map(function (c) {
+        const d = String(c.who.m.memberSince).slice(0, 10), days = H.spanDays(d, ctx.to), g = cats[c.who.cat];
+        if (g.n < MIN_PEERS || !g.total) return null;
+        const own = aggregate(L, d, ctx.to)[c.key], spend = own ? Math.max(0, own.spend) : 0, usual = g.total / g.n / w.days * days;
+        return { c: c, joined: d, days: days, spend: spend, usual: usual };
+      }).filter(function (r) { return r && r.spend <= r.usual / 4; }).sort(function (a, b) { return b.joined.localeCompare(a.joined); });
+      return { rows: rows, joined: joined.length, lo: lo, hi: hi, amount: sum(rows, function (r) { return (r.usual / 2 - r.spend) / (r.days / MONTH); }) };
+    });
+  }
+  function cameOnceData(ctx) {
+    return H.memo(ctx, 'cl-once', function () {
+      const L = ledger(ctx);
+      if (flt.aud === 'member' || !L.first.spend || L.first.spend > ctx.to) return null;
+      const by = {};
+      L.entries.forEach(function (e) { if (e.key.charAt(0) !== 'p' || e.date > ctx.to) return; const x = by[e.key] = by[e.key] || { n: 0, golf: 0, paid: 0, first: e.date, last: e.date, rounds: 0 }; x.n++; if (e.dept === 'Golf' && e.amount > 0) { x.golf++; x.paid += e.amount; } if (e.date > x.last) x.last = e.date; });
+      L.visits.forEach(function (v) { const x = by[v.key]; if (!x || v.date > ctx.to) return; if (v.t === 'round') x.rounds++; if (v.date > x.last) x.last = v.date; });
+      const rows = Object.keys(by).map(function (k) { const x = by[k]; return { c: Object.assign(blank(k), { who: who(k) }), paid: r2(x.paid), on: x.first, last: x.last, since: H.spanDays(x.last, ctx.to) - 1, x: x }; })
+        .filter(function (r) { return reachable(r.c) && r.x.n === 1 && r.x.golf === 1 && r.x.rounds <= 1 && r.on >= ctx.from && r.since >= ONCE_DAYS; }).sort(function (a, b) { return b.since - a.since; });
+      return { rows: rows, paid: sum(rows, function (r) { return r.paid; }), amount: sum(rows, function (r) { return r.paid; }) / 4 };
+    });
+  }
+  function seeLabel(n, word) { return n === 1 ? 'See who it is' : 'See the ' + n + ' ' + (word || audPhrase(n)); }
+  function moreIdeas(ctx) {
+    const out = [], has = function (n) { return n === 1 ? 'has' : 'have'; };
+    const d1 = dineOnlyData(ctx), d2 = noExtrasData(ctx), d3 = noEventsData(ctx), d4 = oneDayData(ctx), d5 = belowCatData(ctx), d6 = droppingData(ctx), d7 = lowVisitData(ctx), d8 = publicSpendData(ctx), d9 = newMemberData(ctx), d10 = cameOnceData(ctx);
+    if (d1 && d1.rows.length) { const n = d1.rows.length; out.push({ id: 'dine-only', title: 'Bring regular diners into the shop and onto the lesson tee',
+      text: n + ' of the ' + d1.regular + ' ' + plural(d1.regular, 'member') + ' with ' + d1.need + ' dining visits or more since ' + F.dateShort(d1.w.from) + ' ' + has(n) + ' no pro shop or lesson spend in this period. The ' + d1.buyers + ' regular diners who do buy there spent ' + money0(d1.avg) + ' a month each on the two. A shop offer or a lesson voucher with dinner that reaches one in four would add about ' + money0(d1.amount) + ' a month.',
+      assume: 'A regular diner is an active member with ' + d1.need + ' dining visits or more in the ' + d1.w.days + ' days on file (three, or two a month, whichever is more). Assumes one in four spends what regular diners who use the shop or take lessons do, for twelve months.',
+      amount: d1.amount, per: 'a month', year: d1.amount * 12, drill: 'idea-list', drillArg: 'dine-only', drillLabel: seeLabel(n, 'members') }); }
+    if (d2 && d2.rows.length) { const n = d2.rows.length; out.push({ id: 'no-extras', title: 'Offer carts and guest days to frequent golfers',
+      text: n + ' of the ' + d2.golfers + ' ' + plural(d2.golfers, 'member') + ' who played ' + d2.need + ' rounds or more since ' + F.dateShort(d2.from) + ' ' + has(n) + ' no power cart and no guest green fee charge in this period. The ' + d2.users + ' frequent golfers who do spent ' + money0(d2.avg) + ' a month each on carts and guests. A guest day or a cart pass that reaches one in four would add about ' + money0(d2.amount) + ' a month.',
+      assume: 'A frequent golfer is an active member with ' + d2.need + ' rounds or more in the ' + d2.days + ' tee sheet days of this period; cart and guest charges are counted since ' + F.dateShort(d2.w.from) + '. Assumes one in four spends what frequent golfers who use carts or bring guests do, over the seven golf season months.',
+      amount: d2.amount, per: 'a month', year: d2.amount * 7, drill: 'idea-list', drillArg: 'no-extras', drillLabel: seeLabel(n, 'members') }); }
+    if (d3 && d3.rows.length) { const n = d3.rows.length; out.push({ id: 'no-events', title: 'Invite members who never come to events',
+      text: n + ' of ' + d3.members + ' active members ' + has(n) + ' no event charge and no event entry since ' + F.dateShort(d3.w.from) + '. The ' + d3.goers + ' who came spent ' + money0(d3.avg) + ' a month each on events. A personal invitation that brings one in four to an event would add about ' + money0(d3.amount) + ' a month.',
+      assume: 'Counts active members with no charge in the events department and no entry to an event held in this period. Assumes one in four spends what members who came to events do, for twelve months.',
+      amount: d3.amount, per: 'a month', year: d3.amount * 12, drill: 'idea-list', drillArg: 'no-events', drillLabel: seeLabel(n, 'members') }); }
+    if (d4 && d4.rows.length && d4.amount >= 1) { const n = d4.rows.length; out.push({ id: 'one-weekday', title: 'Give one-day-a-week clients a reason to come twice',
+      text: n + ' ' + audPhrase(n) + ' made ' + ONE_DAY_VISITS + ' visits or more since ' + F.dateShort(d4.w.from) + ', every one on the same day of the week. They spend ' + money0(sum(d4.rows, function (r) { return r.per; }) / n) + ' a visit on average. One more visit a month on another day from half of them would add about ' + money0(d4.amount) + ' a month.',
+      assume: 'Counts clients with ' + ONE_DAY_VISITS + ' visits or more, all on one weekday. Assumes half of them make one more visit a month at their own average spend per visit (dues excluded), for twelve months.',
+      amount: d4.amount, per: 'a month', year: d4.amount * 12, drill: 'idea-list', drillArg: 'one-weekday', drillLabel: seeLabel(n) }); }
+    if (d5 && d5.rows.length) { const n = d5.rows.length; out.push({ id: 'below-category', title: 'Lift members who spend well below their category',
+      text: n + ' of ' + d5.members + ' active members spent less than half the average of their own membership category since ' + F.dateShort(d5.w.from) + ', ' + money0(d5.gap) + ' below it together. Closing half of that gap, with offers matched to what each one already uses, would add about ' + money0(d5.amount) + ' a month.',
+      assume: 'Compares each active member with the average of all active members in the same category, dues excluded, where the category has ' + MIN_PEERS + ' members or more. Assumes half the gap is closed, for twelve months.',
+      amount: d5.amount, per: 'a month', year: d5.amount * 12, drill: 'idea-list', drillArg: 'below-category', drillLabel: seeLabel(n, 'members') }); }
+    if (d6 && d6.rows.length) { const n = d6.rows.length; out.push({ id: 'dropping', title: 'Check in with clients whose spending keeps falling',
+      text: n + ' ' + audPhrase(n) + ' spent less in ' + d6.labels[1] + ' than in ' + d6.labels[0] + ', and less again in ' + d6.labels[2] + ': ' + money0(d6.drop) + ' a month lower in all. A call to ask how things are going, before the habit goes, that wins back half would add about ' + money0(d6.amount) + ' a month.',
+      assume: 'Counts clients whose spend fell by a tenth or more in each of the last two full months, dues excluded.' + (d6.winter ? ' Green fees and the beverage cart are left out, because one of the months is outside the golf season.' : '') + ' Assumes half the fall comes back, for twelve months.',
+      amount: d6.amount, per: 'a month', year: d6.amount * 12, drill: 'idea-list', drillArg: 'dropping', drillLabel: seeLabel(n) }); }
+    if (d7 && d7.rows.length) { const n = d7.rows.length; out.push({ id: 'low-per-visit', title: 'Raise the spend of frequent visitors who spend little',
+      text: n + ' of the ' + d7.pool + ' ' + plural(d7.pool, 'client') + ' with ' + d7.need + ' visits or more since ' + F.dateShort(d7.w.from) + ' spent less than half of what their membership category spends a visit. They are already here: a drink after the round or a lunch offer that closes half the gap would add about ' + money0(d7.amount) + ' a month.',
+      assume: 'Spend per visit is spend (dues excluded) over days visited, against the same figure for clients of the same category with ' + d7.need + ' visits or more. Assumes half the gap is closed at their present number of visits, for twelve months.',
+      amount: d7.amount, per: 'a month', year: d7.amount * 12, drill: 'idea-list', drillArg: 'low-per-visit', drillLabel: seeLabel(n) }); }
+    if (d8 && d8.rows.length && !d8.covered) { const n = d8.rows.length; out.push({ id: 'public-spenders', title: 'Show high-spending public golfers what membership costs',
+      text: n + ' public ' + plural(n, 'golfer') + ' spent ' + money0(d8.bar) + ' or more since ' + F.dateShort(d8.w.from) + ', half of what ' + d8.tier.name + ' dues as listed come to over the same days (' + money0(d8.prorated) + '). ' + d8.rows[0].who.name + ' spent the most, ' + money0(d8.rows[0].spend) + '. For golfers paying this much in green fees a membership is close to the same money; one of them joining would add ' + money0(d8.dues) + ' a year.',
+      assume: 'Uses ' + d8.tier.name + ' dues as listed, ' + money0(d8.dues) + ' a year, the lowest-dues category with no age limit, prorated to ' + d8.w.days + ' days. Golfers who have applied or joined are left out. Assumes one new member; this is a list by money spent, where the Growth section lists public golfers by rounds played.',
+      amount: d8.dues, per: 'a year', year: d8.dues, drill: 'idea-list', drillArg: 'public-spenders', drillLabel: seeLabel(n, 'public golfers') }); }
+    if (d9 && d9.rows.length && d9.amount >= 1) { const n = d9.rows.length; out.push({ id: 'new-members', title: 'Welcome new members who have not spent yet',
+      text: n + ' of the ' + d9.joined + ' ' + plural(d9.joined, 'member') + ' who joined between ' + F.dateShort(d9.lo) + ' and ' + F.dateShort(d9.hi) + ' ' + has(n) + ' spent little or nothing beyond dues since. A welcome round with a host member or a first dinner on the club sets the habit early; bringing them to half the usual spend of their category would add about ' + money0(d9.amount) + ' a month.',
+      assume: 'Counts active members who joined ' + NEW_MIN_DAYS + ' to ' + NEW_MAX_DAYS + ' days before the period ends and have spent a quarter or less of what the average member of their category spends over as many days. Assumes they reach half that average, for twelve months.',
+      amount: d9.amount, per: 'a month', year: d9.amount * 12, drill: 'idea-list', drillArg: 'new-members', drillLabel: seeLabel(n, 'members') }); }
+    if (d10 && d10.rows.length) { const n = d10.rows.length; out.push({ id: 'came-once', title: 'Bring back public golfers who came once',
+      text: n + ' public ' + plural(n, 'golfer') + ' paid for one round in this period, ' + money0(d10.paid) + ' together, and ' + has(n) + ' nothing on file in the ' + ONCE_DAYS + ' days or more since. A thank-you email with a return offer that brings back one in four would add about ' + money0(d10.amount) + '.',
+      assume: 'Counts public golfers with one paid round and no other purchase or round on file, last seen ' + ONCE_DAYS + ' days or more before the period ends. Assumes one in four comes back once and pays what they paid the first time.',
+      amount: d10.amount, per: 'one time', year: d10.amount, drill: 'idea-list', drillArg: 'came-once', drillLabel: seeLabel(n, 'public golfers') }); }
+    return out;
+  }
+  /* One drawer for the ten: LISTS[arg] says what to show for each client. */
+  const LISTS = {
+    'dine-only': { data: dineOnlyData, title: 'Regular diners with no shop or lesson spend', cols: ['Dining visits', 'Dining spend'], cell: function (c) { return [F.num(c.diningVisits), money0(dv(c, 'Dining'))]; },
+      note: function (d) { return 'Each is an active member with ' + d.need + ' dining visits or more since ' + F.dateShort(d.w.from) + ', no pro shop or lesson charge and no lesson taken. Regular diners who do buy there spent ' + money0(d.avg) + ' a month each on the two.'; } },
+    'no-extras': { data: noExtrasData, title: 'Frequent golfers with no cart or guest charges', cols: ['Rounds', 'Golf spend'], cell: function (c) { return [F.num(c.rounds), money0(dv(c, 'Golf'))]; },
+      note: function (d) { return 'Each is an active member with ' + d.need + ' rounds or more since ' + F.dateShort(d.from) + ' and no power cart or guest green fee charge since ' + F.dateShort(d.w.from) + '. Frequent golfers who do have them spent ' + money0(d.avg) + ' a month each on the two.'; } },
+    'no-events': { data: noEventsData, title: 'Members who have not come to an event', cols: ['Visits', 'Other spend'], cell: function (c) { return [F.num(c.visits), money0(c.spend)]; },
+      note: function (d) { return 'Each is an active member with no charge in the events department and no entry to an event held in this period. Members who came spent ' + money0(d.avg) + ' a month each on events. Other spend leaves dues out.'; } },
+    'one-weekday': { data: oneDayData, title: 'Clients who visit on one day of the week', row: true, cols: ['Their day', 'Visits', 'Spend a visit'], cell: function (r) { return [r.day, F.num(r.c.visits), money0(r.per)]; },
+      note: function () { return 'Each made ' + ONE_DAY_VISITS + ' visits or more in this period, all on the same day of the week. A visit is a day with a purchase at the club, a round played, a dining reservation kept or a lesson taken.'; } },
+    'below-category': { data: belowCatData, title: 'Members well below their category', row: true, cols: ['Spend', 'Category average', 'Gap'], cell: function (r) { return [money0(r.spend), money0(r.avg), money0(r.avg - r.spend)]; },
+      note: function (d) { return 'Each is an active member who spent less than half the average of all active members in the same membership category since ' + F.dateShort(d.w.from) + ', dues excluded.'; } },
+    dropping: { data: droppingData, title: 'Clients whose spending keeps falling', row: true, colsOf: function (d) { return d.labels; }, cell: function (r) { return r.v.map(money0); },
+      note: function (d) { return 'Each spent a tenth or more less in ' + d.labels[1] + ' than in ' + d.labels[0] + ', and a tenth or more less again in ' + d.labels[2] + ', dues excluded.' + (d.winter ? ' Green fees and the beverage cart are left out, because one of the months is outside the golf season.' : ''); } },
+    'low-per-visit': { data: lowVisitData, title: 'Frequent visitors who spend little a visit', row: true, cols: ['Visits', 'Spend a visit', 'Category a visit'], cell: function (r) { return [F.num(r.c.visits), money0(r.per), money0(r.cat)]; },
+      note: function (d) { return 'Each made ' + d.need + ' visits or more since ' + F.dateShort(d.w.from) + ' and spent less than half of what clients of the same category with as many visits spend a visit, dues excluded.'; } },
+    'public-spenders': { data: publicSpendData, title: 'Public golfers who spend like members', cols: ['Rounds', 'Spend', 'Of dues as listed'], cell: function (c, d) { return [F.num(c.rounds), money0(c.spend), pct(c.spend, d.prorated) + '%']; },
+      note: function (d) { return d.tier.name + ' dues as listed are ' + money0(d.dues) + ' a year, ' + money0(d.prorated) + ' over the ' + d.w.days + ' days since ' + F.dateShort(d.w.from) + '. Each golfer here spent half of that or more and has not applied.'; } },
+    'new-members': { data: newMemberData, title: 'New members who have not spent yet', row: true, cols: ['Joined', 'Spend since', 'Usual for the category'], cell: function (r) { return [F.dateShort(r.joined), money0(r.spend), money0(r.usual)]; },
+      note: function () { return 'Each joined ' + NEW_MIN_DAYS + ' to ' + NEW_MAX_DAYS + ' days before the period ends and has spent a quarter or less of what the average member of their category spends over as many days, dues excluded.'; } },
+    'came-once': { data: cameOnceData, title: 'Public golfers who came once', row: true, cols: ['Paid on', 'Paid', 'Days since last seen'], cell: function (r) { return [F.dateShort(r.on), money0(r.paid), F.num(r.since)]; },
+      note: function () { return 'Each has one paid round on file and no other purchase or round, and was last seen ' + ONCE_DAYS + ' days or more before the period ends.'; } }
+  };
+  function listDrill(ctx, arg) {
+    const def = LISTS[String(arg)], d = def ? def.data(ctx) : null;
+    if (!d || !d.rows.length) return noList('No one fits this idea in this period, or the records are too short to tell.');
+    const cols = def.colsOf ? def.colsOf(d) : def.cols, cOf = function (r) { return def.row ? r.c : r; };
+    const body = H.rKpis([{ label: 'On this list', value: F.num(d.rows.length), sub: esc(ctx.line) }, { label: 'Estimate', value: d.amount >= 1 ? money0(d.amount) : 'None', sub: esc(String(arg) === 'public-spenders' ? 'A year, if one joins' : String(arg) === 'came-once' ? 'One time' : 'A month') }]) +
+      H.rSec('Who they are', 'Select a name for the breakdown', H.rTable([{ label: 'Client' }].concat(cols.map(function (l) { return { label: l, num: true }; })),
+        d.rows.map(function (r) { return [whoCell(cOf(r))].concat(def.cell(r, d).map(function (v) { return esc(v); })); }))) + H.rNote(def.note(d));
+    const csv = [['Client', 'Type', 'Category', 'Member no'].concat(cols)].concat(d.rows.map(function (r) { return whoCSV(cOf(r)).concat(def.cell(r, d).map(function (v) { return String(v).replace(/[$,]/g, ''); })); })).concat([[], ['Period', ctx.from + ' to ' + ctx.to], ['Dues', 'Excluded']]);
+    return { title: def.title, body: body, csv: csv, csvId: 'clients-' + arg, noNotes: true, wire: openClient(ctx) };
   }
   /* The drawers behind the ideas: the clients, with the figure that put each on the list. A name opens the breakdown. */
   function whoCell(c) { return '<button type="button" class="cl-name" data-cl-client="' + esc(c.key) + '">' + esc(c.who.name) + '</button><div class="dd-sub">' + esc(c.who.kind === 'member' ? c.who.cat + ' member' : 'Public golfer') + '</div>'; }
@@ -751,8 +1000,8 @@
   Club.reports.addSection({
     id: 'clients', label: 'Client spending', order: 75,
     collections: ['charges', 'receipts', 'payments', 'publicPayments', 'publicPlayers', 'sales', 'diningOrders', 'teeTimes', 'diningReservations', 'lessons', 'members', 'membershipTiers'],
-    kpis: kpis, main: main, panels: panels, about: about, csv: csv, wire: wire, ideas: ideas,
-    drills: { client: clientDrill, ranking: rankingDrill, 'idea-quiet': quietDrill, 'idea-nodine': noDineDrill, 'idea-onedept': oneDeptDrill },
-    data: { ledger: ledger, current: current, view: view, quiet: quietData, noDine: noDineData, oneDept: oneDeptData, filters: function () { return { aud: flt.aud, inc: flt.inc }; } }
+    kpis: kpis, main: main, panels: panels, about: about, csv: csv, wire: wire, ideas: ideas, ideasMore: true,
+    drills: { client: clientDrill, ranking: rankingDrill, 'idea-quiet': quietDrill, 'idea-nodine': noDineDrill, 'idea-onedept': oneDeptDrill, 'idea-list': listDrill },
+    data: { ledger: ledger, current: current, view: view, quiet: quietData, noDine: noDineData, oneDept: oneDeptData, lists: LISTS, filters: function () { return { aud: flt.aud, inc: flt.inc }; } }
   });
 })();

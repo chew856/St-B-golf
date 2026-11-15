@@ -1089,7 +1089,9 @@
         '<div class="idea-est">' + (est ? '<b>' + esc(est) + '</b><span>' + esc(x.per || '') + '</span>' : '<span>No estimate</span>') + '</div></li>';
     }).join('') + '</ol>';
   }
-  function ideasShown(ctx, sec) { return ideasOf(ctx, sec).slice(0, IDEAS_MAX); }
+  /* A section with ideasMore: true gets a "Show all" control under its top five (the Client spending section has thirteen). */
+  const ideasOpen = {};
+  function ideasShown(ctx, sec) { const list = ideasOf(ctx, sec); return sec.ideasMore && ideasOpen[sec.id] ? list : list.slice(0, IDEAS_MAX); }
   function ideasCSV(ctx, sec) {
     const list = sec.id === 'overview' ? ideasShown(ctx, sec) : ideasOf(ctx, sec);
     return [['Rank', 'Idea', 'Section', 'Details', 'Estimate', 'Per', 'Over a year', 'Assumption']].concat(list.map(function (x, i) {
@@ -1101,7 +1103,8 @@
     return { id: sec.id + '-ideas', cls: 'rp-ideas', title: sec.ideasTitle || 'Ideas to grow revenue',
       take: sec.ideasTake || (!list.length ? '' : 'Ranked by estimated effect over a year. Each idea rests on a figure from the club\'s own records and says what it assumes.' +
         (list.length < 3 ? ' Only ' + list.length + ' ' + plural(list.length, 'idea has', 'ideas have') + ' enough data behind ' + (list.length === 1 ? 'it' : 'them') + ' in this period; a longer period gives more.' : '')),
-      body: ideasBody(list, !!sec.ideasLinks), csvId: sec.id + '-ideas' };
+      body: ideasBody(list, !!sec.ideasLinks) + (sec.ideasMore && ideasOf(ctx, sec).length > IDEAS_MAX ? '<div class="ideas-more"><button type="button" class="rp-link" data-ideas-all="' + esc(sec.id) + '" aria-expanded="' + !!ideasOpen[sec.id] + '">' + (ideasOpen[sec.id] ? 'Show the top ' + IDEAS_MAX : 'Show all ' + ideasOf(ctx, sec).length + ' ideas') + '</button></div>' : ''),
+      csvId: sec.id + '-ideas' };
   }
   function sectionHTML(sec, ctx, state, active) {
     const st = state[sec.id] = state[sec.id] || {};
@@ -1271,6 +1274,11 @@
       showTab(b.dataset.go);
       const s = U.$('#rp-sec-' + b.dataset.go, host), t = s && b.dataset.goPanel ? s.querySelector('[data-panel="' + b.dataset.goPanel + '"]') : null;
       if (t || s) (t || s).scrollIntoView({ block: 'start', behavior: 'smooth' });
+    });
+    U.on(host, 'click', '[data-ideas-all]', function (e, b) {
+      const id = b.dataset.ideasAll; ideasOpen[id] = !ideasOpen[id];
+      redraw(false);
+      const again = U.$('[data-ideas-all="' + id + '"]', host); if (again) again.focus({ preventScroll: true });
     });
     U.on(host, 'click', '[data-href]', function (e, b) { Club.app.go(b.dataset.href); });
 

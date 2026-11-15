@@ -782,16 +782,12 @@
     return { id: 'aging-chart', title: 'Receivables by age', take: take, body: body, desc: accountsDesc(ctx), foot: 'Ageing is as of today.', csvId: 'aging', drill: 'aging', drillLabel: 'See every account' };
   }
   function accountsPanels(ctx) {
-    const d = agingData(ctx), s = spendData(ctx);
-    const topSpend = s.list.slice(0, 5);
-    const p1 = { id: 'spend', title: 'Top members by spend', take: !s.list.length ? 'No house charges other than dues were posted in this period.' : (topSpend[0].m ? Club.members.name(topSpend[0].m) : 'A former member') + ' spent the most, ' + F.money0(topSpend[0].total) + (s.list.length > 1 ? ', mostly on ' + String(topSpend[0].top).toLowerCase() : '') + '. ' + s.list.length + ' ' + plural(s.list.length, 'member') + ' charged ' + F.money0(s.total) + ' in all.',
-      body: s.list.length ? Club.charts.ranked(topSpend.map(function (a) { return { label: a.m ? Club.members.name(a.m) : 'Former member', sub: 'Mostly ' + String(a.top).toLowerCase(), value: a.total, attrs: 'data-drill="spend" aria-label="' + esc((a.m ? Club.members.name(a.m) : 'Former member') + ' ' + F.money0(a.total) + '. See all members by spend') + '"' }; }), { total: s.total, fmt: F.money0, noShare: true }) : '<p class="rp-empty">Nothing to rank yet.</p>',
-      desc: spendDesc(ctx), csvId: 'spend', drill: 'spend', drillLabel: 'See all ' + s.list.length };
+    const d = agingData(ctx);
     const late = d.lateAccounts.slice().sort(function (a, c) { return c.late - a.late; }).slice(0, 5);   /* largest overdue first */
-    const p2 = { id: 'late', title: 'Oldest balances', take: !d.lateAccounts.length ? 'No balance is more than 60 days old.' : d.lateAccounts.length + ' ' + plural(d.lateAccounts.length, 'account has', 'accounts have') + ' charges more than 60 days old, ' + F.money0(d.late) + ' in all.',
+    const p2 = { id: 'late', cls: 'wide', title: 'Oldest balances', take: !d.lateAccounts.length ? 'No balance is more than 60 days old.' : d.lateAccounts.length + ' ' + plural(d.lateAccounts.length, 'account has', 'accounts have') + ' charges more than 60 days old, ' + F.money0(d.late) + ' in all.',
       body: late.length ? Club.charts.ranked(late.map(function (a) { return { label: Club.members.name(a.m), sub: (a.b[3] >= 0.5 ? F.money0(a.b[3]) + ' over 90 days' : F.money0(a.b[2]) + ' at 61 to 90 days'), value: a.late, attrs: 'data-href="billing/' + esc(a.m.id) + '" aria-label="' + esc(Club.members.name(a.m) + ' ' + F.money0(a.late) + ' overdue. Open their account') + '"' }; }), { fmt: F.money0, noShare: true }) : '<p class="rp-empty">Nothing is overdue.</p>',
       desc: lateDesc(ctx), csvId: 'aging', drill: 'aging', drillLabel: 'See every account' };
-    return [p1, p2];
+    return [p2];   /* spend by member moved to the Client spending section (reports-clients.js) */
   }
   function spendDesc(ctx) {
     const s = spendData(ctx), r = chargeReach(ctx);
@@ -838,10 +834,10 @@
     return { title: 'Members by spend', body: html, csv: spendCSV(ctx), go: 'billing', goLabel: 'Open billing', noNotes: true };
   }
   addSection({
-    id: 'accounts', label: 'Accounts', order: 70, collections: ['charges', 'payments', 'statements', 'members'],
+    id: 'accounts', label: 'Unpaid accounts', order: 70, collections: ['charges', 'payments', 'statements', 'members'],
     kpis: accountsKpis, main: accountsMain, panels: accountsPanels,
-    about: function (ctx) { return ['Ageing is as of today, from each member\'s balance matched against their most recent charges; billed and collected cover the selected period. Spend excludes dues.', coverageText(ctx.ix.first.ch, ctx, 'House account')].filter(Boolean); },
-    csv: function (ctx) { return [{ id: 'aging', title: 'Receivables aging', rows: agingCSV(ctx) }, { id: 'spend', title: 'Top members by spend', rows: spendCSV(ctx) }]; },
+    about: function (ctx) { return ['Ageing is as of today, from each member\'s balance matched against their most recent charges; billed and collected cover the selected period.', coverageText(ctx.ix.first.ch, ctx, 'House account')].filter(Boolean); },
+    csv: function (ctx) { return [{ id: 'aging', title: 'Receivables aging', rows: agingCSV(ctx) }]; },
     drills: { aging: drillAging, spend: drillSpend }, ideas: accountsIdeas,
     attention: function (ctx) { const d = agingData(ctx); return d.lateAccounts.length ? [{ n: d.lateAccounts.length, text: plural(d.lateAccounts.length, 'house account has', 'house accounts have') + ' balances more than 60 days old, ' + F.money0(d.late) + ' in all', label: 'See accounts', drill: 'aging', sec: 'accounts' }] : []; },
     data: { aging: agingData, spend: spendData }

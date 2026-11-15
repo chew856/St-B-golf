@@ -78,8 +78,9 @@ week; no playing ahead); games never played take the worst score of that week wh
   teams rank on players' average per game mid-season while the table also shows totals.
 - Tested in Chromium only: check in Safari before deploying.
 
-## Client analytics (built Nov 15, NOT DEPLOYED YET)
-Staff Reports has a Clients tab (`js/modules/reports-clients.js`, `Club.clientStats`): every member and public golfer
+## Client analytics (built and deployed Nov 15; tab renames NOT DEPLOYED YET)
+Staff Reports has a "Client spending" tab (the old Accounts tab is now "Unpaid accounts" and no longer has
+"Top members by spend") (`js/modules/reports-clients.js`, `Club.clientStats`): every member and public golfer
 ranked by spend, filters for Everyone / Members / Public golfers and Including / Excluding dues, spend by department
 and by membership category, and a breakdown per client (department, by month, visits and habits, compared with
 others). The same breakdown is the Spending tab on the staff member page.

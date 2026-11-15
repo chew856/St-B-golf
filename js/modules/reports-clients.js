@@ -572,7 +572,7 @@
     out.push('Spend is what a client was charged on their house account plus anything they paid by card or cash, less credits and refunds. Reversed charges are left out, a balance brought forward is not a purchase, payments toward a statement are not spending, and amounts settled with a gift card count when the card was bought. Dues are ' + (flt.inc ? 'included' : 'excluded') + '; the switch above changes that.');
     out.push('A visit is a day on which the client bought something at the club, played a round, kept a dining reservation or took a lesson. Online payments and online shop orders are spend, but the day they were made is not a visit. The average per visit always leaves dues out.');
     out.push('Public golfers are people with an online account: their spend is the green fees and add-ons they paid online and anything rung up against their account at the club. Purchases by people with no account, such as walk-in pro shop sales and dining checks paid by card, cannot be tied to a person and are not in this report. Wedding, banquet and outing deposits belong to function clients and are left out too.');
-    out.push('A pro shop sale or dining check put on a member\'s account counts once, through the charge on their ledger. The Accounts section\'s "Top members by spend" counts ledger charges only and does not subtract credits, so its total can differ a little from this one.');
+    out.push('A pro shop sale or dining check put on a member\'s account counts once, through the charge on their ledger.');
     const cov = [H.coverage(f.spend, ctx, 'Client spending'), f.tee && f.tee > ctx.from ? 'Rounds are counted from ' + F.date(f.tee) + ', when the tee sheet on file begins.' : ''].filter(Boolean);
     if (cov.length) out.push(cov.join(' '));
     out.push(previous(ctx) ? 'Change compares each client with ' + ctx.prev.label + '.' : 'Change against the period before is shown only when client records cover the whole earlier period; for these dates they do not.');
@@ -580,7 +580,7 @@
   }
 
   Club.reports.addSection({
-    id: 'clients', label: 'Clients', order: 75,
+    id: 'clients', label: 'Client spending', order: 75,
     collections: ['charges', 'receipts', 'payments', 'publicPayments', 'publicPlayers', 'sales', 'diningOrders', 'teeTimes', 'diningReservations', 'lessons', 'members', 'membershipTiers'],
     kpis: kpis, main: main, panels: panels, about: about, csv: csv, wire: wire,
     drills: { client: clientDrill, ranking: rankingDrill },

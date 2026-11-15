@@ -90,6 +90,7 @@
   function isGolfer(m) { const t = tierOf(m); return t ? !!t.golf : !!m && m.handicap != null; }
   function toMin(t) { const p = String(t || '0:0').split(':'); return (+p[0]) * 60 + (+p[1] || 0); }
   function minutesSince(tt) { const d = fmt.toDate(tt.date); d.setHours(0, toMin(tt.time), 0, 0); return (Date.now() - d.getTime()) / 60000; }
+  function leagueOf(tt, mid) { const p = tt && (tt.players || []).find(function (x) { return x.memberId === mid; }); return (p && p.friendLeagueId) || null; }
   function inRound(tt, mid) { return (tt.players || []).some(function (p) { return p.memberId === mid; }); }
   function partnerName(p) { return Portal.playerLabel(p); }   /* friends in full, everyone else "Tom R." */
   function partners(tt, mid) { return (tt.players || []).filter(function (p) { return p.memberId !== mid; }); }
@@ -531,7 +532,9 @@
         courseHandicap: c, indexUsed: index, rating: r.rating, slope: r.slope, par: parOf(h), pcc: null,
         differential: differential(t.adjusted, st.tees, st.holes, index), attestedBy: st.attest || null,
         playedWith: tt ? partners(tt, m.id).map(partnerName) : (st.attest ? [memberName(st.attest)] : []),
-        estimate: null, status: 'saved-in-demo', postedAt: new Date().toISOString(), demo: true
+        estimate: null, status: 'saved-in-demo', postedAt: new Date().toISOString(), demo: true,
+        /* A round booked to count toward a friends league (js/core/friendleagues.js) carries the league here */
+        friendLeagueId: leagueOf(tt, m.id)
       };
     }
     function review() {
@@ -676,7 +679,7 @@
   Portal.scores = {
     DEMO_RATINGS: DEMO_RATINGS,
     calc: { courseHandicap: courseHandicap, strokesPerHole: strokesPerHole, ndbCaps: ndbCaps, adjustedOf: adjustedOf, differential: differential, estimate: estimate, holesFor: holesFor },
-    postsOf: postsOf, postFor: postFor, teeLabel: teeLabel, diffText: diffText, openPost: openPost, estimateFor: estimateFor, canPost: canPost, toPost: toPost,
+    demoPosts: demoPosts, postsOf: postsOf, postFor: postFor, teeLabel: teeLabel, diffText: diffText, openPost: openPost, estimateFor: estimateFor, canPost: canPost, toPost: toPost,
     homePrompt: homePrompt, pastCell: pastCell, detailAction: detailAction,
     golfRowsHTML: golfRowsHTML, indexChart: indexChart, wireGolf: wireGolf, openLink: openLink
   };

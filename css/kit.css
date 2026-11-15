@@ -1,0 +1,126 @@
+/* ==========================================================================
+   Shared kit styles (date picker, bottom sheet, select field, accordion, stepper,
+   sticky action bar) used by the members' portal and the staff system.
+   Colours come from the page theme's tokens (css/portal-theme.css on member.html,
+   css/staff-theme.css on index.html). See js/portal/kit.js and datepick.js.
+   ========================================================================== */
+/* ==========================================================================
+   Shared date picker (js/portal/datepick.js): Square-style field, bottom sheet
+   on phones, anchored dropdown on desktop.
+   ========================================================================== */
+.dp { display: flex; flex-direction: column; gap: 6px; }
+.dp-label { font-size: 0.875rem; font-weight: 500; color: var(--text-2); }
+.dp-row { display: flex; gap: 6px; align-items: stretch; position: relative; }
+.dp-field { flex: 1 1 auto; min-width: 0; min-height: 48px; display: flex; align-items: center; gap: 8px; padding: 8px 10px 8px 12px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-ctl); color: var(--text); font: 500 1rem/1.3 var(--sans); text-align: left; cursor: pointer; }
+@media (hover: hover) { .dp-field:hover { border-color: var(--forest-500); } }
+.dp-field > .icon { width: 20px; height: 20px; color: var(--forest-500); flex: none; }
+.dp-field-text { flex: 1 1 auto; min-width: 0; letter-spacing: -0.005em; }
+/* The full date when the field has room, "Tue, October 27" when it doesn't (sized by the field, not the screen) */
+.dp-row { container-type: inline-size; }
+.dp-short { display: none; }
+@container (max-width: 330px) { .dp-long { display: none; } .dp-short { display: inline; } }
+.dp-field .dp-chev { width: 18px; height: 18px; color: var(--text-2); flex: none; transition: transform var(--t-ui) var(--ease-ui); }
+.dp-field[aria-expanded="true"] .dp-chev { transform: rotate(180deg); }
+.dp-step { flex: none; width: 44px; min-height: 48px; display: inline-flex; align-items: center; justify-content: center; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-ctl); color: var(--text); cursor: pointer; }
+@media (hover: hover) { .dp-step:hover:not(:disabled) { background: var(--sage-50); border-color: var(--forest-500); } }
+.dp-step:disabled { color: var(--text-3); background: var(--sage-50); border-color: var(--border); cursor: default; }
+.dp-step .icon { width: 20px; height: 20px; }
+.dp-note { font-size: 0.875rem; color: var(--text-2); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.dp-note .icon { width: 18px; height: 18px; color: var(--forest-500); }
+
+/* ==========================================================================
+   Portal kit (js/portal/kit.js): bottom sheet, select field, accordion,
+   stepper, sticky action bar
+   ========================================================================== */
+body.ps-open { overflow: hidden; }
+.ps-scrim { position: fixed; inset: 0; z-index: 130; background: rgba(16, 30, 23, 0.42); opacity: 0; transition: opacity var(--t-ui) var(--ease-ui); }
+.ps-scrim.open { opacity: 1; }
+.ps-sheet { position: fixed; z-index: 131; left: 0; right: 0; bottom: 0; margin: 0 auto; width: 100%; max-width: 560px; max-height: 88dvh; display: flex; flex-direction: column; background: var(--surface); border-radius: 18px 18px 0 0; box-shadow: var(--shadow-sheet); transform: translateY(100%); transition: transform 200ms var(--ease-ui); padding-bottom: env(safe-area-inset-bottom); }
+.ps-sheet.is-full { height: 94dvh; max-height: 94dvh; }
+.ps-sheet.open { transform: none; }
+.ps-grab { flex: none; height: 20px; display: flex; align-items: center; justify-content: center; cursor: grab; touch-action: none; }
+.ps-grab span { width: 36px; height: 4px; border-radius: 2px; background: var(--border-strong); }
+.ps-head { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 12px 8px 20px; border-bottom: 1px solid var(--border); touch-action: none; }
+.ps-head h2 { font-size: 1.25rem; margin: 0; }
+.ps-x { width: 44px; height: 44px; flex: none; display: inline-flex; align-items: center; justify-content: center; border: 0; background: none; color: var(--text-2); border-radius: var(--radius-ctl); cursor: pointer; }
+@media (hover: hover) { .ps-x:hover { background: var(--sage-50); } }
+.ps-x .icon { width: 20px; height: 20px; }
+.ps-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 4px 0 12px; }
+.ps-body > :not(.ps-list) { margin-left: 20px; margin-right: 20px; }
+.ps-foot { flex: none; padding: 12px 20px; border-top: 1px solid var(--border); background: var(--surface); }
+.ps-foot .btn { width: 100%; }
+.ps-group { padding: 14px 20px 6px; }
+.ps-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 52px; padding: 8px 20px; border: 0; border-bottom: 1px solid var(--border); background: none; color: var(--text); font: 400 1rem/1.3 var(--sans); text-align: left; cursor: pointer; text-decoration: none; }
+@media (hover: hover) { .ps-row:hover:not(:disabled) { background: var(--sage-50); text-decoration: none; } }
+.ps-row:focus-visible { outline-offset: -2px; }
+.ps-row-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ps-row-label { font-variant-numeric: tabular-nums; }
+.ps-row-sub { font-size: 0.875rem; color: var(--text-2); line-height: 1.35; }
+.ps-row-meta { flex: none; font-size: 0.875rem; color: var(--text-2); font-variant-numeric: tabular-nums; text-align: right; }
+.ps-pill { flex: none; font-size: 0.8125rem; font-weight: 500; padding: 2px 8px; border-radius: 999px; background: var(--sage-100); color: var(--forest-800); white-space: nowrap; }
+.ps-tick { flex: none; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--forest-800); color: var(--on-dark); visibility: hidden; }
+.ps-tick .icon { width: 14px; height: 14px; stroke-width: 2.2; }
+.ps-row-go { flex: none; width: 18px; height: 18px; color: var(--text-3); }
+.ps-row[aria-selected="true"] .ps-row-label { font-weight: 500; }
+.ps-row[aria-selected="true"] .ps-tick { visibility: visible; }
+.ps-row:disabled { color: var(--text-3); cursor: default; }
+.ps-row:disabled .ps-row-meta, .ps-row:disabled .ps-row-sub { color: var(--text-3); }
+
+/* Select field (opens the sheet) */
+.pk-field, .pk-stepper { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.pk-label { font-size: 0.875rem; font-weight: 500; color: var(--text-2); }
+.pk-select { width: 100%; min-height: 48px; display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-ctl); color: var(--text); font: 500 1rem/1.3 var(--sans); text-align: left; cursor: pointer; }
+@media (hover: hover) { .pk-select:hover { border-color: var(--forest-500); } }
+.pk-select > .icon:first-child { width: 20px; height: 20px; color: var(--forest-500); flex: none; }
+.pk-select-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.pk-select-sub { font-size: 0.8125rem; font-weight: 400; color: var(--text-2); }
+.pk-select-ph { color: var(--text-3); font-weight: 400; }
+.pk-chev { width: 18px; height: 18px; color: var(--text-2); flex: none; }
+
+/* Accordion */
+.pk-acc { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); overflow: hidden; }
+.pk-acc + .pk-acc { margin-top: 12px; }
+.pk-acc-head { width: 100%; min-height: 52px; display: flex; align-items: center; gap: 12px; padding: 8px 16px; border: 0; background: none; color: var(--text); text-align: left; cursor: pointer; font: inherit; }
+@media (hover: hover) { .pk-acc-head:hover { background: var(--sage-50); } }
+.pk-acc-icon { width: 20px; height: 20px; color: var(--forest-500); flex: none; }
+.pk-acc-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.pk-acc-title { font-size: 1rem; font-weight: 500; }
+.pk-acc-sum { font-size: 0.875rem; color: var(--text-2); }
+.pk-acc-chev { width: 18px; height: 18px; color: var(--text-2); flex: none; transition: transform 200ms var(--ease-ui); }
+.pk-acc.is-open .pk-acc-chev { transform: rotate(180deg); }
+.pk-acc-wrap { overflow: hidden; transition: height 200ms var(--ease-ui); }
+.pk-acc-body { padding: 4px 16px 16px; border-top: 1px solid var(--border); padding-top: 12px; }
+.pk-acc.is-flat { background: transparent; border: 0; box-shadow: none; border-radius: 0; }
+
+/* Stepper */
+.pk-step-row { display: inline-flex; align-items: center; gap: 4px; background: var(--sage-100); border-radius: var(--radius-ctl); padding: 3px; align-self: flex-start; }
+.pk-step { width: 44px; height: 44px; border: 0; border-radius: 8px; background: transparent; color: var(--forest-800); font: 500 1.25rem/1 var(--sans); cursor: pointer; transition: background-color 0.15s; }
+@media (hover: hover) { .pk-step:hover:not(:disabled) { background: var(--sage-200); } }
+.pk-step:disabled { color: var(--text-3); cursor: default; }
+.pk-step-val { min-width: 44px; text-align: center; font: 500 1rem/1 var(--sans); font-variant-numeric: tabular-nums; color: var(--text); }
+.pk-step-unit { font-weight: 400; color: var(--text-2); font-size: 0.875rem; }
+
+/* Sticky action bar, pinned above the bottom nav */
+.pk-bar { position: fixed; z-index: 44; left: 0; right: 0; margin: 0 auto; max-width: 560px; bottom: calc(64px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 12px; padding: 10px 16px 10px 20px; background: var(--surface); border-top: 1px solid var(--border); box-shadow: 0 -6px 20px rgba(16, 30, 23, 0.06); transform: translateY(120%); opacity: 0; transition: transform 200ms var(--ease-ui), opacity 200ms var(--ease-ui); }
+.pk-bar.open { transform: none; opacity: 1; }
+.pk-bar-sum { flex: 1 1 auto; min-width: 0; font-size: 0.9375rem; font-weight: 500; color: var(--text); line-height: 1.3; font-variant-numeric: tabular-nums; }
+.pk-bar-sum small { display: block; font-size: 0.8125rem; font-weight: 400; color: var(--text-2); }
+.pk-bar-btn { flex: none; min-height: 48px; padding: 0 20px; }
+body.has-bar .p-page { padding-bottom: 110px; }
+body.has-bar .toasts { bottom: calc(150px + env(safe-area-inset-bottom)); }
+
+
+/* Staff system on desktop and tablet: sheets open as centred dialogs, the action bar spans the work area */
+@media (min-width: 901px) {
+  body.staff .ps-sheet { top: 50%; bottom: auto; max-height: min(720px, 86vh); max-height: min(720px, 86dvh); border-radius: var(--radius-card); transform: translateY(-46%) scale(0.98); opacity: 0; transition: transform 180ms var(--ease-ui), opacity 180ms var(--ease-ui); padding-bottom: 0; }
+  body.staff .ps-sheet.open { transform: translateY(-50%); opacity: 1; }
+  body.staff .ps-grab { display: none; }
+  body.staff .ps-head { padding-top: 14px; }
+  body.staff .pk-bar { left: var(--sidebar-w); max-width: none; bottom: 0; padding-left: 32px; padding-right: 32px; }
+}
+body.staff .pk-bar { bottom: 0; }
+body.staff.has-bar .view { padding-bottom: 96px; }
+
+/* Staff: pickers often open from inside a dialog (overlay z 140), so the sheet sits above it */
+body.staff .ps-scrim { z-index: 150; }
+body.staff .ps-sheet { z-index: 151; }

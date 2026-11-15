@@ -1,0 +1,10 @@
+import { webkit } from 'playwright';
+const b = await webkit.launch(); const p = await (await b.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
+p.on('pageerror', e => console.log('PAGE', e.message));
+await p.goto('http://localhost:8001/site/index.html#/reports/revenue', { waitUntil: 'domcontentloaded' }); await p.waitForTimeout(2000);
+const bb = await p.locator('#rpPeriodBtn').boundingBox(); console.log('btn', bb);
+await p.mouse.move(bb.x + 30, bb.y + 10); await p.mouse.down(); await p.mouse.up(); await p.waitForTimeout(400);
+console.log('after click1', await p.evaluate(() => ({ hidden: document.querySelector('#rpPeriodMenu').hidden, expanded: document.querySelector('#rpPeriodBtn').getAttribute('aria-expanded'), active: document.activeElement.className })));
+await p.evaluate(() => document.querySelector('#rpPeriodBtn').click()); await p.waitForTimeout(300);
+console.log('after js click', await p.evaluate(() => ({ hidden: document.querySelector('#rpPeriodMenu').hidden })));
+await b.close();

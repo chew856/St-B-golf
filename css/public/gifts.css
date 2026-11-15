@@ -1,0 +1,203 @@
+/* Gift cards (js/core/giftcards.js, js/public/gifts.js). The first part is shared by all three sites (css/portal/gifts.css
+   and css/modules/giftcards.css import this file): the printable card (.gcv), the "Use a gift card" box (.gc-box) and the
+   pay panel (.ck). Theme tokens only; the portal and staff themes remap them onto their palettes. */
+
+/* ---------------- The gift card ---------------- */
+.gcv { width: min(420px, 100%); margin: 0 auto; background: var(--paper); border: 1px solid var(--rule); border-radius: var(--r-panel); overflow: hidden; color: var(--ink); text-align: left; break-inside: avoid; page-break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.gcv-face { position: relative; padding: var(--s5) var(--s5) var(--s4); background: var(--night); color: var(--on-night); aspect-ratio: 1.75 / 1; display: flex; flex-direction: column; overflow: hidden; }
+.gcv-face::after { content: ""; position: absolute; inset: var(--s2); border: 1px solid var(--brass); opacity: 0.45; border-radius: var(--r-control); pointer-events: none; }
+.gcv-top { display: flex; align-items: center; gap: var(--s2); }
+.gcv-crest.stb-logo { height: 30px; width: auto; color: var(--brass-soft); }
+.gcv-club { font-family: var(--font-display); font-size: var(--fs-15); letter-spacing: 0.02em; color: var(--on-night); }
+.gcv-kind { margin-top: auto; font-size: var(--fs-11); letter-spacing: 0.22em; text-transform: uppercase; color: var(--brass-soft); }
+.gcv-amt { font-family: var(--font-display); font-size: clamp(2.25rem, 9vw, 3rem); line-height: 1.05; color: var(--on-night); font-variant-numeric: lining-nums; }
+.gcv-valid { margin-top: var(--s2); font-size: var(--fs-12); color: var(--on-night-2); }
+.gcv-body { padding: var(--s4) var(--s5) var(--s5); }
+.gcv-body p { margin: 0 0 var(--s2); }
+.gcv-to { font-size: var(--fs-15); color: var(--ink); }
+.gcv-to strong { font-family: var(--font-display); font-weight: 500; font-size: var(--fs-18); color: var(--night); }
+.gcv-msg { font-family: var(--font-display); font-style: italic; color: var(--ink-2); overflow-wrap: anywhere; }
+.gcv-from { font-size: var(--fs-13); color: var(--ink-2); }
+.gcv-code { display: flex; flex-direction: column; gap: 2px; margin: var(--s3) 0; padding: var(--s3); border: 1px dashed var(--rule-strong); border-radius: var(--r-control); background: var(--brass-tint); text-align: center; }
+.gcv-code-l { font-size: var(--fs-11); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-3); }
+.gcv-code-v { font-size: 1.25rem; font-weight: 600; letter-spacing: 0.12em; color: var(--night); font-variant-numeric: tabular-nums; }
+.gcv-fine { font-size: var(--fs-12); color: var(--ink-3); line-height: 1.45; }
+.gcv-void { color: var(--oxblood); font-weight: 600; }
+.gcv.is-void .gcv-face { filter: grayscale(1); opacity: 0.7; }
+.gcv-wrap { padding: var(--s2) 0; }
+.gcv-modal .modal-body { background: var(--linen); }
+@media print {
+  body.rc-printing .gcv { width: 100%; max-width: 440px; border: 1px solid var(--rule); }
+}
+
+/* ---------------- "Use a gift card" ---------------- */
+.gc-box-open { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; }
+.gc-box-open svg { width: 18px; height: 18px; }
+.gc-box { margin: 0 0 var(--s3); }
+.gc-box.is-open { padding: var(--s3); border: 1px solid var(--rule); border-radius: var(--r-control); background: var(--brass-tint); }
+.gc-box-field { margin: 0; }
+.gc-box-row { display: flex; gap: var(--s2); }
+.gc-box-row .input { flex: 1 1 auto; min-width: 0; min-height: 44px; letter-spacing: 0.08em; text-transform: uppercase; }
+.gc-box-row .btn { flex: none; min-height: 44px; }
+.gc-box-cancel { margin-top: var(--s2); min-height: 32px; }
+.gc-box.is-applied { display: flex; align-items: center; gap: var(--s3); padding: var(--s3); border: 1px solid var(--moss); border-radius: var(--r-control); background: var(--moss-tint); }
+.gc-box-icon { width: 22px; height: 22px; flex: none; color: var(--moss); }
+.gc-box-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.gc-box-t { font-weight: 600; color: var(--night); }
+.gc-box-s { font-size: var(--fs-12); color: var(--ink-2); }
+.gc-box-rm { flex: none; min-height: 32px; }
+
+/* A tee time or order paid in full by gift card: no card needed. */
+.ck.is-covered .ck-pay { display: none; }
+
+/* Hidden parts of the pay panel and the checkout steps stay hidden. The portal has no global [hidden] rule, so the
+   display rules below used to win (the account note showed with Pay by card selected). */
+.ck [hidden], .ckf [hidden] { display: none !important; }
+
+/* ---------------- Pay panel ---------------- */
+/* How to pay: full-width choices (the site's own option rows: .pa-opt in the portal, .pub-card-opt on the public site). */
+.ck-methods { display: grid; gap: var(--s2); margin-bottom: var(--s4); }
+.ck-mopt { width: 100%; margin: 0; }
+.ck-mopt-icon svg { width: 20px; height: 20px; color: var(--green); }
+.ck-giftpane { margin-bottom: var(--s3); }
+.ck-giftpane .gc-box { margin: 0; }
+.ck-rest { margin-top: var(--s3); }
+.ck-rest-due { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s3); margin: 0 0 var(--s3); padding-bottom: var(--s2); border-bottom: 1px solid var(--rule); font-size: var(--fs-13); color: var(--ink-2); }
+.ck-rest-due strong { font-size: var(--fs-15); color: var(--night); }
+.ck-rest-h { margin: 0 0 var(--s2); font-size: var(--fs-13); font-weight: 600; color: var(--night); }
+.ck-rest-m { margin-bottom: var(--s3); }
+.ck-rest-m .segmented { display: flex; width: 100%; }
+.ck-rest-m .segmented button { flex: 1 1 0; min-height: 42px; }
+.ck-acct-note { display: flex; gap: var(--s2); align-items: flex-start; margin: 0 0 var(--s3); font-size: var(--fs-13); color: var(--ink-2); }
+.ck-acct-note svg { width: 18px; height: 18px; flex: none; color: var(--brass-ink); margin-top: 1px; }
+.ck-alert { display: flex; gap: var(--s3); background: var(--oxblood-tint); color: var(--oxblood); padding: var(--s3) var(--s4); border-radius: var(--r-panel); margin: var(--s3) 0 0; }
+.ck-alert > svg { width: 20px; height: 20px; flex: none; margin-top: 2px; }
+.ck-alert p { margin: 0; color: var(--ink); }
+/* A new card: the picture on top at a modest size, then the fields at full width (number, name, then expiry and the
+   security code side by side). The picture steps aside on small phones. */
+.ck .cc { grid-template-columns: minmax(0, 1fr); gap: var(--s4); }
+.ck .cc .cc-stage { width: 100%; max-width: 260px; margin: 0 auto; }
+.ck .cc .cc-fields.form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--s3); }
+.ck .cc .cc-fields .span-2 { grid-column: 1 / -1; }
+.ck .cc .cc-fields .field { margin-bottom: var(--s3); }
+@media (max-width: 480px) { .ck .cc .cc-stage { display: none; } }
+
+/* ---------------- Checkout steps (Club.checkout.steps): 1 Details · 2 Payment · 3 Review ---------------- */
+.ckf { position: relative; min-width: 0; }
+.ckf-prog { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s1) var(--s2); list-style: none; margin: 0 0 var(--s4); padding: 0 0 var(--s3); border-bottom: 1px solid var(--rule); }
+.ckf-prog li { display: flex; align-items: center; gap: var(--s2); }
+.ckf-prog li + li::before { content: ""; width: 3px; height: 3px; border-radius: 50%; background: var(--ink-3); }
+.ckf-pb { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0; border: 0; background: none; font: inherit; font-size: var(--fs-13); color: var(--ink-3); cursor: pointer; }
+.ckf-pb:disabled { cursor: default; opacity: 1; }
+.ckf-pn { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; flex: none; border: 1px solid var(--rule-strong); border-radius: 50%; font-size: var(--fs-12); font-variant-numeric: tabular-nums; line-height: 1; }
+.ckf-pn svg { width: 13px; height: 13px; }
+.ckf-prog .is-current .ckf-pb { color: var(--night); font-weight: 600; }
+.ckf-prog .is-current .ckf-pn { background: var(--green); border-color: var(--green); color: var(--on-night); }
+.ckf-prog .is-done .ckf-pb { color: var(--green); }
+.ckf-prog .is-done .ckf-pn { border-color: var(--green); color: var(--green); }
+@media (hover: hover) { .ckf-prog .is-done .ckf-pb:hover .ckf-pl { text-decoration: underline; text-underline-offset: 3px; } }
+.ckf-sr { position: absolute; width: 1px; height: 1px; margin: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.ckf-step:focus { outline: none; }
+.ckf-step:focus-visible { outline: 2px solid var(--brass); outline-offset: 4px; }
+.ckf-nav { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); margin-top: var(--s4); }
+.ckf-nav .btn { min-height: 48px; }
+.ckf-nav > :last-child { flex: 1 1 auto; justify-content: center; max-width: 360px; margin-left: auto; }
+.ckf-nav.is-solo > :last-child { max-width: none; }
+.ckf-nav > .ckf-back { flex: none; }
+.ckf-nav > .btn { margin-top: 0; }
+.ckf-nav svg { width: 16px; height: 16px; }
+.ckf-alert { display: flex; gap: var(--s3); background: var(--oxblood-tint); color: var(--oxblood); padding: var(--s3) var(--s4); border-radius: var(--r-panel); margin: var(--s3) 0 0; }
+.ckf-alert > svg { width: 20px; height: 20px; flex: none; margin-top: 2px; }
+.ckf-alert p { margin: 0; color: var(--ink); }
+/* Review: what is ordered, the totals, how it is paid; each part can be edited on its own step. */
+.ckf-rv { display: grid; gap: var(--s4); }
+.ckf-rv-sec + .ckf-rv-sec { padding-top: var(--s4); border-top: 1px solid var(--rule); }
+.ckf-rv-h { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s3); margin-bottom: var(--s2); }
+.ckf-rv-t { font-size: var(--fs-11); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); }
+.ckf-rv-edit { min-height: 32px; font-size: var(--fs-13); }
+.ckf-rv-lines, .ck-rv-pay { list-style: none; margin: 0; padding: 0; }
+.ckf-rv-lines li, .ck-rv-pay li { display: flex; align-items: center; gap: var(--s3); padding: 6px 0; font-size: var(--fs-13); color: var(--ink); }
+.ckf-rv-lines li > :first-child, .ck-rv-pay .ck-rv-t { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.ckf-rv-lines .num, .ck-rv-pay .num { flex: none; font-variant-numeric: tabular-nums; }
+.ck-rv-mark { width: 40px; height: 28px; }
+.ck-rv-mark svg { width: 18px; height: 18px; color: var(--green); }
+.ck-rv-mark .cc-mark { max-width: 32px; }
+.ckf-rv-kv { margin: 0; display: grid; gap: 6px; }
+.ckf-rv-kv > div { display: flex; justify-content: space-between; gap: var(--s3); font-size: var(--fs-13); }
+.ckf-rv-kv dt { color: var(--ink-3); flex: none; }
+.ckf-rv-kv dd { margin: 0; text-align: right; color: var(--ink); min-width: 0; overflow-wrap: anywhere; }
+.ckf-rv-sum { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s3); padding-top: var(--s3); border-top: 1px solid var(--rule-strong); font-weight: 600; color: var(--night); }
+.ckf-rv-sum .num { font-size: var(--fs-18); }
+/* Phones without a sticky bar of their own: Continue and the main button stay in reach at the foot of the screen. */
+@media (max-width: 640px) {
+  .ckf-sticky .ckf-nav { position: sticky; bottom: 0; z-index: 3; margin: var(--s4) calc(-1 * var(--s3)) 0; padding: var(--s3); background: var(--paper); border-top: 1px solid var(--rule); }
+  .ckf-nav .btn { min-height: 46px; }
+}
+/* Small phones: the main button takes the full width, Back sits under it. */
+@media (max-width: 480px) {
+  .ckf-nav { flex-wrap: wrap; }
+  .ckf-nav > :last-child { order: -1; flex: 1 1 100%; max-width: none; margin-left: 0; }
+  .ckf-nav > .ckf-back { min-height: 40px; }
+}
+
+/* ================= Public site: the Gift cards page ================= */
+.gp-grid { display: grid; gap: var(--s4); margin-top: var(--s4); }
+.gp-grid > * { min-width: 0; }
+.gp-form .panel-body { padding: var(--s4); }
+.gp-form .input, .gp-form .textarea { min-height: 46px; }
+.gp-amounts { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: var(--s2); }
+.gp-amt { min-height: 54px; padding: 0 var(--s3); border: 1px solid var(--rule-strong); border-radius: var(--r-control); background: var(--paper); color: var(--night); font: 500 var(--fs-18)/1 var(--font-display); cursor: pointer; transition: border-color var(--t-fast), background var(--t-fast), color var(--t-fast); }
+@media (hover: hover) { .gp-amt:hover { border-color: var(--brass); } }
+.gp-amt.active { background: var(--green); border-color: var(--green); color: var(--on-night); }
+.gp-amt-other { font: 600 var(--fs-13)/1.2 var(--font-body); }
+.gp-custom { margin: var(--s3) 0 0; max-width: 260px; }
+.gp-acct { margin: 0 0 var(--s3); font-size: var(--fs-13); }
+.gp-buy svg { width: 18px; height: 18px; }
+.gp-preview .label-caps { display: block; margin-bottom: var(--s2); }
+.gp-preview-card .gcv { width: 100%; box-shadow: var(--shadow-pop); }
+.gp-bal .panel-body { padding: var(--s4); }
+.gp-bal-form .field { margin: 0; }
+.gp-bal-row { display: flex; gap: var(--s2); }
+.gp-bal-row .input { flex: 1 1 auto; min-width: 0; min-height: 46px; letter-spacing: 0.08em; }
+.gp-bal-row .btn { flex: none; min-height: 46px; }
+.gp-bal-res { margin-top: var(--s3); padding: var(--s3) var(--s4); border: 1px solid var(--rule); border-radius: var(--r-control); background: var(--brass-tint); }
+.gp-bal-res.is-void { background: var(--oxblood-tint); border-color: var(--oxblood-tint); }
+.gp-bal-top { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s3); }
+.gp-bal-l { font-weight: 600; color: var(--night); }
+.gp-bal-amt { font-family: var(--font-display); font-size: var(--fs-24); color: var(--night); font-variant-numeric: lining-nums tabular-nums; }
+.gp-bal-s { margin: var(--s1) 0 0; font-size: var(--fs-13); color: var(--ink-2); }
+.gp-bal-hist { list-style: none; margin: var(--s2) 0 0; padding: 0; }
+.gp-bal-hist li { display: flex; justify-content: space-between; gap: var(--s3); padding: 6px 0; border-top: 1px solid var(--rule); font-size: var(--fs-13); color: var(--ink-2); }
+.gp-done-card .gcv { box-shadow: var(--shadow-pop); }
+.gp-done-body { padding: var(--s4); }
+.gp-kv { margin: 0 0 var(--s4); display: grid; gap: var(--s2); }
+.gp-kv > div { display: flex; justify-content: space-between; gap: var(--s3); padding-bottom: var(--s2); border-bottom: 1px solid var(--rule); }
+.gp-kv dt { color: var(--ink-3); font-size: var(--fs-13); }
+.gp-kv dd { margin: 0; text-align: right; color: var(--night); overflow-wrap: anywhere; }
+.gp-code { font-weight: 600; letter-spacing: 0.1em; }
+.gp-done-acts { display: grid; gap: var(--s2); }
+.gp-done-acts .btn { justify-content: center; min-height: 48px; }
+.gp-done-acts .pub-link { justify-self: center; min-height: 40px; }
+.gp-mark-gift { width: 20px; height: 20px; color: var(--brass-ink); }
+/* My account: gift cards bought */
+.gp-acc-list { list-style: none; margin: 0; padding: 0; }
+.gp-acc-list li + li { border-top: 1px solid var(--rule); }
+.gp-acc-row { display: flex; align-items: center; gap: var(--s3); width: 100%; min-height: 56px; padding: var(--s3) var(--s4); background: none; border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+@media (hover: hover) { .gp-acc-row:hover { background: var(--hover); } }
+.gp-acc-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.gp-acc-t { color: var(--night); font-weight: 600; }
+.gp-acc-s { font-size: var(--fs-12); color: var(--ink-3); }
+.gp-acc-bal { flex: none; text-align: right; color: var(--night); font-variant-numeric: tabular-nums; }
+.gp-acc-bal small { display: block; font-size: var(--fs-11); color: var(--ink-3); }
+
+@media (min-width: 880px) {
+  .gp-grid { grid-template-columns: minmax(0, 1.25fr) minmax(320px, 1fr); align-items: start; gap: var(--s5); }
+  .gp-side { position: sticky; top: 92px; }
+  .gp-done { grid-template-columns: minmax(0, 1fr) minmax(320px, 1fr); }
+  .gp-form .panel-body, .gp-done-body { padding: var(--s5); }
+}
+@media (max-width: 400px) {
+  .gp-amounts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .gp-amt { padding: 0 var(--s2); }
+  .gcv-face, .gcv-body { padding-left: var(--s4); padding-right: var(--s4); }
+}

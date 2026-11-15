@@ -1,0 +1,58 @@
+/* Club.receipts (js/core/receipts.js): the one receipt design on all three sites, on screen and in print.
+   Tokens: the staff and portal themes' (--surface, --text ...), falling back to theme.css on the public site.
+   Printing: receipts.open adds body.rc-printing and marks its overlay .rc-overlay; only that overlay prints. */
+.rc {
+  width: min(400px, 100%); margin: 0 auto; padding: 24px 22px 20px;
+  background: var(--surface, var(--paper)); color: var(--text, var(--ink));
+  border: 1px solid var(--border, var(--rule)); border-radius: var(--radius-ctl, var(--r-panel));
+  font-family: var(--sans, var(--font-body)); font-size: 0.875rem; line-height: 1.45;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.rc-head { text-align: center; padding-bottom: 16px; border-bottom: 1px dashed var(--border-strong, var(--rule-strong)); }
+.rc .rc-logo { height: 52px; width: auto; margin: 0 auto 8px; }
+.rc-club { font-family: var(--serif, var(--font-display)); font-size: 1.1875rem; font-weight: 500; line-height: 1.25; }
+.rc-addr { margin-top: 4px; font-size: 0.8125rem; color: var(--text-3, var(--ink-3)); }
+
+.rc-titlerow { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 16px; }
+.rc .rc-kind { margin: 0; font-family: var(--serif, var(--font-display)); font-size: 1.375rem; font-weight: 500; line-height: 1.2; color: var(--text, var(--ink)); }
+.rc-no { font-size: 0.8125rem; color: var(--text-2, var(--ink-2)); white-space: nowrap; }
+.rc-title { margin: 2px 0 0; color: var(--text-2, var(--ink-2)); overflow-wrap: anywhere; }
+
+.rc-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0 0; }
+.rc-meta dt { font-size: 0.75rem; color: var(--text-3, var(--ink-3)); }
+.rc-meta dd { margin: 0; font-weight: 500; overflow-wrap: anywhere; }
+
+.rc-lines { width: 100%; margin-top: 14px; border-collapse: collapse; border-top: 1px dashed var(--border-strong, var(--rule-strong)); }
+.rc-lines th { padding: 10px 0 4px; font-size: 0.75rem; font-weight: 500; color: var(--text-3, var(--ink-3)); text-align: left; }
+.rc-lines td { padding: 6px 0; vertical-align: top; }
+.rc-lines .rc-qty { width: 1%; padding-right: 10px; white-space: nowrap; color: var(--text-2, var(--ink-2)); }
+.rc-lines .rc-item { overflow-wrap: anywhere; }
+.rc-lines .rc-amt { width: 1%; padding-left: 12px; text-align: right; white-space: nowrap; }
+.rc-sub { display: block; font-size: 0.75rem; color: var(--text-3, var(--ink-3)); }
+.rc-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+.rc-total, .rc-pay { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.rc-total { margin-top: 8px; padding-top: 10px; border-top: 1px dashed var(--border-strong, var(--rule-strong)); font-weight: 500; }
+.rc-total strong { font-family: var(--serif, var(--font-display)); font-size: 1.25rem; font-weight: 500; }
+.rc-pay { margin-top: 6px; color: var(--text-2, var(--ink-2)); }
+.rc-pay span:last-child { text-align: right; color: var(--text, var(--ink)); }
+.rc-note { margin: 12px 0 0; font-size: 0.8125rem; color: var(--text-2, var(--ink-2)); overflow-wrap: anywhere; }
+.rc-foot { margin: 16px 0 0; padding-top: 12px; border-top: 1px dashed var(--border-strong, var(--rule-strong)); text-align: center; font-size: 0.75rem; color: var(--text-3, var(--ink-3)); }
+
+@media (max-width: 480px) {
+  .rc { padding: 20px 16px 16px; }
+  .rc-modal .modal-body .rc { border: 0; padding: 4px 0 0; }
+}
+
+@media print {
+  @page { margin: 14mm; }
+  body.rc-printing { background: none !important; padding: 0 !important; overflow: visible !important; height: auto !important; }
+  /* Everything but the receipt's overlay: the app shell, other modals and drawers, toasts, popovers. Specific enough to
+     beat the portal statement's print rules (css/portal/account.css hides every .overlay). */
+  body.rc-printing > *:not(.rc-overlay) { display: none !important; }
+  html body.rc-printing > .overlay.rc-overlay.rc-overlay { display: block !important; position: static !important; inset: auto !important; background: none !important; padding: 0 !important; animation: none !important; }
+  body.rc-printing .rc-overlay > .modal { width: auto !important; max-height: none !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; background: none !important; animation: none !important; }
+  body.rc-printing .rc-overlay > .modal::before, body.rc-printing .rc-overlay .modal-head, body.rc-printing .rc-overlay .modal-foot { display: none !important; }
+  body.rc-printing .rc-overlay .modal-body { overflow: visible !important; padding: 0 !important; }
+  body.rc-printing .rc { width: 100%; max-width: 420px; border: 0; padding: 0; background: none; break-inside: avoid; page-break-inside: avoid; }
+}

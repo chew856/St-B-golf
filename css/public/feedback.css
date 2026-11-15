@@ -1,0 +1,35 @@
+/* ==========================================================================
+   Public site: Rate your visits on My account (js/public/feedback.js). Same card as the members' portal
+   (Club.feedback.cardHTML, styled in css/portal/feedback.css); here with the public site's tokens (css/theme.css).
+   ========================================================================== */
+.pfb .panel-body { padding: var(--s4); }
+.pfb-intro { margin: 0 0 var(--s3); font-size: var(--fs-15); line-height: 1.5; color: var(--ink-2); }
+.pfb .vf-list { display: grid; gap: var(--s3); }
+.pfb .vf-card { border: 1px solid var(--rule); border-radius: var(--r-panel); background: var(--paper); padding: 14px 16px 16px; }
+.pfb .vf-head { display: flex; align-items: flex-start; gap: 12px; }
+.pfb .vf-icon { width: 36px; height: 36px; flex: none; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--brass-tint); color: var(--brass-ink); }
+.pfb .vf-icon svg { width: 20px; height: 20px; }
+.pfb .vf-what { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.pfb .vf-when { font-size: var(--fs-13); color: var(--ink-3); }
+.pfb .vf-card .vf-title { margin: 1px 0 0; font-family: var(--font-body); font-size: 1rem; font-weight: 600; line-height: 1.35; color: var(--ink); }
+.pfb .vf-sub { font-size: var(--fs-13); color: var(--ink-2); overflow-wrap: anywhere; }
+.pfb .vf-tag { flex: none; display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px 2px 6px; border-radius: var(--r-round); background: var(--moss-tint); color: var(--moss); font-size: var(--fs-13); font-weight: 600; }
+.pfb .vf-tag svg { width: 14px; height: 14px; }
+.pfb .vf-q { margin: 14px 0 8px; font-size: var(--fs-15); font-weight: 600; color: var(--ink); }
+.pfb .vf-scale { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.pfb .vf-n { min-height: 48px; padding: 0; border: 1px solid var(--rule-strong); border-radius: var(--r-control); background: var(--paper); color: var(--ink); font: 600 1.0625rem/1 var(--font-body); font-variant-numeric: tabular-nums; cursor: pointer; transition: background var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease); }
+@media (hover: hover) { .pfb .vf-n:hover { border-color: var(--green); background: var(--hover); } }
+.pfb .vf-n:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+.pfb .vf-n.is-below { background: var(--green-tint); border-color: var(--rule-strong); color: var(--green); }
+.pfb .vf-n.is-on { background: var(--green); border-color: var(--green); color: var(--on-night); }
+.pfb .vf-ends { display: flex; justify-content: space-between; margin-top: 4px; font-size: var(--fs-13); color: var(--ink-3); }
+.pfb .vf-status { margin: 8px 0 0; font-size: var(--fs-13); line-height: 1.45; color: var(--moss); }
+.pfb .vf-status:empty { display: none; }
+.pfb .vf-comment { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--rule); }
+.pfb .vf-cl { display: block; margin-bottom: 6px; font-size: var(--fs-13); font-weight: 600; color: var(--ink-2); }
+.pfb .vf-cl span { font-weight: 400; color: var(--ink-3); }
+.pfb .vf-ta { width: 100%; min-height: 72px; resize: vertical; font-size: 1rem; }
+.pfb .vf-cacts { display: flex; justify-content: flex-end; margin-top: 8px; }
+.pfb .vf-cacts .btn { min-height: 44px; }
+@media (prefers-reduced-motion: reduce) { .pfb .vf-n { transition: none; } }
+@media (max-width: 360px) { .pfb .vf-scale { gap: 4px; } }

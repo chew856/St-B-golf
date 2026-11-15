@@ -1,0 +1,9 @@
+{
+  "name": "st-boniface-webkit-tests",
+  "private": true,
+  "description": "Playwright WebKit tests for the St. Boniface site. Not part of the site or its build.",
+  "type": "module",
+  "devDependencies": {
+    "playwright": "1.48.2"
+  }
+}

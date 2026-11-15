@@ -1,0 +1,391 @@
+/* ==========================================================================
+   Public site theme (public.html only). Loaded last.
+
+   Matches the members' portal (css/portal-theme.css): the same forest and sage
+   palette, Inter for text and Lora for titles and display numbers, soft rounded
+   cards, sentence-case labels and no brass. Everything is scoped to body.public,
+   so the staff system and the portal are unaffected. The public stylesheets'
+   token names (night, brass, linen...) are remapped onto this palette, so their
+   components follow it; the rules further down remove the brass ornament.
+   ========================================================================== */
+
+body.public {
+  /* ---------- Brand (same values as the portal) ---------- */
+  --forest-950: #101E17;
+  --forest-900: #14261D;
+  --forest-800: #1C3326;
+  --forest-700: #27442F;
+  --forest-500: #4E6B57;
+  --sage-200: #D5DED5;
+  --sage-100: #E6ECE5;
+  --sage-50:  #EFF3EE;
+
+  /* ---------- Surfaces and text ---------- */
+  --bg: #F2F4F1;
+  --surface: #FAFBF9;
+  --border: #E0E5DF;
+  --border-strong: #C8D0C7;
+  --text: #16201A;
+  --text-2: #4F5A53;
+  --text-3: #66716A;
+  --on-dark: #F3F6F2;
+  --on-dark-2: rgba(243, 246, 242, 0.72);
+  --on-dark-line: rgba(243, 246, 242, 0.14);
+  --on-dark-ring: rgba(243, 246, 242, 0.32);
+  --danger: #9B2C2C;
+  --danger-tint: #F4E9E7;
+  --warn: #8A5A12;
+
+  /* ---------- Shape, depth, motion ---------- */
+  --radius-card: 14px;
+  --radius-ctl: 10px;
+  --shadow-card: 0 1px 2px rgba(16, 30, 23, 0.04), 0 4px 12px rgba(16, 30, 23, 0.04);
+  --shadow-thumb: 0 1px 2px rgba(16, 30, 23, 0.08), 0 2px 6px rgba(16, 30, 23, 0.08);
+  --shadow-sheet: 0 -8px 32px rgba(16, 30, 23, 0.18);
+  --shadow-pop: 0 1px 2px rgba(16, 30, 23, 0.04), 0 12px 28px rgba(16, 30, 23, 0.12);
+  --ease-ui: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --t-ui: 180ms;
+
+  /* ---------- Type ---------- */
+  --serif: "Lora", "Newsreader", Georgia, serif;
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  /* ---------- Public token names mapped onto this palette ---------- */
+  --night: var(--forest-950);  --night-2: var(--forest-900);  --night-3: var(--forest-800);
+  --green: var(--forest-800);  --green-2: var(--forest-700);  --green-tint: var(--sage-100);
+  --brass: var(--forest-500);  --brass-ink: var(--forest-500); --brass-soft: var(--on-dark); --brass-tint: var(--sage-50);
+  --linen: var(--bg);  --paper: var(--surface);  --parchment: var(--border);  --hover: var(--sage-50);
+  --rule: var(--border);  --rule-strong: var(--border-strong);
+  --ink: var(--text);  --ink-2: var(--text-2);  --ink-3: var(--text-3);
+  --on-night: var(--on-dark);  --on-night-2: var(--on-dark-2);
+  --moss: var(--forest-800);  --moss-tint: var(--sage-100);
+  --ochre: var(--warn);  --ochre-tint: var(--sage-50);
+  --oxblood: var(--danger);  --oxblood-tint: var(--danger-tint);
+  --slate: var(--forest-500);  --slate-tint: var(--sage-50);
+  --r-control: var(--radius-ctl); --r-panel: var(--radius-card);
+  --font-display: var(--serif);
+  --font-body: var(--sans);
+  --shadow-overlay: var(--shadow-sheet);
+
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 1rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+body.public ::selection { background: var(--sage-100); color: var(--text); }
+body.public a { color: var(--forest-800); }
+@media (hover: hover) { body.public a:hover { text-decoration-color: var(--forest-500); } }
+
+/* ---------- Type roles: serif for titles and display numbers, Inter for everything else ---------- */
+body.public h1, body.public h2 { font-family: var(--serif); font-weight: 500; color: var(--text); letter-spacing: -0.005em; text-transform: none; }
+body.public h3, body.public h4 { font-family: var(--sans); font-weight: 500; color: var(--text); letter-spacing: normal; text-transform: none; }
+body.public strong, body.public b, body.public th { font-weight: 500; }
+body.public .serif { font-family: var(--sans); font-style: normal; }
+body.public em, body.public i { font-style: normal; }
+body.public .pub-rate-amt, body.public .pub-band-rate, body.public .pub-fees-total, body.public .pub-sel-time,
+body.public .pub-ticket-time, body.public .pub-order-time .serif, body.public .pub-receipt-amt, body.public .join-dues-amt,
+body.public .join-pos-n, body.public .gp-bal-amt, body.public .gcv-amt { font-family: var(--serif); font-weight: 500; font-variant-numeric: lining-nums tabular-nums; }
+body.public .muted { color: var(--text-2); }
+body.public .eyebrow, body.public .label-caps { font-family: var(--sans); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--forest-500); }
+body.public .btn, body.public .tab, body.public .segmented button, body.public .badge, body.public .field label, body.public .table th { text-transform: none; letter-spacing: normal; }
+/* No italics anywhere: the portal keeps every line upright */
+body.public .pub-hero-lead, body.public .pub-sig-copy, body.public .pub-auth-intro .serif, body.public .pub-page-head .serif,
+body.public .pub-ticket-sign, body.public .pub-receipt-foot, body.public .pub-land, body.public .join-done-lead,
+body.public .gcv-msg, body.public .to-card-notes { font-style: normal; font-family: var(--sans); }
+
+/* ---------- Focus and motion ---------- */
+body.public :focus-visible { outline: 2px solid var(--forest-700); outline-offset: 2px; box-shadow: none; }
+body.public a, body.public button, body.public .btn { transition: background-color var(--t-ui) var(--ease-ui), border-color var(--t-ui) var(--ease-ui), color var(--t-ui) var(--ease-ui), box-shadow var(--t-ui) var(--ease-ui); }
+
+/* ---------- Surfaces ---------- */
+body.public .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
+body.public .panel-head { border-bottom: 1px solid var(--border); }
+body.public .panel-head h3 { font-size: 1.0625rem; font-weight: 500; }
+body.public .divider, body.public .divider.brass { background: var(--border); }
+
+/* ---------- Buttons ---------- */
+body.public .btn { font-family: var(--sans); font-weight: 500; font-size: 0.9375rem; min-height: 44px; padding: 0 18px; border-radius: var(--radius-ctl); background: var(--surface); color: var(--text); border: 1px solid var(--border-strong); gap: 8px; box-shadow: none; }
+@media (hover: hover) { body.public .btn:hover { background: var(--sage-50); border-color: var(--forest-500); text-decoration: none; } }
+body.public .btn-primary, body.public .btn-brass { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); font-weight: 600; }
+@media (hover: hover) { body.public .btn-primary:hover, body.public .btn-brass:hover { background: var(--forest-700); border-color: var(--forest-700); color: var(--on-dark); } }
+body.public .btn-ghost { background: transparent; border-color: transparent; color: var(--forest-800); }
+@media (hover: hover) { body.public .btn-ghost:hover { background: var(--sage-50); border-color: transparent; } }
+body.public .btn-danger { color: var(--danger); border-color: var(--border-strong); background: var(--surface); }
+body.public .btn-sm { min-height: 40px; font-size: 0.875rem; padding: 0 14px; }
+body.public .btn[disabled], body.public .btn:disabled { opacity: 1; background: var(--sage-50); color: var(--text-3); border-color: var(--border); }
+body.public .pub-link { color: var(--forest-800); text-decoration-color: var(--border-strong); }
+@media (hover: hover) { body.public .pub-link:hover { text-decoration-color: var(--forest-800); } }
+
+/* ---------- Forms ---------- */
+body.public .field label { font-size: 0.875rem; font-weight: 500; color: var(--text-2); }
+body.public .input, body.public .select, body.public .textarea { min-height: 48px; font-size: 1rem; border: 1px solid var(--border-strong); border-radius: var(--radius-ctl); background-color: var(--surface); color: var(--text); font-family: var(--sans); }
+body.public .input:focus, body.public .select:focus, body.public .textarea:focus { border-color: var(--forest-700); box-shadow: none; outline: 2px solid var(--forest-700); outline-offset: 1px; }
+body.public .input.invalid, body.public .select.invalid { border-color: var(--danger); }
+body.public .field-error { font-size: 0.875rem; color: var(--danger); font-weight: 500; }
+body.public .check input { accent-color: var(--forest-800); }
+body.public .toggle span { background: var(--border-strong); }
+body.public .toggle input:checked + span { background: var(--forest-800); }
+
+/* ---------- Tabs and segmented controls ---------- */
+body.public .tabs { border-bottom: 1px solid var(--border); }
+body.public .tab { font-size: 0.9375rem; font-weight: 500; color: var(--text-2); }
+body.public .tab.active { color: var(--text); }
+body.public .tab-ink { height: 2px; background: var(--forest-800); }
+body.public .segmented { background: var(--sage-100); border: 0; border-radius: var(--radius-ctl); padding: 3px; gap: 2px; }
+body.public .segmented button { font-size: 0.875rem; font-weight: 500; color: var(--text-2); border-radius: 8px; background: transparent; }
+body.public .segmented button.active, body.public .segmented button[aria-pressed="true"], body.public .segmented button[aria-checked="true"] { background: var(--surface); color: var(--text); box-shadow: var(--shadow-thumb); }
+
+/* ---------- Badges, avatars, tables, icons ---------- */
+body.public .badge { font-family: var(--sans); font-size: 0.8125rem; font-weight: 500; padding: 3px 10px; border-radius: 999px; background: var(--sage-100); color: var(--forest-800); border: 0; }
+body.public .badge::before { display: none; }
+body.public .badge.good, body.public .badge.brass, body.public .badge.dark, body.public .badge.info { background: var(--sage-100); color: var(--forest-800); }
+body.public .badge.warn { background: var(--sage-50); color: var(--warn); }
+body.public .badge.bad { background: var(--danger-tint); color: var(--danger); }
+body.public .badge.plain, body.public .badge.outline { background: var(--surface); color: var(--text-2); border: 1px solid var(--border); }
+body.public .avatar { background: var(--forest-800); color: var(--on-dark); border: 0; font-family: var(--serif); font-weight: 500; }
+body.public .table th { font-size: 0.8125rem; font-weight: 500; color: var(--text-2); background: transparent; border-color: var(--border); }
+body.public .table td { border-color: var(--border); }
+body.public .empty svg { color: var(--forest-500); }
+body.public svg.icon { stroke-width: 1.5; }
+
+/* ---------- Dialogs, sheets, toasts ---------- */
+body.public .overlay { background: rgba(16, 30, 23, 0.42); }
+body.public .modal, body.public .drawer { background: var(--surface); border-top: 0; border-radius: var(--radius-card); box-shadow: var(--shadow-sheet); }
+body.public .drawer { border-left: 1px solid var(--border); border-radius: 0; }
+body.public .modal-head h3, body.public .drawer .modal-head h3 { font-family: var(--serif); font-size: 1.375rem; font-weight: 500; }
+body.public .modal-foot { background: var(--surface); border-top: 1px solid var(--border); }
+body.public .toast { background: var(--forest-950); color: var(--on-dark); border-left: 0; border-radius: var(--radius-ctl); font-size: 0.9375rem; }
+body.public .toast svg { color: var(--on-dark); }
+@media (max-width: 768px) { body.public .modal { border-radius: 18px 18px 0 0; } }
+
+/* ==========================================================================
+   Public pages
+   ========================================================================== */
+
+/* ---------- Header: forest bar, serif name, PUBLIC GOLF eyebrow, sentence-case links ---------- */
+body.public .pub-header { background: var(--forest-950); border-bottom: 0; }
+body.public .pub-header .pub-crest.stb-logo { color: var(--on-dark); height: 30px; }
+body.public .pub-crest.stb-logo.sm, body.public .pub-crest.stb-logo.lg { color: var(--forest-500); }
+body.public .pub-brand-name { font-family: var(--serif); font-weight: 500; font-size: 1.25rem; line-height: 1.1; letter-spacing: normal; color: var(--on-dark); }
+body.public .pub-brand-sub { font-family: var(--sans); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.12em; color: var(--on-dark-2); margin-top: 3px; }
+body.public .pub-me .btn-ghost { color: var(--on-dark); }
+@media (hover: hover) { body.public .pub-me .btn-ghost:hover { background: var(--forest-800); color: var(--on-dark); } }
+/* Create account sits on the dark bar, so it is the light button (as the EN | FR switch's pressed option) */
+body.public .pub-me .btn-brass, body.public .pub-me .btn-primary { background: var(--on-dark); border-color: var(--on-dark); color: var(--forest-950); }
+@media (hover: hover) { body.public .pub-me .btn-brass:hover, body.public .pub-me .btn-primary:hover { background: var(--sage-100); border-color: var(--sage-100); color: var(--forest-950); } }
+body.public .pub-me-btn { border: 0; padding: 0; min-height: 44px; gap: 6px; background: none; }
+body.public .pub-me-btn .avatar { width: 36px; height: 36px; background: transparent; color: var(--on-dark); box-shadow: inset 0 0 0 1px var(--on-dark-ring); }
+body.public .pub-me-name { color: var(--on-dark); font-weight: 500; font-size: 0.9375rem; }
+@media (hover: hover) { body.public .pub-me-btn:hover .avatar { box-shadow: inset 0 0 0 1px var(--on-dark); } }
+body.public .pub-menu-btn { border-color: var(--on-dark-ring); border-radius: var(--radius-ctl); color: var(--on-dark); }
+body.public .i18n-switch { border-color: var(--on-dark-ring); }
+body.public .i18n-opt { letter-spacing: 0.08em; text-indent: 0.08em; }
+body.public .i18n-row .i18n-switch { border-color: var(--border-strong); }
+body.public .pub-menu a, body.public .pub-menu button { color: var(--text); border-color: var(--border); }
+body.public .pub-menu svg { color: var(--forest-500); }
+@media (min-width: 880px) {
+  body.public .pub-header-inner { height: 64px; }
+  body.public .pub-nav a { color: var(--on-dark-2); font-size: 0.9375rem; font-weight: 500; letter-spacing: normal; text-transform: none; }
+  body.public .pub-nav a.active, body.public .pub-nav .pub-nav-members { color: var(--on-dark); }
+  @media (hover: hover) { body.public .pub-nav a:hover { color: var(--on-dark); } }
+  body.public .pub-nav a.active::after { background: var(--on-dark); }
+  body.public .pub-more-btn { color: var(--on-dark-2); font: 500 0.9375rem var(--sans); letter-spacing: normal; text-transform: none; }
+  body.public .pub-more-btn[aria-expanded="true"], body.public .pub-more.has-active .pub-more-btn { color: var(--on-dark); }
+  body.public .pub-more-pop { background: var(--surface); border-color: var(--border-strong); border-radius: var(--radius-ctl); box-shadow: var(--shadow-pop); }
+  body.public .pub-nav .pub-more-pop a { color: var(--text); font-size: 0.9375rem; border-radius: 8px; }
+  @media (hover: hover) { body.public .pub-nav .pub-more-pop a:hover { background: var(--sage-50); color: var(--text); } }
+  body.public .pub-nav .pub-more-pop a.active, body.public .pub-nav .pub-more-pop .pub-nav-members { color: var(--forest-800); font-weight: 600; }
+}
+
+/* ---------- Hero: deep forest panel, no brass frame, crest watermark kept ---------- */
+body.public .pub-hero { background: var(--forest-950); color: var(--on-dark); border-radius: var(--radius-card); }
+body.public .pub-hero::before { display: none; }
+body.public .pub-hero::after { background: var(--forest-800); opacity: 1; }
+body.public .pub-hero .eyebrow { color: var(--on-dark-2); }
+body.public .pub-hero h1 { color: var(--on-dark); font-size: clamp(2rem, 5vw, 2.875rem); line-height: 1.15; }
+body.public .pub-hero-lead { color: var(--on-dark-2); font-size: 1.0625rem; line-height: 1.55; }
+body.public .pub-hero-actions .btn { min-height: 48px; }
+body.public .pub-hero .btn-brass, body.public .pub-hero .btn-primary { background: var(--on-dark); border-color: var(--on-dark); color: var(--forest-950); }
+@media (hover: hover) { body.public .pub-hero .btn-brass:hover, body.public .pub-hero .btn-primary:hover { background: var(--sage-100); border-color: var(--sage-100); color: var(--forest-950); } }
+body.public .pub-btn-night { background: transparent; color: var(--on-dark); border-color: var(--on-dark-ring); }
+@media (hover: hover) { body.public .pub-btn-night:hover { background: var(--forest-800); color: var(--on-dark); border-color: var(--on-dark-ring); } }
+body.public .pub-rates { background: var(--forest-900); border: 1px solid var(--on-dark-line); border-radius: 12px; }
+body.public .pub-rates .label-caps { color: var(--on-dark-2); }
+body.public .pub-rates li { border-bottom-color: var(--on-dark-line); }
+body.public .pub-rate-name { color: var(--on-dark); font-weight: 500; }
+body.public .pub-rate-amt { color: var(--on-dark); font-size: 1.875rem; }
+@media (max-width: 768px) {
+  body.public .pub-rates { background: transparent; border: 0; border-top: 1px solid var(--on-dark-line); border-radius: 0; }
+  body.public .pub-hero .eyebrow, body.public .pub-rates .label-caps { font-size: 0.6875rem; }
+  body.public .pub-page .pub-hero h1 { font-size: 1.625rem; }
+  body.public .pub-hero-lead { font-size: 0.875rem; }
+  body.public .pub-rate-amt { font-size: 1.375rem; }
+}
+
+/* ---------- Booking: steps, day strip, time cards ---------- */
+body.public .pub-book-head h2 { font-size: 1.75rem; }
+body.public .pub-steps { border-bottom-color: var(--border); }
+body.public .pub-steps button { font-size: 0.875rem; font-weight: 500; letter-spacing: normal; text-transform: none; color: var(--text-3); }
+body.public .pub-steps li.active button { color: var(--text); }
+body.public .pub-steps li.active button::after { background: var(--forest-800); }
+body.public .pub-steps li.done button { color: var(--forest-800); }
+body.public .pub-step-n { font-size: 0.8125rem; font-weight: 500; }
+body.public .pub-steps li.active .pub-step-n { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); }
+
+body.public .pub-day { border-color: var(--border); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow-card); }
+@media (hover: hover) { body.public .pub-day:hover { border-color: var(--forest-500); } }
+body.public .pub-day-wk, body.public .pub-day-mo { font-size: 0.75rem; font-weight: 500; letter-spacing: normal; text-transform: none; color: var(--text-2); }
+body.public .pub-day-n { font-size: 1.625rem; font-weight: 500; color: var(--text); }
+body.public .pub-day-lab { font-size: 0.75rem; color: var(--forest-800); }
+body.public .pub-day.is-none .pub-day-n, body.public .pub-day.is-none .pub-day-lab { color: var(--text-3); }
+body.public .pub-day-hol { background: var(--sage-100); color: var(--forest-800); border-color: var(--border-strong); font-size: 0.6875rem; letter-spacing: normal; text-transform: none; font-weight: 500; }
+body.public .pub-day.active { background: var(--forest-800); border-color: var(--forest-800); }
+body.public .pub-day.active .pub-day-wk, body.public .pub-day.active .pub-day-mo, body.public .pub-day.active .pub-day-lab { color: var(--on-dark-2); }
+body.public .pub-day.active .pub-day-n { color: var(--on-dark); }
+body.public .pub-day.has-mine::after { background: var(--forest-500); }
+body.public .pub-day.active.has-mine::after { background: var(--on-dark); }
+body.public .pub-strip-note svg { color: var(--forest-500); }
+
+body.public .pub-times { border-color: var(--border); box-shadow: var(--shadow-card); }
+body.public .pub-times-head h3 { font-family: var(--serif); font-size: 1.375rem; }
+body.public .pub-wx svg { color: var(--forest-500); }
+body.public .pub-hol-note { background: var(--sage-50); color: var(--forest-800); }
+body.public .pub-band + .pub-band { border-top-color: var(--border); }
+body.public .pub-band-name { font-size: 0.75rem; font-weight: 500; letter-spacing: 0.08em; color: var(--forest-500); }
+body.public .pub-band-rate { color: var(--text); }
+body.public .pub-chip { border-color: var(--border-strong); border-radius: var(--radius-ctl); background: var(--surface); }
+@media (hover: hover) { body.public .pub-chip:hover { border-color: var(--forest-500); background: var(--sage-50); } }
+body.public .pub-chip-t { font-size: 1.125rem; font-weight: 500; color: var(--text); }
+body.public .pub-chip-t small { letter-spacing: normal; }
+body.public .pub-chip-amt { font-size: 1.0625rem; font-weight: 500; color: var(--text); }
+body.public .pub-chip-p, body.public .pub-chip-rate { color: var(--forest-800); }
+body.public .pub-chip.st-mine { border-color: var(--forest-500); background: var(--sage-50); }
+body.public .pub-chip.st-mine .tee-head { color: var(--forest-500); }
+body.public .pub-chip.selected { background: var(--forest-800); border-color: var(--forest-800); }
+body.public .pub-chip.selected .pub-chip-price { border-top-color: var(--on-dark-line); }
+
+/* ---------- Players, add-ons, fees ---------- */
+body.public .pub-sel { border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
+body.public .pub-sel-time, body.public .pub-sel-day { color: var(--text); }
+body.public .pub-join { background: var(--sage-50); border-radius: var(--radius-card); }
+body.public .pub-join svg { color: var(--forest-500); }
+body.public .pub-pl { border-bottom-color: var(--border); }
+body.public .pub-pl-n { border-color: var(--border-strong); color: var(--forest-800); font-weight: 500; }
+body.public .pub-walk { font-size: 0.8125rem; letter-spacing: normal; text-transform: none; }
+body.public .pub-add-btn { border-color: var(--border-strong); color: var(--forest-800); border-radius: var(--radius-ctl); }
+@media (hover: hover) { body.public .pub-add-btn:hover { border-color: var(--forest-500); background: var(--sage-50); } }
+body.public .pub-addon-price { color: var(--text-2); }
+@media (hover: hover) { body.public .pub-addon-chip:hover { border-color: var(--forest-500); } }
+body.public .pub-addon-chip.on { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); }
+@media (hover: hover) { body.public .pub-qty-b:hover:not([disabled]) { background: var(--sage-50); } }
+body.public .pub-fees-card { background: var(--sage-50); border-color: var(--border); }
+body.public .pub-fees-total { color: var(--text); font-size: 1.75rem; }
+body.public .pub-fees-sum { border-top-color: var(--border-strong); }
+
+/* ---------- Payment, confirmation ---------- */
+body.public .pub-secure { font-size: 0.8125rem; font-weight: 500; letter-spacing: normal; text-transform: none; color: var(--forest-800); }
+body.public .pub-card-opt { border-color: var(--border-strong); border-radius: var(--radius-ctl); }
+@media (hover: hover) { body.public .pub-card-opt:hover { border-color: var(--forest-500); } }
+body.public .pub-card-opt:has(input:checked) { border-color: var(--forest-800); background: var(--sage-50); }
+body.public .pub-card-opt-t { font-weight: 500; color: var(--text); }
+body.public .pub-mark { border-color: var(--border); border-radius: 6px; }
+body.public .pub-ticket { border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
+body.public .pub-ticket::before { display: none; }
+body.public .pub-ticket-time { color: var(--text); }
+body.public .pub-ticket-pl li { border-bottom-color: var(--border); }
+body.public .pub-ticket-pl .serif { font-size: 1rem; font-weight: 500; color: var(--text); }
+
+/* ---------- Good to know, auth, my bookings, account ---------- */
+body.public .pub-know h2, body.public .pub-sec-head h2 { font-size: 1.375rem; }
+body.public .pub-sig-yds > span { font-family: var(--sans); font-weight: 500; color: var(--text); }
+body.public .pub-sig-copy { font-size: 1rem; line-height: 1.6; }
+body.public .pub-remind-list li { border-bottom-color: var(--border); }
+body.public .pub-remind-list svg, body.public .pub-head-icon { color: var(--forest-500); }
+body.public .pub-remind-list strong { color: var(--text); font-weight: 500; }
+body.public .pub-auth-panel { border-top: 1px solid var(--border); }
+body.public .pub-auth-intro .serif, body.public .pub-page-head .serif { font-size: 1rem; color: var(--text-2); }
+body.public .pub-pw-eye.on { color: var(--forest-800); }
+body.public .pub-bk-date { border-right-color: var(--border); }
+body.public .pub-bk-wk, body.public .pub-bk-mo { font-size: 0.75rem; font-weight: 500; letter-spacing: normal; text-transform: none; color: var(--text-2); }
+body.public .pub-bk-n { font-weight: 500; color: var(--text); }
+body.public .pub-bk-time { font-size: 1.25rem; font-weight: 500; color: var(--text); }
+body.public .pub-bk-acts { border-top-color: var(--border); }
+body.public .pub-bk-lock { background: var(--sage-50); }
+body.public .pub-bk-adds svg { color: var(--forest-500); }
+body.public .pub-acc-sum strong { color: var(--text); }
+body.public .pub-rc-t, body.public .pub-rc-amt { color: var(--text); font-weight: 500; }
+body.public .pub-rc-amt small { letter-spacing: normal; text-transform: none; color: var(--forest-800); }
+body.public .pub-receipt-club, body.public .pub-receipt-amt, body.public .pub-receipt-kv dd { color: var(--text); }
+
+/* ---------- Footer: compact and quiet, as the portal's ---------- */
+body.public .pub-footer { border-top-color: var(--border); }
+body.public .pub-footer-inner { padding: var(--s5) var(--s4) var(--s6); color: var(--text-2); font-size: 0.875rem; line-height: 1.5; }
+body.public .pub-footer .flourish { display: none; }
+body.public .pub-footer-name { font-family: var(--sans); font-size: 1rem; font-weight: 500; color: var(--text); }
+body.public .pub-footer-est { font-size: 0.75rem; font-weight: 500; letter-spacing: 0.08em; color: var(--forest-500); }
+body.public .pub-footer a { color: var(--forest-800); }
+body.public .pub-social { letter-spacing: normal; }
+body.public .pub-land { font-size: 0.8125rem; color: var(--text-3); }
+
+/* ---------- Become a member ---------- */
+body.public .join-offer { background: var(--forest-900); border: 1px solid var(--on-dark-line); border-radius: 12px; }
+body.public .join-offer .label-caps { color: var(--on-dark-2); }
+body.public .join-offer li, body.public .join-offer-note { border-color: var(--on-dark-line); }
+body.public .join-offer-name, body.public .join-offer-t { color: var(--on-dark); }
+body.public .join-cat-age { color: var(--text-2); }
+body.public .join-step-n { background: var(--sage-100); color: var(--forest-800); font-weight: 500; }
+body.public .join-opt-tag, body.public .join-legend { letter-spacing: normal; text-transform: none; font-size: 0.8125rem; }
+@media (hover: hover) { body.public .join-opt:hover { border-color: var(--forest-500); background: var(--sage-50); } }
+body.public .join-opt:focus-within { outline-color: var(--forest-700); }
+body.public .join-side-phone svg, body.public .join-done-crest { color: var(--forest-500); }
+
+/* ---------- Gift cards, takeout, feedback ---------- */
+body.public .gcv-face::after { border-color: var(--on-dark-line); opacity: 1; }
+body.public .gcv-kind, body.public .gcv-code-l, body.public .ckf-rv-t { letter-spacing: 0.08em; }
+body.public .gc-box.is-open, body.public .gp-bal-res { background: var(--sage-50); }
+@media (hover: hover) { body.public .gp-amt:hover { border-color: var(--forest-500); } }
+body.public .gp-amt { font-family: var(--sans); font-weight: 500; }
+body.public .gp-amt.active { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); }
+body.public .ckf-step:focus-visible { outline-color: var(--forest-700); }
+body.public .to-pizza { background: var(--forest-950); border-radius: var(--radius-card); }
+body.public .to-pizza .eyebrow { color: var(--on-dark-2); }
+body.public .to-pizza h3 { font-family: var(--serif); color: var(--on-dark); }
+body.public .to-pizza .to-add { background: var(--on-dark); border-color: var(--on-dark); color: var(--forest-950); }
+body.public .to-tag { letter-spacing: normal; text-transform: none; font-weight: 500; background: var(--sage-100); color: var(--forest-800); }
+@media (hover: hover) { body.public .to-secbtn:hover, body.public .to-day:hover:not(:disabled) { border-color: var(--forest-500); } }
+body.public .to-day.active { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); }
+body.public .to-day-n { font-family: var(--sans); font-weight: 500; }
+body.public .pfb .vf-icon { background: var(--sage-100); color: var(--forest-800); }
+
+/* ---------- Phones: keep the compact sizes from css/public.css (the rules above are sized for wider screens) ---------- */
+@media (max-width: 768px) {
+  body.public .pub-hero-actions .btn { min-height: 44px; font-size: 0.8125rem; gap: 6px; padding: 0 8px; }
+  body.public .pub-book-head h2 { font-size: 1.375rem; }
+  body.public .pub-steps button { font-size: 0.75rem; gap: 6px; }
+  body.public .pub-step-l { font-size: 0.6875rem; letter-spacing: normal; }
+  body.public .pub-step-n { font-size: 0.75rem; }
+  body.public .pub-day { border-radius: 10px; }
+  body.public .pub-day-wk, body.public .pub-day-mo { font-size: 0.6875rem; }
+  body.public .pub-day-n { font-size: 1.375rem; }
+  body.public .pub-day-lab { font-size: 0.625rem; }
+  body.public .pub-day-hol { font-size: 0.5625rem; }
+  body.public .pub-times-head h3 { font-size: 1.1875rem; }
+  body.public .pub-band-name { font-size: 0.6875rem; }
+  body.public .pub-fees-total { font-size: 1.375rem; }
+  body.public .pub-know h2, body.public .pub-sec-head h2 { font-size: 1.1875rem; }
+  body.public .pub-sig-copy, body.public .pub-auth-intro .serif, body.public .pub-page-head .serif { font-size: 0.875rem; }
+  body.public .pub-footer-inner { font-size: 0.8125rem; }
+}
+@media (max-width: 360px) {
+  body.public .pub-steps button { font-size: 0.6875rem; }
+}
+@media (max-width: 768px) {
+  /* Steps take the width their labels need, so "Day and time" stays on one line */
+  body.public .pub-steps { grid-auto-columns: max-content; justify-content: space-between; }
+  body.public .pub-steps button { white-space: nowrap; padding-left: 2px; padding-right: 2px; }
+}
+@media (max-width: 420px) {
+  body.public .pub-hero-actions .btn svg { display: none; }
+}

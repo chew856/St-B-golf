@@ -1,0 +1,63 @@
+/* Members' portal: Gift cards (js/portal/gifts.js). The card, the "Use a gift card" box and the pay panel come from the
+   public stylesheet; this file adds the portal page. */
+@import url("../public/gifts.css");
+
+body.portal .pg-cols { align-items: start; }
+body.portal .pg-form > * + * { margin-top: 16px; }
+body.portal .pg-flow .ckf-body > * + * { margin-top: 16px; }
+body.portal .pg-buy svg { width: 18px; height: 18px; }
+/* Checkout steps in the portal palette (the shared rules are in css/public/gifts.css). */
+body.portal .ckf-alert { border-radius: var(--radius-ctl); }
+body.portal .ckf-prog .is-current .ckf-pn { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); }
+body.portal .ckf-prog .is-done .ckf-pb, body.portal .ckf-prog .is-done .ckf-pn { color: var(--forest-800); border-color: var(--forest-800); }
+body.portal .ck-mopt-icon svg { color: var(--forest-800); }
+body.portal .pg-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 16px; }
+body.portal .pg-h { font-family: var(--sans); font-size: 1.0625rem; font-weight: 500; margin: 0 0 12px; }
+body.portal .gp-amt { border-radius: var(--radius-ctl); border-color: var(--border-strong); background: var(--surface); color: var(--text); font-family: var(--serif); }
+body.portal .gp-amt.active { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); }
+body.portal .gp-amt-other { font-family: var(--sans); }
+body.portal .pg-side .pk-label { display: block; margin-bottom: 8px; }
+body.portal .pg-preview .gcv { box-shadow: var(--shadow-card); }
+body.portal .gcv { border-radius: var(--radius-card); border-color: var(--border); }
+body.portal .gcv-face { background: var(--forest-900); }
+body.portal .gcv-kind, body.portal .gcv-crest.stb-logo { color: var(--on-dark-2); }
+body.portal .gcv-code { border-radius: var(--radius-ctl); background: var(--sage-50); }
+body.portal .gc-box.is-open, body.portal .gc-box.is-applied { border-radius: var(--radius-ctl); }
+body.portal .ck-alert { border-radius: var(--radius-ctl); }
+body.portal .ck-methods .segmented button { min-height: 44px; }
+body.portal .pg-done { align-items: start; }
+body.portal .pg-done-side h2 { margin: 0 0 8px; }
+body.portal .pg-done-acts { display: flex; flex-direction: column; align-items: stretch; gap: 8px; margin-top: 16px; }
+body.portal .pg-done-acts .btn { justify-content: center; min-height: 48px; }
+body.portal .pg-done-acts .p-link { align-self: center; }
+body.portal .pg-list + .pg-list { margin-top: 24px; }
+body.portal .pg-rows { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); overflow: hidden; }
+body.portal .pg-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 12px 16px; background: none; border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+body.portal .pg-row + .pg-row { border-top: 1px solid var(--border); }
+@media (hover: hover) { body.portal .pg-row:hover { background: var(--sage-50); } }
+body.portal .pg-row-icon { width: 40px; height: 40px; flex: none; border-radius: 50%; background: var(--sage-100); color: var(--forest-800); display: flex; align-items: center; justify-content: center; }
+body.portal .pg-row-icon svg { width: 20px; height: 20px; }
+body.portal .pg-row-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+body.portal .pg-row-t { font-weight: 500; color: var(--text); }
+body.portal .pg-row-s { font-size: 0.8125rem; color: var(--text-3); }
+body.portal .pg-row-bal { flex: none; text-align: right; font-variant-numeric: tabular-nums; color: var(--text); }
+body.portal .pg-row-bal small { display: block; font-size: 0.75rem; color: var(--text-3); }
+body.portal .pg-row-go { width: 18px; height: 18px; flex: none; color: var(--text-3); }
+body.portal .pg-sheet .gcv { margin-bottom: 16px; }
+body.portal .pg-kv { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 0 12px; }
+body.portal .pg-kv dt { font-size: 0.8125rem; color: var(--text-3); }
+body.portal .pg-kv dd { margin: 0; font-weight: 500; }
+body.portal .pg-hist { list-style: none; margin: 0 0 16px; padding: 0; }
+body.portal .pg-hist li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--border); font-size: 0.875rem; color: var(--text-2); }
+body.portal .pg-sheet-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+body.portal .pg-bal { max-width: 560px; }
+body.portal .gp-bal-res { border-radius: var(--radius-ctl); background: var(--sage-50); border-color: var(--border); }
+body.portal .gp-bal-amt { font-family: var(--serif); }
+@media (min-width: 1024px) {
+  body.portal .pg-side { position: sticky; top: 96px; }
+}
+@media (max-width: 1023px) {
+  body.portal .pg-preview .gcv { max-width: 360px; }
+}
+/* The header fits the Gift cards link from 1440px; below that it is in the phone tab bar's More list. */
+/* Header links that do not fit move into the More menu (fitNav in js/portal/app.js). */

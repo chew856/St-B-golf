@@ -1,0 +1,45 @@
+/* Staff: the takeout queue (js/modules/takeout.js), built for a phone or tablet at the Gallery pass. */
+.tq-paused { display: inline-flex; align-items: center; gap: 6px; color: var(--oxblood); font-weight: 600; }
+.tq-paused svg { width: 16px; height: 16px; }
+.tq-bar { display: flex; flex-wrap: wrap; gap: var(--s3); align-items: center; justify-content: space-between; margin-bottom: var(--s4); }
+.tq-days, .tq-tabs { display: flex; gap: var(--s2); overflow-x: auto; scrollbar-width: none; max-width: 100%; }
+.tq-days::-webkit-scrollbar, .tq-tabs::-webkit-scrollbar { display: none; }
+.tq-daybtn, .tq-tab { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 var(--s3); border: 1px solid var(--rule-strong); border-radius: var(--r-round); background: var(--paper); color: var(--ink-2); font: 500 var(--fs-13)/1 var(--font-body); cursor: pointer; white-space: nowrap; }
+.tq-daybtn.active, .tq-tab.active { background: var(--green); border-color: var(--green); color: var(--on-night); }
+.tq-n { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: var(--r-round); background: var(--brass-tint); color: var(--brass-ink); font-size: var(--fs-11); font-weight: 600; }
+.tq-daybtn.active .tq-n, .tq-tab.active .tq-n { background: var(--paper); color: var(--green); }
+.tq-grid { display: grid; gap: var(--s3); grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); align-items: start; }
+.tq-card { background: var(--paper); border: 1px solid var(--rule); border-radius: var(--r-panel); padding: var(--s4); transition: opacity var(--t-fast), transform var(--t-fast), border-color var(--t-fast); cursor: pointer; min-width: 0; }
+/* The whole card opens the order drawer (js/modules/takeout.js; drawer styles .od-* in css/modules/proshop.css). */
+@media (hover: hover) { .tq-card:hover { border-color: var(--rule-strong); } }
+.tq-card:focus-visible { outline: 2px solid var(--green-2); outline-offset: 2px; }
+.tq-card.is-soon { border-color: var(--ochre); box-shadow: inset 4px 0 0 var(--ochre); }
+.tq-card.is-late { border-color: var(--oxblood); box-shadow: inset 4px 0 0 var(--oxblood); }
+.tq-card.is-ready { box-shadow: inset 4px 0 0 var(--moss); }
+.tq-card.tq-leaving { opacity: 0.3; transform: scale(0.98); }
+.tq-head { display: flex; gap: var(--s3); align-items: flex-start; }
+.tq-when { flex: none; display: flex; flex-direction: column; align-items: center; min-width: 76px; padding: var(--s2); border-radius: var(--r-control); background: var(--brass-tint); }
+.tq-time { font-family: var(--font-display); font-size: var(--fs-18); color: var(--night); white-space: nowrap; }
+.tq-day { font-size: var(--fs-11); color: var(--ink-3); }
+.tq-who { flex: 1 1 auto; min-width: 0; }
+.tq-no { font-size: var(--fs-12); color: var(--ink-3); }
+.tq-name { font-weight: 600; color: var(--night); overflow-wrap: anywhere; }
+.tq-kind { font-weight: 400; font-size: var(--fs-11); color: var(--ink-3); }
+.tq-phone { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; font-size: var(--fs-13); }
+.tq-phone svg { width: 14px; height: 14px; }
+.tq-items { list-style: none; margin: var(--s3) 0 0; padding: 0; }
+.tq-items li { display: flex; gap: var(--s2); padding: 4px 0; border-top: 1px solid var(--rule); font-size: var(--fs-15); color: var(--ink); }
+.tq-qty { min-width: 26px; font-weight: 700; color: var(--green); }
+.tq-notes { display: flex; gap: var(--s2); margin: var(--s2) 0 0; padding: var(--s2) var(--s3); border-radius: var(--r-control); background: var(--ochre-tint); color: var(--ink); font-size: var(--fs-13); }
+.tq-notes svg { width: 16px; height: 16px; flex: none; color: var(--ochre); margin-top: 2px; }
+.tq-pay { display: flex; justify-content: space-between; gap: var(--s3); margin-top: var(--s3); font-size: var(--fs-13); }
+.tq-pay .num { font-weight: 600; color: var(--night); }
+.tq-pay .muted { text-align: right; }
+.tq-cancelled { margin: var(--s2) 0 0; font-size: var(--fs-13); color: var(--oxblood); }
+.tq-acts { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s3); }
+.tq-go { flex: 1 1 100%; min-height: 48px; justify-content: center; }
+.tq-cancel { color: var(--oxblood); }
+@media (max-width: 768px) {
+  .tq-grid { grid-template-columns: minmax(0, 1fr); }
+  .tq-bar { flex-direction: column; align-items: stretch; }
+}

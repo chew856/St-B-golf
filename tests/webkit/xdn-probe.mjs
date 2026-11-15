@@ -1,0 +1,13 @@
+import { webkit } from 'playwright';
+const b = await webkit.launch(); const c = await b.newContext({ viewport: { width: 1440, height: 1000 } });
+await c.clock.setFixedTime(new Date('2026-11-12T19:25:00'));
+const p = await c.newPage(); p.on('pageerror', e => console.log('ERR', e.message));
+await p.goto('http://localhost:8001/site/index.html#/dining/reservations'); await p.waitForTimeout(1500);
+const day = await p.evaluate(() => { const t = Club.date.today(); const r = Club.store.all('diningReservations').filter(r => r.date > t && r.date <= Club.date.addDays(t, 6) && r.status === 'confirmed' && !r.table && r.venue !== 'Banquet Hall').sort((a, b) => a.date.localeCompare(b.date))[0]; return r; });
+console.log(day);
+await p.click('.dn-day[data-date="' + day.date + '"]'); await p.waitForTimeout(300);
+await p.click('[data-svc="' + (day.time < '11:00' ? 'Breakfast' : day.time < '16:30' ? 'Lunch' : 'Dinner') + '"]'); await p.waitForTimeout(300);
+console.log(await p.locator('.dn-bk.unas').count());
+await p.click('.dn-bk[data-sel="' + day.id + '"]'); await p.waitForTimeout(300);
+console.log((await p.textContent('.dn-rs-side')).slice(0, 400));
+await b.close();

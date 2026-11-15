@@ -1,0 +1,12 @@
+import { webkit } from 'playwright';
+const b = await webkit.launch(); const S = await (await b.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
+const errs = []; S.on('pageerror', e => errs.push(e.message));
+await S.goto('http://localhost:8001/site/index.html#/proshop/register'); await S.waitForTimeout(1500);
+const prods = await S.evaluate(() => Club.store.all('products').filter(p => p.stock > 3).slice(0, 2).map(p => p.id));
+for (const id of [prods[0], prods[0], prods[1]]) await S.click('[data-add="' + id + '"]');
+const before = await S.evaluate(() => Club.store.all('sales').length);
+await S.evaluate(() => { for (const [sel, v] of [['#ps-member', 'mem_1003'], ['#ps-staff', document.querySelector('#ps-staff option[value]:not([value=""])').value]]) { const s = document.querySelector(sel); s.value = v; s.dispatchEvent(new Event('change', { bubbles: true })); } });
+await S.click('[data-action=complete]'); await S.waitForTimeout(800);
+const r = await S.evaluate((before) => { const all = Club.store.all('sales'); const sale = all.slice().sort((a, b) => b.number - a.number)[0]; const newest = all[all.length - 1];
+  return { count: all.length, before, sortedTop: { id: sale.id, number: sale.number, total: sale.total, date: sale.date }, newest: { id: newest.id, number: newest.number, total: newest.total, memberId: newest.memberId }, rc: Club.store.all('receipts').filter(x => x.refId === newest.id).map(x => ({ source: x.source, title: x.title, lines: x.lines.length, total: x.total })) }; }, before);
+console.log(JSON.stringify(r, null, 1), errs); await b.close();

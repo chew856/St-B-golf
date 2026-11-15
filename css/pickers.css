@@ -1,0 +1,59 @@
+/* Club.pickers (js/core/pickers.js): the app's own dropdown list and calendar in place of the browser's.
+   The visible button keeps the field's own classes (.select / .input), so it looks like the field it replaces.
+   Tokens: the staff and portal themes' (--surface, --forest-800 ...), falling back to theme.css on the public site. */
+.cs-native { position: absolute !important; width: 1px !important; height: 1px !important; margin: 0 !important; padding: 0 !important; border: 0 !important; opacity: 0 !important; pointer-events: none !important; clip-path: inset(50%) !important; }
+.cs-btn { display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; text-align: left; cursor: pointer; font: inherit; color: var(--text, var(--ink)); }
+.cs-btn[hidden] { display: none; }
+.cs-btn:disabled { cursor: default; opacity: 0.6; }
+.cs-btn .cs-val { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cs-btn .cs-val.is-empty { color: var(--text-3, var(--ink-3)); }
+.cs-date svg { width: 16px; height: 16px; flex: none; color: var(--text-2, var(--ink-2)); }
+.cs-time svg { width: 16px; height: 16px; flex: none; color: var(--text-2, var(--ink-2)); }
+/* datetime-local: the date and time side by side, stacking on narrow screens */
+.cs-dt { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 8px; width: 100%; }
+@media (max-width: 420px) { .cs-dt { grid-template-columns: 1fr; } }
+/* the run sheet's inline time cell keeps its compact width */
+.fn-rs-time.cs-btn, .cs-btn.fn-rs-time { width: auto; min-width: 7.5em; }
+.cs-btn[aria-expanded="true"] { border-color: var(--forest-700, var(--green)); outline: 2px solid var(--forest-700, var(--green)); outline-offset: 1px; }
+
+.cs-pop {
+  position: fixed; z-index: 190; overflow-y: auto; overscroll-behavior: contain; padding: 6px;
+  background: var(--surface, var(--paper)); color: var(--text, var(--ink));
+  border: 1px solid var(--border-strong, var(--rule-strong)); border-radius: var(--radius-ctl, var(--r-control));
+  box-shadow: var(--shadow-pop); font-family: var(--sans); font-size: 0.9375rem;
+}
+/* Search box at the top of long lists (Nov 12): stays put while the list scrolls under it. */
+.cs-pop.has-search { padding-top: 0; }
+.cs-search { position: sticky; top: 0; z-index: 1; margin: 0 -6px 4px; padding: 6px; background: var(--surface, var(--paper)); border-bottom: 1px solid var(--border, var(--rule)); }
+.cs-search .cs-search-in { width: 100%; min-height: 36px; font-size: 0.9375rem; }
+.cs-none { padding: 10px; color: var(--text-2, var(--ink-2)); font-size: 0.875rem; }
+.cs-opt[hidden], .cs-group[hidden], .cs-none[hidden] { display: none; }
+.cs-group { padding: 8px 10px 4px; font-size: 0.75rem; font-weight: 500; color: var(--text-3, var(--ink-3)); }
+.cs-opt { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 8px 10px; border-radius: 6px; cursor: pointer; line-height: 1.3; }
+.cs-opt.is-active { background: var(--sage-100, var(--parchment)); }
+.cs-opt.is-on { font-weight: 500; }
+.cs-opt.is-off { color: var(--text-3, var(--ink-3)); cursor: default; }
+.cs-tick { display: inline-flex; width: 16px; flex: none; color: var(--forest-800, var(--green)); }
+.cs-tick svg { width: 16px; height: 16px; visibility: hidden; }
+.cs-opt.is-on .cs-tick svg { visibility: visible; }
+
+.cs-cal { width: 288px; padding: 10px; overflow: visible; }
+.cs-cal-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.cs-cal-t { font-weight: 500; }
+.cs-nav { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: 0; border-radius: 8px; background: transparent; color: var(--text, var(--ink)); cursor: pointer; }
+@media (hover: hover) { .cs-nav:hover { background: var(--sage-100, var(--parchment)); } }
+.cs-nav svg { width: 18px; height: 18px; }
+.cs-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+.cs-cal-grid > span { padding: 4px 0; font-size: 0.75rem; color: var(--text-3, var(--ink-3)); }
+.cs-day { height: 36px; border: 0; border-radius: 8px; background: transparent; color: var(--text, var(--ink)); font: inherit; font-variant-numeric: tabular-nums; cursor: pointer; }
+@media (hover: hover) { .cs-day:hover:not(:disabled) { background: var(--sage-100, var(--parchment)); } }
+.cs-day.is-out { color: var(--text-3, var(--ink-3)); }
+.cs-day.is-today { box-shadow: inset 0 0 0 1px var(--border-strong, var(--rule-strong)); }
+.cs-day.is-active { box-shadow: inset 0 0 0 2px var(--forest-700, var(--green)); }
+.cs-day.is-on { background: var(--forest-800, var(--green)); color: var(--on-dark, var(--on-night)); font-weight: 500; }
+.cs-day:disabled { color: var(--text-3, var(--ink-3)); opacity: 0.45; cursor: default; }
+.cs-cal-foot { display: flex; justify-content: space-between; margin-top: 6px; }
+.cs-link { border: 0; background: transparent; padding: 8px 10px; border-radius: 8px; color: var(--forest-800, var(--green)); font: inherit; font-weight: 500; cursor: pointer; }
+@media (hover: hover) { .cs-link:hover:not(:disabled) { background: var(--sage-100, var(--parchment)); } }
+.cs-link:disabled { color: var(--text-3, var(--ink-3)); cursor: default; }
+@media (prefers-reduced-motion: no-preference) { .cs-pop { animation: cs-in 120ms ease-out; } @keyframes cs-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } } }

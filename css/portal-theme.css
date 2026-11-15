@@ -1,0 +1,366 @@
+/* ==========================================================================
+   Members' portal theme v2 (member.html only). Loaded last.
+
+   Refined, premium and easy to use: a quiet private-club look on a soft sage
+   "mist", framed in deep forest green. Everything is scoped to body.portal, so
+   the staff system and the public site are unaffected. Old token names are
+   remapped onto this palette, so existing components follow it.
+
+   Contrast (WCAG): --text on --surface 15.6:1, --text-2 on --surface 6.9:1,
+   --text-3 on --surface 5.0:1 (on --bg 4.7:1), --on-dark on --forest-950 16.2:1,
+   --on-dark-2 on --forest-950 9.0:1, --forest-500 on --surface 5.6:1,
+   --danger on --surface 7.4:1.
+   ========================================================================== */
+
+body.portal {
+  /* ---------- Brand ---------- */
+  --forest-950: #101E17;
+  --forest-900: #14261D;
+  --forest-800: #1C3326;
+  --forest-700: #27442F;
+  --forest-500: #4E6B57;
+  --sage-200: #D5DED5;
+  --sage-100: #E6ECE5;
+  --sage-50:  #EFF3EE;
+
+  /* ---------- Surfaces and text ---------- */
+  --bg: #F2F4F1;
+  --surface: #FAFBF9;
+  --border: #E0E5DF;
+  --border-strong: #C8D0C7;
+  --text: #16201A;
+  --text-2: #4F5A53;
+  --text-3: #66716A;
+  --on-dark: #F3F6F2;
+  --on-dark-2: rgba(243, 246, 242, 0.72);
+  --danger: #9B2C2C;
+  --warn: #8A5A12;
+
+  /* ---------- Shape, depth, motion ---------- */
+  --radius-card: 14px;
+  --radius-ctl: 10px;
+  --shadow-card: 0 1px 2px rgba(16, 30, 23, 0.04), 0 4px 12px rgba(16, 30, 23, 0.04);
+  --shadow-thumb: 0 1px 2px rgba(16, 30, 23, 0.08), 0 2px 6px rgba(16, 30, 23, 0.08);
+  --shadow-sheet: 0 -8px 32px rgba(16, 30, 23, 0.18);
+  --ease-ui: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --t-ui: 180ms;
+
+  /* ---------- Type ---------- */
+  --serif: "Lora", "Newsreader", Georgia, serif;
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  /* ---------- Aliases kept for page stylesheets from the previous pass ---------- */
+  --green-900: var(--forest-900); --green-800: var(--forest-800); --green-700: var(--forest-700);
+  --green-100: var(--sage-100); --green-50: var(--sage-50);
+  --bg-subtle: var(--bg); --text-secondary: var(--text-2); --text-disabled: var(--text-3);
+  --warning: var(--warn); --warning-bg: var(--sage-50); --danger-bg: #F4E9E7;
+  --info: var(--forest-500); --info-bg: var(--sage-50); --success: var(--forest-800);
+  --radius-btn: var(--radius-ctl);
+  --focus: 0 0 0 2px var(--bg), 0 0 0 4px var(--forest-700);
+
+  /* ---------- Original theme token names mapped onto this palette ---------- */
+  --night: var(--forest-950);  --night-2: var(--forest-900);  --night-3: var(--forest-800);
+  --green: var(--forest-800);  --green-2: var(--forest-700);  --green-tint: var(--sage-100);
+  --brass: var(--forest-500);  --brass-ink: var(--forest-500); --brass-soft: var(--on-dark); --brass-tint: var(--sage-50);
+  --linen: var(--bg);  --paper: var(--surface);  --parchment: var(--border);  --hover: var(--sage-50);
+  --rule: var(--border);  --rule-strong: var(--border-strong);
+  --ink: var(--text);  --ink-2: var(--text-2);  --ink-3: var(--text-3);
+  --on-night: var(--on-dark);  --on-night-2: var(--on-dark-2);
+  --moss: var(--forest-800);  --moss-tint: var(--sage-100);
+  --ochre: var(--warn);  --ochre-tint: var(--sage-50);
+  --oxblood: var(--danger);  --oxblood-tint: #F4E9E7;
+  --slate: var(--forest-500);  --slate-tint: var(--sage-50);
+  --c1: var(--forest-800); --c2: var(--forest-500); --c3: #8FA596; --c4: var(--forest-700); --c5: var(--sage-200); --c6: var(--danger);
+  --r-control: var(--radius-ctl); --r-panel: var(--radius-card);
+  --font-display: var(--serif);
+  --font-body: var(--sans);
+  --fs-11: 0.75rem; --fs-12: 0.8125rem; --fs-13: 0.875rem; --fs-15: 1rem; --fs-18: 1.0625rem;
+  --fs-24: 1.375rem; --fs-32: 1.375rem; --fs-44: 1.875rem; --fs-56: 1.875rem;
+
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 1rem;
+  line-height: 1.5;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Type roles ---------- */
+body.portal h1, body.portal h2 { font-family: var(--serif); font-weight: 500; color: var(--text); letter-spacing: -0.005em; text-transform: none; }
+body.portal h1 { font-size: 1.875rem; line-height: 1.2; }
+body.portal h2 { font-size: 1.375rem; line-height: 1.27; }
+body.portal h3, body.portal h4 { font-family: var(--sans); font-weight: 500; color: var(--text); letter-spacing: normal; text-transform: none; }
+body.portal h3 { font-size: 1.0625rem; line-height: 1.4; }
+body.portal h4 { font-size: 1rem; }
+body.portal strong, body.portal b, body.portal th { font-weight: 500; }
+body.portal .serif { font-family: var(--sans); font-style: normal; }          /* serif is reserved for titles and display numbers */
+body.portal em, body.portal i { font-style: normal; }
+body.portal .muted, body.portal .ink-2 { color: var(--text-2); }
+body.portal small, body.portal .person-sub, body.portal .field-hint, body.portal .stat-meta { font-size: 0.875rem; color: var(--text-2); }
+body.portal .num, body.portal time, body.portal td, body.portal .stat-value { font-variant-numeric: tabular-nums lining-nums; }
+/* Eyebrow: the one refined accent per section */
+body.portal .eyebrow, body.portal .label-caps { font-family: var(--sans); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--forest-500); }
+/* Everything else is sentence case with normal spacing */
+body.portal .btn, body.portal .tab, body.portal .segmented button, body.portal .badge, body.portal .field label,
+body.portal .p-nav a, body.portal .p-tabbar a, body.portal .p-tabbar button, body.portal .table th { text-transform: none; letter-spacing: normal; }
+/* No truncated text: wrap, or the page shows two lines with a "More" link */
+body.portal p, body.portal li, body.portal h1, body.portal h2, body.portal h3, body.portal h4, body.portal .person-name, body.portal .person-sub { white-space: normal; overflow-wrap: break-word; text-overflow: clip; }
+
+/* ---------- Focus and motion ---------- */
+body.portal :focus-visible { outline: 2px solid var(--forest-700); outline-offset: 2px; box-shadow: none; }
+body.portal a, body.portal button, body.portal .btn { transition: background-color var(--t-ui) var(--ease-ui), border-color var(--t-ui) var(--ease-ui), color var(--t-ui) var(--ease-ui), box-shadow var(--t-ui) var(--ease-ui); }
+@media (prefers-reduced-motion: reduce) { body.portal *, body.portal *::before, body.portal *::after { animation: none !important; transition: none !important; } }
+
+/* ---------- Surfaces: soft cards with a hairline and a whisper of shadow ---------- */
+body.portal .panel, body.portal .stats { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
+body.portal .panel-head { border-bottom: 1px solid var(--border); padding: 16px; }
+body.portal .panel-head h3 { font-size: 1.0625rem; font-weight: 500; }
+body.portal .panel-body { padding: 16px; }
+body.portal .panel.dark { background: var(--forest-950); color: var(--on-dark); border-color: var(--forest-950); }
+body.portal .panel.dark h2, body.portal .panel.dark h3 { color: var(--on-dark); }
+body.portal .panel.dark .muted, body.portal .panel.dark .eyebrow { color: var(--on-dark-2); }
+body.portal .p-hero::before { display: none; }
+body.portal .divider, body.portal .divider.brass { background: var(--border); }
+body.portal .stat { border-color: var(--border); }
+body.portal .stat-value { font-family: var(--serif); font-weight: 500; font-size: 1.625rem; color: var(--text); }
+
+/* Inset grouped list: one card, rows separated by hairlines (pages opt in with .p-list) */
+body.portal .p-list { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); list-style: none; margin: 0; padding: 0; overflow: hidden; }
+body.portal .p-list > li, body.portal .p-list > a, body.portal .p-list > button { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 10px 16px; border: 0; border-bottom: 1px solid var(--border); color: var(--text); background: transparent; width: 100%; text-align: left; font: inherit; }
+body.portal .p-list > :last-child { border-bottom: 0; }
+body.portal .list > li { border-color: var(--border); }
+
+/* ---------- Buttons ---------- */
+body.portal .btn { font-family: var(--sans); font-weight: 500; font-size: 0.9375rem; min-height: 48px; padding: 0 18px; border-radius: var(--radius-ctl); background: var(--surface); color: var(--text); border: 1px solid var(--border-strong); gap: 8px; box-shadow: none; white-space: normal; text-align: center; line-height: 1.25; }
+@media (hover: hover) { body.portal .btn:hover { background: var(--sage-50); border-color: var(--forest-500); text-decoration: none; } }
+body.portal .btn svg { width: 20px; height: 20px; }
+body.portal .btn-primary, body.portal .btn-brass { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); font-weight: 600; font-size: 1rem; }
+@media (hover: hover) { body.portal .btn-primary:hover, body.portal .btn-brass:hover { background: var(--forest-700); border-color: var(--forest-700); color: var(--on-dark); } }
+body.portal .btn-ghost { background: transparent; border-color: transparent; color: var(--forest-800); }
+@media (hover: hover) { body.portal .btn-ghost:hover { background: var(--sage-50); border-color: transparent; } }
+body.portal .btn-danger { color: var(--danger); border-color: var(--border-strong); background: var(--surface); }
+body.portal .btn-sm { min-height: 40px; font-size: 0.875rem; padding: 0 14px; }
+body.portal .btn-icon, body.portal .btn-icon.btn-sm { width: 44px; min-width: 44px; min-height: 44px; padding: 0; }
+body.portal .btn[disabled], body.portal .btn:disabled { opacity: 1; background: var(--sage-50); color: var(--text-3); border-color: var(--border); }
+/* Quiet text link */
+body.portal .p-link { background: none; border: 0; padding: 0; min-height: 44px; display: inline-flex; align-items: center; gap: 4px; color: var(--forest-800); font: 500 0.9375rem/1.3 var(--sans); cursor: pointer; text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 3px; }
+@media (hover: hover) { body.portal .p-link:hover { text-decoration-color: var(--forest-800); } }
+
+/* ---------- Forms ---------- */
+body.portal .field label { font-size: 0.875rem; font-weight: 500; color: var(--text-2); }
+body.portal .input, body.portal .select, body.portal .textarea { min-height: 48px; font-size: 1rem; border: 1px solid var(--border-strong); border-radius: var(--radius-ctl); background-color: var(--surface); color: var(--text); font-family: var(--sans); }
+body.portal .input:focus, body.portal .select:focus, body.portal .textarea:focus { border-color: var(--forest-700); box-shadow: none; outline: 2px solid var(--forest-700); outline-offset: 1px; }
+body.portal .select { background-repeat: no-repeat; background-position: right 14px center; padding-right: 40px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%234F5A53' stroke-width='1.5'/%3E%3C/svg%3E"); }
+body.portal .input.invalid, body.portal .select.invalid { border-color: var(--danger); }
+body.portal .field-error { font-size: 0.875rem; color: var(--danger); font-weight: 500; }
+body.portal .check { min-height: 44px; font-size: 0.9375rem; }
+body.portal .check input { width: 20px; height: 20px; accent-color: var(--forest-800); }
+body.portal .toggle { width: 48px; height: 28px; }
+body.portal .toggle span { background: var(--border-strong); }
+body.portal .toggle span::after { width: 22px; height: 22px; background: var(--surface); box-shadow: var(--shadow-thumb); }
+body.portal .toggle input:checked + span { background: var(--forest-800); }
+body.portal .toggle input:checked + span::after { transform: translateX(20px); }
+
+/* ---------- Tabs: 15px, 2px underline, never wrap (the row scrolls instead) ---------- */
+body.portal .tabs { gap: 24px; border-bottom: 1px solid var(--border); flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+body.portal .tabs::-webkit-scrollbar { display: none; }
+body.portal .tab { flex: none; min-height: 44px; font-size: 0.9375rem; font-weight: 500; color: var(--text-2); padding: 10px 0; white-space: nowrap; hyphens: none; overflow-wrap: normal; }
+body.portal .tab.active { color: var(--text); }
+body.portal .tab-ink { height: 2px; background: var(--forest-800); }
+
+/* ---------- Segmented control: iOS style sage track with a raised thumb ---------- */
+body.portal .segmented { background: var(--sage-100); border: 0; border-radius: var(--radius-ctl); padding: 3px; gap: 2px; display: inline-flex; flex-wrap: nowrap; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+body.portal .segmented::-webkit-scrollbar { display: none; }
+body.portal .segmented button { min-height: 44px; font-size: 0.875rem; font-weight: 500; color: var(--text-2); border-radius: 8px; padding: 6px 14px; background: transparent; white-space: nowrap; flex: none; text-transform: none; }
+body.portal .segmented button.active, body.portal .segmented button[aria-pressed="true"], body.portal .segmented button[aria-checked="true"] { background: var(--surface); color: var(--text); box-shadow: var(--shadow-thumb); }
+
+/* ---------- Badges and pills ---------- */
+body.portal .badge { font-family: var(--sans); font-size: 0.8125rem; font-weight: 500; padding: 3px 10px; border-radius: 999px; background: var(--sage-100); color: var(--forest-800); border: 0; text-transform: none; letter-spacing: normal; }
+body.portal .badge::before { display: none; }
+body.portal .badge.good, body.portal .badge.brass, body.portal .badge.dark, body.portal .badge.info { background: var(--sage-100); color: var(--forest-800); }
+body.portal .badge.warn { background: var(--sage-50); color: var(--warn); }
+body.portal .badge.bad { background: #F4E9E7; color: var(--danger); }
+body.portal .badge.plain, body.portal .badge.outline { background: var(--surface); color: var(--text-2); border: 1px solid var(--border); }
+
+/* ---------- Avatars ---------- */
+body.portal .avatar { background: var(--forest-800); color: var(--on-dark); border: 0; font-family: var(--serif); font-weight: 500; min-width: 32px; }
+body.portal .avatar.sm { width: 32px; height: 32px; font-size: 0.8125rem; }
+body.portal .avatar.light { background: var(--sage-100); color: var(--forest-800); }
+
+/* ---------- Tables ---------- */
+body.portal .table { font-size: 0.9375rem; }
+body.portal .table th { font-size: 0.8125rem; font-weight: 500; color: var(--text-2); background: transparent; border-color: var(--border); }
+body.portal .table td { border-color: var(--border); }
+body.portal .empty h4 { font-family: var(--serif); font-weight: 500; font-size: 1.25rem; }
+body.portal .empty p { font-size: 0.9375rem; color: var(--text-2); }
+body.portal .empty svg { color: var(--forest-500); }
+
+/* ---------- Icons: 1.5px stroke ---------- */
+body.portal svg.icon { stroke-width: 1.5; }
+
+/* ---------- Dialogs, sheets, toasts ---------- */
+body.portal .overlay { background: rgba(16, 30, 23, 0.42); z-index: 140; }   /* confirm dialogs sit above kit sheets */
+body.portal .modal, body.portal .drawer { background: var(--surface); border-top: 0; border-radius: var(--radius-card); box-shadow: var(--shadow-sheet); }
+body.portal .drawer { border-left: 1px solid var(--border); border-radius: 0; }
+body.portal .modal-head h3, body.portal .drawer .modal-head h3 { font-family: var(--serif); font-size: 1.375rem; font-weight: 500; }
+body.portal .modal-foot { background: var(--surface); border-top: 1px solid var(--border); }
+body.portal .toast { background: var(--forest-950); color: var(--on-dark); border-left: 0; border-radius: var(--radius-ctl); font-size: 0.9375rem; }
+body.portal .toast svg { color: var(--on-dark); }
+@media (max-width: 768px) {
+  body.portal .modal { border-radius: 18px 18px 0 0; }
+  body.portal .modal::before { content: ""; display: block; width: 36px; height: 4px; border-radius: 2px; background: var(--border-strong); margin: 8px auto 0; flex: none; }
+}
+
+/* ---------- Header: forest, serif name, MEMBERS eyebrow, 36px avatar ---------- */
+body.portal .p-header { background: var(--forest-950); border-bottom: 0; padding-top: env(safe-area-inset-top); }
+body.portal .p-header-inner { height: auto; min-height: 56px; padding-top: 6px; padding-bottom: 6px; }
+body.portal .p-brand { color: var(--on-dark); min-width: 0; flex: 1 1 auto; }
+body.portal .p-brand > span { min-width: 0; }
+body.portal .p-brand-name { font-family: var(--serif); font-weight: 500; font-size: 1.25rem; line-height: 1.1; color: var(--on-dark); white-space: normal; letter-spacing: normal; }
+body.portal .p-brand-sub { font-family: var(--sans); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--on-dark-2); margin-top: 3px; }
+body.portal .p-crest.stb-logo { color: var(--on-dark); height: 30px; }
+body.portal .p-nav a { font-size: 0.875rem; font-weight: 500; color: var(--on-dark-2); text-transform: none; letter-spacing: normal; }
+body.portal .p-nav a.active { color: var(--on-dark); }
+@media (hover: hover) { body.portal .p-nav a:hover { color: var(--on-dark); } }
+body.portal .p-nav-ink { background: var(--on-dark); height: 2px; }
+body.portal .p-me-btn { border: 0; padding: 0; min-height: 44px; min-width: 44px; gap: 4px; background: none; }
+body.portal .p-me-btn .avatar { width: 36px; height: 36px; font-size: min(0.9375rem, 15px); background: transparent; color: var(--on-dark); box-shadow: inset 0 0 0 1px rgba(243, 246, 242, 0.4); }
+body.portal .p-me-btn svg { color: var(--on-dark-2); width: 16px; height: 16px; }
+body.portal .p-me-name { color: var(--on-dark); font-weight: 500; font-size: 0.9375rem; }
+body.portal .p-me-menu { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card), 0 12px 28px rgba(16, 30, 23, 0.12); width: min(280px, calc(100vw - 24px)); max-width: calc(100vw - 24px); }
+body.portal .p-me-menu:not(.x) { visibility: hidden; }
+body.portal .p-me.open .p-me-menu { visibility: visible; }
+body.portal .p-me-menu a, body.portal .p-me-menu button { min-height: 48px; font-size: 0.9375rem; color: var(--text); }
+body.portal .p-me-menu svg { color: var(--forest-500); width: 20px; height: 20px; }
+
+/* ---------- More menu ---------- */
+body.portal .p-more-list a, body.portal .p-more-list button { font-size: 1rem; min-height: 52px; color: var(--text); border-color: var(--border); }
+body.portal .p-more-list svg { width: 20px; height: 20px; color: var(--forest-500); }
+
+/* ---------- Footer: compact, so it never costs a third of a screen ---------- */
+body.portal .p-footer { padding: 16px 20px 20px; margin-top: 8px; line-height: 1.45; text-align: center; }
+body.portal .p-footer .flourish { display: none; }
+body.portal .p-footer p { margin: 0 0 4px; }
+body.portal .p-footer .serif { margin-bottom: 2px; }
+body.portal .p-footer .p-land { font-size: 0.8125rem; color: var(--text-3); margin-top: 8px; }
+body.portal .p-footer .p-social { margin-top: 2px; }
+body.portal .p-footer { color: var(--text-2); font-size: 0.875rem; border-color: var(--border); }
+body.portal .p-footer .serif { font-family: var(--sans); font-size: 1rem; font-weight: 500; color: var(--text); }
+body.portal .p-land, body.portal .p-signin-sub { font-style: normal; }
+body.portal .p-footer a { color: var(--forest-800); }
+body.portal .p-footer .flourish::before, body.portal .p-footer .flourish::after { background: var(--border); }
+body.portal .p-crest.stb-logo.sm { color: var(--forest-500); }
+
+/* ---------- Bottom nav: forest bar, ivory bar above the active icon (all widths: one mobile layout) ---------- */
+body.portal .p-tabbar { background: var(--forest-950); border-top: 0; padding: 4px 4px calc(4px + env(safe-area-inset-bottom)); box-shadow: none; }
+body.portal .p-tabbar a, body.portal .p-tabbar button { display: flex; flex-direction: column; align-items: center; justify-content: center; text-decoration: none; border: 0; cursor: pointer; position: relative; flex: 1 1 0; min-width: 0; min-height: 56px; gap: 3px; padding: 8px 2px 6px; font-size: min(0.75rem, 14px); font-weight: 500; color: var(--on-dark-2); background: none; }
+/* Labels cap at 14px and wrap between words at large text sizes, as native tab bars do */
+body.portal .p-tabbar a span, body.portal .p-tabbar button span { display: block; max-width: 100%; text-align: center; line-height: 1.15; white-space: normal; overflow-wrap: normal; word-break: normal; }
+body.portal .p-tabbar svg { width: 22px; height: 22px; padding: 0; background: none; color: inherit; }
+body.portal .p-tabbar a.active { color: var(--on-dark); font-weight: 500; }
+body.portal .p-tabbar a.active svg { background: none; color: var(--on-dark); }
+body.portal .p-tabbar a.active::before { content: ""; position: absolute; top: 0; left: 50%; width: 24px; height: 2px; margin-left: -12px; border-radius: 0 0 2px 2px; background: var(--on-dark); }
+body.portal.signed-in { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
+body.portal .toasts { bottom: calc(80px + env(safe-area-inset-bottom)); }
+
+/* ---------- Sign in ---------- */
+body.portal.signed-out { background: var(--forest-950); }
+body.portal .p-signin-card { border-top: 0; border-radius: 18px; background: var(--surface); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35); }
+body.portal .p-signin h1 { font-family: var(--serif); font-size: 1.875rem; font-weight: 500; }
+body.portal .p-signin-sub { color: var(--text-2); font-size: 0.9375rem; }
+body.portal .p-demo-btn { min-height: 60px; border: 1px solid var(--border); border-radius: var(--radius-ctl); background: var(--surface); }
+@media (hover: hover) { body.portal .p-demo-btn:hover { background: var(--sage-50); border-color: var(--border-strong); } }
+body.portal .p-signin-foot { color: var(--on-dark-2); font-size: 0.875rem; }
+body.portal .p-signin-foot a { color: var(--on-dark); }
+
+/* ---------- Page frame ---------- */
+body.portal .p-page { padding: 20px 20px 32px; }
+@media (min-width: 769px) { body.portal .p-page { padding: 32px 24px 48px; } }
+body.portal .p-hero { background: transparent; color: var(--text); padding: 0; margin-bottom: 24px; border-radius: 0; border: 0; overflow: visible; }
+body.portal .p-hero h1, body.portal .p-hero h2 { color: var(--text); }
+body.portal .p-hero p { color: var(--text-2); font-size: 0.9375rem; }
+body.portal .p-section { margin-top: 28px; }
+body.portal .p-section-head { margin-bottom: 12px; align-items: baseline; }
+body.portal .p-section-head h2 { font-size: 1.375rem; }
+
+/* ---------- Large text sizes: layouts hold and text wraps ---------- */
+body.portal dl, body.portal dl > div, body.portal dd, body.portal dt { min-width: 0; overflow-wrap: break-word; }
+body.portal .p-page .row > *, body.portal .p-page [class*="-row"] > *, body.portal .p-page [class*="-head"] > * { min-width: 0; }
+
+/* ==========================================================================
+   Responsive frame: phone, tablet, desktop, large screens and projectors.
+   Phone (<768): one column, bottom nav. Tablet (768-1023): wider column, bottom nav.
+   Desktop (>=1024): top nav in the header, no bottom nav, multi-column pages (pages
+   use .p-cols / their own grids). Large (>=1800): everything scales up via rem.
+   ========================================================================== */
+body.portal .p-page { width: 100%; margin-left: auto; margin-right: auto; }
+body.portal .p-header-inner, body.portal .p-footer { margin-left: auto; margin-right: auto; }
+/* Shared page grid: main column plus a side column on wide screens */
+/* Phones and tablets: bottom nav; top nav hidden */
+body.portal .p-tabbar { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 45; }
+body.portal .p-nav { display: none; }
+body.portal .p-header-inner { justify-content: space-between; }
+body.portal.signed-in { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
+body.portal .p-cols { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start; }
+body.portal .p-cols > * { min-width: 0; }
+
+@media (min-width: 768px) {
+  body.portal .p-page { max-width: 760px; padding: 28px 28px 40px; }
+  body.portal .p-header-inner, body.portal .p-footer { max-width: 760px; }
+  body.portal .p-tabbar { left: 0; right: 0; margin: 0 auto; max-width: 760px; border-radius: 16px 16px 0 0; }
+  body.portal .pk-bar { max-width: 760px; }
+  /* sheets become centred dialogs */
+  body.portal .ps-sheet { top: 50%; bottom: auto; max-width: 560px; max-height: min(760px, 86vh); max-height: min(760px, 86dvh); border-radius: var(--radius-card); transform: translateY(-46%) scale(0.98); opacity: 0; transition: transform 180ms var(--ease-ui), opacity 180ms var(--ease-ui); padding-bottom: 0; }
+  body.portal .ps-sheet.open { transform: translateY(-50%); opacity: 1; }
+  body.portal .ps-sheet.is-full { height: min(860px, 90vh); height: min(860px, 90dvh); }
+  body.portal .ps-grab { display: none; }
+  body.portal .ps-head { padding-top: 14px; }
+}
+@media (min-width: 1024px) {
+  body.portal .p-page { max-width: 1200px; padding: 32px 32px 56px; }
+  body.portal .p-header-inner, body.portal .p-footer { max-width: 1200px; }
+  body.portal .p-header-inner { min-height: 64px; gap: 32px; }
+  body.portal .p-nav { display: flex; margin: 0 auto 0 24px; gap: 28px; align-self: stretch; }
+  body.portal .p-nav a { display: inline-flex; align-items: center; font-size: 0.9375rem; }
+  body.portal .p-tabbar { display: none !important; }
+  body.portal.signed-in { padding-bottom: 0; }
+  body.portal .pk-bar { bottom: 0; max-width: 1200px; border-radius: 16px 16px 0 0; padding: 12px 24px; }
+  body.portal.has-bar .p-page { padding-bottom: 120px; }
+  body.portal .toasts { bottom: 24px; }
+  body.portal.has-bar .toasts { bottom: 96px; }
+  body.portal .p-cols { grid-template-columns: minmax(0, 1.6fr) minmax(320px, 1fr); gap: 32px; }
+  body.portal .p-cols.is-even { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  body.portal h1 { font-size: 2.125rem; }
+}
+@media (min-width: 1440px) {
+  body.portal .p-page, body.portal .p-header-inner, body.portal .p-footer, body.portal .pk-bar { max-width: 1320px; }
+}
+/* Large displays and projectors: scale the whole interface so it reads from across a room */
+@media (min-width: 1800px) { html:has(body.portal) { font-size: 112.5%; } body.portal .p-page, body.portal .p-header-inner, body.portal .p-footer, body.portal .pk-bar { max-width: 1480px; } }
+@media (min-width: 2400px) { html:has(body.portal) { font-size: 137.5%; } body.portal .p-page, body.portal .p-header-inner, body.portal .p-footer, body.portal .pk-bar { max-width: 1800px; } }
+
+/* Header More menu: pages that don't fit the bar (fitNav in js/portal/app.js) */
+body.portal .p-navmore { position: relative; height: 100%; display: flex; align-items: center; }
+body.portal .p-navmore[hidden] { display: none; }
+body.portal .p-navmore-btn { display: inline-flex; align-items: center; gap: 4px; border: 0; background: transparent; padding: 8px 0; color: var(--on-dark-2); font: 500 0.875rem var(--sans); cursor: pointer; white-space: nowrap; }
+body.portal .p-navmore-btn[aria-expanded="true"], body.portal .p-navmore.has-active .p-navmore-btn { color: var(--on-dark); }
+@media (hover: hover) { body.portal .p-navmore-btn:hover { color: var(--on-dark); } }
+body.portal .p-navmore-btn svg { width: 14px; height: 14px; }
+body.portal .p-navmore-pop { position: absolute; top: calc(100% - 8px); right: 0; z-index: 60; min-width: 200px; padding: 6px; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-ctl); box-shadow: var(--shadow-card); }
+body.portal .p-navmore-pop[hidden] { display: none; }
+body.portal .p-nav .p-navmore-pop a { color: var(--text); padding: 10px 12px; border-radius: 8px; }
+@media (hover: hover) { body.portal .p-nav .p-navmore-pop a:hover { background: var(--sage-50); color: var(--text); } }
+body.portal .p-nav .p-navmore-pop a.active { color: var(--forest-800); font-weight: 600; }
+
+/* When the header shows the menu, the brand stays on one line and keeps its width: links that don't fit move into
+   More (fitNav in js/portal/app.js) instead of the brand wrapping onto two lines. */
+@media (min-width: 981px) {
+  body.portal .p-brand { flex: none; }
+  body.portal .p-brand-name { white-space: nowrap; }
+}
+/* The menu links' text sits 7px above the header's middle (room for the underline below), so the language switch and
+   the account button are raised to the same line. */
+@media (min-width: 981px) {
+  body.portal .p-header-inner .p-lang, body.portal .p-header-inner .p-me { transform: translateY(-7px); }
+}

@@ -1,0 +1,14 @@
+import { webkit } from 'playwright';
+const B = 'http://localhost:8001/site/';
+const b = await webkit.launch(); const ctx = await b.newContext({ viewport: { width: 390, height: 844 } }); const p = await ctx.newPage();
+p.on('pageerror', e => console.log('ERR', e.message));
+await p.goto(B + 'public.html#/signup'); await p.waitForTimeout(1500);
+console.log(JSON.stringify(await p.locator('label[for=pf-heard]').textContent()));
+await p.goto(B + 'public.html#/join/apply/birdie'); await p.waitForTimeout(1500);
+const btn = p.locator('[name=dobMonth]').locator('xpath=preceding-sibling::button[1]');
+console.log('btn count', await btn.count(), await btn.boundingBox());
+await btn.scrollIntoViewIfNeeded(); const bb = await btn.boundingBox();
+await p.mouse.move(bb.x + 12, bb.y + bb.height/2); await p.mouse.down(); await p.mouse.up(); await p.waitForTimeout(400);
+console.log('opts', await p.locator('.cs-opt').count(), await p.evaluate(() => { const o = document.querySelector('.cs-pop, .cs-list, [role=listbox]'); return o ? o.className + ' ' + JSON.stringify(o.getBoundingClientRect()) : 'none'; }));
+await p.screenshot({ path: 'xrg-dbg2.png' });
+await b.close();

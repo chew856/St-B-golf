@@ -1,0 +1,13 @@
+import { webkit } from 'playwright';
+import { B, click } from './xe-lib.mjs';
+const b = await webkit.launch(); const c = await b.newContext({ viewport: { width: 1440, height: 900 } }); const p = await c.newPage();
+p.on('pageerror', e => console.log('ERR', e.message)); p.on('console', m => { if (m.type() === 'error') console.log('CONSOLE', m.text()); });
+await p.goto(B + 'public.html#/'); await p.waitForTimeout(1000);
+await p.evaluate(() => { const pl = Club.store.all('publicPlayers')[0]; localStorage.setItem('stboniface.public.session', pl.id); });
+await p.goto(B + 'public.html#/book'); await p.reload(); await p.waitForTimeout(1500);
+const chip = p.locator('button.pub-chip[data-time]:not([disabled])');
+console.log('chips', await chip.count());
+await click(p, chip.nth(0), { wait: 1200 });
+console.log(await p.evaluate(() => ({ hash: location.hash, timer: document.querySelectorAll('.hold-timer').length, topay: document.querySelectorAll('[data-act=to-pay]').length, cls: document.querySelector('.pub-chip.active, .pub-chip.selected') && 1 })));
+await p.screenshot({ path: 'dbg-tee.png' });
+await b.close();

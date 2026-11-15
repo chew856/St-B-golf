@@ -1,0 +1,36 @@
+import { webkit } from 'playwright';
+const B = 'http://localhost:8001/site/'; const errs = [];
+const b = await webkit.launch(); const p = await (await b.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
+p.on('pageerror', e => errs.push(e.message));
+await p.goto(B + 'index.html#/reports', { waitUntil: 'domcontentloaded' }); await p.waitForTimeout(1500);
+const r = await p.evaluate(() => {
+  const S = Club.store, out = {};
+  const colls = ['members','teeTimes','diningReservations','events','lessons','programs','cartOrders','takeoutOrders','charges','publicPlayers','publicPayments','applications','renewals','receipts'];
+  colls.forEach(c => { const a = S.all(c); out[c] = a.length; });
+  const ch = S.all('charges'); out.chargeRange = [ch.map(c=>c.date).sort()[0], ch.map(c=>c.date).sort().pop()];
+  out.chargeCats = {}; ch.forEach(c => out.chargeCats[c.category] = (out.chargeCats[c.category]||0)+1);
+  out.teeRange = [S.all('teeTimes').map(t=>t.date).sort()[0], S.all('teeTimes').map(t=>t.date).sort().pop()];
+  out.resSample = S.all('diningReservations').slice(0,1);
+  out.resRange = [S.all('diningReservations').map(t=>t.date).sort()[0], S.all('diningReservations').map(t=>t.date).sort().pop()];
+  out.resWithMember = S.all('diningReservations').filter(r=>r.memberId).length;
+  const tiers = {}; S.all('members').forEach(m => tiers[m.tierId] = (tiers[m.tierId]||0)+1); out.tiers = tiers;
+  out.ages = S.all('members').filter(m=>m.tierId==='tier_junior'||m.tierId==='tier_nonresident').map(m=>m.id+' '+m.tierId+' '+m.dob+' '+m.status);
+  // last activity per member
+  const last = {}; const put=(id,d)=>{ if(id&&d&&d<=Club.date.today()&&(!last[id]||d>last[id])) last[id]=d; };
+  S.all('teeTimes').forEach(t => { if (t.status==='cancelled'||t.status==='no-show') return; (t.players||[]).forEach(pl=>put(pl.memberId,t.date)); });
+  const lastNoTee = {}; const put2=(id,d)=>{ if(id&&d&&d<=Club.date.today()&&(!lastNoTee[id]||d>lastNoTee[id])) lastNoTee[id]=d; };
+  S.all('diningReservations').forEach(r=>{put(r.memberId,r.date);put2(r.memberId,r.date);});
+  S.all('lessons').forEach(r=>{ if(r.status!=='cancelled'){put(r.memberId,r.date);put2(r.memberId,r.date);}});
+  S.all('events').forEach(e=>(e.registrations||[]).forEach(g=>{put(g.memberId,e.date);put2(g.memberId,e.date);}));
+  ch.forEach(c=>{ if(c.category!=='Dues'){put(c.memberId,c.date);put2(c.memberId,c.date);}});
+  out.lastDist = S.all('members').map(m=>last[m.id]||'none').sort();
+  out.lastNoTee = S.all('members').map(m=>lastNoTee[m.id]||'none').sort();
+  out.guests = S.all('teeTimes').reduce((a,t)=>a+(t.players||[]).filter(p=>p.type==='guest').length,0);
+  out.guestsContact = S.all('teeTimes').reduce((a,t)=>a+(t.players||[]).filter(p=>p.type==='guest'&&(p.email||p.phone)).length,0);
+  out.pp = S.all('publicPlayers'); out.pays = S.all('publicPayments').slice(0,2);
+  out.publicTee = S.all('teeTimes').filter(t=>(t.players||[]).some(p=>p.type==='public')).length;
+  out.chargeSample = ch.filter(c=>c.category!=='Dues').slice(0,2);
+  return out;
+});
+console.log(JSON.stringify(r, null, 1), errs);
+await b.close();

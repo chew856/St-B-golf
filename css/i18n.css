@@ -1,0 +1,44 @@
+/* The EN | FR language switch (js/core/i18n.js): a two-option segmented control.
+   .i18n-switch on the dark headers (public .pub-lang, portal .p-lang); .i18n-row with a label in the phone menus
+   and the portal's profile list, on light surfaces. Tokens only; 44px targets on touch-sized screens. */
+.i18n-switch { display: inline-flex; flex: none; padding: 2px; gap: 2px; border-radius: var(--r-round); border: 1px solid color-mix(in srgb, var(--brass-soft) 30%, transparent); }
+.i18n-opt { min-width: 34px; height: 30px; padding: 0 var(--s2); border: 0; border-radius: var(--r-round); background: none; color: var(--on-night-2); font: inherit; font-size: var(--fs-11); font-weight: 600; letter-spacing: 0.12em; text-indent: 0.12em; cursor: pointer; transition: background var(--t-fast), color var(--t-fast); }
+@media (hover: hover) { .i18n-opt:hover { color: var(--on-night); } }
+.i18n-opt[aria-pressed=true] { background: var(--brass-soft); color: var(--night); cursor: default; }
+.i18n-opt:focus-visible { outline: 2px solid var(--brass-soft); outline-offset: 1px; }
+
+/* Header placement: next to the account button. */
+.pub-lang, .p-lang { margin-left: auto; }
+.pub-lang + .pub-me, .p-lang + .p-me { margin-left: 0; }
+
+/* Labelled row (menus, profile): light surface, so the pressed option uses the dark ink. */
+.i18n-row { display: flex; align-items: center; gap: var(--s3); min-height: 52px; padding: var(--s3) 0; color: var(--ink); font-size: var(--fs-15); }
+.pub-menu-lang, .p-more-lang { border-bottom: 1px solid var(--parchment); }
+.i18n-row-l { flex: 1; }
+.i18n-row .i18n-switch { border-color: var(--rule-strong, var(--parchment)); }
+.i18n-row .i18n-opt { color: var(--ink-2, var(--ink)); }
+@media (hover: hover) { .i18n-row .i18n-opt:hover { color: var(--ink); } }
+.i18n-row .i18n-opt:focus-visible { outline-color: var(--brass); }
+.i18n-row > svg { width: 18px; height: 18px; flex: none; color: var(--brass-ink); }
+/* The menus style every button in them as a full-width row: the switch's options opt out. */
+.i18n-row .i18n-switch .i18n-opt { display: inline-flex; align-items: center; justify-content: center; width: auto; min-height: 0; height: 36px; padding: 0 var(--s3); border: 0; border-radius: var(--r-round); font-size: var(--fs-11); text-align: center; }
+.i18n-row .i18n-switch .i18n-opt[aria-pressed=true] { background: var(--night); color: var(--on-night); }
+.p-more-lang { font-size: 1rem; color: var(--text, var(--ink)); }
+/* Portal profile list row: the list's own padding and icon size. */
+.pp-lang { min-height: 56px; padding: 8px 14px 8px 16px; color: var(--text, var(--ink)); font-size: 1rem; font-weight: 500; }
+.pp-lang > svg { width: 20px; height: 20px; color: var(--forest-500, var(--brass-ink)); }
+
+/* Touch: full 44px targets. Phones keep the switch in the header (compact) and in the menu drawer. */
+@media (pointer: coarse), (max-width: 760px) {
+  .i18n-opt { min-width: 44px; height: 44px; }
+  .i18n-row .i18n-switch .i18n-opt { min-width: 48px; height: 44px; }
+}
+@media (max-width: 760px) {
+  .i18n-switch.pub-lang, .i18n-switch.p-lang { padding: 0; gap: 0; }
+  .i18n-switch.pub-lang .i18n-opt, .i18n-switch.p-lang .i18n-opt { padding: 0 var(--s1); }
+}
+
+/* French is longer: tighter caps tracking so "AUJOURD'HUI" fits the 84px day chips. */
+html[lang^="fr"] .pub-day-wk, html[lang^="fr"] .pub-day-mo { letter-spacing: 0.02em; }
+/* Very narrow phones: the header switch gives way (it stays in the menu drawer), so brand, avatar and menu fit. */
+@media (max-width: 359px) { .pub-header .pub-lang { display: none; } }

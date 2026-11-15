@@ -1,0 +1,11 @@
+import { webkit } from 'playwright';
+import { B, click } from './xe-lib.mjs';
+const b = await webkit.launch(); const c = await b.newContext({ viewport: { width: 1440, height: 900 } });
+await c.addInitScript(() => { try { localStorage.setItem('stboniface.portal.session', 'mem_1003'); } catch (e) {} });
+const p = await c.newPage(); p.on('pageerror', e => console.log('ERR', e.message));
+await p.goto(B + 'member.html#/takeout'); await p.waitForTimeout(1300);
+await click(p, '.to-sec:not(#to-sec-breakfast) .to-add');
+console.log(await p.evaluate(() => { const f = document.querySelector('.to-time-f'); return f ? f.outerHTML.slice(0, 900) : 'none'; }));
+await click(p, '.to-time-f .cs-btn');
+console.log(await p.evaluate(() => { const f = document.querySelector('.cs-pop'); return f ? f.outerHTML.slice(0, 700) : 'nopop'; }));
+await b.close();

@@ -1,0 +1,141 @@
+/* Members' portal: Lessons (pass 3). One compact booking card; sheets for choices, details and confirm.
+   v2 look (tokens from css/portal-theme.css only). One mobile layout at every width. */
+
+/* ---------- Title and the "Next" row ---------- */
+body.portal .p-page .pl-hero { margin-bottom: 12px; }
+body.portal .p-page .pl-hero h1 { font-size: 1.875rem; line-height: 1.2; margin: 0 0 10px; color: var(--text); }
+body.portal .p-page .pl-hero p { display: block; overflow: visible; margin: 0; }
+body.portal .p-page .pl-hero .pl-hero-line { font-size: 0.9375rem; line-height: 1.45; color: var(--text-2); }
+.pl-next { width: 100%; min-height: 52px; display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); color: var(--text); font: 400 0.9375rem/1.35 var(--sans); text-align: left; cursor: pointer; font-variant-numeric: tabular-nums; }
+@media (hover: hover) { .pl-next:hover { border-color: var(--border-strong); } }
+.pl-next > .icon:first-child { width: 20px; height: 20px; color: var(--forest-500); flex: none; }
+.pl-next-text { flex: 1 1 auto; min-width: 0; }
+.pl-next-k { font-weight: 500; }
+.pl-go { width: 18px; height: 18px; color: var(--text-3); flex: none; }
+.pl-tel { color: var(--forest-800); font-weight: 500; text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 3px; white-space: nowrap; position: relative; font-variant-numeric: tabular-nums; }
+.pl-tel::after { content: ""; position: absolute; inset: -12px -4px; }
+.pl-alert { display: flex; gap: 10px; align-items: flex-start; padding: 12px 16px; margin-bottom: 12px; background: var(--sage-50); color: var(--text); border-radius: var(--radius-card); font-size: 0.9375rem; }
+.pl-alert svg { width: 20px; height: 20px; flex: none; color: var(--forest-500); margin-top: 1px; }
+
+/* ---------- Book: one card ---------- */
+.pl-card { display: flex; flex-direction: column; gap: 12px; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); margin-bottom: 12px; }
+.pl-dur { display: flex; flex-direction: column; gap: 6px; }
+body.portal .pl-dur .segmented, body.portal .pl-seg { display: flex; width: 100%; }
+body.portal .pl-dur .segmented button { flex: 1 1 0; min-width: 0; min-height: 40px; padding: 6px 4px; font-variant-numeric: tabular-nums; }
+body.portal .pl-seg button { flex: 1 1 0; min-width: 0; min-height: 44px; padding: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.2; }
+body.portal .pl-seg button small { font-size: 0.8125rem; font-weight: 400; color: var(--text-2); font-variant-numeric: tabular-nums; }
+body.portal .pl-seg button.is-empty span { color: var(--text-3); }
+.pl-chiprow { display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x proximity; margin: 0 -16px; padding: 2px 16px 4px; scrollbar-width: none; overscroll-behavior-x: contain; }
+.pl-chiprow::-webkit-scrollbar { display: none; }
+.pl-chip {
+  flex: none; min-width: 92px; min-height: 52px; padding: 6px 10px; cursor: pointer; scroll-snap-align: center;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  border: 1px solid var(--border); border-radius: var(--radius-ctl); background: var(--surface); color: var(--text);
+  font: 500 1rem/1.25 var(--sans); font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+@media (hover: hover) { .pl-chip:hover { border-color: var(--forest-500); } }
+.pl-chip small { font-size: 0.8125rem; font-weight: 400; color: var(--text-2); }
+.pl-chip.on { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); }
+.pl-chip.on small { color: var(--on-dark-2); }
+.pl-none { font-size: 0.9375rem; color: var(--text-2); margin: 0; padding: 12px 14px; background: var(--sage-50); border-radius: var(--radius-ctl); }
+
+/* ---------- Sheets ---------- */
+.pl-kv { margin: 4px 0 12px; }
+.pl-kv > div { display: grid; grid-template-columns: minmax(80px, 28%) minmax(0, 1fr); gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.9375rem; }
+.pl-kv dt { color: var(--text-2); }
+.pl-kv dd { margin: 0; font-weight: 500; font-variant-numeric: tabular-nums; }
+.pl-sheet-acts { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 8px; }
+.pl-sheet-acts .btn { flex: 1 1 140px; }
+.pl-sheet-note { font-size: 0.875rem; color: var(--text-2); margin: 0 0 8px; }
+.pl-sum-err { display: flex; gap: 8px; align-items: flex-start; padding: 12px; margin: 4px 0 8px; background: var(--danger-bg); color: var(--danger); border-radius: var(--radius-ctl); font-size: 0.875rem; font-weight: 500; }
+.pl-sum-err[hidden] { display: none; }
+.pl-sum-err svg { width: 18px; height: 18px; flex: none; margin-top: 1px; }
+.pl-done { padding: 8px 0 4px; }
+.pl-done h3 { margin: 0 0 4px; }
+.pl-done p { margin: 0 0 8px; color: var(--text-2); font-size: 0.9375rem; }
+.pl-confirm-icon { width: 40px; height: 40px; border-radius: 50%; background: var(--sage-100); color: var(--forest-800); display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+.pl-confirm-icon svg { width: 20px; height: 20px; }
+body.portal .ps-foot .pl-done-x { width: 100%; justify-content: center; margin-top: 4px; }
+
+/* ---------- My lessons: compact rows ---------- */
+body.portal .pl-les-list > li { padding: 0; min-height: 0; display: block; }
+.pl-row { width: 100%; min-height: 64px; display: flex; align-items: center; gap: 12px; padding: 8px 16px; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+@media (hover: hover) { .pl-row:hover { background: var(--sage-50); } }
+.pl-row-all { min-height: 52px; justify-content: space-between; color: var(--forest-800); font-weight: 500; font-size: 0.9375rem; }
+.pl-dblock { flex: none; width: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--sage-50); color: var(--text); border-radius: var(--radius-ctl); padding: 4px 0; font-variant-numeric: tabular-nums lining-nums; }
+.pl-dblock span { font-size: 0.8125rem; color: var(--text-2); line-height: 1.15; }
+.pl-dblock b { font-family: var(--serif); font-size: 1.25rem; font-weight: 500; line-height: 1.15; }
+.pl-row-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.pl-row-t { font-size: 1rem; font-weight: 500; line-height: 1.35; font-variant-numeric: tabular-nums; }
+.pl-row-s { font-size: 0.875rem; color: var(--text-2); }
+.pl-past-acc { margin-top: 12px; }
+.pl-past { list-style: none; margin: 0; padding: 0; }
+.pl-past > li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.pl-past > li:last-child { border-bottom: 0; }
+.pl-past-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.pl-past-t { font-size: 0.9375rem; font-weight: 500; }
+.pl-past-s { font-size: 0.8125rem; color: var(--text-3); font-variant-numeric: tabular-nums; }
+
+/* ---------- Clinics: one accordion per program ---------- */
+.pl-prog-desc { font-size: 0.9375rem; line-height: 1.45; color: var(--text-2); margin: 0 0 8px; }
+.pl-prog-kv { margin: 0 0 8px; }
+.pl-prog-kv > div { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 0.875rem; }
+.pl-prog-kv dt { color: var(--text-3); }
+.pl-prog-kv dd { margin: 0; color: var(--text); font-variant-numeric: tabular-nums; }
+.pl-prog-cap { font-size: 0.8125rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.pl-prog-cap .bar { margin-top: 6px; height: 4px; background: var(--sage-200); border: 0; border-radius: 2px; }
+.pl-prog-cap .bar span { background: var(--forest-800); border-radius: 2px; }
+.pl-prog-foot { padding-top: 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px 12px; flex-wrap: wrap; }
+.pl-prog-price { font-family: var(--serif); font-size: 1.375rem; font-weight: 500; color: var(--text); font-variant-numeric: tabular-nums lining-nums; }
+.pl-prog-price small { font-family: var(--sans); font-size: 0.8125rem; color: var(--text-3); }
+.pl-prog-inv { font-size: 0.875rem; color: var(--text-2); }
+
+/* ==========================================================================
+   Tablet and desktop. Phones (<768) keep the Pass 3 layout above unchanged.
+   ========================================================================== */
+.pl-side { display: none; }
+body.portal .pl-cols, body.portal .pl-mine-cols { gap: 0; }
+.pl-side-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 1rem; }
+.pl-side-card + .pl-side-card { margin-top: 0.75rem; }
+.pl-side-pros { list-style: none; margin: 0.5rem 0 0; padding: 0; }
+.pl-side-pros > li { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.625rem 0; border-bottom: 1px solid var(--border); }
+.pl-side-pros > li:last-child { border-bottom: 0; }
+.pl-side-pros .avatar { width: 2.5rem; height: 2.5rem; font-size: 0.9375rem; flex: none; }
+.pl-side-pro { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.pl-side-name { font-size: 1rem; font-weight: 500; }
+.pl-side-role { font-size: 0.8125rem; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.pl-side-spec { font-size: 0.875rem; color: var(--text-2); line-height: 1.45; margin-top: 0.125rem; }
+.pl-side-pros .p-link { flex: none; }
+body.portal .pl-side-policy h3 { margin: 0 0 0.375rem; font-size: 1rem; }
+.pl-side-policy p { margin: 0 0 0.375rem; font-size: 0.875rem; line-height: 1.5; color: var(--text-2); max-width: 60ch; }
+
+@media (min-width: 768px) {
+  .pl-next { max-width: 40rem; }
+  .pl-next-day { max-width: 40rem; }
+  .pl-next-day .pl-next-row { max-width: none; }
+  .pl-card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem 1.25rem; padding: 1.25rem; align-items: end; }
+  .pl-period, .pl-times { grid-column: 1 / -1; }
+  .pl-chiprow { display: grid; grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr)); overflow: visible; margin: 0; padding: 0; }
+  .pl-chip { min-width: 0; }
+  .pl-side { display: block; margin-top: 0.75rem; }
+  .pl-mine-cols .pl-past-acc { margin-top: 0.75rem; }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  .pl-side { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 0.75rem; align-items: start; }
+  .pl-side-card + .pl-side-card { margin-top: 0; }
+}
+@media (min-width: 1024px) {
+  body.portal .pl-cols, body.portal .pl-mine-cols { gap: 2rem; }
+  .pl-side { margin-top: 0; position: sticky; top: 5.5rem; }
+  .pl-mine-cols .pl-past-acc { margin-top: 0; }
+  /* clinics: two columns of cards */
+  .pl-progs { columns: 2; column-gap: 1.25rem; }
+  body.portal .pl-progs .pk-acc { break-inside: avoid; margin: 0 0 0.75rem; }
+  body.portal .pl-progs .pk-acc + .pk-acc { margin-top: 0; }
+}
+/* Next: several lessons on the same day, one card with a row each */
+.pl-next-day { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); overflow: hidden; }
+.pl-next-day-h { display: flex; align-items: center; gap: 10px; margin: 0; padding: 12px 14px 8px; font-size: 0.9375rem; color: var(--text); }
+.pl-next-day-h .icon { width: 20px; height: 20px; color: var(--forest-500); flex: none; }
+.pl-next-day .pl-next-row { border: 0; border-top: 1px solid var(--border); border-radius: 0; box-shadow: none; min-height: 48px; padding-left: 44px; }
+@media (hover: hover) { .pl-next-day .pl-next-row:hover { background: var(--sage-50); } }

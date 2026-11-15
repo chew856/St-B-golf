@@ -1,0 +1,18 @@
+/* Club.promos "Have a promo code?" box (js/core/promos.js), on the public site, the portal and the staff app.
+   Same shape as the gift card box (.gc-box in css/public/gifts.css). */
+.pr-box-open { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; }
+.pr-box-open svg { width: 18px; height: 18px; }
+.pr-box { margin: 0 0 var(--s3); }
+.pr-box.is-open { padding: var(--s3); border: 1px solid var(--rule); border-radius: var(--r-control); background: var(--brass-tint); }
+.pr-box-field { margin: 0; }
+.pr-box-row { display: flex; gap: var(--s2); }
+.pr-box-row .input { flex: 1 1 auto; min-width: 0; min-height: 44px; letter-spacing: 0.08em; text-transform: uppercase; }
+.pr-box-row .btn { flex: none; min-height: 44px; }
+.pr-box-cancel { margin-top: var(--s2); min-height: 32px; }
+.pr-box.is-applied { display: flex; align-items: center; gap: var(--s3); padding: var(--s3); border: 1px solid var(--moss); border-radius: var(--r-control); background: var(--moss-tint); }
+.pr-box-icon { width: 22px; height: 22px; flex: none; color: var(--moss); }
+.pr-box-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.pr-box-t { font-weight: 600; color: var(--night); }
+.pr-box-s { font-size: var(--fs-12); color: var(--ink-2); }
+.pr-box-rm { flex: none; min-height: 32px; }
+body.portal .pr-box.is-open, body.portal .pr-box.is-applied { border-radius: var(--radius-ctl); }

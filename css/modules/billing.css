@@ -1,0 +1,232 @@
+/* Billing & Statements module (v2 tokens; serif only for titles and display money) */
+.bil-gap { margin-top: 1.25rem; }
+.bil-bad { color: var(--danger); }
+.bil-credit { color: var(--good); }
+.bil-money { font-variant-numeric: tabular-nums lining-nums; }
+.bil-back { display: inline-flex; align-items: center; gap: 4px; min-height: 36px; font-size: 0.875rem; font-weight: 500; color: var(--text-2); margin-bottom: 0.5rem; }
+.bil-back svg { width: 16px; height: 16px; }
+@media (hover: hover) { .bil-back:hover { color: var(--forest-800); text-decoration: none; } }
+.bil-note { margin: 0; padding: 0.625rem 1.25rem; font-size: 0.875rem; color: var(--text-2); background: var(--sage-50); border-bottom: 1px solid var(--border); }
+.panel > .bil-note { border-radius: 0; }
+.bil-inline-select { width: auto; min-width: 10rem; }
+.bil-wrap-head { flex-wrap: wrap; gap: 0.5rem; }
+.bil-wrap-head .row { gap: 0.5rem; }
+.bil-balance-hint { font-size: 0.875rem; margin-top: -0.25rem; }
+.bil-balance-hint strong { font-weight: 500; color: var(--text); }
+
+/* Pager and "view all" rows */
+.bil-pager { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; padding: 0.625rem 1.25rem; border-top: 1px solid var(--border); font-size: 0.875rem; font-variant-numeric: tabular-nums; }
+.bil-pager-btns { display: flex; align-items: center; gap: 0.5rem; }
+.bil-pager-at { color: var(--text-2); min-width: 7.5rem; text-align: center; }
+.bil-pager .btn:disabled { opacity: 0.45; cursor: default; }
+.bil-viewall { padding: 0.25rem 1.25rem 0.5rem; border-top: 1px solid var(--border); }
+
+/* Aging */
+.bil-aging { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
+.bil-age { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.bil-age-label { font-size: 0.875rem; font-weight: 500; color: var(--text-2); }
+.bil-age-val { font-family: var(--serif); font-weight: 500; font-variant-numeric: tabular-nums lining-nums; font-size: 1.5rem; color: var(--text); line-height: 1.15; white-space: nowrap; }
+.bil-age.warn .bil-age-val { color: var(--danger); }
+.bil-age-sub { font-size: 0.8125rem; color: var(--text-3); margin-bottom: 4px; }
+.bil-paylist > li { padding: 0.5rem 0; }
+.bil-paylist a { display: flex; flex-direction: column; color: var(--text); }
+@media (hover: hover) { .bil-paylist a:hover { text-decoration: none; } }
+@media (hover: hover) { .bil-paylist a:hover .person-name { color: var(--forest-800); text-decoration: underline; text-underline-offset: 3px; } }
+
+/* Ledger */
+.bil-filters { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); }
+.bil-filters .select { width: auto; min-width: 9rem; max-width: 15rem; flex: 0 1 auto; min-height: 40px; }
+.bil-filters .input { min-height: 40px; }
+.bil-search { position: relative; flex: 1 1 12rem; min-width: 0; }
+.bil-search svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-3); }
+.bil-search .input { padding-left: 34px; }
+.bil-date { display: inline-flex; align-items: center; gap: 6px; font-size: 0.875rem; color: var(--text-2); }
+.bil-date .input { width: 9.5rem; }
+.bil-ledger-sum { display: flex; flex-wrap: wrap; gap: 0.5rem 2rem; padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border); background: var(--sage-50); }
+.bil-ledger-sum > span { display: flex; flex-direction: column; }
+.bil-sum-label { font-size: 0.8125rem; color: var(--text-2); }
+.bil-ledger-sum strong { font-family: var(--serif); font-variant-numeric: tabular-nums lining-nums; font-size: 1.25rem; font-weight: 500; color: var(--text); line-height: 1.2; }
+.bil-ledger-table td { padding-top: 7px; padding-bottom: 7px; }
+.bil-ledger-table td:nth-child(3) { min-width: 200px; }
+
+/* Dues */
+.bil-preview-head { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); }
+.bil-preview-head p { margin: 0 0 0.75rem; }
+.bil-preview-head strong { font-weight: 500; color: var(--text); }
+.bil-preview-head .row { justify-content: space-between; gap: 1rem; align-items: center; }
+.bil-total { font-family: var(--serif); font-weight: 500; font-size: 1.875rem; color: var(--text); font-variant-numeric: tabular-nums lining-nums; }
+.bil-dues-acc { padding: 1rem 1.25rem 1.25rem; }
+.bil-dues-acc .pk-acc-body { padding: 0; }
+.bil-scroll { max-height: 26rem; overflow-y: auto; }
+.bil-scroll tfoot td { position: sticky; bottom: 0; background: var(--surface); }
+.bil-prog-th { width: 18%; min-width: 110px; }
+
+/* Statements */
+.bil-st-top { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 1rem; }
+.bil-gen { display: flex; flex-direction: column; gap: 0.75rem; }
+.bil-gen h3 { margin: 4px 0 0.25rem; }
+.bil-gen p { margin: 0; max-width: 56ch; font-size: 0.875rem; }
+.bil-gen .row { gap: 0.5rem; }
+.bil-st-counts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); overflow: hidden; }
+.bil-st-count { position: relative; background: transparent; border: 0; border-left: 1px solid var(--border); border-top: 1px solid var(--border); padding: 0.75rem 1.25rem; text-align: left; display: flex; flex-direction: column; gap: 2px; cursor: pointer; color: var(--text); font: inherit; transition: background var(--t-ui) var(--ease-ui); }
+.bil-st-count:nth-child(odd) { border-left: 0; }
+.bil-st-count:nth-child(-n+2) { border-top: 0; }
+@media (hover: hover) { .bil-st-count:hover { background: var(--sage-50); } }
+.bil-st-count.active { background: var(--sage-100); }
+.bil-st-count.active::after { content: ""; position: absolute; left: 1.25rem; right: 1.25rem; bottom: 0; height: 2px; background: var(--forest-800); }
+.bil-st-label { font-size: 0.875rem; font-weight: 500; color: var(--text-2); }
+.bil-st-count .stat-value { font-size: 1.625rem; line-height: 1.15; }
+.bil-actions { display: flex; gap: 6px; justify-content: flex-end; }
+
+/* Statement letterhead (on screen and printed) */
+.bil-st-bar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.bil-st-bar .bil-back { margin: 0; }
+.bil-st-bar .row { gap: 0.5rem; align-items: center; }
+.bil-sheet { max-width: 820px; margin: 0 auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 3rem 3rem 2.5rem; position: relative; }
+.bil-lh { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.bil-crest { width: auto; height: 64px; margin-bottom: 0.5rem; }
+.bil-lh-name { font-family: var(--serif); font-weight: 500; font-size: 1.75rem; color: var(--text); line-height: 1.2; }
+.bil-lh-est { font-size: 0.75rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--forest-500); }
+.bil-lh-addr { font-size: 0.8125rem; color: var(--text-2); margin-top: 0.5rem; }
+.bil-sheet-rule { height: 1px; background: var(--border-strong); margin: 1.5rem 0 2rem; width: 100%; }
+.bil-sheet-meta { display: flex; justify-content: space-between; gap: 1.25rem; flex-wrap: wrap; margin-bottom: 1.5rem; font-size: 0.875rem; color: var(--text-2); }
+.bil-sheet-label { font-size: 0.8125rem; color: var(--text-3); }
+.bil-addressee-name { font-family: var(--serif); font-weight: 500; font-size: 1.375rem; color: var(--text); margin: 2px 0 4px; }
+.bil-sheet-facts { display: grid; grid-template-columns: auto auto; gap: 2px 1rem; margin: 0; align-content: start; font-variant-numeric: tabular-nums; }
+.bil-sheet-facts dt { font-size: 0.8125rem; color: var(--text-3); align-self: center; }
+.bil-sheet-facts dd { margin: 0; text-align: right; color: var(--text); }
+.bil-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--border); border-radius: var(--radius-ctl); margin-bottom: 1.5rem; overflow: hidden; }
+.bil-summary > div { padding: 0.75rem 1rem; border-left: 1px solid var(--border); display: flex; flex-direction: column; gap: 2px; }
+.bil-summary > div:first-child { border-left: 0; }
+.bil-summary span { font-size: 0.8125rem; color: var(--text-2); }
+.bil-summary strong { font-family: var(--serif); font-variant-numeric: tabular-nums lining-nums; font-size: 1.375rem; font-weight: 500; color: var(--text); white-space: nowrap; }
+.bil-summary-due { background: var(--sage-50); }
+.bil-summary-due span { color: var(--forest-800); font-weight: 500; }
+.bil-sheet-h { font-family: var(--sans); font-size: 1rem; font-weight: 500; margin: 1.5rem 0 0.5rem; color: var(--text); }
+.bil-sheet-table th { position: static; padding-left: 0; }
+.bil-sheet-table td { padding-left: 0; }
+.bil-sheet-table th:last-child, .bil-sheet-table td:last-child { padding-right: 0; }
+@media (hover: hover) { .bil-sheet-table tbody tr:hover { background: transparent; } }
+.bil-cats { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; margin-top: 0.75rem; font-size: 0.875rem; font-variant-numeric: tabular-nums; }
+.bil-cats > span { display: flex; gap: 0.5rem; align-items: baseline; }
+.bil-cat-label { color: var(--text-2); }
+.bil-sheet-foot { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.8125rem; color: var(--text-2); text-align: center; }
+.bil-sheet-foot p { margin: 0 auto 0.5rem; max-width: 60ch; }
+.bil-sheet-thanks { font-size: 0.9375rem; color: var(--text); }
+
+/* Tablet */
+@media (max-width: 1180px) {
+  .bil-st-top { grid-template-columns: 1fr; }
+  .bil-st-counts { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .bil-st-count { border-top: 0 !important; border-left: 1px solid var(--border) !important; }
+  .bil-st-count:first-child { border-left: 0 !important; }
+}
+@media (max-width: 900px) {
+  .bil-sheet { padding: 2rem 1.5rem 1.5rem; }
+  .bil-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bil-summary > div:nth-child(3) { border-left: 0; }
+  .bil-summary > div:nth-child(n+3) { border-top: 1px solid var(--border); }
+}
+@media (max-width: 560px) {
+  .bil-aging { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bil-inline-select { min-width: 0; flex: 1 1 auto; }
+  .bil-st-counts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bil-st-count:nth-child(odd) { border-left: 0 !important; }
+  .bil-st-count:nth-child(n+3) { border-top: 1px solid var(--border) !important; }
+  .bil-sheet { padding: 1.25rem 1rem; }
+  .bil-sheet-meta { flex-direction: column; }
+  .bil-sheet-facts dd { text-align: left; }
+  .bil-sheet-table { font-size: 0.8125rem; }
+  .bil-pager { padding: 0.5rem 1rem; }
+  .bil-pager-at { display: none; }
+}
+
+/* Print: only the statement sheet */
+@media print {
+  @page { margin: 14mm; }
+  body:has(.bil-sheet) { background: var(--surface); }
+  body:has(.bil-sheet) .sidebar,
+  body:has(.bil-sheet) .topbar,
+  body:has(.bil-sheet) .toasts,
+  body:has(.bil-sheet) .chart-tip,
+  body:has(.bil-sheet) .no-print { display: none !important; }
+  body:has(.bil-sheet) .app { display: block; }
+  body:has(.bil-sheet) .view { padding: 0; max-width: none; animation: none; }
+  .bil-sheet { max-width: none; border: 0; box-shadow: none; border-radius: 0; background: var(--surface); padding: 0; margin: 0; opacity: 1 !important; transform: none !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .bil-sheet::before { display: none; }
+  .bil-sheet-table tr { break-inside: avoid; }
+  .bil-sheet-table tfoot { display: table-row-group; }
+  .bil-summary { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .bil-summary > div:nth-child(3) { border-left: 1px solid var(--border); }
+  .bil-summary > div:nth-child(n+3) { border-top: 0; }
+  .bil-sheet-foot { break-inside: avoid; }
+}
+
+.bil-stack { display: flex; flex-direction: column; min-width: 0; color: var(--text); }
+@media (hover: hover) { a.bil-stack:hover { text-decoration: none; } }
+@media (hover: hover) { a.bil-stack:hover .person-name { color: var(--forest-800); text-decoration: underline; text-underline-offset: 3px; } }
+.bil-tabs .list > li.row.between { gap: 0.75rem; }
+.bil-kv { margin: 0; }
+.bil-tabs .table th.right { text-align: right; }
+
+/* ==========================================================================
+   Phones: billing and statements (desktop unchanged)
+   ========================================================================== */
+@media (max-width: 768px) {
+  .bil-gap { margin-top: 1rem; }
+  .bil-note { padding: 0.625rem 1rem; }
+
+  /* Tables keep numbers on one line and scroll sideways inside their panel */
+  .view:is(:has(> .bil-tabs), :has(> .bil-back)) .table td { overflow-wrap: normal; }
+  .view:is(:has(> .bil-tabs), :has(> .bil-back)) .table th,
+  .view:is(:has(> .bil-tabs), :has(> .bil-back)) .table td.num,
+  .view:is(:has(> .bil-tabs), :has(> .bil-back)) .table td:first-child,
+  .view:is(:has(> .bil-tabs), :has(> .bil-back)) .table .badge,
+  .view:is(:has(> .bil-tabs), :has(> .bil-back)) .table td .person-name,
+  .view:is(:has(> .bil-tabs), :has(> .bil-back)) .table td .person-sub { white-space: nowrap; }
+  .view:has(> .bil-back) .table td:nth-child(2) { min-width: 150px; }
+  .bil-ledger-table td:nth-child(3) { min-width: 170px; }
+
+  .bil-aging { gap: 0.75rem 1rem; }
+  .bil-age-val { font-size: 1.25rem; }
+
+  /* Ledger filters: one row that scrolls sideways */
+  .bil-filters { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; gap: 6px; padding: 0.625rem 0.75rem; }
+  .bil-filters::-webkit-scrollbar { display: none; }
+  .bil-filters > * { flex: none; }
+  .bil-filters .bil-search { flex: 0 0 11rem; }
+  .bil-filters .select { flex: 0 0 auto; width: auto; min-width: 0; max-width: none; }
+  .bil-ledger-sum { padding: 0.625rem 1rem; gap: 6px 1rem; }
+  .bil-ledger-sum strong { font-size: 1.0625rem; }
+
+  .bil-preview-head { padding: 0.75rem 1rem; }
+  .bil-dues-acc { padding: 0.75rem 1rem 1rem; }
+  .bil-total { font-size: 1.375rem; }
+  .bil-st-counts .bil-st-count { padding: 0.625rem 0.75rem; }
+  .bil-st-counts .bil-st-count .stat-value { font-size: 1.25rem; }
+
+  .bil-lh-name { font-size: 1.25rem; }
+  .bil-addressee-name { font-size: 1.125rem; }
+  .bil-summary strong { font-size: 1.0625rem; }
+}
+
+/* Ledger: category with its source underneath; overview and tab grids align to the top */
+.bil-cat-cell { white-space: nowrap; }
+.bil-src { margin-left: 6px; font-size: 0.8125rem; color: var(--text-3); }
+.bil-tabs .grid { align-items: start; }
+.bil-ov .bil-aging { margin-bottom: 0; }
+body.staff .bil-actions .btn-sm { min-height: 30px; }
+.bil-st-list .table td { padding-top: 6px; padding-bottom: 6px; }
+body.staff .bil-stats-5 .stat-value { font-size: 1.75rem; white-space: nowrap; }
+@media (max-width: 1180px) { body.staff .bil-stats-5 .stat-value { font-size: 1.375rem; } }
+
+/* Member account: receipts (Club.receipts), each row opens the receipt to view or reprint */
+.bil-rc .list > li { padding: 0; }
+.bil-rc-row { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); width: 100%; min-height: 44px; padding: var(--s3) var(--s5); background: none; border: 0; font: inherit; color: var(--text); text-align: left; cursor: pointer; }
+.bil-rc-row .person-sub { overflow-wrap: anywhere; }
+.bil-rc-row .num { flex: none; font-variant-numeric: tabular-nums lining-nums; }
+@media (hover: hover) { .bil-rc-row:hover { background: var(--sage-50); } }
+@media (hover: hover) { .bil-rc-row:hover .person-name { color: var(--forest-800); text-decoration: underline; text-underline-offset: 3px; } }
+.bil-rc-row:focus-visible { outline-offset: -2px; }
+.bil-rc-more { padding: 0.25rem 1.25rem 0.5rem; border-top: 1px solid var(--border); }
+@media (max-width: 640px) { .bil-rc-row { padding: 10px var(--s4); } }

@@ -1,0 +1,299 @@
+/* ==========================================================================
+   Portal: Tee times (pass 3). One mobile layout, centred by the theme on wide screens.
+   Booking is one card: date, players, holes, rules, then the chosen period's times.
+   The group, fees and Confirm open in a bottom sheet (Portal.openSheet); Continue sits in Portal.actionBar.
+   portal-theme.css tokens only. Body 16, secondary 14, caption 13. Weights 400/500.
+   ========================================================================== */
+
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ---------------- Title and course status ---------------- */
+/* portal.css styles .p-page .p-hero (the old dark hero) above the theme's specificity: reset it here. */
+body.portal .p-page .tt-hero { padding: 0; margin-bottom: 16px; background: transparent; border: 0; border-radius: 0; overflow: visible; }
+body.portal .p-page .tt-hero h1 { font-family: var(--serif); font-size: 1.875rem; line-height: 1.2; font-weight: 500; margin: 0 0 12px; color: var(--text); }
+body.portal .p-page .tt-hero p { display: block; overflow: visible; font-family: var(--sans); -webkit-line-clamp: unset; }
+body.portal .tt-hero .pk-acc-title { font-size: 0.9375rem; line-height: 1.35; }
+.tt-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.tt-tile { display: flex; flex-direction: column; gap: 1px; padding: 10px 12px; background: var(--sage-50); border-radius: var(--radius-ctl); min-width: 0; }
+.tt-tile-k { font-size: 0.8125rem; color: var(--text-3); }
+.tt-tile-v { font-size: 0.9375rem; font-weight: 500; line-height: 1.35; overflow-wrap: break-word; }
+body.portal .p-page .tt-cond-note, .tt-cond-note { margin: 10px 0 0; font-size: 0.875rem; line-height: 1.5; color: var(--text-2); }
+.tt-cond-k { color: var(--text); font-weight: 500; }
+
+/* ---------------- Tabs ---------------- */
+.tt-tabs .tabs { margin-bottom: 16px; }
+
+/* ---------------- Booking card ---------------- */
+.tt-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 16px; }
+.tt-grp-row { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 16px; margin-top: 14px; }
+.tt-holes { display: flex; flex-direction: column; gap: 6px; }
+body.portal .tt-holes .segmented button { min-width: 56px; min-height: 42px; }
+.tt-rules-host { margin-top: 14px; }
+body.portal .tt-rules-host .pk-acc { box-shadow: none; background: var(--sage-50); border-color: transparent; }
+body.portal .tt-rules-host .pk-acc-body { border-top-color: var(--border); }
+.tt-bullets { margin: 0; padding: 0 0 0 1.1em; font-size: 0.875rem; line-height: 1.5; color: var(--text-2); }
+.tt-bullets li { margin: 0 0 4px; }
+.tt-times { margin-top: 16px; }
+.tt-state .empty { padding: 16px 8px 8px; }
+.tt-state .empty .btn { margin-top: 8px; }
+
+/* Morning · Midday · Afternoon with open counts */
+body.portal .segmented.tt-periods { display: flex; width: 100%; margin-bottom: 12px; }
+body.portal .segmented.tt-periods button { flex: 1 1 0; min-width: 0; min-height: 48px; padding: 5px 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; line-height: 1.2; white-space: normal; }
+.tt-per-l { font-size: 0.875rem; font-weight: 500; }
+.tt-per-n { font-size: 0.8125rem; font-weight: 400; color: var(--text-2); }
+body.portal .tt-periods button.is-empty { color: var(--text-3); }
+body.portal .tt-periods button.is-empty .tt-per-n { color: var(--text-3); }
+.tt-none { margin: 4px 0 0; font-size: 0.9375rem; color: var(--text-2); display: flex; flex-wrap: wrap; align-items: center; gap: 0 6px; }
+
+/* Time chips */
+.tt-chips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 359px) { .tt-chips { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.tt-chip {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  min-height: 54px; padding: 6px 4px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-ctl);
+  cursor: pointer; text-align: center; color: var(--text); font: inherit;
+}
+@media (hover: hover) { .tt-chip:hover:not([disabled]):not(.selected) { border-color: var(--forest-500); background: var(--sage-50); } }
+.tt-chip-t { font-size: 1rem; font-weight: 500; line-height: 1.2; font-variant-numeric: tabular-nums lining-nums; white-space: nowrap; }
+.tt-chip-t small { font-size: 0.75rem; font-weight: 500; margin-left: 2px; color: inherit; }
+.tt-chip-p { font-size: 0.8125rem; line-height: 1.25; color: var(--text-2); }
+.tt-chip.is-few .tt-chip-p { color: var(--forest-500); font-weight: 500; }
+.tt-chip.selected { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); }
+.tt-chip.selected .tt-chip-p, .tt-chip.selected.is-few .tt-chip-p { color: var(--on-dark); }
+.tt-chip[disabled] { cursor: default; background: transparent; border-color: var(--border); color: var(--text-3); }
+.tt-chip[disabled] .tt-chip-p { color: var(--text-3); }
+.tt-chip.st-mine { background: var(--sage-50); border: 1.5px solid var(--forest-800); }
+.tt-chip.st-mine .tt-chip-p { color: var(--forest-800); font-weight: 500; }
+.tt-chip-run { grid-column: 1 / -1; padding: 10px 14px; min-height: 44px; display: flex; align-items: center; flex-wrap: wrap; gap: 0 4px; border: 1px dashed var(--border-strong); border-radius: var(--radius-ctl); color: var(--text-3); font-size: 0.8125rem; line-height: 1.4; }
+.tt-run-t { color: var(--text-2); font-weight: 500; font-variant-numeric: tabular-nums; }
+body.portal .tt-showall { margin-top: 4px; font-size: 0.875rem; }
+
+/* Below the card: two accordions */
+.tt-more { margin-top: 16px; }
+.tt-kv-list { list-style: none; margin: 8px 0 0; padding: 0; font-size: 0.9375rem; }
+.tt-kv-list li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.tt-kv-list li:last-child { border-bottom: 0; }
+.tt-kv-list .num { white-space: nowrap; font-weight: 500; font-variant-numeric: tabular-nums; }
+
+/* ---------------- Sheets: booking, change, detail ---------------- */
+.tt-sheet { padding-top: 4px; }
+.tt-sum { display: flex; align-items: center; gap: 14px; padding: 4px 0 14px; border-bottom: 1px solid var(--border); }
+.tt-sum-t { font-family: var(--serif); font-size: 1.75rem; font-weight: 500; line-height: 1.1; font-variant-numeric: tabular-nums lining-nums; white-space: nowrap; }
+.tt-sum-t small, .tt-done-time small, .tt-row-time small { font-family: var(--sans); font-size: 0.75rem; font-weight: 500; margin-left: 3px; }
+.tt-sum-d { font-size: 0.9375rem; line-height: 1.4; color: var(--text-2); }
+.tt-join { display: flex; gap: 10px; align-items: flex-start; margin: 12px 0 0; padding: 10px 12px; background: var(--sage-50); border-radius: var(--radius-ctl); font-size: 0.875rem; color: var(--text-2); }
+.tt-join .icon { width: 20px; height: 20px; color: var(--forest-500); flex: none; }
+.tt-party { margin: 12px 0 0; }
+.tt-party-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding-bottom: 4px; }
+body.portal .tt-party-head h3 { margin: 0; font-size: 1rem; }
+.tt-party-count { font-size: 0.8125rem; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.tt-pl-list { list-style: none; margin: 0; padding: 0; }
+.tt-pl { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-height: 56px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.tt-pl-who { flex: 1 1 8rem; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.tt-pl-name { font-size: 1rem; font-weight: 500; overflow-wrap: break-word; }
+.tt-pl.is-existing .tt-pl-name { font-weight: 400; }
+.tt-pl-sub { font-size: 0.8125rem; color: var(--text-2); }
+body.portal .tt-ride.segmented { flex: none; }
+body.portal .tt-ride.segmented button { min-height: 40px; padding: 6px 14px; }
+.tt-walk-only { font-size: 0.875rem; color: var(--text-2); }
+.tt-pl-x { flex: none; width: 44px; height: 44px; margin-right: -10px; display: inline-flex; align-items: center; justify-content: center; border: 0; background: none; color: var(--text-2); border-radius: var(--radius-ctl); cursor: pointer; }
+@media (hover: hover) { .tt-pl-x:hover { background: var(--sage-50); } }
+.tt-pl-x .icon { width: 20px; height: 20px; }
+.tt-add-row { border-bottom: 1px solid var(--border); }
+.tt-add-btn { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 52px; padding: 8px 0; border: 0; background: none; color: var(--forest-800); font: 500 1rem/1.3 var(--sans); text-align: left; cursor: pointer; }
+@media (hover: hover) { .tt-add-btn:hover { background: var(--sage-50); } }
+.tt-add-btn > .icon:first-child { width: 20px; height: 20px; color: var(--forest-500); flex: none; }
+.tt-add-btn span { flex: 1 1 auto; }
+.tt-go { width: 18px; height: 18px; color: var(--text-3); flex: none; }
+body.portal .tt-hint, .tt-hint { margin: 10px 0 0; font-size: 0.875rem; line-height: 1.45; color: var(--text-2); }
+.tt-rule { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; background: var(--sage-50); border-radius: var(--radius-ctl); }
+.tt-rule .icon { width: 20px; height: 20px; color: var(--forest-500); flex: none; }
+.tt-holes-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 14px 0 0; }
+.tt-sheet .pk-acc { margin-top: 12px; box-shadow: none; }
+.tt-sheet .textarea { width: 100%; min-height: 88px; }
+.tt-due { margin-top: 12px; }
+.tt-due-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 4px 0; font-size: 1rem; font-weight: 500; }
+.tt-due-amt { font-family: var(--serif); font-size: 1.375rem; font-weight: 500; font-variant-numeric: tabular-nums lining-nums; white-space: nowrap; }
+.tt-due .pk-acc { margin-top: 6px; }
+.tt-due-note { margin: 8px 0 0; font-size: 0.8125rem; color: var(--text-3); }
+/* Who pays for a guest (player editor) */
+.tt-pays { flex: 1 1 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; }
+body.portal .tt-pays .tt-pays-seg { flex: 0 1 17rem; }
+.tt-pays-l { font-size: 0.8125rem; color: var(--text-2); }
+body.portal .segmented.tt-pays-seg { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); width: 100%; margin-top: 6px; }
+body.portal .tt-pays .tt-pays-seg { margin-top: 0; }
+body.portal .segmented.tt-pays-seg button { min-height: 44px; min-width: 0; white-space: nowrap; justify-content: center; text-align: center; }
+.tt-due-shop { display: flex; justify-content: space-between; gap: 12px; margin: 2px 0 0; font-size: 0.875rem; color: var(--text-2); }
+.tt-due-sub { margin: 10px 0 2px; font-size: 0.8125rem; color: var(--text-2); }
+.tt-fees-lines { list-style: none; margin: 0; padding: 0; font-size: 0.875rem; }
+body.portal .tt-fees-lines li { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0 12px; padding: 6px 0; border-bottom: 1px solid var(--border); overflow-wrap: normal; }
+.tt-fees-lines li:last-child { border-bottom: 0; }
+.tt-fees-lines .num { white-space: nowrap; }
+.tt-alert { display: flex; gap: 10px; align-items: flex-start; margin-top: 14px; padding: 12px 14px; background: var(--danger-bg); color: var(--danger); border-radius: var(--radius-ctl); font-size: 0.875rem; font-weight: 500; }
+.tt-alert[hidden] { display: none; }
+.tt-alert svg { width: 20px; height: 20px; flex: none; }
+.tt-alert p { margin: 0 0 4px; }
+.tt-alert .btn { margin: 8px 8px 0 0; }
+body.portal .ps-foot .tt-full { width: 100%; }
+.tt-guest .input, .tt-guest .select { width: 100%; margin-top: 6px; }
+.tt-guest { padding-top: 8px; display: flex; flex-direction: column; gap: 16px; }
+.tt-gf { display: flex; flex-direction: column; min-width: 0; }
+.tt-gf .field-error { display: block; margin-top: 6px; }
+.tt-gf-hint { margin-top: 6px; font-size: 0.8125rem; color: var(--text-2); }
+.tt-gf-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.tt-opt { font-weight: 400; color: var(--text-2); }
+.tt-g-recent .ps-list { margin-top: 6px; border: 1px solid var(--border); border-radius: var(--radius-card, 12px); overflow: hidden; }
+.tt-g-or { margin: 16px 0 0; font-size: 0.8125rem; font-weight: 500; color: var(--text-2); }
+@media (max-width: 359px) { .tt-gf-row { grid-template-columns: minmax(0, 1fr); } }
+
+/* "You're booked" */
+.tt-done { text-align: center; padding: 12px 0 4px; }
+.tt-done-ok { display: inline-flex; width: 44px; height: 44px; border-radius: 50%; align-items: center; justify-content: center; background: var(--forest-800); color: var(--on-dark); }
+.tt-done-ok .icon { width: 22px; height: 22px; stroke-width: 2; }
+body.portal .tt-done-h { margin: 10px 0 0; font-family: var(--serif); font-size: 1.375rem; font-weight: 500; }
+.tt-done-time { font-family: var(--serif); font-size: 2.25rem; font-weight: 500; line-height: 1.15; margin-top: 6px; font-variant-numeric: tabular-nums lining-nums; }
+.tt-done-d { margin: 2px 0 0; font-size: 0.9375rem; color: var(--text-2); }
+.tt-done-p { margin: 10px 0 0; font-size: 0.875rem; color: var(--text-2); }
+.tt-done-acts, .tt-detail-acts { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; }
+body.portal .ps-foot .tt-done-acts .btn, body.portal .ps-foot .tt-detail-acts .btn { width: auto; min-width: 0; padding: 0 10px; }
+.tt-ask h3 { margin: 8px 0 6px; }
+.tt-ask p { margin: 0; color: var(--text-2); font-size: 0.9375rem; }
+.tt-detail-pl { margin-top: 8px; }
+
+/* Find a member */
+.tt-find-search { position: relative; margin: 4px 0 8px; }
+.tt-find-search svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; color: var(--text-2); }
+.tt-find-search .input { padding-left: 44px; width: 100%; }
+body.portal .tt-find .ps-list { margin: 0 -20px; }
+.tt-find-empty { padding: 8px 0; }
+
+/* ---------------- My tee times ---------------- */
+.tt-mine-sec + .tt-mine-sec { margin-top: 24px; }
+body.portal .tt-mine-h { margin: 0 0 10px; font-size: 1.375rem; }
+.tt-rounds { overflow: hidden; }
+.tt-row, .tt-all-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 8px 16px; border: 0; border-bottom: 1px solid var(--border); background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+@media (hover: hover) { .tt-row:hover, .tt-all-row:hover { background: var(--sage-50); } }
+.tt-rounds > :last-child { border-bottom: 0; }
+.tt-row-date { flex: none; width: 2.75rem; padding: 4px 0; display: flex; flex-direction: column; align-items: center; background: var(--sage-50); border-radius: var(--radius-ctl); }
+.tt-rd-wk { font-size: 0.8125rem; color: var(--text-2); line-height: 1.2; }
+.tt-rd-n { font-family: var(--serif); font-size: 1.25rem; font-weight: 500; line-height: 1.15; font-variant-numeric: tabular-nums lining-nums; }
+.tt-row-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.tt-row-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tt-row-time { font-size: 1rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+.tt-row-meta { font-size: 0.8125rem; line-height: 1.35; color: var(--text-2); overflow-wrap: break-word; }
+.tt-pill { display: inline-block; font-size: 0.75rem; font-weight: 500; padding: 2px 8px; border-radius: 999px; background: var(--sage-100); color: var(--forest-800); }
+.tt-pill.is-bad { background: var(--danger-bg); color: var(--danger); }
+.tt-all-row { justify-content: space-between; min-height: 52px; color: var(--forest-800); font-weight: 500; }
+.tt-past-list { list-style: none; margin: 0; padding: 0; }
+.tt-past-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.tt-past-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.tt-past-t { font-size: 0.9375rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+.tt-past-s { font-size: 0.8125rem; color: var(--text-2); }
+.tt-empty .empty .btn, .tt-notice .empty .btn { margin-top: 8px; }
+
+/* ---------------- Social and suspended members ---------------- */
+.tt-social-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 20px 16px; }
+.tt-social-card h2 { margin: 0 0 6px; }
+.tt-social-lead { color: var(--text-2); margin: 0 0 14px; font-size: 0.9375rem; }
+.tt-social-steps { list-style: none; margin: 0 0 16px; padding: 0; border-top: 1px solid var(--border); }
+.tt-social-steps li { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.9375rem; color: var(--text-2); }
+.tt-social-steps li > span { width: 1.75rem; height: 1.75rem; flex: none; border-radius: 50%; background: var(--sage-100); color: var(--forest-800); display: inline-flex; align-items: center; justify-content: center; font-weight: 500; font-size: 0.8125rem; }
+.tt-social-steps strong { font-weight: 500; color: var(--text); }
+.tt-social-actions { display: flex; flex-direction: column; gap: 8px; }
+.tt-social-foot { margin: 14px 0 0; font-size: 0.875rem; }
+body.portal .tt-chip-t small, body.portal .tt-sum-t small, body.portal .tt-done-time small, body.portal .tt-row-time small { color: inherit; }
+body.portal .tt-due .pk-acc { background: transparent; border: 0; box-shadow: none; border-radius: 0; margin-top: 0; }
+body.portal .tt-due .pk-acc-head { min-height: 44px; padding: 4px 0; }
+@media (hover: hover) { body.portal .tt-due .pk-acc-head:hover { background: transparent; } }
+body.portal .tt-due .pk-acc-title { font-size: 0.875rem; color: var(--forest-800); }
+body.portal .tt-due .pk-acc-body { padding: 4px 0 0; border-top: 0; }
+body.portal .ps-foot .btn svg { flex: none; }
+
+/* ==========================================================================
+   Tablet (>= 768) and desktop (>= 1024). Phones keep the single column above.
+   ========================================================================== */
+/* Phones: the times sit directly under the booking controls, in the same card look. */
+.tt-times-card { margin-top: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 16px; }
+.tt-times-card .tt-times { margin-top: 0; }
+
+@media (min-width: 768px) {
+  body.portal .p-page .tt-hero { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; }
+  body.portal .p-page .tt-hero h1 { margin: 0; }
+  body.portal .tt-hero .pk-acc { flex: 1 1 26rem; max-width: 38rem; }
+  /* Controls: date wide, players and holes beside it */
+  .tt-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px 20px; align-items: end; }
+  .tt-card .tt-date { grid-column: 1; }
+  .tt-card .tt-grp-row { grid-column: 2; margin-top: 0; flex-wrap: nowrap; align-self: start; padding-top: 0; }
+  .tt-card .tt-rules-host { grid-column: 1 / -1; margin-top: 0; }
+  .tt-chips { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .tt-more { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+  body.portal .tt-more .pk-acc + .pk-acc { margin-top: 0; }
+  /* My tee times: upcoming rows in two columns */
+  body.portal .tt-rounds { display: grid; grid-template-columns: 1fr 1fr; }
+  body.portal .tt-rounds .tt-row { border-bottom: 1px solid var(--border); }
+  body.portal .tt-rounds .tt-row:nth-child(odd) { border-right: 1px solid var(--border); }
+  body.portal .tt-rounds .tt-all-row { grid-column: 1 / -1; border-bottom: 0; }
+  body.portal .tt-rounds > .tt-row:last-child:nth-child(odd), body.portal .tt-rounds > .tt-row:nth-last-child(2):nth-child(odd) { grid-column: 1 / -1; border-right: 0; }
+  .tt-past-list { columns: 2; column-gap: 32px; }
+  .tt-past-row { break-inside: avoid; }
+  .tt-social-card { max-width: 40rem; }
+  .tt-social-actions { flex-direction: row; }
+}
+
+@media (min-width: 1024px) {
+  /* Booking controls and course info in a side column, the time grid wide beside them */
+  .tt-book { display: grid; grid-template-columns: minmax(22rem, 25rem) minmax(0, 1fr); grid-template-areas: "card times" "more times"; gap: 16px 24px; align-items: start; }
+  .tt-card { grid-area: card; display: block; }
+  .tt-card .tt-grp-row { margin-top: 14px; }
+  .tt-card .tt-rules-host { margin-top: 14px; }
+  .tt-times-card { grid-area: times; margin-top: 0; padding: 20px; }
+  .tt-more { grid-area: more; display: block; margin-top: 0; }
+  body.portal .tt-more .pk-acc + .pk-acc { margin-top: 12px; }
+  body.portal .segmented.tt-periods { max-width: none; width: 100%; }
+  .tt-chips { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+  .tt-none { font-size: 1rem; }
+  .tt-rounds .tt-row { min-height: 72px; }
+}
+@media (min-width: 1280px) { .tt-chips { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+
+/* Add-ons in the player editor (Club.addons, member ones only): a chip per player, or a quantity for the group */
+.tt-adds { list-style: none; margin: 0; padding: 0; }
+.tt-add { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.tt-add:last-child { border-bottom: 0; }
+.tt-add-head { flex: 1 1 9rem; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.tt-add-name { font-size: 1rem; font-weight: 500; }
+.tt-add-price { font-size: 0.8125rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.tt-add-who { display: flex; flex-wrap: wrap; gap: 8px; }
+.tt-add-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; max-width: 11rem; padding: 6px 14px; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface); color: var(--text); font: 400 0.9375rem/1.2 var(--sans); cursor: pointer; transition: background-color 0.15s, border-color 0.15s, color 0.15s; }
+.tt-add-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (hover: hover) { .tt-add-chip:hover { border-color: var(--forest-500); } }
+.tt-add-tick { width: 16px; height: 16px; flex: none; display: none; }
+.tt-add-chip.on { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); }
+.tt-add-chip.on .tt-add-tick { display: block; }
+body.portal .tt-add-qty { align-self: center; }
+.tt-pl-adds { display: flex; align-items: center; gap: 6px; font-size: 0.8125rem; color: var(--text-2); }
+.tt-pl-adds .icon { width: 14px; height: 14px; flex: none; color: var(--forest-500); }
+
+/* Time cards: head count (taken places filled, Club.teeHeads in js/core/holds.js) and the guest green fee (Nov 9) */
+.tt-chip { min-height: 0; padding: 8px 4px 6px; }
+.tt-chip .tee-heads { gap: 2px; margin: 4px 0 2px; }
+.tt-chip .tee-head { width: 14px; height: 14px; border-width: 1px; color: var(--forest-500); }
+.tt-chip .tee-head .icon { width: 9px; height: 9px; stroke-width: 2; }
+.tt-chip .tee-head.is-taken { color: var(--text-3); }
+.tt-chip-fee { align-self: stretch; margin: 4px 6px 0; padding-top: 4px; border-top: 1px solid var(--border); font-size: 0.75rem; line-height: 1.3; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.tt-chip.selected .tee-head { color: var(--on-dark); }
+.tt-chip.selected .tee-head.is-taken { color: var(--on-dark-2); }
+.tt-chip.selected .tee-head.is-taken .icon { stroke: var(--forest-800); }
+.tt-chip.selected .tt-chip-fee { color: var(--on-dark); border-top-color: rgba(243, 246, 242, 0.25); }
+.tt-chip[disabled] .tee-head { color: var(--text-3); opacity: 0.7; }
+.tt-chip.st-mine .tee-head { color: var(--forest-800); }
+.tt-hold-note { margin: 12px 0 0; }
+
+/* Promo code on a booking (Club.promos box in the Book sheet, its line in the fee breakdown, the saved note) */
+.tt-promo-host { margin-top: 14px; }
+.tt-promo-host .pr-box { margin: 0; }
+.tt-fees-lines li.tt-fee-promo .num { color: var(--forest-500); font-weight: 500; }
+.tt-done-promo { display: flex; align-items: center; justify-content: center; gap: 6px; color: var(--forest-800); }
+.tt-done-promo .icon { width: 16px; height: 16px; flex: none; color: var(--forest-500); }
+.tt-add-note { font-size: 0.8125rem; color: var(--text-3); margin-top: 2px; }

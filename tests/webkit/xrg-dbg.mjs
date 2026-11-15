@@ -1,0 +1,13 @@
+import { webkit } from 'playwright';
+const B = 'http://localhost:8001/site/';
+const b = await webkit.launch(); const ctx = await b.newContext({ viewport: { width: 390, height: 844 } }); const p = await ctx.newPage();
+await p.goto(B + 'index.html#/reports/growth'); await p.waitForTimeout(2000);
+await p.locator('[data-rg-open="age"]').click(); await p.waitForTimeout(500);
+const a = p.locator('.drawer.rg-drawer a[href^="#/members/mem_"]').first();
+await a.scrollIntoViewIfNeeded(); const bb = await a.boundingBox(); console.log(bb);
+const hit = await p.evaluate(({x,y}) => { const e = document.elementFromPoint(x,y); return e && (e.outerHTML.slice(0,150)); }, { x: bb.x + bb.width/2, y: bb.y + bb.height/2 });
+console.log(hit);
+const tw = await p.evaluate(() => [...document.querySelectorAll('.drawer .table-wrap')].map(w => w.scrollWidth + '/' + w.clientWidth));
+console.log(tw);
+await p.screenshot({ path: 'xrg-dbg.png' });
+await b.close();

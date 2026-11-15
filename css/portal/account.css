@@ -1,0 +1,427 @@
+/* ==========================================================================
+   Portal: My account (pa-), v2. Quiet, refined surfaces from css/portal-theme.css tokens only.
+   ========================================================================== */
+
+/* ---------- Title block ---------- */
+body.portal .p-page .pa-hero h1 { font-size: 1.875rem; line-height: 1.2; margin: 0 0 6px; color: var(--text); }
+body.portal .p-page .pa-hero p { display: block; overflow: visible; margin: 0; font-size: 0.9375rem; line-height: 1.45; color: var(--text-2); }
+body.portal .p-page .pa-hero .pa-hero-meta { font-size: 0.8125rem; color: var(--text-3); margin-top: 4px; font-variant-numeric: tabular-nums; }
+.pa-hero { margin-bottom: 16px; }
+.pa-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- Sub navigation: same look as the tabs, never wraps ---------- */
+.pa-subnav { display: flex; flex-wrap: nowrap; gap: 24px; border-bottom: 1px solid var(--border); margin-bottom: 24px; overflow-x: auto; scrollbar-width: none; }
+.pa-subnav::-webkit-scrollbar { display: none; }
+.pa-subnav a { position: relative; flex: none; display: inline-flex; align-items: center; justify-content: center; min-height: 44px; min-width: 44px; font-size: 0.9375rem; font-weight: 500; color: var(--text-2); text-decoration: none; white-space: nowrap; }
+@media (hover: hover) { .pa-subnav a:hover { color: var(--text); text-decoration: none; } }
+.pa-subnav a.active { color: var(--text); }
+.pa-subnav a.active::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--forest-800); }
+
+/* ---------- Shared ---------- */
+.pa-ov { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.pa-ov2 { grid-template-columns: minmax(0, 1fr); margin-top: 12px; gap: 12px; }
+.pa-ov2.pa-ov2-single { grid-template-columns: minmax(0, 1fr); }
+.pa-head-icon { width: 20px; height: 20px; color: var(--forest-500); flex: none; }
+.pa-head-sub { font-size: 0.8125rem; color: var(--text-3); margin-top: 1px; }
+.pa-link { display: inline-flex; align-items: center; gap: 2px; min-height: 44px; font-size: 0.875rem; font-weight: 500; color: var(--forest-800); text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 3px; }
+.pa-link svg { width: 16px; height: 16px; }
+.pa-note { color: var(--text); font-size: 0.9375rem; padding: 12px 14px; background: var(--sage-50); border-radius: var(--radius-ctl); margin: 0 0 12px; }
+.pa-fine { font-size: 0.8125rem; line-height: 1.45; color: var(--text-3); margin: 12px 0 0; }
+.pa-fig-l { display: block; font-size: 0.8125rem; color: var(--text-3); }
+.pa-step-n { font-size: 0.8125rem; color: var(--text-3); margin-bottom: 1px; }
+body.portal .p-link svg { width: 16px; height: 16px; }
+
+/* ---------- Balance ---------- */
+.pa-balance .panel-body { padding: 20px 16px 16px; }
+.pa-bal-h { font-size: 0.875rem; color: var(--text-2); margin-top: 6px; }
+.pa-bal-val { font-family: var(--serif); font-size: 2.5rem; font-weight: 500; line-height: 1.15; color: var(--text); margin: 2px 0 12px; font-variant-numeric: tabular-nums lining-nums; overflow-wrap: anywhere; }
+.pa-past { display: flex; gap: 10px; align-items: flex-start; background: var(--sage-50); color: var(--text); padding: 12px 14px; border-radius: var(--radius-ctl); font-size: 0.875rem; margin: 0 0 12px; }
+.pa-past svg { width: 18px; height: 18px; color: var(--forest-500); flex: none; margin-top: 1px; }
+.pa-facts { margin: 0 0 16px; border-top: 1px solid var(--border); }
+.pa-facts > div { display: grid; grid-template-columns: minmax(110px, 36%) minmax(0, 1fr); column-gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.pa-facts dt { grid-row: span 2; font-size: 0.875rem; color: var(--text-2); }
+.pa-facts dd { margin: 0; font-size: 0.9375rem; font-weight: 500; color: var(--text); text-align: right; font-variant-numeric: tabular-nums; }
+.pa-facts dd a { color: var(--forest-800); text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 3px; position: relative; }
+.pa-facts dd a::after { content: ""; position: absolute; inset: -12px -4px; }
+.pa-facts dd.muted { font-size: 0.8125rem; font-weight: 400; color: var(--text-3); margin-top: 1px; }
+.pa-facts dd .badge { margin-top: 2px; }
+.pa-bal-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.pa-bal-actions .btn { flex: 1 1 160px; }
+.pa-month .chart-wrap { justify-content: center; }
+.pa-month .donut-legend { flex: 1 1 180px; font-size: 0.875rem !important; }
+/* The donut's centre label is drawn by js/core/charts.js at 10px uppercase: bring it to the caption size */
+.pa-month svg text:not(.donut-center) { font-size: 0.8125rem !important; fill: var(--text-3) !important; letter-spacing: 0.04em; }
+.pa-month svg .donut-center { font-weight: 500; }
+
+/* ---------- Food and drink minimum ---------- */
+.pa-fb-figs { display: flex; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; margin-bottom: 10px; }
+.pa-fb-figs .right { text-align: right; }
+.pa-fb-val { font-family: var(--serif); font-size: 1.5rem; font-weight: 500; color: var(--text); line-height: 1.2; font-variant-numeric: tabular-nums lining-nums; }
+.pa-fb-val.muted { color: var(--text-2); }
+.pa-fb-bar { height: 4px; margin-bottom: 12px; background: var(--sage-200); border: 0; border-radius: 2px; }
+.pa-fb-bar.bar span, .pa-fb-bar.bar.brass span { background: var(--forest-800); border-radius: 2px; }
+.pa-fb-note { margin: 0 0 4px; font-size: 0.875rem; color: var(--text-2); }
+
+/* ---------- Activity rows (inset list inside a card) ---------- */
+.pa-list { list-style: none; margin: 0; padding: 0; }
+.pa-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); min-height: 60px; }
+.pa-list > li:last-child { border-bottom: 0; }
+.pa-date { width: 40px; flex: none; display: flex; flex-direction: column; align-items: center; line-height: 1.15; font-variant-numeric: tabular-nums lining-nums; }
+.pa-date-d { font-family: var(--serif); font-size: 1.25rem; font-weight: 500; color: var(--text); }
+.pa-date-m { font-size: 0.8125rem; color: var(--text-3); }
+.pa-row-icon { width: 36px; height: 36px; border-radius: 50%; flex: none; display: inline-flex; align-items: center; justify-content: center; background: var(--sage-50); color: var(--forest-500); }
+.pa-row-icon svg { width: 20px; height: 20px; }
+.pa-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.pa-row-desc { color: var(--text); font-size: 0.9375rem; font-weight: 500; line-height: 1.35; overflow-wrap: anywhere; }
+.pa-row-sub { font-size: 0.8125rem; color: var(--text-3); }
+.pa-row-amt { flex: none; text-align: right; display: flex; flex-direction: column; align-items: flex-end; font-size: 0.9375rem; font-weight: 500; color: var(--text); font-variant-numeric: tabular-nums; }
+.pa-row-tag { font-size: 0.8125rem; font-weight: 400; color: var(--forest-500); }
+.pa-row.is-pay .pa-pay-amt, .pa-row.is-credit .pa-row-amt { color: var(--forest-800); }
+.pa-row.is-pay .pa-row-icon { background: var(--sage-100); color: var(--forest-800); }
+.pa-row.is-pay .pa-row-icon.pa-row-card { color: var(--text); background: var(--surface); border: 1px solid var(--border); }
+.pa-row-card .cc-mark { max-width: 26px; }
+.pa-month-head { padding: 14px 16px 6px; background: var(--surface); border-bottom: 1px solid var(--border); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--forest-500); }
+
+.pa-filters { display: flex; gap: 12px 16px; padding: 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.pa-filter { display: flex; flex-direction: column; gap: 6px; flex: 1 1 180px; max-width: 320px; }
+.pa-filter-l { font-size: 0.875rem; font-weight: 500; color: var(--text-2); }
+.pa-act-sum { display: flex; gap: 8px 28px; padding: 14px 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.pa-act-sum > span { display: flex; flex-direction: column; }
+.pa-act-sum strong { font-size: 1rem; font-weight: 500; color: var(--text); font-variant-numeric: tabular-nums; }
+.pa-more { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 16px; border-top: 1px solid var(--border); font-size: 0.875rem; }
+
+/* ---------- Statements: one inset list ---------- */
+body.portal .pa-st-list > li { display: block; padding: 0; min-height: 0; }
+.pa-st { display: flex; align-items: center; gap: 12px; padding: 14px 16px; color: var(--text); min-height: 64px; text-decoration: none; }
+@media (hover: hover) { .pa-st:hover { text-decoration: none; background: var(--sage-50); } }
+.pa-st-icon { width: 36px; height: 36px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--sage-50); color: var(--forest-500); flex: none; }
+.pa-st-icon svg { width: 20px; height: 20px; }
+.pa-st-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.pa-st-period { font-size: 1rem; font-weight: 500; color: var(--text); line-height: 1.35; }
+.pa-st-main .pa-row-sub { font-size: 0.8125rem; }
+.pa-st-amt { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; font-size: 0.9375rem; font-weight: 500; color: var(--text); font-variant-numeric: tabular-nums; flex: none; }
+.pa-chev { width: 18px; height: 18px; color: var(--text-3); flex: none; }
+body.portal .pa-st-pay { margin: -6px 16px 6px 64px; }
+
+/* ---------- Statement letterhead ---------- */
+.pa-back { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; font-size: 0.9375rem; font-weight: 500; color: var(--forest-800); text-decoration: none; }
+.pa-back svg { width: 18px; height: 18px; }
+.pa-st-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.pa-st-bar-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pa-sheet-wrap { max-width: 860px; margin: 0 auto; }
+.pa-sheet { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 32px; }
+.pa-lh { text-align: center; }
+.pa-crest { width: auto; height: 56px; color: var(--forest-800); display: block; margin: 0 auto 8px; }
+.pa-lh-name { font-family: var(--serif); font-size: 1.375rem; font-weight: 500; color: var(--text); line-height: 1.25; }
+.pa-lh-est { font-size: 0.75rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--forest-500); margin-top: 4px; }
+.pa-lh-addr { font-size: 0.8125rem; color: var(--text-3); margin-top: 4px; }
+.pa-sheet-rule { height: 1px; background: var(--border); margin: 24px 0; }
+.pa-sheet-meta { display: flex; justify-content: space-between; gap: 16px 24px; flex-wrap: wrap; font-size: 0.875rem; color: var(--text-2); margin-bottom: 24px; }
+.pa-addressee-name { font-size: 1rem; font-weight: 500; color: var(--text); margin: 2px 0; }
+.pa-sheet-facts { display: grid; grid-template-columns: max-content max-content; gap: 4px 16px; margin: 0; }
+.pa-sheet-facts dt { color: var(--text-3); }
+.pa-sheet-facts dd { margin: 0; color: var(--text); text-align: right; font-variant-numeric: tabular-nums; }
+.pa-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--border); border-radius: var(--radius-ctl); margin-bottom: 24px; overflow: hidden; }
+.pa-summary > div { padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; border-left: 1px solid var(--border); min-width: 0; }
+.pa-summary > div:first-child { border-left: 0; }
+.pa-summary span { font-size: 0.8125rem; color: var(--text-3); }
+.pa-summary strong { font-size: 1.0625rem; font-weight: 500; color: var(--text); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.pa-summary-due { background: var(--sage-50); }
+.pa-summary-due span { color: var(--forest-500); }
+.pa-sheet-h { font-size: 1rem; font-weight: 500; color: var(--text); margin: 24px 0 6px; }
+.pa-sheet-table th { background: transparent; position: static; }
+.pa-sheet-table td, .pa-sheet-table th { padding: 8px 10px; }
+@media (hover: hover) { .pa-sheet-table tbody tr:hover { background: transparent; } }
+.pa-dept-inline { display: none; }
+.pa-cats { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-top: 12px; font-size: 0.875rem; font-variant-numeric: tabular-nums; }
+.pa-cats > span { display: flex; gap: 6px; align-items: baseline; }
+.pa-cats .pa-fig-l { display: inline; }
+.pa-sheet-foot { margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 0.8125rem; color: var(--text-3); text-align: center; }
+.pa-sheet-foot a { color: var(--forest-800); text-decoration: underline; text-decoration-color: var(--border-strong); position: relative; }
+.pa-sheet-foot a::after { content: ""; position: absolute; inset: -12px -4px; }
+.pa-sheet-thanks { font-size: 0.9375rem; color: var(--text-2); }
+
+/* ---------- Payment ---------- */
+.pa-pay { grid-template-columns: minmax(0, 1fr); align-items: start; gap: 12px; }
+.pa-pay [hidden] { display: none !important; }
+.pa-pay .stack { gap: 12px; }
+.pa-opts { display: grid; gap: 8px; }
+.pa-opt { display: flex; align-items: center; gap: 12px; padding: 12px 14px; min-height: 56px; border: 1px solid var(--border); border-radius: var(--radius-ctl); background: var(--surface); cursor: pointer; flex-wrap: wrap; }
+@media (hover: hover) { .pa-opt:hover { border-color: var(--border-strong); } }
+.pa-opt input { accent-color: var(--forest-800); width: 20px; height: 20px; flex: none; margin: 0; }
+.pa-opt:has(input:checked) { border-color: var(--forest-800); box-shadow: inset 0 0 0 0.5px var(--forest-800); background: var(--sage-50); }
+.pa-opt:has(input:disabled) { cursor: default; }
+.pa-opt-body { flex: 1 1 150px; min-width: 0; display: flex; flex-direction: column; }
+.pa-opt-title { color: var(--text); font-weight: 500; font-size: 1rem; }
+.pa-opt-sub { font-size: 0.8125rem; color: var(--text-3); }
+.pa-opt-amt { font-family: var(--serif); font-size: 1.25rem; font-weight: 500; color: var(--text); font-variant-numeric: tabular-nums lining-nums; margin-left: auto; }
+.pa-other { margin: 16px 0 0; }
+.pa-money { position: relative; }
+.pa-money span { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-2); }
+.pa-money .input { padding-left: 28px; font-variant-numeric: tabular-nums; }
+.pa-secure { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8125rem; color: var(--forest-500); }
+.pa-secure svg { width: 18px; height: 18px; }
+.pa-newcard .cc { margin-bottom: 12px; }
+.pa-mark { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 32px; flex: none; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); }
+.pa-mark .cc-mark { max-width: 40px; }
+.pa-mark .cc-mark-generic { width: 20px; height: 20px; color: var(--text-3); }
+.pa-rv-method { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.pa-rv-method .pa-mark { width: 38px; height: 26px; }
+.pa-rv-method .pa-mark .cc-mark { max-width: 32px; }
+.pa-newcard .field-hint { font-size: 0.8125rem; color: var(--text-3); }
+/* Card entry widget (css/cards.css, shared): label and hint sizes on this page */
+.pa-newcard .cc-fields label { font-size: 0.875rem; }
+.pa-newcard .cc-detected { font-size: 0.8125rem; color: var(--text-3); }
+
+.pa-review { padding: 0 4px; }
+.pa-review-kv { margin: 0 0 16px; }
+.pa-review-kv > div { display: flex; justify-content: space-between; align-items: baseline; gap: 4px 12px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.9375rem; flex-wrap: wrap; }
+.pa-review-kv dt { color: var(--text-2); }
+.pa-review-kv dd { margin: 0; color: var(--text); font-weight: 500; text-align: right; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.pa-rv-amt { font-family: var(--serif); font-size: 1.5rem; font-weight: 500 !important; line-height: 1.2; }
+.pa-paybtn { width: 100%; }
+
+/* ---------- Receipt ---------- */
+.pa-receipt-wrap { max-width: 640px; margin: 0 auto; }
+.pa-receipt-kv { margin: 0; text-align: left; }
+.pa-receipt-kv > div { display: flex; justify-content: space-between; gap: 4px 16px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.9375rem; flex-wrap: wrap; }
+.pa-receipt-kv dt { color: var(--text-2); flex: none; }
+.pa-receipt-kv dd { margin: 0; text-align: right; color: var(--text); font-weight: 500; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.pa-receipt-actions { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 20px; }
+
+/* ---------------- Responsive ---------------- */
+@media (max-width: 720px) {
+  .pa-row { padding: 12px 16px; }
+  .pa-row-icon, .pa-st-icon { display: none; }
+  body.portal .pa-st-pay { margin-left: 16px; }
+  .pa-filter { max-width: none; }
+  .pa-sheet { padding: 20px 16px; }
+  .pa-summary { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .pa-summary > div:nth-child(3) { border-left: 0; }
+  .pa-summary > div:nth-child(n+3) { border-top: 1px solid var(--border); }
+  .pa-sheet-facts dd { text-align: left; }
+  .pa-col-dept { display: none; }
+  .pa-dept-inline { display: block; font-size: 0.8125rem; color: var(--text-3); }
+  .pa-sheet-table td, .pa-sheet-table th { padding: 8px 6px; }
+  .pa-st-bar-actions { width: 100%; }
+  .pa-st-bar-actions .btn { flex: 1 1 140px; }
+  .pa-receipt-actions .btn { flex: 1 1 200px; }
+  .pa-month .chart-wrap { flex-wrap: wrap; }
+}
+@media (max-width: 400px) {
+  .pa-summary { grid-template-columns: minmax(0, 1fr); }
+  .pa-summary > div { border-left: 0; }
+  .pa-summary > div + div { border-top: 1px solid var(--border); }
+  .pa-sheet-facts { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ---------------- Print: only the statement or receipt ---------------- */
+@media print {
+  @page { margin: 14mm; }
+  body.portal:has(.pa-printable) { background: var(--surface); padding: 0 !important; }
+  body.portal:has(.pa-printable) .p-header,
+  body.portal:has(.pa-printable) .p-footer,
+  body.portal:has(.pa-printable) .p-tabbar,
+  body.portal:has(.pa-printable) .toasts,
+  body.portal:has(.pa-printable) .chart-tip,
+  body.portal:has(.pa-printable) .overlay,
+  .pa-st-bar, .pa-hero, .pa-subnav, .pa-receipt-actions { display: none !important; }
+  body.portal:has(.pa-printable) .p-page { padding: 0; max-width: none; }
+  .pa-sheet-wrap, .pa-receipt-wrap { max-width: none; }
+  .pa-printable { border: 0 !important; box-shadow: none !important; padding: 0 !important; animation: none !important; opacity: 1 !important; transform: none !important; clip-path: none !important; }
+  .pa-printable * { animation: none !important; }
+  .pa-col-dept { display: table-cell !important; }
+  .pa-dept-inline { display: none !important; }
+  .pa-summary { grid-template-columns: repeat(4, 1fr) !important; }
+  .pa-sheet-table tr { break-inside: avoid; }
+  .pa-summary-due, .pa-summary { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+/* ---------- Pass 3: compact overview and pay ---------- */
+.pa-month .chart-wrap { padding-top: 4px; }
+.pa-all a { display: flex; align-items: center; justify-content: space-between; min-height: 52px; padding: 0 16px; color: var(--forest-800); font-size: 0.9375rem; font-weight: 500; text-decoration: none; }
+@media (hover: hover) { .pa-all a:hover { background: var(--sage-50); text-decoration: none; } }
+.pa-all svg { width: 18px; height: 18px; color: var(--text-3); }
+.pa-recent .panel-head { padding: 12px 16px; }
+.pa-review-kv { margin: 0 0 4px; }
+.pa-bar-amt { font-family: var(--serif); font-size: 1.25rem; font-weight: 500; font-variant-numeric: tabular-nums lining-nums; }
+body.portal .pk-bar-sum small.pa-bar-card { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.pa-bar-card .pa-mark { width: 32px; height: 22px; }
+.pa-bar-card .pa-mark .cc-mark { max-width: 26px; }
+/* Filters side by side; tighter step cards on Pay */
+.pa-filter { flex: 1 1 140px; }
+.pa-pay .panel-head { padding: 12px 16px; }
+.pa-pay .panel-body { padding: 14px 16px; }
+body.portal .pa-newcard .cc .cc-stage { max-width: 210px; }
+.pa-pay .stack { gap: 10px; }
+.pa-pay .pa-opts { gap: 6px; }
+.pa-pay .pa-opt { min-height: 52px; padding: 10px 14px; }
+.pa-newcard .cc { margin-bottom: 8px; }
+
+/* ==========================================================================
+   Tablet and desktop. Phones (<768) keep the Pass 3 layout above unchanged.
+   ========================================================================== */
+@media (min-width: 768px) {
+  .pa-hero .pa-hero-line { max-width: 60ch; }
+  /* Pay: amount and card side by side would be cramped at tablet width; keep one column but cap the card */
+  .pa-pay .pa-opts { grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
+  .pa-st-list, .pa-sheet-wrap { max-width: 52rem; }
+}
+@media (min-width: 1024px) {
+  /* Overview: balance card on the left, recent activity and this month on the right */
+  .pa-ovwrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 1rem 1.5rem; align-items: start; grid-auto-flow: row dense; }
+  .pa-ovwrap .pa-ov, .pa-ovwrap .pa-ov2 { display: contents; }
+  .pa-ovwrap .pa-balance { grid-column: 1; grid-row: 1 / span 2; }
+  .pa-ovwrap .pa-recent { grid-column: 2; grid-row: 1; }
+  .pa-ovwrap .pa-month { grid-column: 2; grid-row: 2; }
+  .pa-ovwrap .pa-fb { grid-column: 1; }
+  .pa-ovwrap > * > * { margin: 0; }
+  /* Activity: filters and totals in a side column, the list in the main column */
+  .pa-actpanel { display: grid; grid-template-columns: minmax(0, 1fr) 18rem; align-items: start; }
+  .pa-actpanel .pa-filters { grid-column: 2; grid-row: 1; flex-direction: column; border-bottom: 0; border-left: 1px solid var(--border); align-self: stretch; }
+  .pa-actpanel .pa-filter { max-width: none; flex: none; }
+  .pa-actpanel .pa-act { grid-column: 1; grid-row: 1; min-width: 0; }
+  /* Pay: the two steps on the left, the balance summary beside them */
+  .pa-pay { grid-template-columns: minmax(0, 1.5fr) minmax(18rem, 1fr); gap: 1.5rem; }
+  .pa-pay .pa-review { position: sticky; top: 5.5rem; padding: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
+  .pa-pay .pa-opts { grid-template-columns: minmax(0, 1fr); }
+  .pa-newcard .cc { grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr); }
+  body.portal .pa-newcard .cc .cc-stage { max-width: 18rem; }
+}
+
+/* ==========================================================================
+   Receipts (#/account/receipts, #/account/receipt/<id>) and the shared Receipt link (Portal.receiptLink, js/portal/kit.js).
+   The receipt itself is css/receipts.css.
+   ========================================================================== */
+.pa-rc-filters { align-items: flex-end; }
+.pa-rc-search { flex: 2 1 220px; }
+.pa-rc-q { position: relative; }
+.pa-rc-q > .icon { position: absolute; left: 12px; top: 50%; width: 18px; height: 18px; margin-top: -9px; color: var(--text-3); pointer-events: none; }
+body.portal .pa-rc-q .input { padding-left: 38px; -webkit-appearance: none; appearance: none; }
+.pa-rc-q .input::-webkit-search-decoration { -webkit-appearance: none; }
+.pa-rc-count { margin: 0; padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 0.875rem; color: var(--text-2); }
+.pa-rcs .pa-list > li { list-style: none; }
+.pa-rc-row { width: 100%; margin: 0; background: none; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+@media (hover: hover) { .pa-rc-row:hover { background: var(--sage-50); } }
+.pa-rc-row:focus-visible { outline: 2px solid var(--forest-500); outline-offset: -2px; }
+.pa-rcs .pa-list > li:last-child .pa-rc-row { border-bottom: 0; }
+.pa-rc-row .pa-row-sub { overflow-wrap: anywhere; }
+.pa-rc-bal { max-width: 400px; margin: 0 auto 16px; padding: 4px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
+.pa-rc-bal > div:last-child { border-bottom: 0; }
+.pa-rc-print .rc { box-shadow: var(--shadow-card); }
+body.portal .p-rc-link { min-height: 44px; font-size: 0.875rem; }
+body.portal .p-rc-link svg { width: 16px; height: 16px; }
+/* Under a past lesson, visit or round: a full-height tap target that does not add to the row's height */
+body.portal .pl-past-main .p-rc-link, body.portal .pd-past-main .p-rc-link, body.portal .tt-past-main .p-rc-link { align-self: flex-start; margin: -8px 0 -12px; }
+/* Five tabs fit a 390px phone without hiding Pay off the edge */
+@media (max-width: 480px) { .pa-subnav { gap: 14px; } .pa-subnav a { font-size: 0.875rem; } }
+@media (min-width: 1024px) {
+  /* Same frame as Activity: search and month in a side column, the list in the main column */
+  .pa-rcpanel { display: grid; grid-template-columns: minmax(0, 1fr) 18rem; align-items: start; }
+  .pa-rcpanel .pa-rc-filters { grid-column: 2; grid-row: 1; flex-direction: column; align-items: stretch; border-bottom: 0; border-left: 1px solid var(--border); align-self: stretch; }
+  .pa-rcpanel .pa-filter { max-width: none; flex: none; }
+  .pa-rcpanel .pa-rcs { grid-column: 1; grid-row: 1; min-width: 0; }
+}
+@media print {
+  .pa-rc-bal { display: none !important; }
+  .pa-rc-print .rc { box-shadow: none; border: 0; }
+}
+
+/* ==========================================================================
+   Overview extras: next season's renewal, the season summary and Rate your visits (.pa-ov3)
+   ========================================================================== */
+.pa-ov3 { grid-template-columns: minmax(0, 1fr); gap: 12px; margin-top: 12px; }
+.pa-ov3 > .panel { margin: 0; }
+.pa-ov3 .panel-head { padding: 12px 16px; }
+.pa-ov3 .panel-body { padding: 14px 16px 16px; }
+.pa-rn-fig { display: flex; flex-direction: column; margin-bottom: 6px; }
+.pa-rn-val { font-family: var(--serif); font-size: 1.75rem; font-weight: 500; line-height: 1.2; color: var(--text); font-variant-numeric: tabular-nums lining-nums; }
+.pa-rn-line { margin: 0 0 8px; font-size: 0.9375rem; line-height: 1.45; color: var(--text-2); }
+.pa-rn-line a { color: var(--forest-800); }
+.pa-rn-demo { margin: 0 0 12px; }
+.pa-rn-state { display: flex; align-items: center; gap: 8px 10px; flex-wrap: wrap; margin-bottom: 8px; font-size: 0.9375rem; font-weight: 500; color: var(--text); }
+.pa-rn-go { width: 100%; }
+.pa-ys-mini { list-style: none; margin: 4px 0 6px; padding: 0; }
+.pa-ys-mini li { display: flex; align-items: center; gap: 10px; padding: 6px 0; font-size: 0.9375rem; color: var(--text-2); border-bottom: 1px solid var(--border); }
+.pa-ys-mini li:last-child { border-bottom: 0; }
+.pa-ys-mini li span:nth-child(2) { flex: 1 1 auto; min-width: 0; }
+.pa-ys-mini .num { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
+.pa-ys-dot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; flex: none; background: var(--cat, var(--forest-500)); margin-right: 8px; vertical-align: 0; }
+.pa-ys-mini .pa-ys-dot { margin-right: 0; }
+.pa-linkrow { display: flex; align-items: center; gap: 12px; padding: 14px 16px; min-height: 64px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); color: var(--text); text-decoration: none; }
+@media (hover: hover) { .pa-linkrow:hover { text-decoration: none; background: var(--sage-50); } }
+.pa-linkrow:focus-visible { outline: 2px solid var(--forest-700); outline-offset: 2px; }
+
+/* ==========================================================================
+   Renew for next season (#/account/renew)
+   ========================================================================== */
+.pa-rn { grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: start; }
+.pa-rn .stack { display: grid; gap: 12px; align-content: start; }
+.pa-rn .panel { margin: 0; }
+.pa-rn .panel-head { padding: 12px 16px; }
+.pa-rn .panel-body { padding: 14px 16px; }
+.pa-rn .panel-body.flush { padding: 0; }
+.pa-rn .pa-review-kv { margin: 0; }
+.pa-rn .pa-opt { min-height: 60px; }
+.pa-rn-list { list-style: none; margin: 0; padding: 0; }
+.pa-rn-row { display: flex; align-items: center; gap: 12px; padding: 10px 16px; min-height: 56px; border-bottom: 1px solid var(--border); }
+.pa-rn-row .pa-row-main { align-items: flex-start; }
+.pa-rn-row.is-posted .pa-row-tag { color: var(--forest-800); }
+.pa-rn-row .p-rc-link { margin: -8px 0 -12px; }
+.pa-rn-total { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 12px 16px; font-size: 0.9375rem; color: var(--text-2); }
+.pa-rn-total strong { font-family: var(--serif); font-size: 1.25rem; font-weight: 500; color: var(--text); }
+.pa-rn-done .panel-head .badge { flex: none; }
+/* Review sheet */
+.pa-rn-review .pa-review-kv dd { max-width: 100%; }
+.pa-rn-rsub { display: block; margin-top: 2px; font-size: 0.8125rem; font-weight: 400; color: var(--text-2); font-family: var(--sans); }
+.pa-rn-rh { margin: 14px 0 4px; font-size: 0.875rem; font-weight: 500; color: var(--text-2); }
+.pa-rn-mini { list-style: none; margin: 0 0 12px; padding: 0; columns: 2; column-gap: 24px; font-size: 0.875rem; font-variant-numeric: tabular-nums; }
+.pa-rn-mini li { display: flex; justify-content: space-between; gap: 8px; padding: 4px 0; break-inside: avoid; color: var(--text-2); }
+.pa-rn-mini li .num { color: var(--text); font-weight: 500; }
+.pa-rn-terms { margin: 0; font-size: 0.875rem; line-height: 1.45; color: var(--text-2); }
+body.portal .pa-rn-acts { display: flex; gap: 8px; width: 100%; }
+body.portal .pa-rn-acts .btn { width: auto; white-space: nowrap; }
+body.portal .pa-rn-acts [data-rv=back] { flex: 0 0 auto; min-width: 96px; }
+body.portal .pa-rn-acts .btn-primary { flex: 1 1 auto; }
+@media (max-width: 400px) { .pa-rn-mini { columns: 1; } }
+
+/* ==========================================================================
+   Season summary (#/account/summary): a letterhead sheet like the statement
+   ========================================================================== */
+.pa-ys-hint { margin: -8px 0 16px; font-size: 0.8125rem; color: var(--text-3); }
+.pa-ys-title { margin: 0 0 16px; font-family: var(--serif); font-size: 1.375rem; font-weight: 500; line-height: 1.25; color: var(--text); text-align: center; }
+.pa-ys-table .pa-ys-sh { width: 32%; }
+.pa-ys-table td.pa-ys-sh { white-space: nowrap; }
+.pa-ys-bar { display: inline-block; vertical-align: middle; width: calc(100% - 3rem); min-width: 40px; height: 6px; border-radius: 3px; background: var(--sage-100); overflow: hidden; }
+.pa-ys-bar > span { display: block; height: 100%; border-radius: 3px; background: var(--forest-500); }
+.pa-ys-pct { display: inline-block; width: 2.75rem; text-align: right; font-size: 0.8125rem; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.pa-ys-table tfoot td { font-weight: 500; color: var(--text); }
+.pa-ys-two { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px 24px; }
+.pa-ys-h5 { margin: 4px 0 2px; font-size: 0.875rem; font-weight: 500; color: var(--text-2); }
+@media (max-width: 720px) {
+  .pa-ys-table .pa-ys-sh { width: 28%; }
+  .pa-ys-bar { width: calc(100% - 2.5rem); min-width: 24px; }
+  .pa-ys-pct { width: 2.25rem; }
+}
+@media (max-width: 400px) {
+  .pa-ys-table th.pa-ys-sh, .pa-ys-table td.pa-ys-sh .pa-ys-bar { display: none; }
+  .pa-ys-table .pa-ys-sh { width: auto; }
+}
+@media (min-width: 768px) {
+  .pa-ys-two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+@media (min-width: 1024px) {
+  .pa-ov3 { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 1rem 1.5rem; margin-top: 1rem; align-items: start; }
+  .pa-ov3 .pa-linkrow { grid-column: 1 / -1; }
+  .pa-rn { grid-template-columns: minmax(0, 1fr) minmax(20rem, 1fr); gap: 1.5rem; }
+  .pa-rn .pa-rn-sched { position: sticky; top: 5.5rem; }
+}
+@media print {
+  .pa-ys-hint, body.portal:has(.pa-printable) .pk-bar { display: none !important; }
+  .pa-ys .pa-ys-table .pa-ys-sh, .pa-ys .pa-ys-bar { display: table-cell; }
+  .pa-ys .pa-ys-bar { display: inline-block !important; width: 70%; }
+  .pa-ys .pa-ys-two { grid-template-columns: 1fr 1fr !important; }
+  .pa-ys-bar, .pa-ys-bar > span, .pa-ys-dot { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .pa-ys .pa-sheet-table tr { break-inside: avoid; }
+  .pa-ys-title { margin-top: 0; }
+}

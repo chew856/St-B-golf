@@ -1,0 +1,13 @@
+import { human, modalBtn, open, go } from './xc-lib.mjs';
+const { b, p, errs } = await open(390);
+await go(p, '#/accounting');
+for (const d of ['shop', 'gallery', 'cart']) await p.locator('[name="' + d + ':100"]').fill('0');
+await p.locator('[name=terminal]').fill(String(await p.evaluate(() => Club.accounting.summarize(Club.date.today()).byTender.card)));
+await p.locator('[name=notes]').fill('Test close, drawers empty');
+await p.evaluate(v => { const n = document.querySelector('select[name=staffId]'); n.value = v; n.dispatchEvent(new Event('change', { bubbles: true })); }, await p.evaluate(() => Club.store.all('staff')[0].id));
+const loc = p.locator('[data-action=close-day]');
+const box = await loc.boundingBox(); console.log(box);
+await human(p, '[data-action=close-day]');
+console.log(await p.evaluate(() => [...document.querySelectorAll('.toast, .field-error')].map(t => t.textContent)), await p.locator('.modal').count(), errs);
+await p.screenshot({ path: 'xc-dbg.png' });
+await b.close();

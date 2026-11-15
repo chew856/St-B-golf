@@ -1,0 +1,199 @@
+/* ==========================================================================
+   Beverage cart (staff module, js/modules/cart.js). Phone-first: the cart attendant's
+   screen shows the next stop and big buttons without scrolling on a 390px phone.
+   Clubhouse view (tablet/desktop) and the menu editor. v2 tokens only (css/staff-theme.css).
+   ========================================================================== */
+.cx-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+body.staff .cx-h { font-family: var(--sans); font-size: 1rem; font-weight: 500; color: var(--text); margin: 0 0 8px; }
+.cx-quiet { color: var(--text-2); font-size: 0.9375rem; margin: 4px 0 0; }
+.cx-tabs { margin-top: 4px; }
+.cx-tabs .tab-host { padding-top: 16px; }
+
+/* ---------- My cart ---------- */
+.cx-mine { display: grid; gap: 12px; max-width: 560px; }
+.cx-who { display: flex; align-items: center; gap: 10px; }
+.cx-cartno { width: 32px; height: 32px; border-radius: 50%; background: var(--forest-800); color: var(--on-dark); display: inline-flex; align-items: center; justify-content: center; font: 500 0.9375rem/1 var(--serif); flex: none; }
+.cx-who-t { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.cx-who-n { font-weight: 500; line-height: 1.3; }
+.cx-who-s { font-size: 0.8125rem; color: var(--text-2); line-height: 1.35; }
+
+.cx-next { background: var(--forest-950); color: var(--on-dark); border-radius: var(--radius-card); padding: 14px 16px 16px; display: grid; gap: 8px; animation: cx-in 220ms var(--ease-ui) both; }
+@keyframes cx-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.cx-next-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.cx-eyebrow { margin: 0; font-size: 0.75rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--on-dark-2); }
+.cx-ago { font-size: 0.8125rem; color: var(--on-dark-2); }
+.cx-where { margin: 0; font-family: var(--serif); font-weight: 500; font-size: 2.25rem; line-height: 1.05; color: var(--on-dark); }
+.cx-sub { margin: 0; font-size: 1rem; line-height: 1.4; }
+.cx-next .cx-sub { color: var(--on-dark); }
+.cx-group, .cx-next .cx-hint { color: var(--on-dark-2); font-size: 0.875rem; }
+.cx-items { list-style: none; margin: 0; padding: 8px 0 0; border-top: 1px solid color-mix(in srgb, var(--on-dark) 14%, transparent); display: grid; gap: 4px; }
+.cx-items li { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; font-size: 1rem; }
+.cx-qty { font-weight: 500; font-variant-numeric: tabular-nums; min-width: 2.2em; }
+.cx-id { font-size: 0.75rem; font-weight: 500; padding: 2px 8px; border-radius: 999px; background: var(--forest-800); color: var(--on-dark); }
+.cx-size { font-weight: 400; color: var(--text-2); }
+.cx-pay { display: flex; align-items: center; gap: 8px; font-size: 0.9375rem; padding: 8px 10px; border-radius: var(--radius-ctl); background: var(--forest-800); }
+.cx-pay svg { width: 18px; height: 18px; flex: none; }
+.cx-pay strong { font-weight: 600; }
+.cx-pay.is-due { background: var(--on-dark); color: var(--forest-950); }
+.cx-note { margin: 0; display: flex; gap: 6px; align-items: flex-start; font-size: 0.9375rem; color: var(--on-dark); }
+.cx-note svg { width: 18px; height: 18px; flex: none; margin-top: 2px; color: var(--on-dark-2); }
+.cx-next.is-going { box-shadow: inset 0 0 0 2px var(--on-dark-2); }
+.cx-next.is-empty, .cx-next.is-restock { background: var(--surface); color: var(--text); border: 1px solid var(--border); box-shadow: var(--shadow-card); }
+.cx-next.is-empty .cx-where, .cx-next.is-restock .cx-where { color: var(--text); font-size: 1.75rem; }
+.cx-next.is-empty .cx-eyebrow, .cx-next.is-restock .cx-eyebrow { color: var(--forest-500); }
+.cx-next.is-empty .cx-sub, .cx-next.is-restock .cx-sub { color: var(--text-2); }
+
+.cx-actions { display: grid; gap: 8px; }
+.cx-actions.two, .cx-actions .cx-actions.two { grid-template-columns: 1fr 1fr; }
+body.staff .cx-big { min-height: 64px; width: 100%; font-size: 1.125rem; justify-content: center; border-radius: 12px; }
+body.staff .cx-big svg { width: 24px; height: 24px; }
+body.staff .cx-mid { min-height: 52px; width: 100%; font-size: 1rem; justify-content: center; border-radius: 12px; }
+body.staff .cx-mid svg { width: 20px; height: 20px; }
+
+.cx-rest { margin-top: 8px; }
+.cx-line > li { min-height: 60px; }
+.cx-place { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--border-strong); display: inline-flex; align-items: center; justify-content: center; font-size: 0.8125rem; font-weight: 500; flex: none; color: var(--text-2); }
+.cx-line-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.cx-line-t { font-weight: 500; line-height: 1.3; }
+.cx-line-s { font-size: 0.8125rem; color: var(--text-2); line-height: 1.35; }
+.cx-line-amt { flex: none; text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; display: flex; flex-direction: column; }
+.cx-line-amt small { font-size: 0.75rem; font-weight: 400; color: var(--text-2); }
+
+/* Cart visits */
+.cx-visit { margin: 0; padding: 8px 0 0; border-top: 1px solid color-mix(in srgb, var(--on-dark) 14%, transparent); display: flex; gap: 8px; align-items: center; font-size: 1rem; font-weight: 500; color: var(--on-dark); }
+.cx-visit svg { width: 20px; height: 20px; flex: none; color: var(--on-dark-2); }
+.cx-tag { font-size: 0.75rem; font-weight: 500; padding: 1px 7px; border-radius: 999px; background: var(--sage-100); color: var(--forest-800); white-space: nowrap; }
+.cx-buy-cat { margin: 14px 0 6px; font-size: 0.8125rem; font-weight: 500; color: var(--text-2); }
+.cx-buy { list-style: none; margin: 0; padding: 0; border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--surface); overflow: hidden; }
+.cx-buy li { display: flex; align-items: center; gap: 10px; min-height: 56px; padding: 6px 8px 6px 14px; border-bottom: 1px solid var(--border); }
+.cx-buy li:last-child { border-bottom: 0; }
+.cx-buy li.is-in { background: var(--sage-50); }
+.cx-step { flex: none; display: inline-flex; align-items: center; border: 1px solid var(--forest-800); border-radius: var(--radius-ctl); overflow: hidden; background: var(--surface); }
+body.staff .cx-step button { width: 44px; height: 44px; border: 0; background: var(--surface); color: var(--forest-800); font: 500 1.25rem/1 var(--sans); cursor: pointer; }
+body.staff .cx-step button:disabled { color: var(--text-3); cursor: default; }
+.cx-step output { min-width: 26px; text-align: center; font-weight: 500; font-variant-numeric: tabular-nums; }
+.cx-buy-foot { display: grid; gap: 10px; width: 100%; }
+.cx-buy-total { margin: 0; font-weight: 500; font-variant-numeric: tabular-nums; }
+body.staff .cx-payseg button { min-height: 44px; }
+
+/* Group stops: one stop, each golfer's order listed (and billed) on its own */
+.cx-grp { font-weight: 500; }
+.cx-next .cx-once { color: var(--on-dark-2); }
+.cx-gdoc { display: grid; gap: 6px; padding-top: 8px; border-top: 1px solid color-mix(in srgb, var(--on-dark) 14%, transparent); }
+.cx-gname { margin: 0; font-weight: 500; color: var(--on-dark); }
+.cx-gdoc .cx-items, .cx-gdoc .cx-visit { border-top: 0; padding-top: 0; }
+.cx-grows > li { gap: 12px; }
+
+/* Sheets */
+.cx-sheet-p { margin: 0 0 12px; color: var(--text-2); }
+.cx-sheet-btns { display: grid; gap: 8px; margin-top: 12px; }
+.cx-del { display: grid; gap: 12px; }
+.cx-del-amt { margin: 0; font-family: var(--serif); font-size: 2rem; font-weight: 500; line-height: 1.1; display: flex; flex-direction: column; gap: 4px; }
+.cx-del-amt small { font-family: var(--sans); font-size: 0.9375rem; color: var(--text-2); }
+.cx-del .field { margin: 0; }
+.cx-del .select { width: 100%; min-height: 48px; }
+.cx-hint { margin: 0; display: flex; gap: 6px; align-items: center; color: var(--text-2); font-size: 0.875rem; }
+.cx-hint svg { width: 16px; height: 16px; flex: none; }
+.cx-paid-l { margin: 0; font-weight: 500; }
+
+/* Start a shift */
+.cx-start { display: grid; gap: 16px; max-width: 560px; }
+.cx-onshift .s-list > button { cursor: pointer; min-height: 60px; }
+@media (hover: hover) { .cx-onshift .s-list > button:hover { background: var(--sage-50); } }
+.cx-use { flex: none; font-size: 0.875rem; font-weight: 500; color: var(--forest-800); }
+.cx-form { display: grid; gap: 14px; }
+.cx-form .field { margin: 0; }
+.cx-form .select, .cx-form .input { width: 100%; min-height: 48px; }
+.cx-flabel { display: block; font-size: 0.8125rem; font-weight: 500; color: var(--text-2); margin-bottom: 6px; }
+body.staff .cx-seg { display: flex; width: 100%; }
+body.staff .cx-seg button { flex: 1 1 0; min-height: 44px; font-size: 0.9375rem; }
+body.staff .cx-seg button:disabled { color: var(--text-3); cursor: default; }
+
+/* ---------- Clubhouse ---------- */
+.cx-house { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.cx-house > *, .cx-house-grid > * { min-width: 0; }
+.cx-banner { margin: 0; display: flex; gap: 8px; align-items: center; color: var(--text-2); }
+.cx-banner svg { width: 18px; height: 18px; color: var(--forest-500); flex: none; }
+.cx-house-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.cx-carts { display: grid; gap: 12px; align-content: start; }
+.cx-cartcard .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cx-cartcard h3 { display: flex; align-items: center; gap: 8px; margin: 0; }
+.cx-cartcard .cx-cartno { width: 28px; height: 28px; font-size: 0.875rem; }
+.cx-cartcard .cx-sub { color: var(--text-2); font-size: 0.875rem; margin-bottom: 8px; }
+.cx-mini { margin: 0; padding: 0; list-style: none; counter-reset: cx; display: grid; }
+.cx-mini li { counter-increment: cx; display: grid; grid-template-columns: 1.5em 5.5em minmax(0, 1fr) auto; gap: 8px; padding: 6px 0; border-top: 1px solid var(--border); font-size: 0.875rem; }
+.cx-mini li::before { content: counter(cx); color: var(--text-2); }
+.cx-mini li.is-going { font-weight: 500; }
+.cx-legend { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8125rem; color: var(--text-2); }
+.cx-lg-cart, .cx-lg-wait { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-left: 6px; }
+.cx-lg-cart { background: var(--forest-800); }
+.cx-lg-wait { border: 2px solid var(--warn); }
+.cx-mapanel .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cx-map { width: 100%; height: auto; max-height: 400px; display: block; margin: 0 auto; }
+.cx-edge { stroke: var(--border-strong); stroke-width: 6; stroke-linecap: round; }
+.cx-route { stroke: var(--forest-800); stroke-width: 6; stroke-dasharray: 14 10; stroke-linecap: round; }
+.cx-node { fill: var(--surface); stroke: var(--forest-500); stroke-width: 3; }
+.cx-node.is-ch { fill: var(--sage-100); }
+.cx-node-t { font: 500 22px var(--sans); fill: var(--text); text-anchor: middle; }
+.cx-wait { fill: none; stroke: var(--warn); stroke-width: 5; }
+.cx-wait-t { font: 600 24px var(--sans); fill: var(--warn); }
+.cx-cartdot circle { fill: var(--forest-800); stroke: var(--surface); stroke-width: 4; }
+.cx-cartdot text { font: 600 24px var(--sans); fill: var(--on-dark); text-anchor: middle; }
+.cx-cartdot.is-restock circle { fill: var(--forest-500); }
+.cx-credit { margin: 8px 0 0; font-size: 0.75rem; color: var(--text-2); text-align: right; }
+.cx-orders .panel-head { display: flex; justify-content: space-between; align-items: baseline; }
+.cx-orders .table td { vertical-align: top; }
+
+/* ---------- Menu editor ---------- */
+.cx-menu { display: grid; gap: 16px; max-width: 760px; }
+.cx-menu-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.cx-menu-head p { margin: 0; max-width: 52ch; }
+.cx-menu .s-list > li.is-out .cx-line-t { color: var(--text-2); }
+.cx-sold { display: inline-flex; align-items: center; gap: 8px; font-size: 0.8125rem; color: var(--text-2); cursor: pointer; flex: none; min-height: 44px; }
+
+/* ---------- Phone: the attendant's screen ---------- */
+@media (max-width: 768px) {
+  .cx-page .page-head { padding-bottom: 6px; margin-bottom: 0; border-bottom: 0; }
+  .cx-page .page-head .eyebrow, .cx-page .page-head .subtitle { display: none; }
+  body.staff .cx-page .page-head h1 { font-size: 1.375rem; margin: 0; }
+  .cx-tabs .tab-host { padding-top: 12px; }
+  .cx-orders .table th:nth-child(4), .cx-orders .table td:nth-child(4) { display: none; }
+  /* Scroll sideways instead of breaking names mid-word; the last column holds Cancel or Receipt. */
+  .cx-orders .table td { overflow-wrap: normal; }
+  .cx-orders .table td:nth-child(3) { min-width: 9rem; }
+  .cx-orders .table .badge, .cx-orders .table td:last-child { white-space: nowrap; }
+  .cx-sold > span:first-child { display: none; }
+}
+@media (min-width: 900px) {
+  .cx-house-grid { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: start; }
+}
+@media (min-width: 1024px) {
+  .cx-mine { max-width: 960px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px 24px; align-items: start; }
+  .cx-mine > .cx-who { grid-column: 1 / -1; }
+  .cx-mine > .cx-rest { grid-column: 2; grid-row: 2 / span 2; margin-top: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .cx-next { animation: none; } }
+
+/* Toasts never take a tap on the cart page, and sit at the top while a sheet is open, so a confirmation
+   ("On your way to hole 16") can't cover the sheet's main button on a phone. */
+body.staff:has(.cx-page) .toasts, body.staff:has(.cx-page) .toast { pointer-events: none; }
+/* A toast with Undo does take a tap; it sits at the top, away from the Go and Delivered buttons. */
+body.staff:has(.cx-page) .toast.has-act { pointer-events: auto; }
+body.staff.ps-open:has(.cx-page) .toasts { top: 12px; bottom: auto; }
+/* On the cart phone the big Go / Delivered buttons sit low on the screen: messages show one at a time at the top, never over them */
+body.staff:has(.cx-page) .toasts { top: 12px; bottom: auto; }
+body.staff:has(.cx-page) .toast:not(:last-child) { display: none; }
+
+/* Menu item editor: category chips (no native menu) and the new category field */
+.cx-cat-lab { font-size: 0.8125rem; font-weight: 500; color: var(--text-2); }
+.cx-cats { display: flex; flex-wrap: wrap; gap: 8px; }
+.cx-cat-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 8px 14px; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface); color: var(--text); font: 500 0.9375rem/1.2 var(--sans); cursor: pointer; }
+@media (hover: hover) { .cx-cat-chip:hover { background: var(--sage-50); } }
+.cx-cat-chip.active { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); }
+.cx-cat-chip svg { width: 16px; height: 16px; }
+.cx-cat-newf { margin-top: 12px; }
+/* Category heading with Remove category */
+.cx-sec-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 8px; }
+body.staff .cx-sec-head .cx-h { margin: 0; }
+.cx-rmcat { color: var(--text-2); }
+.cx-rmcat svg { width: 16px; height: 16px; }

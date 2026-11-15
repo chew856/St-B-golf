@@ -1,0 +1,105 @@
+/* Tournaments & Outings (js/modules/outings.js).
+   The pipeline board, hero, stepper, quote table and letterhead come from css/modules/functions.css (fn- classes);
+   this file adds what is particular to golf outings. */
+
+.ot-small { font-size: var(--fs-13); }
+.ot-err { background: var(--oxblood-tint); }
+.ot-err svg { color: var(--danger); }
+.ot-rules { margin-top: var(--s2); }
+.ot-impact { margin-top: var(--s2); }
+
+/* ---------- Add-on picker ---------- */
+.ot-aos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s3) var(--s5); padding: var(--s3) var(--s4); border: 1px solid var(--border); border-radius: var(--r-panel); background: var(--sage-50); }
+.ot-ao-group { border: 0; margin: 0; padding: 0; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.ot-ao-group legend { padding: 0; margin-bottom: 4px; }
+.ot-ao { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px var(--s2); }
+.ot-ao .check { align-items: flex-start; line-height: 1.35; }
+.ot-ao .check input { margin-top: 1px; flex: none; }
+.ot-ao .check .muted { font-size: var(--fs-12); white-space: nowrap; }
+.ot-ao-qty { width: 76px; min-height: 30px; padding: 2px 6px; text-align: right; }
+.ot-ao-desc { grid-column: 1 / -1; padding-left: 24px; font-size: var(--fs-11); color: var(--text-3); }
+.ot-ao.off { opacity: 0.5; }
+.ot-ao.off .check { cursor: not-allowed; }
+
+/* ---------- Packages tab ---------- */
+.ot-avail { margin: 0; font-size: var(--fs-12); color: var(--forest-500); }
+.ot-pkgs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.ot-surcharge { margin: var(--s3) 0 var(--s5); }
+.ot-menus { margin-bottom: var(--s5); }
+.ot-menu-group { padding: var(--s3) 0; border-top: 1px solid var(--border); }
+.ot-menu-group p { margin: 4px 0 0; font-size: var(--fs-13); color: var(--text-2); }
+.ot-ao-list > li { padding-top: var(--s2); padding-bottom: var(--s2); }
+.ot-ao-list > li.ot-ao-head { background: var(--sage-50); padding-top: 6px; padding-bottom: 6px; }
+.ot-ao-list .num { font-family: var(--sans); font-feature-settings: "lnum" 1; color: var(--text); }
+.ot-ao-list .num .muted { font-family: var(--sans); font-size: var(--fs-11); margin-left: 2px; }
+.ot-terms dl { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s4) var(--s6); }
+.ot-terms dt { font-size: var(--fs-11); color: var(--forest-500); margin-bottom: 4px; }
+.ot-terms dd { margin: 0; font-size: var(--fs-13); color: var(--text-2); line-height: 1.6; }
+.ot-contacts { display: flex; flex-wrap: wrap; gap: var(--s4) var(--s7); margin-top: var(--s5); padding: var(--s4) 0; border-top: 1px solid var(--border); }
+
+.ot-season + .ot-season { margin-top: var(--s4); }
+
+/* ---------- Tee sheet panel ---------- */
+.ot-block { display: flex; gap: var(--s3); align-items: flex-start; font-size: var(--fs-13); }
+.ot-block > svg { width: 20px; height: 20px; color: var(--text-3); flex: none; margin-top: 2px; }
+.ot-block.on > svg { color: var(--good); }
+.ot-block.missing > svg { color: var(--danger); }
+.ot-block .btn { margin-top: var(--s2); }
+.ot-tee.stack > * + * { margin-top: var(--s3); }
+.ot-buffet .form-grid { margin-top: var(--s2); }
+
+/* ---------- Proposal ---------- */
+.ot-lt-terms { columns: 1; }
+.ot-signs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s5); }
+.ot-signs .fn-lt-sign { margin-top: var(--s3); padding-top: var(--s3); border-top: 1px solid var(--text-3); }
+
+/* ---------- Day-of pairings ---------- */
+.ot-day { grid-template-columns: minmax(0, 1fr); align-items: start; }
+.ot-day > * { min-width: 0; }
+.ot-roster { min-height: 220px; font-size: var(--fs-13); line-height: 1.7; }
+.ot-pairs td { vertical-align: top; }
+.ot-pairs tbody tr { animation: rise var(--t-ui) var(--ease-ui) both; }
+.ot-names { margin: 0; padding-left: 18px; }
+.ot-names li { font-size: var(--fs-13); line-height: 1.6; }
+.ot-names li.tbd { color: var(--text-3); }
+.ot-cart { display: flex; align-items: center; height: calc(2 * 1.6 * var(--fs-13)); font-size: var(--fs-12); color: var(--text-2); border-left: 1px solid var(--border-strong); padding-left: var(--s2); }
+.ot-cart + .ot-cart { margin-top: 0; }
+
+@media (max-width: 1180px) {
+  .ot-pkgs { grid-template-columns: 1fr; }
+  .ot-day { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  .ot-aos { grid-template-columns: 1fr; }
+  .ot-terms dl { grid-template-columns: 1fr; }
+  .ot-signs { grid-template-columns: 1fr; }
+  .ot-roster { min-height: 220px; }
+}
+@media print {
+  .fn-print-target.ot-sheet .btn { display: none !important; }
+  .fn-print-target .ot-names li.tbd { color: var(--text-3); }
+}
+
+/* ---------- Phone (board, hero and stepper come from functions.css) ---------- */
+@media (max-width: 768px) {
+  .ot-aos { padding: var(--s3); gap: var(--s3); }
+  .ot-ao-qty { width: 64px; }
+  .ot-surcharge { margin: var(--s2) 0 var(--s4); font-size: var(--fs-13); }
+  .ot-menus { margin-bottom: var(--s4); }
+  .ot-terms dl { gap: var(--s3); }
+  .ot-contacts { gap: var(--s3) var(--s5); margin-top: var(--s4); padding: var(--s3) 0; }
+  .ot-block { gap: 10px; }
+  .ot-block > svg { width: 18px; height: 18px; }
+  .ot-roster { min-height: 160px; }
+  .ot-avail { font-size: 0.625rem; }
+}
+.ot-fb-note { margin: 0 0 10px; }
+/* The shared board bleeds 16px each side; on phones the staff view gutter is 12px, so match it (no page scroll) */
+@media (max-width: 768px) {
+  .ot-tabs .fn-board { margin-left: -12px; margin-right: -12px; padding-left: 12px; padding-right: 12px; }
+  .fn-steps-wrap.ot-steps { margin-left: -12px; margin-right: -12px; }
+}
+/* Enquiries sent from the members' portal (js/portal/outings.js): a quiet badge on the card, the hero and the season table */
+.ot-card-src { margin-top: 4px; }
+.ot-portal { white-space: nowrap; vertical-align: middle; }
+.fn-hero-badge .ot-portal { margin-left: 6px; }

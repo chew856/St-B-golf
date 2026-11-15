@@ -1,0 +1,168 @@
+/* Members' portal: Group outings (js/portal/outings.js). Packages, My enquiries, the enquiry form and its confirmation.
+   Theme tokens only (css/portal-theme.css). Phone layout is the base; wider layouts are added in min-width queries. */
+body.portal .po-hero .eyebrow { margin-bottom: 6px; }
+body.portal .po-hero-acts { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 8px; }
+body.portal .po-hero-acts .btn { min-height: 48px; }
+body.portal .po-hero-acts .btn svg { width: 18px; height: 18px; }
+body.portal .po-main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; }
+body.portal .po-main > * { min-width: 0; }
+body.portal .po-fine { font-size: 0.8125rem; color: var(--text-3); margin: 12px 0 0; }
+body.portal .po-p { margin: 0 0 12px; color: var(--text-2); font-size: 0.9375rem; }
+body.portal .po-muted { color: var(--text-3); }
+
+/* My enquiries */
+body.portal .po-empty { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 16px; }
+body.portal .po-empty p { margin: 0 0 4px; color: var(--text-2); font-size: 0.9375rem; }
+body.portal .p-list.po-enqs > li { padding: 0; }
+body.portal .po-enq { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 10px 16px; background: none; border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+@media (hover: hover) { body.portal .po-enq:hover { background: var(--sage-50); } }
+body.portal .po-enq-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+body.portal .po-enq-t { font-weight: 500; color: var(--text); overflow-wrap: anywhere; }
+body.portal .po-enq-s { font-size: 0.8125rem; color: var(--text-3); }
+body.portal .po-enq .badge { flex: none; }
+body.portal .po-enq-go { width: 18px; height: 18px; flex: none; color: var(--text-3); }
+body.portal .po-status { white-space: nowrap; }
+
+/* Packages */
+body.portal .po-pkgs { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+body.portal .po-pkg { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 16px; display: flex; flex-direction: column; min-width: 0; }
+body.portal .po-pkg-head h3 { font-family: var(--serif); font-weight: 500; font-size: 1.25rem; margin: 2px 0 0; color: var(--text); }
+body.portal .po-price { display: flex; align-items: baseline; gap: 6px; margin: 8px 0 10px; }
+body.portal .po-price-n { font-family: var(--serif); font-weight: 500; font-size: 1.75rem; color: var(--forest-800); font-variant-numeric: tabular-nums; }
+body.portal .po-price-u { font-size: 0.875rem; color: var(--text-3); }
+body.portal .po-pkg-fmt, body.portal .po-pkg-when { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 6px; font-size: 0.9375rem; color: var(--text-2); }
+body.portal .po-pkg-fmt svg, body.portal .po-pkg-when svg { width: 18px; height: 18px; flex: none; margin-top: 1px; color: var(--forest-500); }
+body.portal .po-incl { list-style: none; margin: 8px 0 14px; padding: 10px 0 0; border-top: 1px solid var(--border); display: grid; gap: 6px; }
+body.portal .po-incl li { display: flex; align-items: flex-start; gap: 8px; font-size: 0.9375rem; color: var(--text); }
+body.portal .po-incl svg { width: 16px; height: 16px; flex: none; margin-top: 3px; color: var(--forest-800); }
+body.portal .po-pkg-go { margin-top: auto; justify-content: center; min-height: 44px; }
+
+/* Good to know: accordions */
+body.portal .po-accs { display: grid; gap: 8px; }
+body.portal .po-acc-h { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 14px 0 6px; font: 500 0.8125rem/1.3 var(--sans); color: var(--text-3); text-transform: uppercase; letter-spacing: 0.04em; }
+body.portal .po-acc-h:first-child { margin-top: 0; }
+body.portal .po-acc-n { text-transform: none; letter-spacing: normal; font-weight: 400; }
+body.portal .po-rows { list-style: none; margin: 0; padding: 0; }
+body.portal .po-rows li { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--border); }
+body.portal .po-rows li:first-child { border-top: 0; }
+body.portal .po-row-main { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+body.portal .po-row-t { color: var(--text); font-size: 0.9375rem; }
+body.portal .po-row-s { color: var(--text-3); font-size: 0.8125rem; }
+body.portal .po-row-p { flex: none; text-align: right; font-variant-numeric: tabular-nums; color: var(--text); }
+body.portal .po-row-p small { display: block; font-size: 0.75rem; color: var(--text-3); }
+body.portal .po-terms { margin: 0; display: grid; gap: 12px; }
+body.portal .po-terms dt { font-weight: 500; color: var(--text); margin-bottom: 2px; }
+body.portal .po-terms dd { margin: 0; color: var(--text-2); font-size: 0.9375rem; }
+body.portal .po-people { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+body.portal .po-people li { display: flex; gap: 12px; align-items: flex-start; }
+body.portal .po-person { min-width: 0; display: flex; flex-direction: column; }
+body.portal .po-person-n { font-weight: 500; color: var(--text); }
+body.portal .po-person-r { font-size: 0.875rem; color: var(--text-3); }
+body.portal .po-person-links { display: flex; flex-wrap: wrap; column-gap: 16px; }
+body.portal .po-person-links .p-link { overflow-wrap: anywhere; }
+body.portal .po-person-links svg { width: 16px; height: 16px; flex: none; }
+
+/* Enquiry form */
+body.portal .po-back { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; color: var(--forest-800); font-weight: 500; text-decoration: none; margin: -8px 0 4px; }
+body.portal .po-back svg { width: 18px; height: 18px; }
+body.portal .po-form > * + * { margin-top: 16px; }
+body.portal .po-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 16px; min-width: 0; }
+body.portal .po-h { font-family: var(--sans); font-size: 1.0625rem; font-weight: 500; margin: 0 0 12px; color: var(--text); }
+body.portal .po-card > .field-hint { display: block; margin-top: 8px; }
+body.portal .po-dates { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+body.portal .po-date { min-width: 0; }
+body.portal .po-date .dp-label { display: block; }
+body.portal .po-date .field-error { display: block; margin-top: 6px; }
+body.portal .po-date.po-invalid .dp-field { border-color: var(--danger); }
+body.portal .po-dp-empty .dp-field-text { color: var(--text-3); }
+body.portal .po-clear { min-height: 40px; font-size: 0.875rem; }
+body.portal .po-date-hint { margin-top: 10px; }
+body.portal .po-choices { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+body.portal .po-choices.po-invalid .po-choice { border-color: var(--danger); }
+body.portal .po-choice { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-ctl); font: inherit; color: var(--text); text-align: left; cursor: pointer; transition: border-color var(--t-ui) var(--ease-ui), background-color var(--t-ui) var(--ease-ui); }
+@media (hover: hover) { body.portal .po-choice:hover { background: var(--sage-50); } }
+body.portal .po-choice.active { border-color: var(--forest-800); background: var(--sage-50); box-shadow: inset 0 0 0 1px var(--forest-800); }
+body.portal .po-choice-dot { width: 20px; height: 20px; flex: none; border-radius: 50%; border: 2px solid var(--border-strong); background: var(--surface); }
+body.portal .po-choice.active .po-choice-dot { border-color: var(--forest-800); box-shadow: inset 0 0 0 4px var(--surface); background: var(--forest-800); }
+body.portal .po-choice-main { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+body.portal .po-choice-t { font-weight: 500; }
+body.portal .po-choice-s { font-size: 0.8125rem; color: var(--text-3); }
+body.portal .po-fmt { margin-top: 16px; }
+body.portal .po-fmt .pk-label { display: block; margin-bottom: 6px; }
+body.portal .po-seg { display: flex; width: 100%; }
+body.portal .po-seg button { flex: 1 1 0; min-width: 0; white-space: normal; line-height: 1.2; padding: 6px 8px; }
+body.portal .po-note { display: flex; gap: 10px; align-items: flex-start; margin-top: 14px; padding: 12px 14px; border-radius: var(--radius-ctl); background: var(--sage-50); border: 1px solid var(--border); color: var(--text-2); font-size: 0.875rem; }
+body.portal .po-note svg { width: 18px; height: 18px; flex: none; color: var(--warn); margin-top: 1px; }
+body.portal .po-note ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+body.portal .po-form textarea { min-height: 112px; }
+body.portal .po-send-row { display: none; }
+body.portal .po-send svg { width: 18px; height: 18px; }
+
+/* Summary (beside the form on desktop, after it on phones) and the enquiry sheet */
+body.portal .po-kv { margin: 0; display: grid; gap: 10px; }
+body.portal .po-kv > div { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr); gap: 12px; align-items: baseline; }
+body.portal .po-kv dt { font-size: 0.875rem; color: var(--text-3); }
+body.portal .po-kv dd { margin: 0; color: var(--text); overflow-wrap: anywhere; }
+body.portal .po-kv .po-kv-wide { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+body.portal .po-est { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 2px; }
+body.portal .po-est-l { font-size: 0.875rem; color: var(--text-3); }
+body.portal .po-est-n { font-family: var(--serif); font-weight: 500; font-size: 1.5rem; color: var(--forest-800); font-variant-numeric: tabular-nums; }
+body.portal .po-est-s { font-size: 0.8125rem; color: var(--text-2); }
+body.portal .po-sheet-top { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; margin-bottom: 14px; }
+body.portal .po-sheet-top p { margin: 0; color: var(--text-2); }
+body.portal .po-steps { list-style: none; margin: 0 0 16px; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+body.portal .po-steps li { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 0.8125rem; color: var(--text-3); text-align: center; }
+body.portal .po-steps li::before { content: ""; position: absolute; top: 11px; right: 50%; width: 100%; height: 2px; background: var(--border); z-index: 0; }
+body.portal .po-steps li:first-child::before { display: none; }
+body.portal .po-steps li.done::before, body.portal .po-steps li.current::before { background: var(--forest-800); }
+body.portal .po-step-dot { position: relative; z-index: 1; width: 24px; height: 24px; border-radius: 50%; background: var(--surface); border: 2px solid var(--border-strong); display: flex; align-items: center; justify-content: center; }
+body.portal .po-steps li.done .po-step-dot { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); }
+body.portal .po-steps li.done .po-step-dot svg { width: 14px; height: 14px; }
+body.portal .po-steps li.current .po-step-dot { border-color: var(--forest-800); box-shadow: inset 0 0 0 4px var(--surface); background: var(--forest-800); }
+body.portal .po-steps li.done, body.portal .po-steps li.current { color: var(--text); }
+body.portal .po-sheet-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+body.portal .po-sheet-acts .btn { flex: 1 1 auto; justify-content: center; min-height: 48px; }
+body.portal .po-withdraw { color: var(--danger); border-color: var(--border-strong); }
+body.portal .po-confirm h3 { font-family: var(--sans); font-weight: 500; font-size: 1.0625rem; margin: 0 0 8px; }
+body.portal .po-confirm p { margin: 0; color: var(--text-2); }
+
+/* Confirmation */
+body.portal .po-done { max-width: 620px; margin: 8px auto 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 24px 16px; text-align: center; }
+body.portal .po-done-mark { width: 56px; height: 56px; margin: 0 auto 12px; border-radius: 50%; background: var(--forest-800); color: var(--on-dark); display: flex; align-items: center; justify-content: center; }
+body.portal .po-done-mark svg { width: 28px; height: 28px; }
+body.portal .po-done h1 { font-size: 1.625rem; margin: 0 0 8px; }
+body.portal .po-done > p { color: var(--text-2); margin: 0 auto 18px; max-width: 46ch; }
+body.portal .po-done-kv { text-align: left; padding: 14px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+body.portal .po-done-acts { display: flex; flex-direction: column; align-items: stretch; gap: 4px; margin-top: 18px; }
+body.portal .po-done-acts .btn { justify-content: center; min-height: 48px; }
+body.portal .po-done-acts .p-link { align-self: center; }
+@media (prefers-reduced-motion: no-preference) {
+  body.portal .po-done-mark { animation: po-pop 420ms var(--ease-ui) both; }
+  @keyframes po-pop { from { transform: scale(0.6); opacity: 0; } to { transform: none; opacity: 1; } }
+}
+
+/* Phones: the packages sit side by side in a row that scrolls sideways (the next card peeks in), so the page stays short. */
+@media (max-width: 767px) {
+  body.portal .po-pkgs { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding: 0 20px; margin: 0 -20px; padding: 2px 20px 10px; scrollbar-width: none; overscroll-behavior-x: contain; }
+  body.portal .po-pkgs::-webkit-scrollbar { display: none; }
+  body.portal .po-pkg { flex: 0 0 84%; scroll-snap-align: start; }
+  body.portal .po-pkgs:focus-visible { outline: none; box-shadow: var(--focus); border-radius: var(--radius-card); }
+}
+@media (min-width: 600px) {
+  body.portal .po-dates { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  body.portal .po-choices { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+@media (min-width: 768px) {
+  body.portal .po-pkgs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  body.portal .po-done { padding: 32px; }
+}
+@media (min-width: 1024px) {
+  body.portal .po-main { grid-template-columns: minmax(0, 1.6fr) minmax(320px, 1fr); grid-template-areas: "pkgs pkgs" "info mine"; column-gap: 32px; row-gap: 32px; }
+  body.portal .po-pkgs-sec { grid-area: pkgs; }
+  body.portal .po-info { grid-area: info; }
+  body.portal .po-mine { grid-area: mine; }
+  body.portal .po-send-row { display: flex; justify-content: flex-end; }
+  body.portal .po-send { min-height: 48px; padding: 0 24px; }
+  body.portal .po-side { position: sticky; top: 96px; }
+}
+body.portal .po-call { min-height: 0; display: inline; }

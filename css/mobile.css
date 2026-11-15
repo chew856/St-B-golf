@@ -1,0 +1,243 @@
+/* ==========================================================================
+   Phone design for the staff system, members' portal and public site.
+   Loaded last on every page. EVERY rule lives inside a max-width media query,
+   so screens wider than 768px render exactly as before.
+
+   Direction: a compact, app-like phone layout. Smaller type scale, tighter
+   spacing, two-up stat tiles, single-row controls that scroll sideways, and
+   bottom-sheet dialogs. Same palette, fonts and branding as desktop.
+   Page-specific phone rules live at the end of each module's own stylesheet,
+   also inside max-width media queries.
+   ========================================================================== */
+
+@media (max-width: 768px) {
+
+  /* ---------- Scale: type and spacing tokens shrink for phones ---------- */
+  :root {
+    --fs-11: 0.625rem;   /* 10px  small caps labels */
+    --fs-12: 0.75rem;    /* 12px  captions, meta */
+    --fs-13: 0.8125rem;  /* 13px  secondary text, tables */
+    --fs-15: 0.9375rem;  /* 15px  body */
+    --fs-18: 1rem;       /* 16px */
+    --fs-24: 1.1875rem;  /* 19px */
+    --fs-32: 1.375rem;   /* 22px */
+    --fs-44: 1.625rem;   /* 26px */
+    --fs-56: 2rem;
+    --s4: 12px; --s5: 16px; --s6: 20px; --s7: 28px; --s8: 36px;
+    --topbar-h: 56px;
+  }
+  body { font-size: var(--fs-15); line-height: 1.5; -webkit-text-size-adjust: 100%; }
+  h1 { font-size: var(--fs-44); line-height: 1.12; }
+  h2 { font-size: var(--fs-32); }
+  h3 { font-size: 1.125rem; }
+  h4 { font-size: 0.9375rem; }
+  .eyebrow, .label-caps { font-size: var(--fs-11); letter-spacing: 0.14em; }
+
+  /* Long words, emails and URLs wrap instead of pushing the page wider. */
+  p, li, dd, td, .person-name, .person-sub, .empty p { overflow-wrap: anywhere; }
+  img, svg, video, iframe, canvas { max-width: 100%; }
+
+  /* Wide content scrolls inside its own panel instead of widening the page. */
+  .grid > *, .stack > *, .panel, .panel-body, .panel-head, .modal-body, .drawer .modal-body { min-width: 0; }
+  .panel-head > * { min-width: 0; max-width: 100%; }
+  .table-wrap { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .panel > .table, .panel-body > .table { display: block; overflow-x: auto; }
+
+  /* ---------- Staff shell ---------- */
+  .topbar { height: var(--topbar-h); padding: 0 var(--s3); gap: var(--s2); }
+  .topbar .search { flex: 1 1 auto; width: auto; min-width: 0; }
+  .search input { height: 38px; font-size: 1rem; padding-left: 34px; }
+  .search svg { top: 10px; }
+  .search input::placeholder { font-size: 0.8125rem; }
+  .user-chip .avatar { width: 32px; height: 32px; font-size: 0.8rem; }
+  .view { padding: var(--s4) var(--s4) var(--s7); }
+  .nav-link { min-height: 44px; font-size: 0.875rem; }
+
+  /* ---------- Page header: compact title block, actions in one scrolling row ---------- */
+  .page-head { padding-bottom: var(--s4); margin-bottom: var(--s4); gap: var(--s3); }
+  .page-head::after { width: 56px; }
+  .page-head h1 { margin-top: 2px; }
+  .page-head .subtitle { font-size: var(--fs-13); margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .page-actions { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; gap: var(--s2); margin: 0 calc(-1 * var(--s4)); padding: 2px var(--s4); width: calc(100% + 2 * var(--s4)); }
+  .page-actions::-webkit-scrollbar { display: none; }
+  .page-actions .btn { flex: 0 0 auto; }
+
+  /* ---------- Buttons and controls ---------- */
+  .btn { min-height: 40px; padding: 0 var(--s4); font-size: 0.6875rem; letter-spacing: 0.08em; gap: 6px; }
+  .btn svg { width: 15px; height: 15px; }
+  .btn-sm { min-height: 34px; padding: 0 10px; font-size: 0.625rem; }
+  .btn-icon { width: 40px; min-width: 40px; padding: 0; }
+  .btn-icon.btn-sm { width: 34px; min-width: 34px; }
+  .input, .select, .input:not(.x), .select:not(.x) { min-height: 42px; font-size: 1rem; padding: 8px 10px; }   /* 16px stops iOS zooming */
+  .select, .select:not(.x) { padding-right: 30px; }
+  .textarea { font-size: 1rem; min-height: 88px; }
+  .field { margin-bottom: var(--s3); gap: 4px; }
+  .field label { font-size: 0.625rem; }
+  .form-grid { gap: 0 var(--s3); }
+  .check { min-height: 36px; font-size: var(--fs-13); }
+  .toggle { width: 44px; height: 26px; }
+  .toggle span::after { width: 20px; height: 20px; }
+  .toggle input:checked + span::after { transform: translateX(18px); }
+
+  /* Segmented controls: compact, and scroll inside themselves when they run long. */
+  .segmented, .segmented:not(.x) { max-width: 100%; overflow-x: auto; scrollbar-width: none; flex-wrap: nowrap; }
+  .segmented::-webkit-scrollbar { display: none; }
+  .segmented button, .segmented:not(.x) button { min-height: 34px; padding: 6px 12px; font-size: 0.625rem; flex: none; }
+  .row.wrap > .segmented { min-width: 0; }
+
+  /* Tabs: smaller, tighter, scroll sideways. */
+  .tabs { gap: var(--s5); margin-bottom: var(--s4); }
+  .tab { font-size: 0.6875rem; letter-spacing: 0.1em; padding: 10px 0; min-height: 40px; display: inline-flex; align-items: center; }
+
+  /* ---------- Stat strip: two-up compact tiles ---------- */
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat { padding: var(--s3) var(--s4); border-left: 0; border-top: 1px solid var(--parchment); }
+  .stat:nth-child(-n+2) { border-top: 0; }
+  .stat:nth-child(even) { border-left: 1px solid var(--parchment); }
+  .stat:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .stat .label-caps { margin-bottom: 4px; font-size: 0.5625rem; letter-spacing: 0.12em; }
+  .stat-value { font-size: 1.5rem; }
+  .stat-value small { font-size: 0.55em; }
+  .stat-meta { margin-top: 4px; font-size: 0.6875rem; line-height: 1.35; }
+
+  /* ---------- Panels, lists, tables ---------- */
+  .grid { gap: var(--s4); }
+  .panel-head { padding: var(--s3) var(--s4); flex-wrap: wrap; gap: var(--s2); }
+  .panel-head h3 { font-size: 1.0625rem; }
+  .panel-body { padding: var(--s4); }
+  .list > li { padding: 10px var(--s4); gap: var(--s3); }
+  .table { font-size: var(--fs-13); }
+  .table th { padding: 8px 10px; font-size: 0.5625rem; }
+  .table td { padding: 9px 10px; }
+  .kv { grid-template-columns: max-content 1fr; gap: 6px var(--s4); font-size: var(--fs-13); }
+  .badge { font-size: 0.5625rem; padding: 2px 7px; white-space: normal; max-width: 100%; }
+  .avatar { width: 32px; height: 32px; font-size: 0.8125rem; }
+  .avatar.sm { width: 26px; height: 26px; font-size: 0.6875rem; }
+  .avatar.lg { width: 48px; height: 48px; font-size: 1.125rem; }
+  .avatar.xl { width: 64px; height: 64px; font-size: 1.5rem; }
+  .empty { padding: var(--s6) var(--s4); }
+  .empty svg { width: 30px; height: 30px; }
+  .empty h4 { font-size: 1.125rem; }
+  .empty p { font-size: var(--fs-13); }
+  .divider { margin: var(--s4) 0; }
+
+  /* ---------- Dialogs become bottom sheets ---------- */
+  .overlay { padding: 0; align-items: flex-end; }
+  .modal, .modal.lg, .modal.xl { width: 100%; max-height: 92dvh; border-radius: 14px 14px 0 0; }
+  .modal-head { padding: var(--s4) var(--s4) var(--s3); }
+  .modal-head h3 { font-size: 1.25rem; }
+  .modal-body { padding: 0 var(--s4) var(--s4); }
+  .modal-foot { padding: var(--s3) var(--s4) calc(var(--s3) + env(safe-area-inset-bottom)); flex-wrap: wrap; }
+  .modal-foot .btn { flex: 1 1 auto; }
+  @keyframes sheet-in { from { transform: translateY(100%); } to { transform: none; } }
+  .modal { animation: sheet-in var(--t-med) var(--ease-out) both; }
+  .drawer { width: 100%; }
+  .drawer .modal-body { padding-top: 0; }
+
+  /* Toasts */
+  .toasts { left: var(--s3); right: var(--s3); bottom: var(--s3); }
+  .toast { min-width: 0; max-width: none; font-size: var(--fs-13); padding: 10px var(--s4); }
+
+  /* Charts keep their axis text legible but small */
+  .chart text { font-size: 10px; }
+  .chart-legend { gap: var(--s3); font-size: 0.6875rem; }
+  /* Donut charts are drawn at a fixed size; scale them down beside their legend */
+  .chart-wrap.row > svg.chart { width: 132px !important; height: 132px !important; }
+  .chart-wrap.row { gap: var(--s4) !important; }
+  .donut-legend { font-size: var(--fs-12) !important; gap: 6px !important; }
+
+  /* ---------- Members' portal shell ---------- */
+  .p-header-inner { height: 56px; padding: 0 var(--s4); gap: var(--s3); }
+  .p-crest.stb-logo { height: 28px; }
+  .p-brand-name { font-size: 1.0625rem; }
+  .p-brand-sub { font-size: 0.5rem; margin-top: 2px; }
+  .p-me-btn { padding: 2px 8px 2px 2px; min-height: 36px; }
+  .p-page { padding: var(--s4) var(--s4) var(--s6); }
+  .p-section { margin-top: var(--s6); }
+  .p-section-head { margin-bottom: var(--s3); }
+  .p-section-head h2 { font-size: 1.25rem; }
+  .p-footer { padding: var(--s5) var(--s4) var(--s6); }
+  .p-footer .serif { font-size: 1rem; }
+  .p-tabbar a, .p-tabbar button { min-height: 44px; font-size: 0.5625rem; }
+  .p-tabbar svg { width: 18px; height: 18px; }
+  body.signed-in { padding-bottom: 64px; }
+  .p-signin-card { padding: var(--s5) var(--s4); }
+  .p-signin-logo { height: 80px; }
+  .p-signin h1 { font-size: 1.75rem; }
+  .pc-subnav { max-width: 100%; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
+  .pc-subnav::-webkit-scrollbar { display: none; }
+  .pc-fc > li { position: relative; }   /* keeps screen-reader labels inside each scrolling day card */
+
+  /* ---------- Public site shell ---------- */
+  .pub-header-inner { height: 56px; gap: var(--s2); padding: 0 var(--s4); }
+  .pub-brand-name { font-size: 1.0625rem; }
+  .pub-menu-btn { width: 40px; height: 40px; }
+  /* Hero buttons share the row; long labels wrap rather than touch the edge */
+  .pub-hero-actions .btn:not(.x) { white-space: normal; text-align: center; line-height: 1.2; letter-spacing: 0.06em; }
+  .pub-hero-actions .btn:not(.x) svg { flex: none; }
+}
+
+@media (max-width: 480px) {
+  h1 { font-size: 1.5rem; }
+  .pub-brand-sub { display: none; }
+  .pub-me .btn-brass { display: none; }   /* sign up stays in the menu, which already offers it */
+}
+
+@media (max-width: 360px) {
+  .view, .p-page { padding-left: var(--s3); padding-right: var(--s3); }
+  .p-brand-sub { display: none; }
+  .stat-value { font-size: 1.3rem; }
+}
+
+/* ==========================================================================
+   Touch polish (Nov 12). Phone and tablet only, so desktop is unchanged.
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* iPhones zoom into any field under 16px. css/staff-theme.css loads after this file, so its rules are restated here with html in front to win. */
+  html body.staff .search input, html body.staff .input, html body.staff .select, html body.staff .textarea,
+  body .input, body .select, body .textarea, input.input, textarea.textarea { font-size: 1rem; }
+  html body.staff .search input::placeholder { font-size: 0.875rem; }
+
+  /* Tap targets: 44px for main controls, 40px for compact ones that sit in tables and toolbars. */
+  .btn, html body.staff .btn { min-height: 44px; }
+  .btn-sm, html body.staff .btn-sm { min-height: 40px; }
+  .btn-icon, html body.staff .btn-icon { width: 44px; min-width: 44px; }
+  .btn-icon.btn-sm, html body.staff .btn-icon.btn-sm { width: 40px; min-width: 40px; }
+  .tab, html body.staff .tab { min-height: 44px; }
+  .segmented button, .segmented:not(.x) button, html body.staff .segmented button { min-height: 40px; }
+  .check { min-height: 40px; }
+  /* Text links and small chips that act as buttons. */
+  .s-link { min-height: 44px; display: inline-flex; align-items: center; }
+  html body.staff .rp-link, html body.staff .rp-kpi .v { min-height: 36px; display: inline-flex; align-items: center; }
+  html body.staff .ps-chip { min-height: 40px; }
+  html body.staff .ts-slot { min-height: 40px; }
+  html body.public .btn { min-height: 44px; }
+  html body.public .pub-menu-btn { width: 44px; height: 44px; }
+  html body.public .pub-brand { min-height: 44px; }
+  html body.public .pub-footer a, html body.public .pub-social a { display: inline-flex; align-items: center; min-height: 40px; }
+
+  /* Smallest text: nothing under 11px (was 9 to 10px). */
+  :root { --fs-11: 0.6875rem; }
+  .badge { font-size: 0.6875rem; }
+  .btn-sm { font-size: 0.6875rem; }
+  .field label, .segmented button, .segmented:not(.x) button { font-size: 0.6875rem; }
+  html body.staff .field label { font-size: 0.8125rem; }
+  html body.staff .segmented button { font-size: 0.8125rem; }
+  .stat .label-caps, .table th { font-size: 0.6875rem; }
+
+  /* Dialogs and drawers: scrolling inside them never moves the page behind. */
+  .overlay, .modal-body, .drawer .modal-body, .ps-body { overscroll-behavior: contain; }
+  /* When the on-screen keyboard is up, the bottom sheet sits above it (js/core/ui.js sets --kb and --vvh). */
+  .overlay .modal { max-height: min(92dvh, calc(var(--vvh, 100dvh) - 8px)); margin-bottom: var(--kb, 0px); transition: margin-bottom 120ms ease-out; }
+  .toasts { bottom: calc(var(--s3) + env(safe-area-inset-bottom)); }
+}
+
+/* Touch screens: press feedback instead of hover, and no grey tap flash. */
+html { -webkit-tap-highlight-color: transparent; }
+.modal:focus, .drawer:focus, .ps-sheet:focus { outline: none; }
+@media (hover: none) {
+  button:active, a:active, summary:active, [role=button]:active, [data-action]:active, .btn:active, .rowbtn:active { opacity: 0.72; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .overlay .modal { transition: none; }
+}

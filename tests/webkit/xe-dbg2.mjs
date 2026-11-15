@@ -1,0 +1,14 @@
+import { webkit } from 'playwright';
+import { B, click, seedCart } from './xe-lib.mjs';
+const b = await webkit.launch(); const c = await b.newContext({ viewport: { width: 1440, height: 900 } });
+await c.addInitScript(() => { try { localStorage.setItem('stboniface.portal.session', 'mem_1003'); } catch (e) {} });
+const p = await c.newPage();
+await p.goto(B + 'member.html#/shop'); await p.waitForTimeout(1000); await seedCart(p);
+await p.goto(B + 'member.html#/shop/basket'); await p.waitForTimeout(1200);
+await click(p, '.ckf-next');
+await click(p, '.ck-mopt:has(input[value=card])');
+const shot = async (n) => { const bx = await p.locator('.cc-card').boundingBox(); await p.screenshot({ path: 'xe-shots/dbg-' + n + '.png', clip: { x: bx.x, y: bx.y, width: bx.width, height: bx.height } }); };
+await shot('a');
+await p.evaluate(() => { const c = document.querySelector('.cc-card'); c.style.display = 'none'; void c.offsetHeight; c.style.display = ''; });
+await p.waitForTimeout(300); await shot('b');
+await b.close();

@@ -1,0 +1,10 @@
+import { webkit } from 'playwright';
+const b = await webkit.launch(); const p = await (await b.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
+p.on('pageerror', e => console.log('ERR', e.message));
+await p.goto('http://localhost:8001/site/public.html#/book'); await p.waitForTimeout(2000);
+await p.evaluate(() => { const pp = Club.store.all('publicPlayers')[0]; Pub.signIn(pp.id, true); }); await p.waitForTimeout(1200);
+await p.goto('http://localhost:8001/site/public.html#/book'); await p.waitForTimeout(2000);
+const c = p.locator('.pub-chip.st-open').first(); await c.scrollIntoViewIfNeeded(); await c.click(); await p.waitForTimeout(1500);
+console.log(await p.evaluate(() => [!!document.querySelector('.pub-adds'), [...document.querySelectorAll('.pub-adds-list li')].map(l => l.innerText.split('\n')[0]), document.querySelector('.pub-party') ? 'step2' : 'step1']));
+await p.screenshot({ path: 'xd-probe.png' });
+await b.close();

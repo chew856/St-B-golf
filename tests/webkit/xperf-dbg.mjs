@@ -1,0 +1,11 @@
+import { webkit } from 'playwright';
+const B = 'http://localhost:8001/site/'; const b = await webkit.launch();
+const c = await b.newContext({ viewport: { width: 1440, height: 900 } });
+await c.addInitScript(() => { try { localStorage.setItem('stboniface.portal.session', 'mem_1003'); } catch (e) {} });
+const p = await c.newPage(); await p.goto(B + 'member.html#/home'); await p.waitForTimeout(1200);
+const date = await p.evaluate(n => Club.date.fromToday(n), 2);
+await p.evaluate(dt => { location.hash = '#/tee-times/' + dt; }, date); await p.waitForTimeout(1200);
+const chip = p.locator('.tt-chip.st-open').first(); console.log(await chip.count());
+await chip.click(); await p.waitForTimeout(800);
+console.log(await p.evaluate(() => [...document.querySelectorAll('[data-act], .btn-primary')].filter(e => e.offsetParent).map(e => (e.dataset.act || '') + ':' + e.textContent.trim().slice(0, 30)).join(' | ')));
+await p.screenshot({ path: 'xperf-dbg.png' }); await b.close();

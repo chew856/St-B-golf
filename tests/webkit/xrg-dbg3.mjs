@@ -1,0 +1,11 @@
+import { webkit } from 'playwright';
+const b = await webkit.launch(); const p = await (await b.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
+p.on('pageerror', e => console.log('ERR', e.message)); p.on('console', m => { if (m.type() === 'error') console.log('CONSOLE', m.text()); });
+await p.goto('http://localhost:8001/site/index.html#/reports/growth'); await p.waitForTimeout(2200);
+const row = p.locator('.rg-heard-row', { hasText: 'Wedding or event at the club' });
+console.log(await row.count(), await row.getAttribute('data-rg-open'));
+await row.evaluate(n => n.scrollIntoView({ block: 'center' })); const bb = await row.boundingBox();
+console.log(await p.evaluate(({x,y}) => document.elementFromPoint(x,y).outerHTML.slice(0,120), { x: bb.x + 12, y: bb.y + bb.height/2 }));
+await p.mouse.move(bb.x + 12, bb.y + bb.height / 2); await p.mouse.down(); await p.mouse.up(); await p.waitForTimeout(600);
+console.log('drawers', await p.locator('.drawer').count(), (await p.locator('.drawer').last().innerText().catch(()=>'')).slice(0,300));
+await b.close();

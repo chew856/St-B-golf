@@ -1,0 +1,338 @@
+/* Members' portal: Events v2 (calendar, leaderboard, event detail with registration, members' league).
+   Quiet private-club look: mist page, soft surface cards, serif titles, sans UI at 400/500.
+   Loads before portal-theme.css, so rules are scoped to body.portal. Tokens only. */
+
+body.portal .pe-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+body.portal .pe-flip { transform: rotate(180deg); }
+
+/* ---------- Title and status line ---------- */
+body.portal .pe-hero { margin-bottom: 16px; }
+body.portal .pe-hero h1 { margin: 0 0 4px; }
+body.portal .pe-status { margin: 0; font-size: 0.9375rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
+
+/* ---------- Section tabs (never wrap; scroll if needed) ---------- */
+body.portal .pe-tabs { display: flex; gap: 24px; border-bottom: 1px solid var(--border); margin: 0 0 24px; overflow-x: auto; scrollbar-width: none; }
+body.portal .pe-tabs::-webkit-scrollbar { display: none; }
+body.portal .pe-tab { flex: none; display: inline-flex; align-items: center; min-height: 44px; padding: 10px 0; font-size: 0.9375rem; font-weight: 500; color: var(--text-2); white-space: nowrap; border-bottom: 2px solid transparent; margin-bottom: -1px; text-decoration: none; }
+@media (hover: hover) { body.portal .pe-tab:hover { color: var(--text); text-decoration: none; } }
+body.portal .pe-tab.on { color: var(--text); border-bottom-color: var(--forest-800); }
+
+/* ---------- Sections ---------- */
+body.portal .pe-mine h2, body.portal .pe-boards h2, body.portal .pe-cal h2, body.portal .pe-detail-boards h2 { margin: 0 0 12px; }
+body.portal .pe-mine { margin-bottom: 20px; }
+body.portal .pe-mine-all { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 48px; padding: 8px 16px; border: 0; background: none; color: var(--forest-800); font: 500 0.9375rem/1.3 var(--sans); text-align: left; cursor: pointer; }
+@media (hover: hover) { body.portal .pe-mine-all:hover { background: var(--sage-50); } }
+body.portal .pe-mine-all svg { width: 18px; height: 18px; color: var(--text-3); }
+
+/* ---------- Live banner (Calendar) ---------- */
+body.portal .pe-live-banner { display: flex; align-items: center; gap: 10px; min-height: 48px; margin: -8px 0 16px; padding: 8px 14px; background: var(--sage-50); border-radius: var(--radius-ctl); color: var(--text); text-decoration: none; }
+@media (hover: hover) { body.portal .pe-live-banner:hover { background: var(--sage-100); text-decoration: none; } }
+body.portal .pe-live-banner > svg { width: 18px; height: 18px; color: var(--text-2); flex: none; margin-left: auto; }
+body.portal .pe-live-banner .pe-live-dot { margin: 0 2px; }
+body.portal .pe-live-banner .pe-live-dot::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: var(--forest-500); animation: pe-pulse 1.8s ease-out infinite; }
+body.portal .pe-lbn-t { flex: 1 1 auto; min-width: 0; display: flex; flex-wrap: wrap; column-gap: 6px; font-size: 0.875rem; line-height: 1.4; }
+body.portal .pe-lbn-b { font-weight: 500; }
+body.portal .pe-lbn-l { color: var(--forest-800); }
+body.portal .pe-lbn-l::before { content: "· "; color: var(--text-3); }
+
+/* ---------- Event filter: one select field ---------- */
+body.portal .pe-cal-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin-bottom: 4px; }
+body.portal .pe-cal-head h2 { margin: 0 !important; }
+body.portal .pe-filter-f { flex: 0 1 auto; min-width: 0; }
+body.portal .pe-filter-f .pk-select { min-height: 44px; padding: 6px 10px 6px 12px; gap: 6px; font-size: 0.9375rem; }
+body.portal .pe-filter-f .pk-select-main::before { content: "Showing: "; font-weight: 400; color: var(--text-2); }
+body.portal .pe-quiet { margin: 0; padding: 14px 16px; background: var(--sage-50); border-radius: var(--radius-card); color: var(--text-2); font-size: 0.9375rem; }
+
+/* ---------- My events: inset grouped list ---------- */
+body.portal .p-list.pe-mine-list > li { padding: 0; min-height: 0; display: block; }
+body.portal .pe-mine-list a { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 4rem; padding: 10px 16px; color: var(--text); text-decoration: none; }
+@media (hover: hover) { body.portal .pe-mine-list a:hover { background: var(--sage-50); text-decoration: none; } }
+body.portal .pe-mine-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+body.portal .pe-mine-when { font-size: 0.8125rem; line-height: 1.4; font-weight: 500; color: var(--forest-500); font-variant-numeric: tabular-nums; }
+body.portal .pe-mine-title { font-size: 1rem; line-height: 1.5; font-weight: 500; }
+body.portal .pe-mine-sub { font-size: 0.875rem; line-height: 1.43; color: var(--text-2); }
+body.portal .pe-mine-list svg { width: 18px; height: 18px; flex: none; color: var(--text-3); }
+
+/* ---------- "Going" pill ---------- */
+body.portal .pe-going { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 999px; background: var(--sage-100); color: var(--forest-800); font-size: 0.8125rem; font-weight: 500; line-height: 1.4; }
+
+/* ---------- Month groups and event cards ---------- */
+body.portal .pe-month { container-type: inline-size; }
+body.portal .pe-month + .pe-month { margin-top: 16px; }
+body.portal .pe-month-acc + .pe-month-acc, body.portal .pe-month-rest { margin-top: 12px; }
+body.portal .pe-month-rest + .pe-month-acc { margin-top: 12px; }
+body.portal .pe-month-acc .pk-acc-body { background: var(--bg); padding: 12px; }
+body.portal .pe-month-title { margin: 16px 0 10px; font-size: 0.9375rem; font-weight: 500; color: var(--text-2); }
+body.portal .pe-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+body.portal .pe-card { display: flex; gap: 14px; padding: 14px 16px; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); text-decoration: none; }
+@media (hover: hover) { body.portal .pe-card:hover { border-color: var(--border-strong); text-decoration: none; } }
+body.portal .pe-date { flex: none; width: 3.5rem; align-self: flex-start; display: flex; flex-direction: column; align-items: center; padding: 8px 0 7px; border-radius: var(--radius-ctl); background: var(--sage-50); font-variant-numeric: tabular-nums lining-nums; }
+body.portal .pe-date-wd, body.portal .pe-date-m { font-size: 0.8125rem; line-height: 1.3; color: var(--text-2); }
+body.portal .pe-date-n { font-family: var(--serif); font-size: 1.5rem; font-weight: 500; line-height: 1.15; color: var(--text); }
+body.portal .pe-card-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+body.portal .pe-card-top { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-height: 22px; }
+body.portal .pe-card-title { font-size: 1.0625rem; line-height: 1.4; font-weight: 500; margin: 0; }
+body.portal .pe-card-meta { margin: 0; font-size: 0.875rem; line-height: 1.43; color: var(--text-2); font-variant-numeric: tabular-nums; }
+
+/* Capacity: thin bar and a caption */
+body.portal .pe-cap { margin-top: 8px; }
+body.portal .pe-cap-bar { height: 4px; border-radius: 2px; background: var(--sage-200); overflow: hidden; }
+body.portal .pe-cap-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--forest-800); }
+body.portal .pe-cap.closed .pe-cap-bar > span, body.portal .pe-cap.full .pe-cap-bar > span { background: var(--text-3); }
+body.portal .pe-cap-t { margin: 4px 0 0; font-size: 0.8125rem; line-height: 1.38; color: var(--text-3); font-variant-numeric: tabular-nums; }
+body.portal .pe-cap.low .pe-cap-t { color: var(--forest-500); font-weight: 500; }
+
+/* ---------- Leaderboard card ---------- */
+body.portal .pe-lb { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 16px; color: var(--text); }
+body.portal .pe-lb + .pe-lb { margin-top: 12px; }
+body.portal .pe-lb-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 10px 12px; margin-bottom: 8px; }
+body.portal .pe-lb-head { flex: 1 1 0; min-width: min(100%, 9.5em); }
+body.portal .pe-lb-title { font-family: var(--serif); font-size: 1.25rem; font-weight: 500; line-height: 1.3; margin: 4px 0 0; }
+body.portal .pe-lb-sub { margin: 0; font-size: 0.8125rem; line-height: 1.38; color: var(--text-3); }
+body.portal .pe-lb-mode { flex: none; margin-top: 2px; }
+body.portal .pe-lb-mode button { min-width: 52px; padding-left: 12px; padding-right: 12px; }
+body.portal .pe-live, body.portal .pe-final { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8125rem; font-weight: 500; color: var(--forest-500); }
+body.portal .pe-final { color: var(--text-2); }
+body.portal .pe-live-dot { position: relative; width: 7px; height: 7px; border-radius: 50%; background: var(--forest-500); flex: none; }
+body.portal .pe-live:not(.pe-static) .pe-live-dot::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: var(--forest-500); animation: pe-pulse 1.8s ease-out infinite; }
+@keyframes pe-pulse { from { transform: scale(1); opacity: 0.55; } to { transform: scale(2.8); opacity: 0; } }
+
+/* Table: narrow fixed columns, names on one line */
+body.portal .pe-lbt-wrap { container-type: inline-size; }
+body.portal .pe-lbt { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 0.9375rem; font-variant-numeric: tabular-nums lining-nums; }
+body.portal .pe-w-pos { width: 2.25em; }
+body.portal .pe-w-num { width: 3.6em; }
+body.portal .pe-lbt th, body.portal .pe-lbt td { height: 3rem; padding: 6px 4px; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--border); }
+body.portal .pe-lbt thead th { height: 2.25rem; padding-top: 0; padding-bottom: 6px; vertical-align: bottom; font-size: 0.8125rem; font-weight: 500; color: var(--text-3); white-space: nowrap; }
+body.portal .pe-lbt thead abbr { text-decoration: none; }
+body.portal .pe-lbt tbody tr:last-child th, body.portal .pe-lbt tbody tr:last-child td { border-bottom: 0; }
+body.portal .pe-c-pos { color: var(--text-2); white-space: nowrap; }
+body.portal .pe-c-name { font-size: 0.9375rem; font-weight: 400; line-height: 1.3; color: var(--text); white-space: nowrap; }
+body.portal .pe-c-num { text-align: right !important; white-space: nowrap; color: var(--text-2); }
+body.portal .pe-score { font-weight: 500; color: var(--text) !important; }
+body.portal .pe-score.under { color: var(--danger) !important; }
+body.portal .pe-lbt tr.me th, body.portal .pe-lbt tr.me td { background: var(--sage-50); }
+body.portal .pe-lbt tr.me th { font-weight: 500; }
+body.portal .pe-lbt tr.pe-gap th, body.portal .pe-lbt tr.pe-gap td { border-top: 1px solid var(--border-strong); }
+body.portal .pe-lbt tr.waiting td, body.portal .pe-lbt tr.waiting th { color: var(--text-3); }
+body.portal .pe-you { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: var(--sage-100); color: var(--forest-800); font-size: 0.8125rem; font-weight: 500; line-height: 1.4; vertical-align: 1px; }
+body.portal .pe-lb-wait { display: block; font-size: 0.8125rem; line-height: 1.3; color: var(--text-3); }
+body.portal .pe-stack-l { display: none; }
+body.portal .pe-lb-more-row { display: flex; justify-content: center; border-top: 1px solid var(--border); margin-top: 0; padding-top: 4px; }
+body.portal .pe-lb-foot { margin: 4px 0 0; font-size: 0.8125rem; line-height: 1.38; color: var(--text-3); }
+body.portal .pe-lb-empty { margin: 0; padding: 16px 0; color: var(--text-2); font-size: 0.9375rem; }
+
+/* Narrow container (large text sizes): names may wrap; at very large sizes rows become two lines */
+@container (max-width: 17em) {
+  body.portal .pe-c-name { white-space: normal; overflow-wrap: break-word; }
+  body.portal .pe-lbt th, body.portal .pe-lbt td { height: auto; padding-top: 10px; padding-bottom: 10px; }
+}
+@container (max-width: 15.5em) {
+  body.portal .pe-lbt thead, body.portal .pe-lbt colgroup { display: none; }
+  body.portal .pe-lbt, body.portal .pe-lbt tbody { display: block; }
+  body.portal .pe-lbt tr { display: grid; grid-template-columns: 2.2em minmax(0, 1fr) auto; column-gap: 8px; align-items: baseline; padding: 10px 4px; border-bottom: 1px solid var(--border); }
+  body.portal .pe-lbt tbody tr:last-child { border-bottom: 0; }
+  body.portal .pe-lbt tr > * { display: block; height: auto; padding: 0 !important; border: 0 !important; }
+  body.portal .pe-lbt .pe-c-pos { grid-column: 1; grid-row: 1; }
+  body.portal .pe-lbt .pe-c-name { grid-column: 2 / 4; grid-row: 1; }
+  body.portal .pe-lbt .pe-c-holes { grid-column: 2; grid-row: 2; text-align: left !important; font-size: 0.875rem; }
+  body.portal .pe-lbt .pe-score { grid-column: 3; grid-row: 2; }
+  body.portal .pl-table .pe-score { grid-column: 2; text-align: left !important; }
+  body.portal .pe-lbt .pe-c-move { grid-column: 3; grid-row: 2; }
+  body.portal .pe-stack-l { display: inline; }
+  body.portal .pe-lbt tr.me { background: var(--sage-50); }
+  body.portal .pe-lbt tr.me > * { background: none; }
+}
+
+/* ---------- Event detail ---------- */
+body.portal .pe-back { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding-right: 12px; margin: -10px 0 4px; font-size: 0.9375rem; font-weight: 500; color: var(--forest-800); text-decoration: none; }
+@media (hover: hover) { body.portal .pe-back:hover { text-decoration: underline; } }
+body.portal .pe-back svg { width: 18px; height: 18px; }
+body.portal .pe-detail { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 20px 16px 16px; }
+body.portal .pe-detail-title { margin: 6px 0 14px; }
+body.portal .pe-meta { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 0.9375rem; color: var(--text); }
+body.portal .pe-meta li { display: flex; align-items: flex-start; gap: 10px; font-variant-numeric: tabular-nums; }
+body.portal .pe-meta svg { width: 20px; height: 20px; flex: none; color: var(--forest-500); margin-top: 1px; }
+body.portal .pe-detail .pe-cap { margin: 16px 0 0; }
+body.portal .pe-desc { border-top: 1px solid var(--border); margin-top: 16px; padding-top: 14px; }
+body.portal .pe-desc p { margin: 0; font-size: 1rem; line-height: 1.5; color: var(--text); }
+body.portal .pe-desc.clamped p { max-height: 4.5em; overflow: hidden; }
+body.portal .pe-desc .pe-more[hidden] { display: none; }
+
+/* ---------- Registration panel ---------- */
+body.portal .pe-rsvp { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 20px 16px 16px; }
+body.portal .pe-rsvp h2 { margin: 0 0 12px; }
+body.portal .pe-names { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 16px; }
+body.portal .pe-total { background: var(--sage-50); border-radius: var(--radius-ctl); padding: 12px 14px; margin-bottom: 16px; }
+body.portal .pe-total-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 2px 12px; }
+body.portal .pe-total-l { font-size: 0.9375rem; font-weight: 500; color: var(--text-2); }
+body.portal .pe-total-n { font-family: var(--serif); font-size: 1.375rem; font-weight: 500; font-variant-numeric: tabular-nums lining-nums; }
+body.portal .pe-total p { margin: 2px 0 0; font-size: 0.875rem; color: var(--text-2); }
+body.portal .pe-form-err { display: flex; gap: 8px; padding: 12px; margin-bottom: 16px; background: var(--danger-bg); color: var(--danger); border-radius: var(--radius-ctl); font-size: 0.9375rem; font-weight: 500; }
+body.portal .pe-form-err[hidden] { display: none; }
+body.portal .pe-form-err svg { width: 20px; height: 20px; flex: none; }
+body.portal .pe-rsvp-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+body.portal .pe-rsvp-acts .btn { flex: 1 1 auto; min-width: 0; max-width: 100%; height: auto; padding-top: 8px; padding-bottom: 8px; }
+body.portal .pe-rsvp-acts .pe-submit { flex: 1 1 100%; }
+
+body.portal .pe-confirm-head { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 16px; }
+body.portal .pe-confirm-head h2 { margin: 0 0 4px; }
+body.portal .pe-att-mark { width: 28px; height: 28px; margin-top: 2px; border-radius: 50%; background: var(--forest-800); color: var(--on-dark); display: inline-flex; align-items: center; justify-content: center; flex: none; }
+body.portal .pe-att-mark svg { width: 16px; height: 16px; stroke-width: 2; }
+body.portal .pe-att-names, body.portal .pe-confirm-line { margin: 0 0 2px; font-size: 0.9375rem; color: var(--text); }
+body.portal .pe-att-fee { margin: 0; font-size: 0.875rem; color: var(--text-2); }
+body.portal .pe-kv { margin: 0 0 16px; padding: 4px 14px; background: var(--sage-50); border-radius: var(--radius-ctl); }
+body.portal .pe-kv div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px; padding: 10px 0; }
+body.portal .pe-kv div + div { border-top: 1px solid var(--border); }
+body.portal .pe-kv dt { font-size: 0.875rem; color: var(--text-2); }
+body.portal .pe-kv dd { margin: 0; font-size: 0.9375rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+body.portal .pe-closed-note { margin: 0 0 12px; font-size: 0.875rem; color: var(--text-2); }
+body.portal .pe-notice p { margin: 0 0 16px; font-size: 0.9375rem; color: var(--text-2); }
+body.portal .pe-detail, body.portal .pe-detail-boards, body.portal .pe-rsvp { margin-bottom: 12px; }
+body.portal .p-list.pe-detail-boards > li { padding: 0; display: block; }
+body.portal .pe-board-link { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 16px; color: var(--text); text-decoration: none; }
+@media (hover: hover) { body.portal .pe-board-link:hover { background: var(--sage-50); text-decoration: none; } }
+body.portal .pe-board-link > svg:first-child { width: 20px; height: 20px; color: var(--forest-500); flex: none; }
+body.portal .pe-board-link > svg:last-child { width: 18px; height: 18px; color: var(--text-3); flex: none; }
+/* Guests stepper inside the sticky action bar */
+body.portal .pk-bar .pe-bar-g .pk-stepper { flex-direction: row; align-items: center; gap: 10px; }
+body.portal .pe-reg .pe-guests-hint { margin: -4px 0 12px; }
+body.portal .pe-reg .p-link { margin-top: 4px; }
+/* Leaderboard tab */
+body.portal .pe-lb-pick { margin-bottom: 12px; }
+
+/* ---------- Members' league ---------- */
+body.portal .pl-head { margin-bottom: 20px; }
+body.portal .pl-head h2 { margin: 0 0 6px; }
+body.portal .pl-meta { margin: 0; font-size: 0.9375rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
+body.portal .pl-facts { margin: 4px 0 0; font-size: 0.875rem; color: var(--text-3); font-variant-numeric: tabular-nums; }
+body.portal .pl-head + .pe-quiet { margin-bottom: 20px; }
+body.portal .pl-join { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; padding: 16px; margin-bottom: 20px; }
+body.portal .pl-join h2 { margin: 0 0 4px; }
+body.portal .pl-join p { margin: 0; max-width: 52ch; color: var(--text-2); font-size: 0.9375rem; }
+body.portal .pl-join .btn { flex: 1 1 auto; max-width: 320px; }
+body.portal .pl-card { padding: 16px; margin-bottom: 12px; }
+body.portal .pl-more { margin-top: 12px; }
+body.portal .pl-champ-line { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 12px; font-size: 0.9375rem; color: var(--text); }
+body.portal .pl-champ-line svg { width: 20px; height: 20px; color: var(--forest-500); flex: none; margin-top: 1px; }
+body.portal .pl-champ-l { font-weight: 500; }
+body.portal .pl-head + .pe-quiet { margin-bottom: 12px; }
+body.portal .pl-more .pl-weeks { margin-top: 0; }
+body.portal .pl-more .pl-weeks > li:first-child { border-top: 0; }
+body.portal .pl-card h3 { margin: 0 0 4px; }
+body.portal .pl-muted { margin: 0; font-size: 0.875rem; color: var(--text-2); }
+body.portal .pl-champ { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-family: var(--serif); font-size: 1.25rem; font-weight: 500; }
+body.portal .pl-champ svg { width: 20px; height: 20px; color: var(--forest-500); flex: none; }
+body.portal .pl-next-row { display: flex; gap: 12px; align-items: flex-start; margin-top: 8px; }
+body.portal .pl-next-t { margin: 0; font-size: 1rem; font-weight: 500; }
+body.portal .pl-note { display: flex; gap: 8px; align-items: flex-start; margin: 8px 0 0; font-size: 0.875rem; color: var(--text-2); }
+body.portal .pl-note svg { width: 18px; height: 18px; flex: none; color: var(--forest-500); }
+body.portal .pl-move { display: inline-flex; align-items: center; justify-content: flex-end; gap: 1px; font-size: 0.875rem; color: var(--text-3); }
+body.portal .pl-move svg { width: 14px; height: 14px; stroke-width: 1.8; }
+body.portal .pl-move.up { color: var(--forest-500); }
+body.portal .pl-move.down { color: var(--text-2); }
+body.portal .pl-move.new { font-size: 0.8125rem; font-weight: 500; padding: 1px 7px; border-radius: 999px; background: var(--sage-100); color: var(--forest-800); }
+body.portal .pl-weeks { list-style: none; margin: 10px 0 0; padding: 0; }
+body.portal .pl-weeks > li { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; padding: 8px 0; border-top: 1px solid var(--border); }
+body.portal .pl-weeks > li.extra { display: none; }
+body.portal .pl-weeks.all > li.extra { display: flex; }
+body.portal .pl-wk-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+body.portal .pl-wk-t { font-size: 0.9375rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+body.portal .pl-weeks > li.off .pl-wk-t { font-weight: 400; color: var(--text-2); }
+body.portal .pl-wk-score { display: flex; flex-direction: column; align-items: flex-end; text-align: right; font-size: 0.8125rem; color: var(--text-3); font-variant-numeric: tabular-nums; }
+body.portal .pl-wk-score b { font-size: 0.9375rem; color: var(--text); font-weight: 500; white-space: nowrap; }
+body.portal .pl-weeks-more { width: 100%; margin-top: 8px; }
+body.portal .pl-weeks-more svg { width: 18px; height: 18px; }
+
+/* ---------- Narrow phones and large text ---------- */
+@media (max-width: 360px) {
+  body.portal .pe-card { gap: 12px; padding: 14px 12px; }
+  body.portal .pe-lb { padding: 14px 12px; }
+}
+/* At very large text sizes the date tile sits above the card text instead of squeezing it. */
+@container (max-width: 15em) {
+  body.portal .pe-card { flex-direction: column; gap: 10px; }
+  body.portal .pe-date { flex-direction: row; align-items: baseline; gap: 6px; width: auto; padding: 4px 12px; }
+  body.portal .pe-date-n { font-size: 1.125rem; }
+  body.portal .pe-date-wd, body.portal .pe-date-m { font-size: 0.9375rem; color: var(--text); }
+}
+
+
+/* ==========================================================================
+   Tablet (>= 768) and desktop (>= 1024) layouts. Phones keep the one-column Pass 3 layout.
+   ========================================================================== */
+body.portal .pe-side-lb { display: none; }
+@media (min-width: 768px) {
+  body.portal .pe-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  body.portal .pe-live-banner { margin-top: -4px; }
+  body.portal .pe-month-acc .pk-acc-body { padding: 16px; }
+  body.portal .pe-desc p { max-width: 68ch; }
+}
+@media (min-width: 1024px) {
+  /* Calendar: events in the main column, My events and the live leaderboard in a side column */
+  body.portal .pe-cal-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 22rem); gap: 32px; align-items: start; }
+  body.portal .pe-cal-layout > .pe-side { grid-column: 2; grid-row: 1; position: sticky; top: 88px; display: flex; flex-direction: column; gap: 20px; }
+  body.portal .pe-cal-layout > .pe-cal { grid-column: 1; grid-row: 1; min-width: 0; }
+  body.portal .pe-side .pe-live-banner { display: none; }
+  body.portal .pe-side .pe-mine { margin: 0; }
+  body.portal .pe-side-lb { display: block; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 16px; }
+  body.portal .pe-side-lb-head { margin-bottom: 8px; }
+  body.portal .pe-side-lb .pe-lb-title { font-size: 1.125rem; }
+  body.portal .pe-side-rows { list-style: none; margin: 0; padding: 0; }
+  body.portal .pe-side-rows li { display: grid; grid-template-columns: 2.25em minmax(0, 1fr) auto; gap: 8px; align-items: center; min-height: 2.75rem; border-top: 1px solid var(--border); font-size: 0.9375rem; font-variant-numeric: tabular-nums; }
+  body.portal .pe-side-rows li.me { background: var(--sage-50); }
+  body.portal .pe-side-name { min-width: 0; overflow-wrap: break-word; }
+  body.portal .pe-side-go { margin-top: 4px; }
+  body.portal .pe-side-go svg { width: 16px; height: 16px; }
+  body.portal .pe-cal-head { margin-bottom: 8px; }
+
+  /* Leaderboard tab: tournament info and controls on the left, the table on the right */
+  body.portal .pe-lbx { display: grid; grid-template-columns: minmax(260px, 20rem) minmax(0, 1fr); grid-template-rows: auto auto 1fr; column-gap: 32px; align-items: start; }
+body.portal .pe-lbx.one { grid-template-rows: auto 1fr; }
+  body.portal .pe-lbx > .pe-lb-pick { grid-column: 1; grid-row: 1; margin: 0 0 16px; }
+  body.portal .pe-lbx .pe-board-host, body.portal .pe-lbx .pe-lb { display: contents; }
+  body.portal .pe-lbx .pe-lb-top { grid-column: 1; grid-row: 2; flex-direction: column; align-items: flex-start; gap: 14px; margin: 0; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
+  body.portal .pe-lbx.one .pe-lb-top { grid-row: 1; }
+  body.portal .pe-lbx .pe-lb-head { flex: none; min-width: 0; }
+  body.portal .pe-lbx .pe-lb-title { font-size: 1.5rem; }
+  body.portal .pe-lbx .pe-lb-foot { grid-column: 1; grid-row: 3; margin: 12px 4px 0; }
+  body.portal .pe-lbx.one .pe-lb-foot { grid-row: 2; }
+  body.portal .pe-lbx .pe-lb-board { grid-column: 2; grid-row: 1 / span 4; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 8px 20px 12px; }
+  body.portal .pe-lbx .pe-lbt { font-size: 1rem; }
+  body.portal .pe-lbx .pe-w-pos { width: 3em; }
+  body.portal .pe-lbx .pe-w-num { width: 5em; }
+
+  /* League: standings in the main column; join, champion and the season details beside them */
+  body.portal .pl-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 22rem); grid-template-rows: auto 1fr; column-gap: 32px; align-items: start; }
+  body.portal .pl-grid > .pl-board { grid-column: 1; grid-row: 1 / span 2; }
+  body.portal .pl-grid > .pl-top { grid-column: 2; grid-row: 1; }
+  body.portal .pl-grid > .pl-more { grid-column: 2; grid-row: 2; margin-top: 0; }
+  body.portal .pl-head .pl-meta, body.portal .pl-head .pl-facts { max-width: 75ch; }
+
+  /* Event detail: details and description beside the registration panel */
+  body.portal .pe-dgrid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(320px, 1fr); column-gap: 32px; align-items: start; }
+  body.portal .pe-dgrid > .pe-detail { grid-column: 1; grid-row: 1 / span 2; padding: 24px; }
+  body.portal .pe-dgrid > .pe-rsvp-host { grid-column: 2; grid-row: 1; }
+  body.portal .pe-dgrid > .pe-detail-boards { grid-column: 2; grid-row: 2; }
+  body.portal .pe-dgrid .pe-desc.clamped p { max-height: none; }
+  body.portal .pe-dgrid .pe-desc .pe-more { display: none; }
+}
+@media (min-width: 1440px) {
+  body.portal .pe-cal-layout, body.portal .pl-grid { grid-template-columns: minmax(0, 1fr) minmax(320px, 24rem); }
+}
+/* Projectors: the leaderboard reads from across the room */
+@media (min-width: 1800px) {
+  body.portal .pe-lbx .pe-lbt { font-size: 1.125rem; }
+  body.portal .pe-lbx .pe-lbt th, body.portal .pe-lbx .pe-lbt td { height: 3.25rem; }
+  body.portal .pe-lbx .pe-lbt thead th { height: 2.5rem; font-size: 0.875rem; }
+}
+/* Registration review sheet (Register opens it; Confirm charges) */
+body.portal .pe-review .pe-kv { margin-bottom: 12px; }
+body.portal .pe-review .pe-kv dd { text-align: right; max-width: 100%; }
+body.portal .pe-review-sub { display: block; margin-top: 2px; font-size: 0.8125rem; color: var(--text-2); }
+body.portal .pe-review-total { font-family: var(--serif); font-size: 1.25rem; font-weight: 500; color: var(--text); font-variant-numeric: lining-nums tabular-nums; }
+body.portal .pe-review-terms { margin: 0; font-size: 0.875rem; color: var(--text-2); }
+body.portal .pe-review-acts { display: flex; gap: 8px; width: 100%; }
+body.portal .pe-review-acts .btn { width: auto; white-space: nowrap; }
+body.portal .pe-review-acts [data-rv=back] { flex: 0 0 auto; min-width: 96px; }
+body.portal .pe-review-acts .btn-primary { flex: 1 1 auto; }

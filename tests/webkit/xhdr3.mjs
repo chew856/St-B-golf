@@ -1,0 +1,10 @@
+import { webkit } from 'playwright';
+const b = await webkit.launch(); const c = await b.newContext({ viewport: { width: 1470, height: 900 } }); const p = await c.newPage();
+await p.goto('http://localhost:8001/site/member.html', { waitUntil: 'domcontentloaded' }); await p.waitForTimeout(600);
+await p.evaluate(() => localStorage.setItem('stboniface.portal.session', 'mem_1003')); await p.goto('http://localhost:8001/site/member.html#/home'); await p.waitForTimeout(2000);
+await p.screenshot({ path: 'hdr-raised-1470.png', clip: { x: 0, y: 0, width: 1470, height: 90 } });
+await p.click('.p-me-btn'); await p.waitForTimeout(300);
+const menu = await p.evaluate(() => { const m = document.querySelector('.p-me-menu'), r = m.getBoundingClientRect(); return { top: Math.round(r.top), visible: getComputedStyle(m).visibility !== 'hidden' && getComputedStyle(m).display !== 'none' }; });
+console.log('account menu', JSON.stringify(menu));
+await p.screenshot({ path: 'hdr-raised-menu.png', clip: { x: 900, y: 0, width: 570, height: 260 } });
+await b.close();

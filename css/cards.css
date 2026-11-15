@@ -1,0 +1,100 @@
+/* Card entry (js/core/cards.js). The card picture uses each brand's own colours on purpose:
+   this is the one place the club palette gives way, so the member recognises their card. The club's own
+   default card follows the v2 forest palette (#14261D to #101E17, as --forest-900 / --forest-950); the chip is a
+   quiet silver rather than gold. Used on index.html, member.html and public.html, so tokens fall back safely. */
+.cc { display: grid; grid-template-columns: minmax(260px, 340px) 1fr; gap: var(--s5); align-items: start; }
+.cc-stage { perspective: 1200px; }
+.cc-card {
+  position: relative; width: 100%; aspect-ratio: 1.586; border-radius: 14px;
+  transform-style: preserve-3d; transition: transform 700ms var(--ease-out);
+  --cc-bg: linear-gradient(135deg, #14261D 0%, #1C3326 55%, #27442F 100%); --cc-ink: #F3F6F2;
+}
+.cc-card.flipped { transform: rotateY(180deg); }
+.cc-face {
+  position: absolute; inset: 0; border-radius: inherit; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  background: var(--cc-bg); color: var(--cc-ink); overflow: hidden;
+  box-shadow: 0 18px 40px -18px rgba(16, 30, 23, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  transition: background 400ms var(--ease), color 400ms var(--ease);
+}
+.cc-face::after { /* soft sheen */
+  content: ""; position: absolute; inset: -40% -10% auto auto; width: 70%; height: 120%;
+  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0)); pointer-events: none;
+}
+.cc-front { padding: 7% 7.5%; display: flex; flex-direction: column; justify-content: space-between; }
+.cc-back { transform: rotateY(180deg); }
+.cc-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.cc-chip { width: 44px; height: 33px; border-radius: 6px; background: linear-gradient(135deg, #E4E8E2, #B4BCB3 55%, #DCE1DA); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18); position: relative; }
+.cc-chip::before { content: ""; position: absolute; inset: 7px 0; border-top: 1px solid rgba(0, 0, 0, 0.22); border-bottom: 1px solid rgba(0, 0, 0, 0.22); }
+.cc-brand { display: flex; align-items: center; min-height: 34px; }
+.cc-mark { display: block; width: auto; }
+.cc-mark-generic { width: 34px; height: 34px; opacity: 0.85; }
+.cc-number { font-family: "SFMono-Regular", Menlo, Consolas, monospace; font-size: clamp(1rem, 4.2vw, 1.3rem); letter-spacing: 0.08em; white-space: nowrap; text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25); }
+.cc-bottom { display: flex; justify-content: space-between; gap: var(--s3); align-items: flex-end; }
+.cc-bottom > div { min-width: 0; display: flex; flex-direction: column; }
+.cc-cap { font-size: 0.5625rem; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.72; }
+.cc-name { font-size: 0.82rem; letter-spacing: 0.08em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cc-exp { font-family: "SFMono-Regular", Menlo, Consolas, monospace; font-size: 0.85rem; }
+.cc-stripe { height: 22%; background: rgba(0, 0, 0, 0.78); margin-top: 9%; }
+.cc-sig { margin: 7% 7.5% 0; height: 18%; background: repeating-linear-gradient(-45deg, #f4f1e6 0 6px, #e7e2d0 6px 12px); border-radius: 3px; display: flex; align-items: center; justify-content: flex-end; padding-right: 10px; color: #222; font-family: "SFMono-Regular", Menlo, Consolas, monospace; font-style: italic; letter-spacing: 0.15em; }
+.cc-back-brand { position: absolute; right: 7.5%; bottom: 9%; }
+
+/* Brand looks */
+.cc-card[data-brand="visa"] { --cc-bg: linear-gradient(135deg, #0B1660 0%, #1A1F71 45%, #2A3FA8 100%); --cc-ink: #FFFFFF; }
+.cc-card[data-brand="visa"] .cc-brand { color: #FFFFFF; }
+.cc-card[data-brand="mastercard"] { --cc-bg: linear-gradient(135deg, #141414 0%, #2B2B2B 55%, #3C3C3C 100%); --cc-ink: #F5F5F5; }
+.cc-card[data-brand="amex"] { --cc-bg: linear-gradient(135deg, #0E4C92 0%, #1F72CD 55%, #5AA6E8 100%); --cc-ink: #FFFFFF; }
+.cc-card[data-brand="discover"] { --cc-bg: linear-gradient(120deg, #F4F1EA 0%, #FFFFFF 55%, #FFE3CF 100%); --cc-ink: #1F1F1F; }
+.cc-card[data-brand="discover"] .cc-face { box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(0, 0, 0, 0.1); }
+.cc-card[data-brand="discover"] .cc-brand, .cc-card[data-brand="discover"] .cc-back-brand { color: #1F1F1F; }
+.cc-card[data-brand="diners"] { --cc-bg: linear-gradient(135deg, #00507E 0%, #0079BE 60%, #3FA2DA 100%); --cc-ink: #FFFFFF; }
+.cc-card[data-brand="jcb"] { --cc-bg: linear-gradient(135deg, #0B4EA2 0%, #1C66B8 50%, #0B8F4F 100%); --cc-ink: #FFFFFF; }
+.cc-card[data-brand="unionpay"] { --cc-bg: linear-gradient(135deg, #00447C 0%, #01628F 50%, #007B84 100%); --cc-ink: #FFFFFF; }
+
+/* Brand change: a quick settle so the new look registers */
+@keyframes cc-swap { 0% { transform: scale(0.97); filter: brightness(1.25); } 100% { transform: none; filter: none; } }
+.cc-card.cc-swap:not(.flipped) { animation: cc-swap 450ms var(--ease-out); }
+
+/* Fields */
+.cc-num-wrap { position: relative; }
+.cc-num-wrap .input { padding-right: 56px; font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
+.cc-num-mark { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: flex; color: var(--forest-950, var(--night)); }
+.cc-num-mark .cc-mark { animation: rise var(--t-med) var(--ease-out); }
+.cc-detected { color: var(--forest-500, var(--brass-ink)); font-size: 0.8125rem; min-height: 1.2em; }
+
+@media (max-width: 720px) {
+  .cc { grid-template-columns: 1fr; }
+  .cc-stage { max-width: 340px; width: 100%; margin: 0 auto; }
+}
+@media (prefers-reduced-motion: reduce) { .cc-card { transition: none; } }
+
+/* ---------- Phone: a smaller card picture and tight fields ---------- */
+@media (max-width: 768px) {
+  .cc { grid-template-columns: 1fr; gap: var(--s3); }
+  .cc .cc-stage { max-width: 236px; width: 100%; margin: 0 auto; }
+  .cc-card { border-radius: 10px; }
+  .cc-face { box-shadow: 0 10px 22px -12px rgba(16, 30, 23, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.08); }
+  .cc-front { padding: 6% 7%; }
+  .cc-chip { width: 30px; height: 22px; border-radius: 4px; }
+  .cc-chip::before { inset: 5px 0; }
+  .cc-brand { min-height: 24px; }
+  .cc-brand .cc-mark { max-height: 22px; }
+  .cc-mark-generic { width: 24px; height: 24px; }
+  .cc-number { font-size: 0.9375rem; letter-spacing: 0.06em; }
+  .cc-bottom { gap: var(--s2); }
+  .cc-cap { font-size: 0.4375rem; letter-spacing: 0.14em; }
+  .cc-name { font-size: 0.625rem; }
+  .cc-exp { font-size: 0.6875rem; }
+  .cc-sig { font-size: 0.75rem; padding-right: 8px; }
+  .cc-back-brand .cc-mark { max-height: 18px; }
+  .cc .cc-fields.form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--s2); }
+  .cc .cc-fields .span-2 { grid-column: 1 / -1; }
+  .cc .cc-fields .field { margin-bottom: 10px; }
+  .cc-num-wrap .input { padding-right: 48px; }
+  .cc-num-mark { right: 8px; }
+  .cc-detected { font-size: 0.8125rem; min-height: 0; }
+  .cc-detected:empty { display: none; }
+}
+@media (max-width: 360px) {
+  .cc .cc-stage { max-width: 210px; }
+  .cc-number { font-size: 0.8125rem; letter-spacing: 0.04em; }
+}

@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>St. Boniface Golf Club</title>
+  <meta name="description" content="Club management system for St. Boniface Golf Club.">
+  <link rel="icon" type="image/png" href="assets/stb-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Mulish:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/cards.css">
+  <!-- Module styles -->
+  <link rel="stylesheet" href="css/modules/dashboard.css">
+  <link rel="stylesheet" href="css/modules/teesheet.css">
+  <link rel="stylesheet" href="css/modules/lessons.css">
+  <link rel="stylesheet" href="css/modules/members.css">
+  <link rel="stylesheet" href="css/modules/billing.css">
+  <link rel="stylesheet" href="css/modules/proshop.css">
+  <link rel="stylesheet" href="css/modules/cart.css">
+  <link rel="stylesheet" href="css/modules/dining.css">
+  <link rel="stylesheet" href="css/modules/functions.css">
+  <link rel="stylesheet" href="css/modules/outings.css">
+  <link rel="stylesheet" href="css/modules/events.css">
+  <link rel="stylesheet" href="css/modules/communications.css">
+  <link rel="stylesheet" href="css/modules/course.css">
+  <link rel="stylesheet" href="css/modules/reports.css">
+  <link rel="stylesheet" href="css/modules/reports-extra.css">
+  <link rel="stylesheet" href="css/modules/settings.css">
+  <link rel="stylesheet" href="css/mobile.css">
+  <link rel="stylesheet" href="css/staff-theme.css">
+  <link rel="stylesheet" href="css/kit.css">
+  <link rel="stylesheet" href="css/pickers.css">
+  <link rel="stylesheet" href="css/receipts.css">
+  <link rel="stylesheet" href="css/promos.css">
+  <link rel="stylesheet" href="css/shop.css">
+  <link rel="stylesheet" href="css/waitlist.css">
+  <link rel="stylesheet" href="css/modules/giftcards.css">
+  <link rel="stylesheet" href="css/modules/takeout.css">
+  <link rel="stylesheet" href="css/modules/feedback.css">
+  <link rel="stylesheet" href="css/modules/accounting.css">
+  <link rel="stylesheet" href="css/modules/accounting-export.css">
+</head>
+<body class="staff">
+  <a href="#view" class="btn btn-primary" style="position:absolute;left:-9999px;top:8px;z-index:999" onfocus="this.style.left='8px'" onblur="this.style.left='-9999px'">Skip to content</a>
+  <div class="app">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="main">
+      <header class="topbar" id="topbar"></header>
+      <main id="view" tabindex="-1"></main>
+    </div>
+  </div>
+
+  <!-- Core -->
+  <script src="js/core/icons.js"></script>
+  <script src="js/core/store.js"></script>
+  <script src="js/core/ui.js"></script>
+  <script src="js/core/holds.js"></script>
+  <script src="js/core/undo.js"></script>
+  <script src="js/core/charts.js"></script>
+  <script src="js/core/drill.js"></script>
+  <script src="js/core/club.js"></script>
+  <script src="js/core/teerules.js"></script>
+  <script src="js/core/cards.js"></script>
+  <script src="js/core/cartdispatch.js"></script>
+  <script src="js/core/premises.js"></script>
+  <script src="js/core/holes.js"></script>
+  <script src="js/core/receipts.js"></script>
+  <script src="js/core/waitlist.js"></script>
+  <script src="js/core/giftcards.js"></script>
+  <script src="js/core/promos.js"></script>
+  <script src="js/core/addons.js"></script>
+  <script src="js/core/shop.js"></script>
+  <script src="js/core/takeout.js"></script>
+  <script src="js/core/feedback.js"></script>
+  <script src="js/core/app.js"></script>
+  <!-- Shared kit from the members' app: sheets, select fields, accordions, steppers, sticky action bar, date picker -->
+  <script src="js/portal/kit.js"></script>
+  <script src="js/portal/datepick.js"></script>
+
+  <!-- Modules (each registers itself and seeds its own data) -->
+  <script src="js/modules/dashboard.js"></script>
+  <script src="js/shared/teesheet-data.js"></script>
+  <script src="js/modules/teesheet.js"></script>
+  <script src="js/shared/lessons-data.js"></script>
+  <script src="js/modules/lessons.js"></script>
+  <script src="js/shared/members-data.js"></script>
+  <script src="js/modules/members.js"></script>
+  <script src="js/shared/billing-data.js"></script>
+  <script src="js/modules/billing.js"></script>
+  <script src="js/shared/proshop-data.js"></script>
+  <script src="js/modules/proshop.js"></script>
+  <script src="js/shared/dining-data.js"></script>
+  <script src="js/modules/dining.js"></script>
+  <script src="js/shared/functions-data.js"></script>
+  <script src="js/modules/functions.js"></script>
+  <script src="js/shared/outings-data.js"></script>
+  <script src="js/modules/outings.js"></script>
+  <script src="js/shared/events-data.js"></script>
+  <script src="js/modules/events.js"></script>
+  <script src="js/shared/communications-data.js"></script>
+  <script src="js/modules/communications.js"></script>
+  <script src="js/shared/course-data.js"></script>
+  <script src="js/modules/course.js"></script>
+  <script src="js/shared/reports-data.js"></script>
+  <script src="js/modules/reports.js"></script>
+  <script src="js/modules/reports-members.js"></script>
+  <script src="js/modules/reports-growth.js"></script>
+  <script src="js/modules/reports-golf.js"></script>
+  <script src="js/modules/reports-food.js"></script>
+  <script src="js/modules/reports-overview.js"></script>
+  <script src="js/modules/settings.js"></script>
+  <script src="js/shared/cart-data.js"></script>
+  <script src="js/modules/cart.js"></script>
+  <script src="js/modules/giftcards.js"></script>
+  <script src="js/modules/takeout.js"></script>
+  <script src="js/modules/feedback.js"></script>
+  <script src="js/modules/accounting.js"></script>
+  <script src="js/modules/accounting-export.js"></script>
+  <script src="js/core/pickers.js"></script>
+</body>
+</html>

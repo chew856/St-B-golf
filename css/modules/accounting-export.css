@@ -1,0 +1,121 @@
+/* Accounting export: the Export and Account mapping tabs on the Accounting page (js/modules/accounting-export.js). Prefix acx-. */
+
+.acx .acx-small { font-size: var(--fs-12); line-height: 1.5; }
+.acx .acx-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.acx .acx-bad { color: var(--oxblood); }
+.acx .acx-pad { padding: var(--s3) var(--s4); margin: 0; }
+.acx-grid { align-items: start; }
+.acx-grid > * { min-width: 0; }
+.acx-history { margin-top: var(--s5); }
+
+/* Controls */
+.acx-form { display: grid; gap: var(--s4); }
+.acx-seg { display: grid; gap: var(--s2); }
+.acx-seg .segmented { flex-wrap: wrap; max-width: 100%; }
+.acx-seg .segmented button { white-space: nowrap; }
+.acx-dates { align-items: start; }
+.acx-datefmt[hidden] { display: none; }
+.acx-skip { align-self: start; }
+.acx-stats .stats { margin: 0; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+.acx-stats .stat { padding: var(--s4); }
+.acx-stats .stat-value { font-size: var(--fs-24); white-space: nowrap; }
+
+/* Download and notes */
+.acx-dl { flex: none; }
+.acx-block, .acx-warn { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); padding: var(--s3); border-radius: var(--r-control); font-size: var(--fs-13); margin: 0 0 var(--s3); }
+.acx-block { background: var(--oxblood-tint); color: var(--oxblood); }
+.acx-warn { background: var(--brass-tint); color: var(--ink-2); }
+.acx-block svg, .acx-warn svg { width: 16px; height: 16px; flex: none; }
+.acx-warn svg { color: var(--brass-ink); }
+.acx-block span { flex: 1 1 200px; }
+.acx-skipped { margin: var(--s3) 0 0; }
+
+/* Day journals */
+.acx-days { display: grid; gap: var(--s2); }
+.acx-day { border: 1px solid var(--rule); border-radius: var(--r-panel); background: var(--paper); transition: border-color var(--t-fast); }
+.acx-day.is-bad { border-color: var(--oxblood); }
+.acx-day > summary { list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s3); padding: var(--s3); cursor: pointer; border-radius: var(--r-panel); }
+.acx-day > summary::-webkit-details-marker { display: none; }
+@media (hover: hover) { .acx-day > summary:hover { background: var(--hover); } }
+.acx-day > summary:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+.acx-day-when { display: inline-flex; align-items: center; gap: var(--s2); font-weight: 600; color: var(--ink); min-width: 0; }
+.acx-chev { display: inline-flex; color: var(--ink-3); transition: transform var(--t-med) var(--ease-out); }
+.acx-chev svg { width: 14px; height: 14px; }
+.acx-day[open] .acx-chev { transform: rotate(90deg); }
+.acx-day-badges { display: inline-flex; flex-wrap: wrap; gap: var(--s1); }
+.acx-day-tot { margin-left: auto; font-family: var(--font-display); font-size: var(--fs-18); color: var(--night); }
+.acx-day-body { padding: 0 var(--s3) var(--s3); animation: fade var(--t-med) var(--ease-out); }
+.acx-day-body > p { margin: 0 0 var(--s2); }
+.acx-issues { list-style: none; margin: 0 0 var(--s3); padding: 0; display: grid; gap: var(--s1); }
+.acx-issues li { display: flex; gap: var(--s2); align-items: flex-start; font-size: var(--fs-13); color: var(--oxblood); }
+.acx-issues svg { width: 14px; height: 14px; flex: none; margin-top: 2px; }
+.acx-jt td, .acx-jt th { vertical-align: top; }
+.acx-jt .acx-acct { min-width: 180px; }
+.acx-jt .acx-acct .num { color: var(--ink-3); margin-right: 2px; }
+.acx-jt .acx-memo { color: var(--ink-2); min-width: 140px; }
+.acx-jt .num { white-space: nowrap; }
+.acx-jt tr.acx-round td { background: var(--brass-tint); }
+.acx-jt tfoot td { font-weight: 600; }
+
+/* Side column */
+.acx-connect .panel-body { display: grid; gap: var(--s3); }
+.acx-connect-head { display: flex; gap: var(--s3); align-items: center; }
+.acx-connect-head > svg { width: 22px; height: 22px; color: var(--brass-ink); flex: none; }
+.acx-connect-head h3 { margin: 0; }
+.acx-connect p { margin: 0; }
+.acx-connect .btn[disabled] { justify-self: start; cursor: not-allowed; opacity: 0.6; }
+.acx-connect-badge { justify-self: start; }
+.acx-list { margin: 0; padding-left: 1.1em; display: grid; gap: var(--s2); font-size: var(--fs-13); color: var(--ink-2); line-height: 1.5; }
+.acx-rules-body > p, .acx-layout-body > p { margin: 0 0 var(--s3); }
+.acx-rules-body > p:last-child { margin: var(--s3) 0 0; }
+.acx-cols { display: flex; flex-wrap: wrap; gap: var(--s1); }
+.acx code { font-size: var(--fs-12); background: var(--parchment); border: 1px solid var(--rule); border-radius: var(--r-control); padding: 1px 5px; overflow-wrap: anywhere; }
+
+/* History */
+.acx-hist td { vertical-align: top; }
+
+/* Account mapping */
+.acx-map-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: var(--s5); align-items: start; }
+.acx-head-actions { gap: var(--s2); }
+.acx-def { padding-bottom: 0; }
+.acx-ph { display: flex; gap: var(--s2); align-items: flex-start; padding: var(--s3); border-radius: var(--r-control); background: var(--brass-tint); color: var(--ink-2); font-size: var(--fs-13); margin: 0 0 var(--s3); }
+.acx-ph svg { width: 18px; height: 18px; flex: none; color: var(--brass-ink); margin-top: 1px; }
+.acx-ph strong { color: var(--ink); }
+.acx-accts .primary-cell { min-width: 150px; overflow-wrap: break-word; }
+.acx-chart .panel-head { flex-wrap: wrap; gap: var(--s2); }
+.acx-del { display: inline-flex; }
+.acx-del .btn[disabled] { opacity: 0.35; cursor: not-allowed; }
+.acx-map-form { display: grid; gap: var(--s5); }
+.acx-group { border: 0; margin: 0; padding: 0; min-width: 0; display: grid; gap: var(--s3); }
+.acx-group legend { font-family: var(--font-display); font-size: var(--fs-18); color: var(--night); padding: 0 0 var(--s2); border-bottom: 1px solid var(--brass-soft); width: 100%; margin-bottom: var(--s2); }
+.acx-group > p { margin: 0; }
+.acx-map-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) 76px; gap: var(--s2) var(--s3); align-items: start; margin: 0; }
+.acx-map-label { display: grid; gap: 2px; padding-top: 8px; }
+.acx-map-label label { margin: 0; }
+.acx-map-ctl { display: grid; gap: 4px; min-width: 0; }
+.acx-map-ctl .cs-btn { width: 100%; }
+.acx-warn-hint { color: var(--ochre); }
+.acx-taxed { padding-top: 8px; white-space: nowrap; }
+.acx-map-foot { gap: var(--s3); align-items: center; padding-top: var(--s2); border-top: 1px solid var(--rule); }
+
+@media (max-width: 1480px) {
+  .acx-map-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 768px) {
+  .acx-day-tot { margin-left: 0; }
+  .acx-map-row { grid-template-columns: minmax(0, 1fr) 76px; }
+  .acx-map-label { grid-column: 1 / -1; padding-top: 0; }
+  .acx-taxed { padding-top: 6px; }
+}
+@media (max-width: 480px) {
+  .acx-stats .stat { padding: var(--s3); }
+  .acx-stats .stat-value { font-size: var(--fs-18); }
+  .acx-seg .segmented { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; }
+  .acx-seg .segmented button { white-space: normal; text-align: left; }
+  .acx-dl .btn { width: 100%; justify-content: center; }
+  .acx-preview .panel-head { flex-wrap: wrap; gap: var(--s2); }
+  .acx-dl { width: 100%; }
+  .acx-chart .panel-head { flex-wrap: wrap; gap: var(--s2); }
+  .acx-day > summary { padding: var(--s2) var(--s3); }
+  .acx-jt .acx-acct { min-width: 150px; }
+}

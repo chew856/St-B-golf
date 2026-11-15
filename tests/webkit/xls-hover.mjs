@@ -1,0 +1,11 @@
+import { suite, open } from './xb-lib.mjs';
+const T = suite();
+const { b, p } = await open(1900, 'lessons', T); await p.waitForTimeout(800);
+await p.locator('.ls-sched-panel').scrollIntoViewIfNeeded();
+const blk = p.locator('.ls-day').nth(5).locator('.ls-block[data-action=lesson]').nth(3); const bx = await blk.boundingBox();
+await p.mouse.move(bx.x + 2, bx.y + 2); await p.mouse.move(bx.x + bx.width / 2, bx.y + 10); await p.waitForTimeout(400);
+await p.locator('.ls-sched-panel').screenshot({ path: 'xls-tip-1900.png' });
+const d = p.locator('.ls-day').nth(4); const db = await d.boundingBox();
+await p.mouse.move(db.x + 30, db.y + db.height * 0.19); await p.mouse.move(db.x + 40, db.y + db.height * 0.2); await p.waitForTimeout(300);
+await p.locator('.ls-sched-panel').screenshot({ path: 'xls-ghost-1900.png' });
+await b.close(); console.log(T.errs);

@@ -41,6 +41,7 @@
   const DEFAULT_PARS = [4, 5, 3, 4, 4, 4, 3, 5, 4, 4, 3, 5, 4, 4, 4, 3, 4, 5];
   const DEFAULT_SI = [7, 3, 15, 1, 11, 9, 17, 5, 13, 8, 16, 2, 12, 6, 10, 18, 14, 4];
 
+  const UNPOSTED_DAYS = 14;   /* a league round booked but not scored holds its game this long */
   function today() { return Club.date.today(); }
   function addDays(d, n) { return Club.date.addDays(d, n); }
   function daysBetween(a, b) { return Math.round((Club.fmt.toDate(b) - Club.fmt.toDate(a)) / 86400000); }
@@ -68,11 +69,11 @@
     if (waiting.length) out.push(waiting.length === 1 ? '1 invite not answered yet' : waiting.length + ' invites not answered yet');
     if (lg.mode === 'teams') {
       (lg.teams || []).forEach(function (t) {
-        const n = teamMembers(lg, t.id).length;
+        const n = teamMembers(lg, t.id, true).length;   /* invited players hold their spot until they answer */
         if (n < lg.teamSize) out.push(t.name + ' needs ' + (lg.teamSize - n) + ' more ' + (lg.teamSize - n === 1 ? 'player' : 'players'));
       });
       if ((lg.teams || []).length < 2) out.push('At least two teams are needed');
-    } else if (acc.length < 2) out.push('At least two players are needed');
+    } else if (acc.length + waiting.length < 2) out.push('At least two players are needed');
     return out;
   }
   function ready(lg) { return !lg.cancelled && !problems(lg).length; }
@@ -160,6 +161,7 @@
     const postedTees = {}; posted.forEach(function (p) { if (p.teeTimeId) postedTees[p.teeTimeId] = 1; });
     const booked = S.all('teeTimes').filter(function (t) {
       if (!t || t.id === excludeTee || postedTees[t.id] || ['cancelled', 'no-show'].indexOf(t.status) >= 0) return false;
+      if (t.date < addDays(today(), -UNPOSTED_DAYS)) return false;   /* never scored: the game is free again */
       return (t.players || []).some(function (p) { return p.memberId === mid && p.friendLeagueId === lg.id; });
     });
     const used = posted.length + booked.length, total = lg.weeks * lg.perWeek;

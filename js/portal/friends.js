@@ -397,14 +397,14 @@
       '<p class="fr-quiet">' + Club.icon('info') + '<span>Fees are settled at check-in, as for any tee time. Your guests’ fees go on your account. You can leave up to 2 hours before you play.</span></p>' +
       '<div class="fr-join-err" role="alert" hidden></div></div>',
       footer: '<button type="button" class="btn btn-primary" data-fr="confirm-join">' + (ask ? 'Send request' : 'Confirm') + '</button>' });
-    const ed = T.editor(ui.$('.fr-editor', sh.body), model, { me: mem, date: tt.date, time: tt.time, excludeId: tt.id, uid: 'fj' + tt.id,
+    const ed = T.editor(ui.$('.fr-editor', sh.body), model, { me: mem, date: tt.date, time: tt.time, excludeId: tt.id, uid: 'fj' + tt.id, league: !ask,
       allowGuests: true, hideNotes: true, hideZeroFees: true, fullNote: 'Group is full', hostId: function () { return me; },
       onChange: function () { const h = ui.$('.fr-join-what', sh.body); if (h) h.textContent = head(); } });
     ui.$('[data-fr=confirm-join]', sh.foot).addEventListener('click', function () {
       ed.validate();
       const self = model.players[0];
       if (ask) { sendJoinRequest(me, ttId, ownerId, model, sh, after); return; }
-      const res = T.join(member(me), ttId, { cart: !!self.cart, players: model.players.slice(1), existing: model.existing });
+      const res = T.join(member(me), ttId, { cart: !!self.cart, players: model.players.slice(1), existing: model.existing, friendLeagueId: self.friendLeagueId || null });
       if (!res.ok) { const er = ui.$('.fr-join-err', sh.body); er.hidden = false; er.innerHTML = Club.icon('alert') + '<div><p>Nothing was booked.</p>' + res.errs.map(function (x) { return '<p>' + esc(x) + '</p>'; }).join('') + '</div>'; er.scrollIntoView({ block: 'nearest' }); return; }
       const doc = res.doc; const added = model.players.slice(1); sendAuto(me, doc, added);
       sh.setContent('<div class="fr-joinbox fr-done"><span class="fr-done-ic">' + Club.icon('check') + '</span><h3 class="fr-done-h">You’re in</h3>' +

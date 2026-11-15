@@ -63,6 +63,21 @@ The Playwright WebKit suites are in `tests/webkit/` (about 45 suites and their h
   in Profile > Golf ("Plays", Change).
 - Tested in Chromium only (no WebKit on the cloud machine): check in Safari before deploying.
 
+## Friends leagues (built Nov 15, NOT DEPLOYED YET)
+Members start a league with friends: individual or teams (2 to 4 a team, same size), creator picks start date, weeks,
+games a week, 9 or 18 holes and one of four formats. Missed weeks are caught up (the next round fills the earliest open
+week; no playing ahead); games never played take the worst score of that week when the league ends.
+- Rules engine: `js/core/friendleagues.js` (`Club.friendLeagues`, collection `friendLeagues`; data model in its header).
+- Portal: Leagues tab on Friends (`js/portal/fleagues.js`, `css/portal/fleagues.css`), invites under Requests.
+- Booking: "Counts toward <league>" in the booking sheet, My tee times and when joining a friend's group
+  (`js/portal/teetimes.js`). It sits on the player's entry as `friendLeagueId` and is copied to the score post.
+  A league round booked but never scored frees its game after 14 days.
+- Staff: read-only Friends leagues tab in Events & Tournaments (`js/modules/events.js`).
+- French: `js/i18n/fr-fleagues.js`, `js/i18n/fr-fleagues-book.js`. Demo: two running leagues and one invite for Dave.
+- Open: joining by request (friend approves) cannot carry a league choice yet; members cannot leave a league;
+  teams rank on players' average per game mid-season while the table also shows totals.
+- Tested in Chromium only: check in Safari before deploying.
+
 ## Still to do or decide
 1. **Resolved Nov 13**: run alone, `xpo-test.mjs` (Group outings) passes all 192 checks and `xe-checkout.mjs`
    passes 418. The one failure is the outside weather service answering 503, not the site.

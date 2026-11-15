@@ -29,9 +29,12 @@
   function now() { return new Date().toISOString(); }
   function isCreator(lg, me) { return lg.createdBy === me; }
   function teamOf(lg, id) { return (lg.teams || []).find(function (t) { return t.id === id; }) || null; }
+  /** Pieces joined with " · ", each in its own span so each translates on its own. */
+  function spans(arr) { return arr.map(function (x) { return '<span>' + esc(x) + '</span>'; }).join(' · '); }
   function rulesLine(lg) {
-    return [FL.formatOf(lg).label, lg.holes + ' holes', plural(lg.weeks, 'week', 'weeks'), (lg.perWeek === 1 ? '1 game' : lg.perWeek + ' games') + ' a week'].join(' · ');
+    return spans([FL.formatOf(lg).label, lg.holes + ' holes', plural(lg.weeks, 'week', 'weeks'), (lg.perWeek === 1 ? '1 game' : lg.perWeek + ' games') + ' a week']);
   }
+  function seasonHTML(start, weeks) { return '<span>' + esc(dshort(start) + ' to ' + dshort(Club.date.addDays(start, weeks * 7 - 1))) + '</span> <span>' + esc('(' + plural(weeks, 'week', 'weeks') + ')') + '</span>'; }
   function datesLine(lg) { return dshort(lg.start) + ' to ' + dshort(FL.endDate(lg)); }
   function canInvite(lg, me) { const st = FL.status(lg); return isCreator(lg, me) && (st === 'forming' || st === 'waiting'); }
   function invitesFor(me) { return FL.invitesFor(me).sort(function (a, b) { return String(a.start).localeCompare(String(b.start)); }); }
@@ -47,10 +50,10 @@
   /* ---------------- Invites (also shown in the Friends Requests tab) ---------------- */
   function inviteRowHTML(lg, me) {
     const e = FL.entry(lg, me) || {}, team = e.teamId ? teamOf(lg, e.teamId) : null;
-    const sub = ['Starts ' + dshort(lg.start), plural(lg.weeks, 'week', 'weeks'), FL.formatOf(lg).short].concat(team ? ['On ' + team.name] : []).join(' · ');
+    const sub = spans(['Starts ' + dshort(lg.start), plural(lg.weeks, 'week', 'weeks'), FL.formatOf(lg).short].concat(team ? ['Team: ' + team.name] : []));
     return '<li class="fl-inv" data-inv-row="' + esc(lg.id) + '"><span class="fl-inv-main">' +
       '<span class="fl-inv-t">' + esc(nameFor(lg.createdBy, me) + ' invited you to ' + lg.name) + '</span>' +
-      '<span class="fl-inv-s">' + esc(sub) + '</span>' +
+      '<span class="fl-inv-s">' + sub + '</span>' +
       '<a class="p-link fl-inv-more" href="#/friends/leagues/' + encodeURIComponent(lg.id) + '">See details</a></span>' +
       '<span class="fl-inv-act"><button type="button" class="btn btn-sm" data-fl="decline" data-id="' + esc(lg.id) + '" aria-label="' + esc('Decline the invite to ' + lg.name) + '">Decline</button>' +
       '<button type="button" class="btn btn-primary btn-sm" data-fl="accept" data-id="' + esc(lg.id) + '" aria-label="' + esc('Accept the invite to ' + lg.name) + '">Accept</button></span></li>';
@@ -94,9 +97,9 @@
     return '<li><a class="fl-row" href="#/friends/leagues/' + encodeURIComponent(lg.id) + '">' +
       '<span class="fl-row-ic" aria-hidden="true">' + Club.icon('trophy') + '</span>' +
       '<span class="fl-row-main"><span class="fl-row-name">' + esc(lg.name) + '</span>' +
-      '<span class="fl-row-sub">' + esc(FL.formatOf(lg).short + ' · ' + playersText(lg)) + '</span>' +
-      (sub2 ? '<span class="fl-row-sub fl-row-me">' + esc(sub2) + '</span>' : '') + '</span>' +
-      statusPill(lg) + Club.icon('chevronRight', 'fr-go') + '</a></li>';
+      '<span class="fl-row-sub">' + spans([FL.formatOf(lg).short, playersText(lg)]) + '</span>' +
+      '<span class="fl-row-st">' + statusPill(lg) + (sub2 ? '<span class="fl-row-me">' + esc(sub2) + '</span>' : '') + '</span></span>' +
+      Club.icon('chevronRight', 'fr-go') + '</a></li>';
   }
   function listHTML(me) {
     const all = FL.listFor(me);
@@ -119,7 +122,7 @@
   /* ---------------- League page ---------------- */
   function memberStatusText(lg, x, me) {
     if (x.memberId === lg.createdBy) return 'Organiser';
-    return x.status === 'accepted' ? 'Joined' : x.status === 'invited' ? 'Invited' : x.status === 'declined' ? 'Declined' : '';
+    return x.status === 'accepted' ? 'Joined' : x.status === 'invited' ? 'Invited' : x.status === 'declined' ? 'Declined the invite' : '';
   }
   function personRow(lg, x, me) {
     const editable = FL.editable(lg) && isCreator(lg, me) && x.memberId !== me && (x.status === 'accepted' || x.status === 'invited');
@@ -153,7 +156,7 @@
     const kv = function (k, v) { return '<div><dt>' + esc(k) + '</dt><dd>' + esc(v) + '</dd></div>'; };
     return '<dl class="fl-kv">' +
       kv('Scoring', f.label) + '<div class="fl-kv-note"><dd>' + esc(f.text) + '</dd></div>' +
-      kv('Season', datesLine(lg) + ' (' + plural(lg.weeks, 'week', 'weeks') + ')') +
+      '<div><dt>Season</dt><dd>' + seasonHTML(lg.start, lg.weeks) + '</dd></div>' +
       kv('Games', (lg.perWeek === 1 ? '1 game' : lg.perWeek + ' games') + ' a week, ' + lg.holes + ' holes') +
       kv('Players', lg.mode === 'teams' ? 'Teams of ' + lg.teamSize : 'Individual') +
       kv('Organiser', fullName(lg.createdBy)) +
@@ -245,7 +248,7 @@
     const e = FL.entry(lg, me), st = FL.status(lg), probs = FL.problems(lg), creator = isCreator(lg, me);
     let h = '<a class="p-link fr-back fl-back" href="#/friends/leagues">' + Club.icon('chevronLeft') + '<span>Leagues</span></a>' +
       '<header class="fl-title"><p class="eyebrow">Friends league</p><h1>' + esc(lg.name) + '</h1>' +
-      '<p class="fl-sub">' + statusPill(lg) + '<span>' + esc(rulesLine(lg)) + '</span></p><p class="fl-sub2">' + esc(datesLine(lg) + (lg.mode === 'teams' ? ' · Teams of ' + lg.teamSize : '')) + '</p></header>';
+      '<p class="fl-sub">' + statusPill(lg) + '<span>' + rulesLine(lg) + '</span></p><p class="fl-sub2">' + spans([datesLine(lg)].concat(lg.mode === 'teams' ? ['Teams of ' + lg.teamSize] : [])) + '</p></header>';
     if (e && e.status === 'invited' && st !== 'cancelled') {
       const team = e.teamId ? teamOf(lg, e.teamId) : null;
       h += '<div class="fl-banner" role="note"><p><strong>' + esc(nameFor(lg.createdBy, me) + ' invited you to this league' + (team ? ', on ' + team.name : '') + '.') + '</strong> ' + esc('Joining shares your league scores with the other players.') + '</p>' +
@@ -403,7 +406,7 @@
         }
         return '<div class="fl-tcard"><div class="fl-tcard-head"><label class="fr-sr" for="fl-tn-' + i + '">Name of team ' + (i + 1) + '</label>' +
           '<input class="input fl-tname" id="fl-tn-' + i + '" data-tname="' + i + '" maxlength="30" autocomplete="off" placeholder="Team ' + (i + 1) + '" value="' + esc(t.name) + '">' +
-          (st.teams.length > 2 ? '<button type="button" class="p-link" data-delteam="' + i + '" aria-label="' + esc('Remove ' + teamName(i)) + '">Remove</button>' : '') + '</div>' +
+          (st.teams.length > 2 ? '<button type="button" class="p-link" data-delteam="' + i + '" aria-label="' + esc('Remove the team ' + teamName(i)) + '">Remove</button>' : '') + '</div>' +
           '<ul class="fl-slots">' + slots + '</ul></div>';
       }).join('') + '</div>' +
         (st.teams.length < MAX_TEAMS ? '<button type="button" class="btn fl-addteam" data-act="add-team">' + Club.icon('plus') + '<span>Add a team</span></button>' : '');
@@ -419,10 +422,10 @@
       } else who = '<p class="fl-rev-tp">' + esc(['You'].concat(st.picks.map(fullName)).join(', ')) + '</p>';
       const n = st.mode === 'teams' ? st.teams.reduce(function (a, t) { return a + t.members.filter(function (x) { return x !== me; }).length; }, 0) : st.picks.length;
       return '<div class="fl-card"><h2 class="fl-rev-h">' + esc(String(st.name).trim()) + '</h2><dl class="fl-kv">' +
-        kv('Scoring', f.label) + kv('Season', dshort(st.start) + ' to ' + dshort(Club.date.addDays(st.start, st.weeks * 7 - 1)) + ' (' + plural(st.weeks, 'week', 'weeks') + ')') +
+        kv('Scoring', f.label) + '<div><dt>Season</dt><dd>' + seasonHTML(st.start, st.weeks) + '</dd></div>' +
         kv('Games', (st.perWeek === 1 ? '1 game' : st.perWeek + ' games') + ' a week, ' + st.holes + ' holes') +
         kv('Players', st.mode === 'teams' ? plural(st.teams.length, 'team', 'teams') + ' of ' + st.teamSize : 'Individual') + '</dl>' +
-        '<h3 class="eyebrow fl-eb">Players</h3>' + who + '</div>' +
+        '<h3 class="eyebrow fl-eb">Who is playing</h3>' + who + '</div>' +
         '<p class="fl-note">' + esc(plural(n, 'friend gets', 'friends get') + ' an invite in Friends, Requests. The league starts on ' + dshort(st.start) + ' once everyone has accepted. Until then you can invite or remove players.') + '</p>';
     }
 
@@ -461,7 +464,7 @@
       else if (st.step === 'players') {
         const n = st.mode === 'teams' ? st.teams.length + ' teams of ' + st.teamSize : plural(st.picks.length + 1, 'player', 'players');
         Portal.actionBar.show({ summaryHTML: esc(st.mode === 'teams' ? 'Teams' : 'Individual') + '<small>' + esc(n) + '</small>', label: 'Continue', onClick: next });
-      } else Portal.actionBar.show({ summaryHTML: esc(String(st.name).trim()) + '<small>' + esc('Starts ' + dshort(st.start)) + '</small>', label: 'Start league', onClick: create });
+      } else Portal.actionBar.show({ summaryHTML: esc(String(st.name).trim()) + '<small>' + esc('Starts ' + dshort(st.start)) + '</small>', label: 'Create league', onClick: create });
     }
     function next() {
       readName();
@@ -480,14 +483,14 @@
       } else o.invites = st.picks.map(function (id) { return { memberId: id, teamIndex: null }; });
       const doc = FL.create(o);
       Portal.actionBar.hide();
-      ui.toast('League started. ' + plural(o.invites.length, 'invite', 'invites') + ' sent');
+      ui.toast('League created. ' + plural(o.invites.length, 'invite', 'invites') + ' sent');
       Portal.go('friends/leagues/' + doc.id);
     }
     function openPlace(i) {
       const opts = [me].concat(fs);
       Portal.openSheet({ title: 'Add to ' + teamName(i), rows: opts.map(function (id) {
         const on = placedOn(id);
-        return { value: id, label: id === me ? fullName(id) + ' (you)' : fullName(id), sub: on >= 0 ? 'On ' + teamName(on) + (on === i ? '' : ', tap to move') : hcpText(id), disabled: on === i, reason: on === i ? 'On this team' : '' };
+        return { value: id, label: id === me ? fullName(id) + ' (you)' : fullName(id), sub: on >= 0 ? 'On team: ' + teamName(on) + (on === i ? '' : ', tap to move') : hcpText(id), disabled: on === i, reason: on === i ? 'On this team' : '' };
       }), onPick: function (id) {
         st.teams.forEach(function (t) { const k = t.members.indexOf(id); if (k >= 0) t.members.splice(k, 1); });
         st.teams[i].members.push(id); st.err = []; draw(); const b = ui.$('[data-place="' + i + '"]', host) || ui.$('[data-tname="' + i + '"]', host); if (b) b.focus();
@@ -520,7 +523,7 @@
     ui.on(host, 'click', '[data-act=add-team]', function () { st.teams.push({ name: '', members: [] }); st.err = []; draw(); const x = ui.$('[data-tname="' + (st.teams.length - 1) + '"]', host); if (x) x.focus(); });
     ui.on(host, 'click', '[data-delteam]', function (e, b) {
       const i = +b.dataset.delteam, gone = st.teams[i]; st.teams.splice(i, 1); st.err = []; draw();
-      ui.toast((String(gone.name).trim() || 'Team ' + (i + 1)) + ' removed', null, { action: { label: 'Undo', onClick: function () { st.teams.splice(i, 0, gone); draw(); } } });
+      ui.toast('Removed the team ' + (String(gone.name).trim() || 'Team ' + (i + 1)), null, { action: { label: 'Undo', onClick: function () { st.teams.splice(i, 0, gone); draw(); } } });
     });
     draw(false);
     return function () { Portal.actionBar.hide(); };

@@ -529,7 +529,9 @@
     }
     return { render: render, validate: function () { model.players.forEach(function (p) { if (p.type === 'guest') p.name = String(p.name || '').trim(); }); return true; },
       /** The promo box (Book sheet only): recheck() right before booking. */
-      promo: function () { return promoBox; } };
+      promo: function () { return promoBox; },
+      /** Redraw the friends league row (after a failed save: a league that can no longer take the round is dropped). */
+      league: drawLeague };
   }
 
   /** "Who pays" for a guest: two options, so a segmented control (same look as Walk / Cart), not a native select. */
@@ -1228,7 +1230,7 @@
           const pb = editor.promo(); const pm = pb ? pb.recheck() : '';
           if (pm) { fail(sh.body, [pm]); return; }
           const res = book(sh.body, e.currentTarget);
-          if (!res) return;
+          if (!res) { editor.league(); return; }
           booked = true;
           if (H) { H.stopTimer(); H.release(); }
           bookedView(sh, res.doc, res.joined);
@@ -1501,7 +1503,7 @@
           const mineM = model.players.find(function (p) { return p.memberId === m.id; });
           const newHoles = mgr ? model.holes : fresh.holes;
           if (mineM && mineM.friendLeagueId) { const lc = leagueCheck(m.id, mineM.friendLeagueId, fresh.date, newHoles, fresh.id); if (!lc.ok) errs.push(lc.msg); }
-          if (errs.length) { al.innerHTML = Club.icon('alert') + '<div>' + errs.map(function (x) { return '<p>' + esc(x) + '</p>'; }).join('') + '</div>'; al.hidden = false; al.scrollIntoView({ block: 'nearest' }); return; }
+          if (errs.length) { editor.league(); al.innerHTML = Club.icon('alert') + '<div>' + errs.map(function (x) { return '<p>' + esc(x) + '</p>'; }).join('') + '</div>'; al.hidden = false; al.scrollIntoView({ block: 'nearest' }); return; }
           const keepPaid = function (p) { const prev = before.find(function (q) { return q.type === p.type && (p.type === 'member' ? q.memberId === p.memberId : q.name === p.name); }); return prev ? !!prev.paid : false; };
           const clean = function (p) {
             const o = { memberId: p.type === 'member' ? p.memberId : null, name: p.type === 'member' ? playerName(p) : p.name, type: p.type, cart: noCarts(fresh.date) ? false : !!p.cart, paid: keepPaid(p) };

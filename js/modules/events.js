@@ -655,7 +655,7 @@
         '</tbody></table>';
     };
     const body = '<div class="sc-card">' +
-      '<div class="sc-top"><div><div class="eyebrow">' + esc(Club.info.name) + '</div><div class="sc-title serif">' + esc(t.name) + '</div><div class="person-sub">' + esc(fmt.dateLong(t.date) + ' · ' + t.format + ' · ' + COURSE.teeLabel + ' · Rating ' + COURSE.rating + ' / Slope ' + COURSE.slope) + '</div></div>' +
+      '<div class="sc-top"><div><div class="eyebrow">' + esc(Club.info.name) + '</div><div class="sc-title serif">' + esc(t.name) + '</div><div class="person-sub">' + esc(fmt.dateLong(t.date) + ' · ' + t.format + ' · ' + COURSE.teeLabel) + '</div></div>' +
       '<div class="sc-player"><span class="label-caps">Player</span><span class="serif">' + esc(memberName(memberId)) + '</span><span class="person-sub">Index ' + esc(fmt.handicap(p.handicap)) + ' · Course handicap ' + (l.ch < 0 ? '+' + Math.abs(l.ch) : l.ch) + '</span></div></div>' +
       '<div class="sc-halves">' + half(0, 'Out', l.out, l.outN) + half(9, 'In', l.inn, l.inN) + '</div>' +
       '<div class="sc-totals"><div><span class="label-caps">Gross</span><span class="serif">' + (l.thru ? l.gross : '–') + '</span></div><div><span class="label-caps">Handicap</span><span class="serif">' + (l.ch < 0 ? '+' + Math.abs(l.ch) : l.ch) + '</span></div><div><span class="label-caps">Net</span><span class="serif">' + (l.net != null ? l.net : (l.thru ? l.gross - l.strokes : '–')) + '</span></div><div><span class="label-caps">To par</span><span class="serif ev-topar ' + parClass(l.netToPar) + '">' + (l.thru ? toPar(l.netToPar) : '–') + '</span></div>' + (t.format === 'Stableford' ? '<div><span class="label-caps">Points</span><span class="serif">' + l.pts + '</span></div>' : '') + '</div>' +
@@ -685,7 +685,7 @@
       '<section class="panel lb-panel" data-reveal><div class="lb-top">' +
       '<div><div class="eyebrow">' + (t.status === 'live' ? '<span class="live-dot"></span> Live scoring' : t.status === 'final' ? 'Final results' : 'Awaiting first tee') + '</div><h2 class="lb-title">Leaderboard</h2></div>' +
       (stable ? '<span class="label-caps">Stableford points</span>' : ui.segmented([{ value: 'net', label: 'Net' }, { value: 'gross', label: 'Gross' }], boardMode, 'board')) +
-      '</div><div class="lb-board"></div><p class="lb-foot">' + esc(COURSE.teeLabel + ' · Par ' + parTotal() + ' · Course rating ' + COURSE.rating + ', slope ' + COURSE.slope + '. Course handicap = index x slope / 113 + (rating minus par), rounded.') + '</p></section>' +
+      '</div><div class="lb-board"></div><p class="lb-foot">' + esc(COURSE.teeLabel + ' · Par ' + parTotal()) + '</p></section>' +
       '<div class="stack">' +
       '<div class="panel" data-reveal><div class="panel-head"><div><h3>Field</h3><div class="person-sub ev-field-count"></div></div></div><div class="panel-body ev-field-add"></div><ul class="list ev-field-list"></ul></div>' +
       '</div></div>' +

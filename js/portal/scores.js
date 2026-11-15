@@ -186,7 +186,6 @@
   }
   function demoPill(txt) { return '<span class="gc-pill">' + esc(txt || 'Demo') + '</span>'; }
   function diffText(p) { return (p.differential < 0 ? '+' + Math.abs(p.differential).toFixed(1) : p.differential.toFixed(1)); }
-  function ratingsLine(tee, n) { const r = ratingFor(tee, n); return r.rating.toFixed(1) + ' / ' + r.slope; }
 
   function historyRows(posts) {
     return posts.map(function (p) {
@@ -238,7 +237,6 @@
       cardHTML(p) +
       '<dl class="gc-kv">' +
         '<div><dt>Course handicap</dt><dd>' + p.courseHandicap + ' ' + demoPill() + '</dd></div>' +
-        '<div><dt>Course rating / slope</dt><dd>' + esc(p.rating.toFixed(1) + ' / ' + p.slope) + ' ' + demoPill('Placeholder') + '</dd></div>' +
         '<div><dt>Playing conditions</dt><dd>Calculated by Golf Canada</dd></div>' +
         '<div><dt>Played with</dt><dd>' + esc(p.playedWith && p.playedWith.length ? niceList(p.playedWith) : tt ? (Portal.member() && Portal.member().id !== p.memberId ? 'Played alone' : 'Just you') : 'Not recorded') + '</dd></div>' +
         '<div><dt>Attested by</dt><dd>' + esc(att || 'Not attested') + '</dd></div>' +
@@ -362,7 +360,7 @@
         return '<button type="button" class="gc-opt" role="radio" data-tee="' + t.id + '" aria-checked="' + on + '"><span class="gc-dot gc-dot-' + t.id + '" aria-hidden="true"></span>' +
           '<span class="gc-opt-main"><span class="gc-opt-l">' + t.label + '</span><span class="gc-opt-s">' + yardsOf(h, t.id).toLocaleString('en-CA') + ' yards · Par ' + parOf(h) + '</span></span>' +
           '<span class="gc-radio" aria-hidden="true"></span></button>';
-      }).join('') + '</div><p class="gc-hint">Yardage and par from the club scorecard. Course and slope ratings: calculated by Golf Canada (placeholders in this demo).</p></div>';
+      }).join('') + '</div><p class="gc-hint">Yardage and par from the club scorecard.</p></div>';
       return head + nine + tees;
     }
     /* ---- Step 2: the score ---- */
@@ -545,7 +543,6 @@
           '<dl class="gc-kv">' +
             '<div><dt>Entered</dt><dd>' + (d.entry === 'hole' ? 'Hole by hole' : 'Total only') + '</dd></div>' +
             '<div><dt>Course handicap</dt><dd>' + d.courseHandicap + ' ' + demoPill() + '</dd></div>' +
-            '<div><dt>Course rating / slope</dt><dd>' + esc(ratingsLine(d.tees, d.holes)) + ' ' + demoPill('Placeholder') + '</dd></div>' +
             '<div><dt>Playing conditions</dt><dd>Calculated by Golf Canada</dd></div>' +
             '<div><dt>Attested by</dt><dd>' + esc(d.attestedBy ? memberName(d.attestedBy) : 'Not attested') + '</dd></div>' +
           '</dl>' +

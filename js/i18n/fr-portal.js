@@ -1788,6 +1788,7 @@
     'Back 9': 'Retour',
     'holes 1 to 9': 'trous 1 à 9',
     'holes 10 to 18': 'trous 10 à 18',
+    'Yardage and par from the club scorecard.': 'Verges et normale tirées de la carte de pointage du club.',
     'Yardage and par from the club scorecard. Course and slope ratings: calculated by Golf Canada (placeholders in this demo).': 'Verges et normale tirées de la carte de pointage du club. Évaluations du parcours et de la pente' + NB + ': calculées par Golf Canada (valeurs fictives dans cette démo).',
     'gives 1 back': 'rend 1 coup',
     'How to enter your score': 'Comment entrer votre score',

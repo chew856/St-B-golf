@@ -121,6 +121,10 @@
             '<select class="select" name="dobMonth" aria-label="Month of birth"><option value="">Month</option>' + MONTHS.map(function (m, i) { return '<option value="' + pad(i + 1) + '">' + m + '</option>'; }).join('') + '</select>' +
             '<input class="input" name="dobYear" inputmode="numeric" autocomplete="bday-year" maxlength="4" placeholder="Year" aria-label="Year of birth">' +
           '</div><span class="field-hint">Junior is for golfers under 18 and Young Adult for ages 19 to 23, so we ask for your date of birth.</span></div>' +
+        '<div class="field span-2 join-hand-field"><span class="join-legend" id="jn-hand-l">Which hand do you play? *</span>' +
+          '<div class="join-opts join-hands" role="radiogroup" aria-labelledby="jn-hand-l">' + Club.members.HANDS.map(function (h) {
+            return '<label class="join-opt join-hand' + (p.hand === h.value ? ' selected' : '') + '"><input type="radio" name="hand" value="' + h.value + '"' + (p.hand === h.value ? ' checked' : '') + '><span class="join-opt-name">' + esc(h.label) + '</span></label>';
+          }).join('') + '</div><span class="field-hint">Your friends at the club and the golf shop can see this.</span></div>' +
       '</div>' +
       '<h3 class="join-h">About your golf <span class="join-opt-tag">Optional</span></h3>' +
       '<div class="form-grid">' +
@@ -190,7 +194,11 @@
       ui.$$('.invalid', fld).forEach(function (x) { x.classList.remove('invalid'); x.removeAttribute('aria-invalid'); });
       ui.$$('.field-error', fld).forEach(function (x) { x.remove(); });
     }
-    form.addEventListener('input', function (e) { if (e.target.name !== 'tierId') clearField(e.target); });
+    form.addEventListener('input', function (e) { if (e.target.name !== 'tierId' && e.target.name !== 'hand') clearField(e.target); });
+    ui.on(form, 'change', 'input[name=hand]', function () {
+      const g = ui.$('.join-hand-field', form); g.classList.remove('invalid'); const er = ui.$('.field-error', g); if (er) er.remove();
+      ui.$$('.join-hand', form).forEach(function (l) { l.classList.toggle('selected', !!ui.$('input:checked', l)); });
+    });
     form.addEventListener('change', function (e) { if (e.target.name === 'dobMonth' || e.target.name === 'consent') clearField(e.target); });
     form.addEventListener('blur', function (e) {
       const t = e.target;
@@ -217,6 +225,7 @@
       const dup = S.all('applications').some(function (a) { return String(a.email || '').toLowerCase() === e && a.stage !== 'Approved' && a.stage !== 'Declined'; });
       if (dup) { Pub.setErr(form, 'email', 'The club already has an application from this email address. To change it, please call the office at ' + Club.info.phone + '.'); ok = false; }
     }
+    if (v.hand !== 'right' && v.hand !== 'left') { const hg = ui.$('.join-hand-field', form); hg.classList.add('invalid'); hg.insertAdjacentHTML('beforeend', '<span class="field-error">Choose right-handed or left-handed.</span>'); ok = false; }
     if (!phoneOk(v.phone)) { Pub.setErr(form, 'phone', v.phone ? 'Enter a 10-digit phone number, for example 204-555-0123.' : 'Enter a phone number so the office can reach you.'); ok = false; }
 
     /* Date of birth: a real date, in the past, and inside the category's age range */
@@ -255,7 +264,7 @@
     if (!v.consent) { Pub.setErr(form, 'consent', 'Please tick to confirm so the club can process your application.'); ok = false; }
     if (!ok) return null;
     const first = v.firstName.trim().replace(/\s+/g, ' '), last = v.lastName.trim().replace(/\s+/g, ' ');
-    return { firstName: first, lastName: last, name: first + ' ' + last, email: v.email.trim().toLowerCase(), phone: Pub.normPhone(v.phone), dob: dob,
+    return { firstName: first, lastName: last, name: first + ' ' + last, email: v.email.trim().toLowerCase(), phone: Pub.normPhone(v.phone), dob: dob, hand: v.hand,
       handicap: hcp == null ? null : Math.round(hcp * 10) / 10, heardFrom: M().cleanHeard(v.heardFrom), sponsorNames: String(v.sponsorNames || '').trim(), notes: String(v.notes || '').trim() };
   }
 
@@ -265,7 +274,7 @@
     const d = read(form, t);
     if (!d) {
       const first = ui.$('.invalid', form);
-      if (first && first.classList.contains('join-cat-field')) { ui.$('input[name=tierId]', first).focus(); first.scrollIntoView({ block: 'center' }); }
+      if (first && (first.classList.contains('join-cat-field') || first.classList.contains('join-hand-field'))) { ui.$('input[type=radio]', first).focus(); first.scrollIntoView({ block: 'center' }); }
       else if (first) first.focus();
       ui.toast('Please check the highlighted fields', 'bad');
       return;

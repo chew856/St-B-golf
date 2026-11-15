@@ -51,6 +51,15 @@ The Playwright WebKit suites are in `tests/webkit/` (about 45 suites and their h
 - Long dropdowns have a search box.
 - Members' portal: Group outings page with an enquiry form that lands in the staff Pipeline.
 
+## Done Nov 15 (NOT DEPLOYED YET)
+- Which hand a member plays (`members.hand`: 'right', 'left' or null; label via `Club.members.hand(m)`):
+  - Required on the public membership application; carried onto the member record when staff approve it.
+  - Staff member page shows "Plays"; staff can set or change it under Edit, Golf. Demo members were filled in once.
+  - Always shown on a friend's profile in the portal (not tied to any privacy setting).
+- Friend profile: "Recent rounds" from posted scores (last 3, Show all for the rest; tapping one opens the scorecard).
+  Hidden when the friend keeps scores private. Dave's friends got demo rounds once (`demoBackfills` marker).
+- Tested in Chromium only (no WebKit on the cloud machine): check in Safari before deploying.
+
 ## Still to do or decide
 1. **Resolved Nov 13**: run alone, `xpo-test.mjs` (Group outings) passes all 192 checks and `xe-checkout.mjs`
    passes 418. The one failure is the outside weather service answering 503, not the site.

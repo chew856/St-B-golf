@@ -128,3 +128,9 @@
 @media (prefers-reduced-motion: reduce) {
   .join-cat { animation: none; }
 }
+
+/* Which hand the applicant plays: two choices in the same style as the categories */
+.join-hand { min-height: 52px; justify-content: center; align-items: center; text-align: center; }
+.join-hand .join-opt-name { font-size: var(--fs-18); }
+.join-hand-field.invalid .join-opt { border-color: var(--oxblood); }
+.join-hand-field .field-hint { margin-top: var(--s2); }

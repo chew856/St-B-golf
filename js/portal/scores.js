@@ -114,15 +114,12 @@
   /* ---------------- Seed: about 12 past demo posts for Dave (mem_1003) ---------------- */
   /* Differentials chosen to sit around his handicapHistory (6.2 to 7.0 this season). Two line up with his completed
      tee times when the tee sheet has an 18-hole round on that day. Marked demo: true and seed: true. */
-  S.seed('scorePosts', function () {
-    const R = S.R; R.reseed(5150);
-    const mid = S.DEMO_MEMBER || 'mem_1003', m = S.find('members', mid);
+  /** Demo posts for one member from a plan of [days ago, tees, target differential, strokes over net double bogey]. */
+  function demoPosts(mid, plan, seedNo, idPre) {
+    const R = S.R; R.reseed(seedNo);
+    const m = S.find('members', mid);
     if (!m || !S.all('holes').length) return [];
     const fr = friendsOf(mid);
-    const plan = [   /* [days ago, tees, target differential, strokes over net double bogey on one hole] */
-      [170, 'green', 8.6, 0], [156, 'green', 10.4, 2], [141, 'black', 7.3, 0], [127, 'green', 9.1, 0], [112, 'green', 6.2, 0], [98, 'black', 11.6, 3],
-      [84, 'green', 7.8, 0], [69, 'green', 5.9, 0], [55, 'black', 8.4, 1], [40, 'green', 6.6, 0], [10, 'green', 9.4, 2], [2, 'black', 6.8, 0]
-    ];
     return plan.map(function (p, i) {
       const date = Club.date.fromToday(-p[0]);
       const tt = S.all('teeTimes').find(function (t) { return t.date === date && t.status === 'completed' && +t.holes === 18 && inRound(t, mid); }) || null;
@@ -134,7 +131,7 @@
       const attest = tt ? ((others.find(function (q) { return q.memberId && fr.indexOf(q.memberId) >= 0; }) || {}).memberId || null)
         : (fr.length && i % 3 !== 2 ? fr[i % fr.length] : null);
       return {
-        id: 'sp_seed_' + (i + 1), memberId: mid, date: date, time: tt ? tt.time : null, teeTimeId: tt ? tt.id : null,
+        id: idPre + (i + 1), memberId: mid, date: date, time: tt ? tt.time : null, teeTimeId: tt ? tt.id : null,
         holes: 18, nine: null, tees: tee, entry: 'hole', holeScores: scores, gross: sum(scores), adjusted: ags,
         courseHandicap: ch, indexUsed: idx, rating: r.rating, slope: r.slope, par: parOf(hs), pcc: null,
         differential: differential(ags, tee, 18, idx), attestedBy: attest,
@@ -142,7 +139,27 @@
         estimate: null, status: 'saved-in-demo', postedAt: date + 'T19:30:00', demo: true, seed: true
       };
     });
+  }
+  S.seed('scorePosts', function () {
+    return demoPosts(S.DEMO_MEMBER || 'mem_1003', [   /* [days ago, tees, target differential, strokes over net double bogey on one hole] */
+      [170, 'green', 8.6, 0], [156, 'green', 10.4, 2], [141, 'black', 7.3, 0], [127, 'green', 9.1, 0], [112, 'green', 6.2, 0], [98, 'black', 11.6, 3],
+      [84, 'green', 7.8, 0], [69, 'green', 5.9, 0], [55, 'black', 8.4, 1], [40, 'green', 6.6, 0], [10, 'green', 9.4, 2], [2, 'black', 6.8, 0]
+    ], 5150, 'sp_seed_');
   });
+  /* Demo posts for Dave's friends, so a friend's profile has recent rounds to show. Added once, also in browsers
+     that seeded scorePosts before friends had rounds; the 'demoBackfills' marker keeps it from coming back. */
+  (function friendRounds() {
+    const mid = S.DEMO_MEMBER || 'mem_1003';
+    if (S.find('demoBackfills', 'friendRounds') || !S.find('members', mid)) return;
+    friendsOf(mid).forEach(function (fid, k) {
+      const f = S.find('members', fid); if (!f || f.handicap == null || postsOf(fid).length) return;
+      const base = Math.max(-2, f.handicap * 113 / 125);
+      const offs = [[150, 2.4, 1], [118, 0.8, 0], [86, 3.1, 2], [52, 1.2, 0], [27, -0.4, 0], [9, 1.9, 1], [3 + k, 0.6, 0]];
+      demoPosts(fid, offs.map(function (o, i) { return [o[0] + k * 2, i % 3 === 1 ? 'black' : 'green', Math.round((base + o[1]) * 10) / 10, o[2]]; }), 7300 + k, 'sp_fseed_' + fid + '_')
+        .forEach(function (doc) { S.insert('scorePosts', doc); });
+    });
+    S.insert('demoBackfills', { id: 'friendRounds', at: new Date().toISOString() });
+  })();
   /** A plausible hole-by-hole card whose adjusted total is `target`; `blow` adds one hole over net double bogey. */
   function fakeCard(hs, caps, target, R, blow) {
     const n = hs.length, sc = hs.map(function (h) { return h.par; });
@@ -662,7 +679,7 @@
   Portal.scores = {
     DEMO_RATINGS: DEMO_RATINGS,
     calc: { courseHandicap: courseHandicap, strokesPerHole: strokesPerHole, ndbCaps: ndbCaps, adjustedOf: adjustedOf, differential: differential, estimate: estimate, holesFor: holesFor },
-    postsOf: postsOf, postFor: postFor, estimateFor: estimateFor, canPost: canPost, toPost: toPost,
+    postsOf: postsOf, postFor: postFor, teeLabel: teeLabel, diffText: diffText, openPost: openPost, estimateFor: estimateFor, canPost: canPost, toPost: toPost,
     homePrompt: homePrompt, pastCell: pastCell, detailAction: detailAction,
     golfRowsHTML: golfRowsHTML, indexChart: indexChart, wireGolf: wireGolf, openLink: openLink
   };

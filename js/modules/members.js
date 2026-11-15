@@ -262,6 +262,7 @@
       '<p class="mem-since">' + (sinceY ? 'Member since ' + sinceY + (yrs > 0 ? ', ' + yrs + (yrs === 1 ? ' year' : ' years') : '') : 'Joining date not recorded') + '</p></div></div>' +
       '<dl class="mem-facts">' +
       '<div><dt>Handicap index</dt><dd><span class="mem-fact-big">' + esc(fmt.handicap(m.handicap)) + '</span>' + spark + '</dd></div>' +
+      '<div><dt>Plays</dt><dd>' + (Club.members.hand(m) ? esc(Club.members.hand(m)) : '<span class="muted">Not recorded</span>') + '</dd></div>' +
       '<div><dt>Golf Canada no.</dt><dd>' + (m.ghin ? esc(m.ghin) : '<span class="muted">None</span>') + '</dd></div>' +
       '<div><dt>Locker</dt><dd>' + (m.locker ? 'No. ' + esc(m.locker) : '<span class="muted">Unassigned</span>') + '</dd></div>' +
       '<div><dt>Account balance</dt><dd><a class="mem-fact-link" href="#/billing/' + esc(m.id) + '">' + esc(fmt.money(bal)) + '</a></dd></div>' +
@@ -445,6 +446,7 @@
       ui.field({ label: 'Children', name: 'children', type: 'number', value: d.children || 0, min: 0, max: 12, step: 1 }) +
       sec('Golf') +
       ui.field({ label: 'Handicap index', name: 'handicap', type: 'number', value: d.handicap, step: 0.1, min: -10, max: 54, hint: 'Use a negative number for a plus handicap' }) +
+      ui.field({ label: 'Plays', name: 'hand', type: 'select', options: '<option value="">Not recorded</option>' + ui.options(Club.members.HANDS, d.hand || '') }) +
       ui.field({ label: 'Golf Canada number', name: 'ghin', value: d.ghin, placeholder: '7 digits' }) +
       ui.field({ label: 'Locker', name: 'locker', value: d.locker }) +
       ui.field({ label: 'On the course', name: 'cart', type: 'select', options: ui.options(CART_PREFS, pr.cart || 'Cart') }) +
@@ -475,6 +477,7 @@
               memberNo: v.memberNo, firstName: v.firstName, lastName: v.lastName, email: v.email, phone: v.phone, address: v.address,
               tierId: v.tierId, status: v.status || 'active', memberSince: v.memberSince, dob: v.dob || null,
               handicap: v.handicap == null ? null : Math.round(v.handicap * 10) / 10, ghin: v.ghin || null, locker: v.locker || null,
+              hand: v.hand === 'left' || v.hand === 'right' ? v.hand : null,
               spouse: v.spouse || null, children: v.children || 0,
               preferences: { cart: v.cart, dining: v.dining, notes: v.prefNotes || '' },
               tags: v.tags ? v.tags.split(',').map(function (s) { return s.trim(); }).filter(Boolean) : []
@@ -680,7 +683,7 @@
           /* Online applications carry first and last name, date of birth and handicap; office ones only a full name */
           const mem = S.insert('members', {
             id: newMemberId(no), memberNo: no, firstName: a.firstName || parts.join(' ') || a.name, lastName: a.lastName || last, email: a.email || '', phone: a.phone || '', address: '',
-            tierId: a.proposedTierId || 'tier_full', status: 'active', memberSince: today(), dob: a.dob || null, handicap: a.handicap != null ? a.handicap : null, ghin: null, locker: null,
+            tierId: a.proposedTierId || 'tier_full', status: 'active', memberSince: today(), dob: a.dob || null, handicap: a.handicap != null ? a.handicap : null, hand: a.hand || null, ghin: null, locker: null,
             spouse: null, children: 0, balance: 0, preferences: { cart: 'Cart', dining: 'Gallery Taphouse & Grill', notes: '' }, tags: ['New member'], notes: a.notes || '', applicationId: a.id
           });
           write({ memberId: mem.id, decidedOn: today() });
@@ -764,6 +767,7 @@
         .concat(pos ? [['Waiting list', 'Number ' + pos + ' for ' + esc(tierName(a.proposedTierId))]] : [])
         .concat(online || a.dob ? [['Date of birth', a.dob ? esc(fmt.date(a.dob)) + ' <span class="muted">(age ' + ageHtml(a) + ')</span>' : null]] : [])
         .concat(online ? [['Handicap index', a.handicap != null ? esc(fmt.handicap(a.handicap)) : 'None given']] : [])
+        .concat(online || a.hand ? [['Plays', Club.members.hand(a) ? esc(Club.members.hand(a)) : '<span class="muted">Not given</span>']] : [])
         .concat([['Heard about us', heardFrom(a) ? esc(heardFrom(a)) : '<span class="muted">Not given</span>']])
         .concat(online ? [['Members named', a.sponsorNames ? esc(a.sponsorNames) : 'None']] : [])
         .concat([['Sponsors', sponsors.length ? sponsors.join(', ') : null]])

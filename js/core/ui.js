@@ -64,6 +64,9 @@
     get: function (id) { return Club.store.find('members', id); },
     name: function (idOrDoc) { const m = typeof idOrDoc === 'string' ? Club.store.find('members', idOrDoc) : idOrDoc; return m ? m.firstName + ' ' + m.lastName : 'Guest'; },
     tier: function (m) { return m ? Club.store.find('membershipTiers', m.tierId) : null; },
+    /** Which hand a member plays: 'Right-handed', 'Left-handed' or null when not recorded. */
+    HANDS: [{ value: 'right', label: 'Right-handed' }, { value: 'left', label: 'Left-handed' }],
+    hand: function (m) { const h = m && m.hand; return h === 'left' ? 'Left-handed' : h === 'right' ? 'Right-handed' : null; },
     options: function (selectedId) {
       return Club.store.all('members').slice().sort(function (a, b) { return a.lastName.localeCompare(b.lastName); })
         .map(function (m) { return '<option value="' + m.id + '"' + (m.id === selectedId ? ' selected' : '') + '>' + esc(m.lastName + ', ' + m.firstName) + ' · #' + m.memberNo + '</option>'; }).join('');

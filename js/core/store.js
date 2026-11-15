@@ -347,6 +347,13 @@
     return out;
   });
 
+  /* Which hand each demo member plays ('right' or 'left'; null means not recorded). Demo members only, filled once
+     where the field is missing, also in browsers seeded before it existed: about one in nine plays left-handed. */
+  store.all('members').forEach(function (m) {
+    const n = +String(m.id).replace('mem_', '');
+    if (m.hand === undefined && n >= 1001 && n <= 1064) store.update('members', m.id, { hand: n % 9 === 4 ? 'left' : 'right' });
+  });
+
   /* The members' portal demo account (shown on the sign-in page). Applied to existing data too. */
   store.DEMO_MEMBER = 'mem_1003';
   (function () {

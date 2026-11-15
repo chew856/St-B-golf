@@ -1840,6 +1840,18 @@
   pat(/^Diff$/, 'Diff.');
   pat(/^Counts as (\d+)$/, 'Compte pour $1');
   pat(/^, counts as (\d+)$/, ', compte pour $1');
+  /* Friend profile: which hand they play and their recent rounds (js/portal/friends.js) */
+  add({
+    'Hand not recorded': 'Main non indiquée',
+    'Plays right-handed': 'Joue en droitier',
+    'Plays left-handed': 'Joue en gaucher',
+    'Recent rounds': 'Parties récentes',
+    'League and tournaments': 'Ligue et tournois'
+  });
+  pat(/^(Black|Green|Silver) tees · (\d+) holes · Differential (.+)$/, function (m) { return 'Tertres ' + tee(m[1]).toLowerCase() + ' · ' + m[2] + ' trous · Différentiel ' + dec(m[3]); });
+  pat(/^(.+), (Black|Green|Silver) tees · (\d+) holes · Differential (.+), score (\d+)\. Open scorecard$/, function (m) {
+    return m[1] + ', tertres ' + tee(m[2]).toLowerCase() + ' · ' + m[3] + ' trous · différentiel ' + dec(m[4]) + ', score ' + m[5] + '. Ouvrir la carte de score';
+  });
   pat(/^((.+) · )?(\d+) holes( \((front|back) nine\))? · (Black|Green|Silver) tees$/, function (m) {
     return (m[2] ? tl(m[2]) + ' · ' : '') + m[3] + ' trous' + (m[5] ? ' (' + (m[5] === 'back' ? 'retour' : 'aller') + ')' : '') + ' · tertres ' + tee(m[6]).toLowerCase();
   });

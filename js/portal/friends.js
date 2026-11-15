@@ -237,13 +237,28 @@
     return { lg: lg, row: row, of: st.rows.filter(function (r) { return r.rounds; }).length, nights: nights, status: Club.league.status(lg) };
   }
 
+  /* ---------------- Hand and recent rounds ---------------- */
+  const ROUNDS_SHOWN = 3;
+  function handText(m) { const h = Club.members.hand(m); return h ? 'Plays ' + h.toLowerCase() : 'Hand not recorded'; }
+  /** Posted scores, newest first (from Scores, js/portal/scores.js). */
+  function roundsOf(id) { return Portal.scores && Portal.scores.postsOf ? Portal.scores.postsOf(id) : []; }
+  function roundRowHTML(r, hidden) {
+    const sc = Portal.scores; const tees = sc.teeLabel ? sc.teeLabel(r.tees) : r.tees;
+    const when = fmt.toDate(r.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    const sub = tees + ' tees · ' + r.holes + ' holes' + (sc.diffText ? ' · Differential ' + sc.diffText(r) : '');
+    return '<li' + (hidden ? ' hidden' : '') + '><button type="button" class="fr-round" data-fr="round" data-id="' + esc(r.id) + '" aria-label="' + esc(when + ', ' + sub + ', score ' + r.gross + '. Open scorecard') + '">' +
+      '<span class="fr-tee-main"><span class="fr-tee-when">' + esc(when) + '</span><span class="fr-tee-sub">' + esc(sub) + '</span></span>' +
+      '<span class="fr-round-score">' + r.gross + '</span>' + Club.icon('chevronRight', 'fr-go') + '</button></li>';
+  }
+
   /* ---------------- Friend rundown ---------------- */
   function quiet(text) { return '<p class="fr-quiet">' + Club.icon('eye') + '<span>' + esc(text) + '</span></p>'; }
   function profileHTML(me, fid) {
     const m = member(fid); if (!m) return '<p class="fr-quiet">This member is no longer listed.</p>';
     const t = tierOf(m); const pv = privacy(fid); const first = m.firstName; const mineShare = shareLabel(me, fid);
     let h = '<div class="fr-p-head">' + ui.avatar(m.firstName + ' ' + m.lastName, 'lg') +
-      '<div class="fr-p-id"><h2 class="fr-p-name">' + esc(m.firstName + ' ' + m.lastName) + '</h2><p class="fr-p-sub">' + esc((t ? t.name : 'Member') + (m.memberSince ? ' · Member since ' + String(m.memberSince).slice(0, 4) : '')) + '</p></div></div>' +
+      '<div class="fr-p-id"><h2 class="fr-p-name">' + esc(m.firstName + ' ' + m.lastName) + '</h2><p class="fr-p-sub">' + esc((t ? t.name : 'Member') + (m.memberSince ? ' · Member since ' + String(m.memberSince).slice(0, 4) : '')) + '</p>' +
+      '<p class="fr-p-hand">' + Club.icon('flag') + '<span>' + esc(handText(m)) + '</span></p></div></div>' +
       '<div class="fr-p-acts"><button type="button" class="btn btn-primary btn-sm" data-fr="message" data-id="' + esc(fid) + '">' + Club.icon('mail') + '<span>Message</span></button>' +
       '<button type="button" class="btn btn-sm" data-fr="menu" data-id="' + esc(fid) + '" aria-haspopup="dialog">' + Club.icon('more') + '<span>More</span></button></div>' +
       '<button type="button" class="fr-share-row" data-fr="sharing" data-id="' + esc(fid) + '" aria-haspopup="dialog">' + Club.icon('key', 'fr-share-ic') + '<span class="fr-share-main"><span class="fr-share-l">Your tee times</span><span class="fr-share-v">' + esc(mineShare) + '</span></span>' + Club.icon('chevronRight', 'fr-go') + '</button>';
@@ -277,10 +292,16 @@
     h += '</section>';
 
     /* Scores and results */
-    const lr = leagueFor(fid); const tr = tournaments(fid);
+    const lr = leagueFor(fid); const tr = tournaments(fid); const rounds = roundsOf(fid);
     if (!pv.scores) h += '<section class="fr-sec"><h3 class="eyebrow">Scores and results</h3>' + quiet(first + ' keeps scores and results private') + '</section>';
-    else if (lr || tr.length) {
-      h += '<section class="fr-sec"><h3 class="eyebrow">Scores and results</h3><ul class="p-list fr-results">';
+    else if (lr || tr.length || rounds.length) {
+      h += '<section class="fr-sec"><h3 class="eyebrow">Scores and results</h3>';
+      if (rounds.length) {
+        h += '<h4 class="fr-sub-h">Recent rounds</h4><ul class="p-list fr-rounds">' + rounds.map(function (r, i) { return roundRowHTML(r, i >= ROUNDS_SHOWN); }).join('') + '</ul>' +
+          (rounds.length > ROUNDS_SHOWN ? '<button type="button" class="p-link fr-more-rounds" data-fr="more-rounds" aria-expanded="false">Show all (' + rounds.length + ')</button>' : '');
+      }
+      if (lr || tr.length) h += (rounds.length ? '<h4 class="fr-sub-h">League and tournaments</h4>' : '');
+      h += '<ul class="p-list fr-results">';
       if (lr) h += '<li><span class="fr-tee-main"><span class="fr-tee-when">' + esc(lr.lg.name) + '</span><span class="fr-tee-sub">' + esc((lr.status === 'complete' ? 'Final standing ' : 'Standing ') + lr.row.pos + ' of ' + lr.of + ' · ' + lr.row.total + ' points') + '</span>' +
         (lr.nights.length ? '<span class="fr-tee-sub">Last nights: ' + esc(lr.nights.map(function (n) { return fmt.dateShort(n.date) + ' ' + n.points + ' pts (' + n.place + ')'; }).join(', ')) + '</span>' : '') + '</span></li>';
       tr.forEach(function (x) {
@@ -520,6 +541,13 @@
     ui.on(root, 'click', '[data-fr=decline-req]', function (e, b) { if (declineRequest(me, b.dataset.req)) { ui.toast('Request declined'); if (after) after(); } });
     ui.on(root, 'click', '[data-fr=sharing]', function (e, b) { openSharing(me, b.dataset.id, after); });
     ui.on(root, 'click', '[data-fr=leave]', function (e, b) { openLeave(me, b.dataset.tee, after); });
+    ui.on(root, 'click', '[data-fr=more-rounds]', function (e, b) {
+      const open = b.getAttribute('aria-expanded') !== 'true'; const list = b.previousElementSibling;
+      ui.$$('li', list).forEach(function (li, i) { if (i >= ROUNDS_SHOWN) li.hidden = !open; });
+      b.setAttribute('aria-expanded', open); b.textContent = open ? 'Show fewer' : 'Show all (' + ui.$$('li', list).length + ')';
+      if (open) { const f = ui.$('li:nth-child(' + (ROUNDS_SHOWN + 1) + ') button', list); if (f) f.focus(); }
+    });
+    ui.on(root, 'click', '[data-fr=round]', function (e, b) { if (Portal.scores && Portal.scores.openPost) Portal.scores.openPost(b.dataset.id); });
     ui.on(root, 'click', '[data-fr=more-tees]', function (e, b) {
       const open = b.getAttribute('aria-expanded') !== 'true'; const list = b.previousElementSibling;
       ui.$$('li', list).forEach(function (li, i) { if (i >= 4) li.hidden = !open; });

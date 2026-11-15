@@ -51,5 +51,8 @@ html[lang^="fr"] .pub-day-wk, html[lang^="fr"] .pub-day-mo { letter-spacing: 0.0
 .pub-footer-lang[hidden] { display: none; }
 .pub-footer-lang .i18n-row { min-height: 44px; padding: 0; gap: var(--s2); font-size: inherit; color: inherit; }
 .pub-footer-lang .i18n-row-l { flex: none; }
-.pub-lang-set { padding: 0; }
-.pub-lang-set .i18n-row-l { flex: none; margin-right: auto; }
+/* My account: the panel heading already says Language, so the row's own label is hidden */
+.pub-lang-line { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); flex-wrap: wrap; }
+.pub-lang-line .pub-lang-note { margin: 0; }
+.pub-lang-set { padding: 0; min-height: 44px; }
+.pub-lang-set .i18n-row-l { display: none; }

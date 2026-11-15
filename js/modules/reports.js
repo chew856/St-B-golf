@@ -501,7 +501,7 @@
        csv(ctx)    -> [{ id, title, rows }]
        drills: { key: fn(ctx, arg) -> { title, body, csv, go, goLabel, asOf, noNotes, wire(api) } }
        facts(ctx) -> [{ text, where }]     attention(ctx) -> [{ n, text, label, drill, sec, arg, href, ok }]
-       ideas(ctx) -> [{ title, text, assume, amount, per, year }]   "Ideas to grow revenue" (see ideasOf below)
+       ideas(ctx) -> [{ title, text, assume, amount, per, year, id, drill, drillArg, drillLabel }]   "Ideas to grow revenue" (see ideasOf below)
        ideasTitle, ideasTake, ideasFirst, ideasLinks                 the Overview's "Top opportunities" uses these
        data: {}                             anything other sections may read (the Overview does)
      }) */
@@ -1053,15 +1053,30 @@
      A section's ideas(ctx) returns [{ title, text, assume, amount, per, year }]. text carries the figure the idea rests
      on and the estimate in words; amount and per are the estimate shown beside it ("+$450", "a week"); year is the same
      estimate over twelve months, used only to rank (ideas without an estimate come last); assume states the assumption.
-     Every figure comes from the club's own records. The Overview's "Top opportunities" ranks every section's together. */
+     Every figure comes from the club's own records. The Overview's "Top opportunities" ranks every section's together.
+     Optional: drill (with drillArg, drillLabel) names one of the section's drills, the list of people behind the idea;
+     id names the idea for good. Each idea gets a stable key, "<section>:<id or the title in lower case, digits dropped>",
+     so the Growth plan (reports-plan.js) can keep an idea marked while its figures change. Two ideas of one section
+     that would share a key get "-2", "-3" in the order the section lists them. */
   const IDEAS_MAX = 5;
   function rankIdeas(list) { return list.slice().sort(function (a, b) { return (b.year > 0 ? b.year : -1) - (a.year > 0 ? a.year : -1); }); }
+  function ideaSlug(v) { return String(v || '').toLowerCase().replace(/\d+/g, '').replace(/[^a-z]+/g, '-').replace(/^-+|-+$/g, ''); }
   function ideasOf(ctx, sec) {
     if (!sec || !sec.ideas) return [];
     return memo(ctx, 'ideas-' + sec.id, function () {
-      const list = safe(function () { return sec.ideas(ctx) || []; }, []);
-      return rankIdeas(list.filter(function (x) { return x && x.title && x.text; }).map(function (x) { return Object.assign({ sec: sec.id, where: sec.label }, x); }));
+      const list = safe(function () { return sec.ideas(ctx) || []; }, []), used = {};
+      return rankIdeas(list.filter(function (x) { return x && x.title && x.text; }).map(function (x) {
+        if (x.key) return Object.assign({ sec: sec.id, where: sec.label }, x);   /* already keyed by its own section (the Overview passes them on) */
+        const base = sec.id + ':' + (ideaSlug(x.id || x.title) || 'idea'), n = used[base] = (used[base] || 0) + 1;
+        return Object.assign({ sec: sec.id, where: sec.label }, x, { key: n > 1 ? base + '-' + n : base });
+      }));
     });
+  }
+  /** Every section's ideas in one list, ranked by estimated effect over a year (the Overview and the Growth plan). */
+  function allIdeas(ctx) {
+    let list = [];
+    SECTIONS.forEach(function (s) { if (s.id !== 'overview' && s.ideas) list = list.concat(ideasOf(ctx, s)); });
+    return rankIdeas(list);
   }
   function ideaEst(x) { return x.amount >= 1 ? '+' + (x.amount >= 1e4 ? moneyShort(x.amount) : F.money0(x.amount)) : ''; }
   function ideasBody(list, links) {
@@ -1069,6 +1084,7 @@
     return '<ol class="ideas">' + list.map(function (x) {
       const est = ideaEst(x);
       return '<li><div class="idea-main"><h3>' + esc(x.title) + '</h3><p>' + esc(x.text) + '</p>' + (x.assume ? '<p class="idea-why">' + esc(x.assume) + '</p>' : '') +
+        (x.drill ? '<button type="button" class="rp-link" data-drill="' + esc(x.drill) + '" data-sec="' + esc(x.sec) + '"' + (x.drillArg != null ? ' data-arg="' + esc(x.drillArg) + '"' : '') + ' aria-haspopup="dialog">' + esc(x.drillLabel || 'See the list') + '</button>' : '') +
         (links ? '<button type="button" class="rp-link" data-go="' + esc(x.sec) + '" data-go-panel="' + esc(x.sec + '-ideas') + '">' + esc('More ideas in ' + x.where) + '</button>' : '') + '</div>' +
         '<div class="idea-est">' + (est ? '<b>' + esc(est) + '</b><span>' + esc(x.per || '') + '</span>' : '<span>No estimate</span>') + '</div></li>';
     }).join('') + '</ol>';
@@ -1139,6 +1155,8 @@
     },
     /** A section's ideas, ranked (memoised per render). */
     ideasOf: function (ctx, id) { return ideasOf(ctx, getSection(id)); },
+    /** Every section's ideas together, ranked, each with its section (sec, where) and stable key. */
+    allIdeas: allIdeas,
     rankIdeas: rankIdeas
   };
 

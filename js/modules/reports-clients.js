@@ -548,6 +548,174 @@
     } };
   }
 
+  /* ---------------- Ideas to grow revenue ----------------
+     Three ideas, each with the list of clients behind it (a drill drawer). They follow the Show filter (everyone,
+     members, public golfers) and always leave dues out: dues are billed, not a sign of anyone using the club.
+       quiet     Big spenders gone quiet. "Earlier" runs from the start of the period (or of client records) to 31 days
+                 before the period ends; "recent" is the last 30 days of the period. A big spender is in the top quarter
+                 by earlier spend; quiet means recent spend is a quarter or less of their own earlier 30-day average.
+                 When the recent days fall outside April to October, green fees and the beverage cart are left out of
+                 both sides, so the course closing does not make every golfer look quiet.
+       nodine    Members who play often but never dine: rounds at or above the threshold (three, or two a month over the
+                 tee sheet days in the period, whichever is more) with no dining charge and no dining visit.
+       onedept   Clients who spent in one department only, against the second-largest department of clients in the same
+                 membership category (public golfers together) who spent in two or more.
+     An idea is left out when the records are too short to support it (see the MIN_ constants). */
+  const MONTH = 30.4375, QUIET_DAYS = 30, MIN_EARLIER_DAYS = 30, MIN_POOL = 8, QUIET_SHARE = 0.25, MIN_TEE_DAYS = 14, MIN_SPEND_DAYS = 28, MIN_PEERS = 3;
+  const COURSE_DEPTS = { Golf: 1, 'Beverage cart': 1 };
+  function audOK(c) { return flt.aud === 'all' || c.who.kind === flt.aud; }
+  /** Someone the club can still reach: an active member, or a public golfer whose account is open. */
+  function reachable(c) { return c.who.kind === 'member' ? !!(c.who.m && c.who.m.status === 'active') : !!c.who.p; }
+  function audPhrase(n) { return flt.aud === 'member' ? plural(n, 'member') : flt.aud === 'public' ? plural(n, 'public golfer') : plural(n, 'client'); }
+  function spendFrom(ctx) { const f = ledger(ctx).first.spend; return f && f > ctx.from ? f : ctx.from; }
+  function posDepts(c) { return deptsOf(c, false).filter(function (d) { return d.value > 0; }); }
+
+  function quietData(ctx) {
+    return H.memo(ctx, 'cl-quiet-' + flt.aud, function () {
+      const L = ledger(ctx), f = L.first.spend;
+      if (!f || f > ctx.to) return null;
+      const rFrom = Dt.addDays(ctx.to, -(QUIET_DAYS - 1)), eFrom = spendFrom(ctx), eTo = Dt.addDays(rFrom, -1);
+      if (eFrom > eTo) return null;
+      const eDays = H.spanDays(eFrom, eTo);
+      if (eDays < MIN_EARLIER_DAYS) return null;
+      const winter = !H.inSeasonKey(rFrom.slice(0, 7)) || !H.inSeasonKey(ctx.to.slice(0, 7));
+      const amt = function (c) { return c ? r2(sum(Object.keys(c.depts).filter(function (d) { return d !== 'Dues' && !(winter && COURSE_DEPTS[d]); }), function (d) { return c.depts[d]; })) : 0; };
+      const early = aggregate(L, eFrom, eTo), recent = aggregate(L, rFrom, ctx.to);
+      const pool = Object.keys(early).map(function (k) { return early[k]; }).filter(function (c) { return audOK(c) && reachable(c) && amt(c) > 0; })
+        .sort(function (a, b) { return amt(b) - amt(a) || a.who.name.localeCompare(b.who.name); });
+      if (pool.length < MIN_POOL) return null;
+      const top = pool.slice(0, Math.ceil(pool.length / 4));
+      const rows = top.map(function (c) { const e = amt(c), now = Math.max(0, amt(recent[c.key])); return { c: c, early: e, rate: e / eDays * QUIET_DAYS, now: now }; })
+        .filter(function (r) { return r.now <= r.rate * QUIET_SHARE; }).sort(function (a, b) { return (b.rate - b.now) - (a.rate - a.now); });
+      const gap = sum(rows, function (r) { return r.rate - r.now; });
+      return { rows: rows, pool: pool.length, top: top.length, cutoff: amt(top[top.length - 1]), eFrom: eFrom, eTo: eTo, rFrom: rFrom, rTo: ctx.to, winter: winter,
+        was: sum(rows, function (r) { return r.rate; }), now: sum(rows, function (r) { return r.now; }), gap: gap, amount: gap / 2, months: winter ? 12 : 7 };
+    });
+  }
+  function noDineData(ctx) {
+    return H.memo(ctx, 'cl-nodine', function () {
+      if (flt.aud === 'public') return null;
+      const L = ledger(ctx), tf = L.first.tee;
+      if (!tf || tf > ctx.to || !L.first.spend || L.first.spend > ctx.to) return null;
+      const from = tf > ctx.from ? tf : ctx.from, days = H.spanDays(from, ctx.to);
+      if (days < MIN_TEE_DAYS) return null;
+      const need = Math.max(3, Math.round(days / 15)), months = H.spanDays(spendFrom(ctx), ctx.to) / MONTH;
+      const cur = current(ctx), members = Object.keys(cur).map(function (k) { return cur[k]; }).filter(function (c) { return c.who.kind === 'member' && reachable(c); });
+      const diners = members.filter(function (c) { return c.depts.Dining > 0; });
+      if (diners.length < MIN_PEERS || months < 0.2) return null;
+      const avg = sum(diners, function (c) { return c.depts.Dining; }) / diners.length / months;
+      const players = members.filter(function (c) { return c.rounds >= need; });
+      const rows = players.filter(function (c) { return !(c.depts.Dining > 0) && !c.diningVisits; }).sort(function (a, b) { return b.rounds - a.rounds || a.who.name.localeCompare(b.who.name); });
+      return { rows: rows, need: need, from: from, days: days, players: players.length, diners: diners.length, avg: avg, amount: rows.length * avg / 2, resFrom: L.first.res, spendFrom: spendFrom(ctx) };
+    });
+  }
+  function oneDeptData(ctx) {
+    return H.memo(ctx, 'cl-onedept-' + flt.aud, function () {
+      const L = ledger(ctx), f = L.first.spend;
+      if (!f || f > ctx.to) return null;
+      const from = spendFrom(ctx), days = H.spanDays(from, ctx.to);
+      if (days < MIN_SPEND_DAYS) return null;
+      const months = days / MONTH, cur = current(ctx), everyone = Object.keys(cur).map(function (k) { return cur[k]; }).filter(reachable);
+      const peers = {};
+      everyone.forEach(function (c) {
+        const d = posDepts(c);
+        if (d.length < 2) return;
+        const g = peers[c.who.cat] || (peers[c.who.cat] = { n: 0, second: 0, depts: {} });
+        g.n++; g.second += d[1].value; g.depts[d[1].label] = (g.depts[d[1].label] || 0) + 1;
+      });
+      const rows = everyone.filter(function (c) { return audOK(c) && posDepts(c).length === 1; }).map(function (c) {
+        const d = posDepts(c)[0], g = peers[c.who.cat], ok = !!(g && g.n >= MIN_PEERS);
+        return { c: c, dept: d.label, value: d.value, peers: g ? g.n : 0, second: ok ? g.second / g.n / months : null };
+      }).sort(function (a, b) { return b.value - a.value || a.c.who.name.localeCompare(b.c.who.name); });
+      const est = rows.filter(function (r) { return r.second != null; });
+      const depts = {}; rows.forEach(function (r) { depts[r.dept] = (depts[r.dept] || 0) + 1; });
+      const lead = Object.keys(depts).sort(function (a, b) { return depts[b] - depts[a]; })[0];
+      return { rows: rows, est: est.length, from: from, days: days, months: months, peers: peers, lead: lead, leadN: lead ? depts[lead] : 0,
+        each: est.length ? sum(est, function (r) { return r.second; }) / est.length : 0, amount: sum(est, function (r) { return r.second; }) / 4 };
+    });
+  }
+  function ideas(ctx) {
+    const out = [], q = quietData(ctx), nd = noDineData(ctx), od = oneDeptData(ctx);
+    if (q && q.rows.length) {
+      const n = q.rows.length, left = q.winter ? ' Green fees and the beverage cart are left out of both, because the last 30 days fall outside the golf season.' : '';
+      out.push({ id: 'quiet-spenders', title: 'Win back big spenders who have gone quiet',
+        text: n + ' of the ' + q.top + ' biggest-spending ' + audPhrase(q.top) + ' from ' + F.dateShort(q.eFrom) + ' to ' + F.dateShort(q.eTo) + ' ' + (n === 1 ? 'has' : 'have') + ' spent little or nothing in the last 30 days: ' + money0(q.now) + ' together, against ' + money0(q.was) + ' in an average 30 days before. A call or a personal invitation that brings back half of what is missing would add about ' + money0(q.amount) + ' a month.',
+        assume: 'A big spender is in the top quarter of the ' + q.pool + ' ' + audPhrase(q.pool) + ' who spent from ' + F.dateShort(q.eFrom) + ' to ' + F.dateShort(q.eTo) + ' (' + money0(q.cutoff) + ' or more, dues excluded). Quiet means ' + F.dateShort(q.rFrom) + ' to ' + F.dateShort(q.rTo) + ' came to a quarter or less of their own earlier 30-day average.' + left + ' Assumes half the gap comes back, over ' + (q.winter ? 'twelve months.' : 'the seven golf season months.'),
+        amount: q.amount, per: 'a month', year: q.amount * q.months, drill: 'idea-quiet', drillLabel: n === 1 ? 'See who it is' : 'See the ' + n + ' ' + audPhrase(n) });
+    }
+    if (nd && nd.rows.length) {
+      const n = nd.rows.length;
+      out.push({ id: 'play-never-dine', title: 'Invite frequent golfers to the dining room',
+        text: n + ' of the ' + nd.players + ' ' + plural(nd.players, 'member') + ' who played ' + nd.need + ' rounds or more since ' + F.dateShort(nd.from) + ' ' + (n === 1 ? 'has' : 'have') + ' no dining charge and no dining visit on file in this period. The ' + nd.diners + ' ' + plural(nd.diners, 'member') + ' who do dine spent ' + money0(nd.avg) + ' a month each in the dining room. A table offer after the round that brings half of them in would add about ' + money0(nd.amount) + ' a month.',
+        assume: 'Counts active members with ' + nd.need + ' rounds or more in the ' + nd.days + ' tee sheet days of this period (three rounds, or two a month, whichever is more), no dining charge since ' + F.dateShort(nd.spendFrom) + ' and no reservation kept' + (nd.resFrom && nd.resFrom > ctx.from ? ' (reservations on file begin ' + F.dateShort(nd.resFrom) + ')' : '') + '. Takeout and the beverage cart are not dining. Assumes half of them dine at the average of members who do, for twelve months.',
+        amount: nd.amount, per: 'a month', year: nd.amount * 12, drill: 'idea-nodine', drillLabel: n === 1 ? 'See who it is' : 'See the ' + n + ' members' });
+    }
+    if (od && od.rows.length) {
+      const n = od.rows.length, rest = n - od.est;
+      const since = od.from > ctx.from ? ' since ' + F.dateShort(od.from) : ' in this period';
+      const text = [n + ' ' + audPhrase(n) + ' spent in one department only' + since + (od.lead ? ', ' + (od.leadN === n ? (n === 1 ? '' : 'all ') + 'in ' : od.leadN + ' of them in ') + od.lead.toLowerCase() : '') + '.'];
+      if (od.est) text.push('Clients in the same membership category who use more of the club spent ' + money0(od.each) + ' a month in their second department. If one in four of ' + (rest ? 'the ' + od.est + ' with clients to compare' : 'them') + ' did the same, it would add about ' + money0(od.amount) + ' a month.');
+      if (rest) text.push((od.est ? 'The other ' + rest + ' ' + (rest === 1 ? 'has' : 'have') : n === 1 ? 'There is' : 'There are') + ' no' + (od.est ? '' : ' similar') + ' clients on file who spent in two departments' + (od.est ? ' to compare with' : ', so there is nothing to estimate from') + '. An offer in a second department, such as a dining credit with a green fee, is the place to start.');
+      out.push({ id: 'one-department', title: 'Offer a second department to one-department clients', text: H.sents(text),
+        assume: 'Dues are never counted as a department. A similar client is in the same membership category (public golfers together) and spent in two or more departments; the figure is the average of their second-largest department a month, used when a category has ' + MIN_PEERS + ' or more of them.' + (od.est ? ' Assumes one in four adds a second department at that average, for twelve months.' : ' No estimate: no category has enough of them.'),
+        amount: od.est ? od.amount : null, per: 'a month', year: od.est ? od.amount * 12 : 0, drill: 'idea-onedept', drillLabel: n === 1 ? 'See who it is' : 'See the ' + n + ' ' + audPhrase(n) });
+    }
+    return out;
+  }
+  /* The drawers behind the ideas: the clients, with the figure that put each on the list. A name opens the breakdown. */
+  function whoCell(c) { return '<button type="button" class="cl-name" data-cl-client="' + esc(c.key) + '">' + esc(c.who.name) + '</button><div class="dd-sub">' + esc(c.who.kind === 'member' ? c.who.cat + ' member' : 'Public golfer') + '</div>'; }
+  function whoCSV(c) { return [c.who.name, c.who.kind === 'member' ? 'Member' : 'Public golfer', c.who.kind === 'member' ? c.who.cat : '', c.who.m ? c.who.m.memberNo : '']; }
+  function openClient(ctx) {
+    return function (api, c, open) { U.on(api.el, 'click', '[data-cl-client]', function (e, b) { const k = b.dataset.clClient; api.close(); setTimeout(function () { open(clientDrill(ctx, k)); }, 200); }); };
+  }
+  function noList(text) { return { title: 'Nothing to list', body: H.rNote(text), csv: [], noNotes: true }; }
+  function quietDrill(ctx) {
+    const q = quietData(ctx);
+    if (!q || !q.rows.length) return noList('No big spender has gone quiet in this period, or the records are too short to tell.');
+    const body = H.rKpis([
+      { label: 'Gone quiet', value: F.num(q.rows.length), sub: esc('of the ' + q.top + ' biggest spenders') },
+      { label: 'Earlier, per 30 days', value: money0(q.was), sub: esc(F.dateShort(q.eFrom) + ' to ' + F.dateShort(q.eTo)) },
+      { label: 'Last 30 days', value: money0(q.now), sub: esc(F.dateShort(q.rFrom) + ' to ' + F.dateShort(q.rTo)) },
+      { label: 'Missing', value: money0(q.gap), sub: esc('A month, against their own average') }
+    ]) + H.rSec('Who they are', 'Select a name for the breakdown', H.rTable([{ label: 'Client' }, { label: 'Earlier spend', num: true }, { label: 'Per 30 days', num: true }, { label: 'Last 30 days', num: true }],
+      q.rows.map(function (r) { return [whoCell(r.c), esc(money0(r.early)), esc(money0(r.rate)), '<strong>' + esc(money0(r.now)) + '</strong>']; }),
+      ['Total', esc(money0(sum(q.rows, function (r) { return r.early; }))), esc(money0(q.was)), esc(money0(q.now))])) +
+      H.rNote('A big spender is in the top quarter of the ' + q.pool + ' ' + audPhrase(q.pool) + ' who spent from ' + F.dateShort(q.eFrom) + ' to ' + F.dateShort(q.eTo) + ', ' + money0(q.cutoff) + ' or more with dues excluded. Each is listed because the last 30 days came to a quarter or less of their own earlier 30-day average.' + (q.winter ? ' Green fees and the beverage cart are left out, because the last 30 days fall outside the golf season.' : ''));
+    const csv = [['Client', 'Type', 'Category', 'Member no', 'Earlier spend', 'Earlier per 30 days', 'Last 30 days']].concat(q.rows.map(function (r) { return whoCSV(r.c).concat([r.early.toFixed(2), r.rate.toFixed(2), r.now.toFixed(2)]); }))
+      .concat([[], ['Earlier', q.eFrom + ' to ' + q.eTo], ['Last 30 days', q.rFrom + ' to ' + q.rTo], ['Dues', 'Excluded'], ['Green fees and beverage cart', q.winter ? 'Excluded' : 'Included']]);
+    return { title: 'Big spenders gone quiet', body: body, csv: csv, csvId: 'clients-quiet-spenders', noNotes: true, wire: openClient(ctx) };
+  }
+  function noDineDrill(ctx) {
+    const nd = noDineData(ctx);
+    if (!nd || !nd.rows.length) return noList('Every member who plays often has dined in this period, or the records are too short to tell.');
+    const body = H.rKpis([
+      { label: 'Play but never dine', value: F.num(nd.rows.length), sub: esc('of ' + nd.players + ' with ' + nd.need + ' rounds or more') },
+      { label: 'Their rounds', value: F.num(sum(nd.rows, function (c) { return c.rounds; })), sub: esc('Since ' + F.dateShort(nd.from)) },
+      { label: 'Members who dine', value: F.num(nd.diners), sub: esc('With a dining charge in this period') },
+      { label: 'They spend', value: money0(nd.avg), sub: esc('A month each in the dining room') }
+    ]) + H.rSec('Who they are', 'Select a name for the breakdown', H.rTable([{ label: 'Member' }, { label: 'Rounds', num: true }, { label: 'Dining', num: true }, { label: 'Other spend', num: true }],
+      nd.rows.map(function (c) { return [whoCell(c), '<strong>' + F.num(c.rounds) + '</strong>', esc(money0(0)), esc(money0(c.spend))]; }))) +
+      H.rNote('Each is an active member with ' + nd.need + ' rounds or more since ' + F.dateShort(nd.from) + ', no dining charge since ' + F.dateShort(nd.spendFrom) + ' and no dining reservation kept' + (nd.resFrom && nd.resFrom > ctx.from ? ' (reservations on file begin ' + F.dateShort(nd.resFrom) + ')' : '') + '. Other spend leaves dues out.');
+    const csv = [['Client', 'Type', 'Category', 'Member no', 'Rounds', 'Dining spend', 'Dining visits', 'Other spend']].concat(nd.rows.map(function (c) { return whoCSV(c).concat([c.rounds, '0.00', 0, c.spend.toFixed(2)]); }))
+      .concat([[], ['Rounds counted', nd.from + ' to ' + ctx.to], ['Threshold', nd.need + ' rounds'], ['Average dining spend a month of members who dine', nd.avg.toFixed(2)]]);
+    return { title: 'Members who play but never dine', body: body, csv: csv, csvId: 'clients-play-never-dine', noNotes: true, wire: openClient(ctx) };
+  }
+  function oneDeptDrill(ctx) {
+    const od = oneDeptData(ctx);
+    if (!od || !od.rows.length) return noList('Every client spent in two departments or more in this period, or the records are too short to tell.');
+    const body = H.rKpis([
+      { label: 'One department only', value: F.num(od.rows.length), sub: esc(od.lead ? od.leadN + ' in ' + od.lead.toLowerCase() : '') },
+      { label: 'They spent', value: money0(sum(od.rows, function (r) { return r.value; })), sub: esc(F.dateShort(od.from) + ' to ' + F.dateShort(ctx.to)) },
+      { label: 'With clients to compare', value: F.num(od.est), sub: esc('Same category, two departments or more') },
+      { label: 'Similar clients spend', value: od.est ? money0(od.each) : 'None', sub: esc(od.est ? 'A month in their second department' : 'Not enough on file') }
+    ]) + H.rSec('Who they are', 'Select a name for the breakdown', H.rTable([{ label: 'Client' }, { label: 'Only department' }, { label: 'Spend', num: true }, { label: 'Similar clients, second department', num: true }],
+      od.rows.map(function (r) { return [whoCell(r.c), esc(r.dept), '<strong>' + esc(money0(r.value)) + '</strong>', r.second != null ? esc(money0(r.second) + ' a month') : '<span class="muted">None to compare</span>']; }))) +
+      H.rNote('Dues are never counted as a department. A similar client is in the same membership category (public golfers together) and spent in two or more departments; the figure is the average of their second-largest department a month, shown when a category has ' + MIN_PEERS + ' or more of them.');
+    const csv = [['Client', 'Type', 'Category', 'Member no', 'Only department', 'Spend', 'Similar clients', 'Their second department a month']].concat(od.rows.map(function (r) { return whoCSV(r.c).concat([r.dept, r.value.toFixed(2), r.peers, r.second != null ? r.second.toFixed(2) : '']); }))
+      .concat([[], ['Period', od.from + ' to ' + ctx.to], ['Dues', 'Never counted as a department']]);
+    return { title: 'Clients in one department only', body: body, csv: csv, csvId: 'clients-one-department', noNotes: true, wire: openClient(ctx) };
+  }
+
   /* ---------------- Filters and the table's clicks ---------------- */
   function filtersHTML() { return '<div class="cl-filters cl-bar" data-reveal>' + seg(AUD, flt.aud, 'aud', 'Show') + seg(DUES_OPTS, flt.inc ? 'in' : 'ex', 'dues', 'Dues') + '</div>'; }
   function wire(el, ctx, api) {
@@ -575,6 +743,7 @@
     out.push('A pro shop sale or dining check put on a member\'s account counts once, through the charge on their ledger.');
     const cov = [H.coverage(f.spend, ctx, 'Client spending'), f.tee && f.tee > ctx.from ? 'Rounds are counted from ' + F.date(f.tee) + ', when the tee sheet on file begins.' : ''].filter(Boolean);
     if (cov.length) out.push(cov.join(' '));
+    out.push('The ideas to grow revenue follow the Show filter above and always leave dues out. Each one opens the list of clients behind it.');
     out.push(previous(ctx) ? 'Change compares each client with ' + ctx.prev.label + '.' : 'Change against the period before is shown only when client records cover the whole earlier period; for these dates they do not.');
     return out;
   }
@@ -582,8 +751,8 @@
   Club.reports.addSection({
     id: 'clients', label: 'Client spending', order: 75,
     collections: ['charges', 'receipts', 'payments', 'publicPayments', 'publicPlayers', 'sales', 'diningOrders', 'teeTimes', 'diningReservations', 'lessons', 'members', 'membershipTiers'],
-    kpis: kpis, main: main, panels: panels, about: about, csv: csv, wire: wire,
-    drills: { client: clientDrill, ranking: rankingDrill },
-    data: { ledger: ledger, current: current, view: view, filters: function () { return { aud: flt.aud, inc: flt.inc }; } }
+    kpis: kpis, main: main, panels: panels, about: about, csv: csv, wire: wire, ideas: ideas,
+    drills: { client: clientDrill, ranking: rankingDrill, 'idea-quiet': quietDrill, 'idea-nodine': noDineDrill, 'idea-onedept': oneDeptDrill },
+    data: { ledger: ledger, current: current, view: view, quiet: quietData, noDine: noDineData, oneDept: oneDeptData, filters: function () { return { aud: flt.aud, inc: flt.inc }; } }
   });
 })();

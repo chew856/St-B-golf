@@ -104,12 +104,12 @@
     rows.push([], ['Needs attention', 'Count']); attention(ctx).forEach(function (x) { rows.push([x.text, x.n]); });
     return [{ id: 'overview', title: 'Overview', rows: rows }];
   }
-  /** Top opportunities: every section's ideas to grow revenue, ranked together; the Overview shows the best five. */
+  /** Top opportunities: every section's ideas to grow revenue, ranked together; the Overview shows the best five.
+      Ideas marked Done or Dismissed in the Growth plan (reports-plan.js) are left out. */
   function ideas(ctx) {
-    let list = [];
-    Club.reports.sections().forEach(function (s) { if (s.id !== 'overview' && s.ideas) list = list.concat(Club.reports.ideasOf(ctx, s.id)); });
-    return Club.reports.rankIdeas(list);
+    const plan = Club.growthPlan;
+    return Club.reports.allIdeas(ctx).filter(function (x) { return !(plan && plan.status(x.key)); });
   }
-  Club.reports.addSection({ id: 'overview', label: 'Overview', order: 10, collections: ['visitFeedback'], kpis: kpis, panels: panels, about: about, csv: csv, ideas: ideas,
+  Club.reports.addSection({ id: 'overview', label: 'Overview', order: 10, collections: ['visitFeedback', 'growthPlan'], kpis: kpis, panels: panels, about: about, csv: csv, ideas: ideas,
     ideasTitle: 'Top opportunities', ideasTake: 'The five ideas with the largest estimated effect over a year, picked from every section. Each rests on the club\'s own figures and says what it assumes.', ideasFirst: true, ideasLinks: true });
 })();

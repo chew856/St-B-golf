@@ -126,6 +126,13 @@ week; no playing ahead); games never played take the worst score of that week wh
     - Some dense tee-sheet cells stay at 36 to 40px.
 11. **Cheaper agents**: big jobs have used Opus agents. Options: run them on Sonnet (a `.claude/agents/` file with
     `model: sonnet`, or `model: "sonnet"` per agent).
+10. **Automatic monthly payment (owner decided Nov 15, waiting on the club's payment processor)**: every member must
+   connect a payment method when they sign in (mandatory), choosing a card or pre-authorized debit from a bank
+   account, and the monthly statement is charged to it automatically. Do not build until the club chooses a
+   processor. This replaces the "no saved cards" rule for this one purpose: the processor holds the card or bank
+   details, the site keeps only a reference. Needs a server and real database (charges must run with no browser
+   open), signed consent for recurring charges, and handling for declined or expired payments.
+
 
 ## Test on a real iPhone and Android phone
 1. Tap the staff search bar and dialog fields: the page should not zoom in.

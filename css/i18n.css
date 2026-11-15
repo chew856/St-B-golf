@@ -42,3 +42,14 @@
 html[lang^="fr"] .pub-day-wk, html[lang^="fr"] .pub-day-mo { letter-spacing: 0.02em; }
 /* Very narrow phones: the header switch gives way (it stays in the menu drawer), so brand, avatar and menu fit. */
 @media (max-width: 359px) { .pub-header .pub-lang { display: none; } }
+
+/* Language as a setting (Nov 2026): no header switch. Signed-out pages keep one: under the portal sign-in card (dark
+   page) and in the public footer and phone menu; signed-in people use Profile (portal) or My account (public). */
+.p-header-inner .p-me, .pub-header-inner .pub-me { margin-left: auto; }
+.p-signin-lang { display: flex; justify-content: center; margin-top: var(--s4); }
+.pub-footer-lang { display: flex; justify-content: center; margin-top: var(--s3); }
+.pub-footer-lang[hidden] { display: none; }
+.pub-footer-lang .i18n-row { min-height: 44px; padding: 0; gap: var(--s2); font-size: inherit; color: inherit; }
+.pub-footer-lang .i18n-row-l { flex: none; }
+.pub-lang-set { padding: 0; }
+.pub-lang-set .i18n-row-l { flex: none; margin-right: auto; }

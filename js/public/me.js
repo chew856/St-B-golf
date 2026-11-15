@@ -358,6 +358,14 @@
       });
     }
   });
+  /* ---------------- My account: language ---------------- */
+  if (Club.i18n) Pub.addAccountSection({
+    order: 90,
+    html: function () {
+      return '<section class="panel pub-lang-panel" data-reveal aria-labelledby="pub-lang-h"><div class="panel-head"><div><div class="eyebrow">Settings</div><h3 id="pub-lang-h">Language</h3></div>' + Club.icon('globe', 'pub-head-icon') + '</div><div class="panel-body">' +
+        '<p class="pub-fine pub-lang-note">Choose English or French for this site.</p>' + Club.i18n.switchRow('pub-lang-set') + '</div></section>';
+    }
+  });
   function optinState(p) {
     if (!p.marketingOptIn) return 'You are not getting club news and offers by email.';
     return p.marketingOptInAt ? 'Subscribed since ' + fmt.date(S.iso(new Date(p.marketingOptInAt))) + '.' : 'You are subscribed.';

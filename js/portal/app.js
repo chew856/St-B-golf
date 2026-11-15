@@ -55,6 +55,7 @@
             return '<button type="button" class="p-demo-btn" data-id="' + m.id + '">' + ui.avatar(m.firstName + ' ' + m.lastName, 'sm') + '<span><span class="person-name">' + esc(m.firstName + ' ' + m.lastName) + '</span><span class="person-sub">#' + esc(m.memberNo) + ' · ' + esc((Club.members.tier(m) || {}).name || '') + '</span></span></button>';
           }).join('') + '</div>' +
         '</div>' +
+        (Club.i18n ? '<div class="p-signin-lang">' + Club.i18n.switcher() + '</div>' : '') +
         '<p class="p-signin-foot">Not a member? <a href="public.html">Book public golf</a> \u00b7 Club staff? <a href="index.html">Open the club system</a></p>' +
       '</main>';
     const form = ui.$('form', root);
@@ -92,7 +93,7 @@
         '<nav class="p-nav" aria-label="Main">' + list.filter(function (p) { return p.nav !== false; }).map(function (p, i) { return '<a href="#/' + p.id + '" data-page="' + p.id + '" data-ord="' + i + '">' + esc(p.label) + '</a>'; }).join('') +
           '<div class="p-navmore" hidden><button type="button" class="p-navmore-btn" aria-haspopup="true" aria-expanded="false">More' + Club.icon('chevronDown') + '</button><div class="p-navmore-pop" hidden></div></div>' +
           '<span class="p-nav-ink"></span></nav>' +
-        (Club.i18n ? Club.i18n.switcher('p-lang') : '') +
+        /* Language is a setting in Profile now (and on the sign-in page), not a header switch */
         '<div class="p-me">' +
           '<button class="p-me-btn" type="button" aria-haspopup="true" aria-expanded="false">' + ui.avatar(m.firstName + ' ' + m.lastName, 'sm') + '<span class="p-me-name">' + esc(m.firstName) + '</span>' + Club.icon('chevronDown') + '</button>' +
           '<div class="p-me-menu" role="menu">' +
@@ -117,7 +118,7 @@
     ui.on(root, 'click', '.p-me-menu a', function () { me.classList.remove('open'); });
     ui.on(root, 'click', '[data-action=signout]', function () { ui.confirm({ title: 'Sign out?', text: 'You can sign back in any time with your member number.', confirmLabel: 'Sign out' }).then(function (ok) { if (ok) Portal.signOut(); }); });
     ui.$('.p-more-btn', root).addEventListener('click', function () {
-      const d = ui.drawer({ title: 'Menu', eyebrow: Club.info.short, body: '<div class="p-more-list">' + (Club.i18n ? Club.i18n.switchRow('p-more-lang', Club.icon('globe')) : '') + list.map(function (p) { return '<a href="#/' + p.id + '">' + Club.icon(p.icon || 'flag') + '<span>' + esc(p.label) + '</span>' + Club.icon('chevronRight') + '</a>'; }).join('') + '<button type="button" data-action="signout">' + Club.icon('logout') + '<span>Sign out</span></button></div>' });
+      const d = ui.drawer({ title: 'Menu', eyebrow: Club.info.short, body: '<div class="p-more-list">' + list.map(function (p) { return '<a href="#/' + p.id + '">' + Club.icon(p.icon || 'flag') + '<span>' + esc(p.label) + '</span>' + Club.icon('chevronRight') + '</a>'; }).join('') + '<button type="button" data-action="signout">' + Club.icon('logout') + '<span>Sign out</span></button></div>' });
       ui.on(d.body, 'click', 'a', function () { d.close(); });
       ui.on(d.body, 'click', '[data-action=signout]', function () { d.close(); Portal.signOut(); });
     });

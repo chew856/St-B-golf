@@ -378,7 +378,6 @@
       '<header class="pub-header"><div class="pub-header-inner">' +
         '<a class="pub-brand" href="#/" aria-label="' + esc(Club.info.name) + ' public golf home">' + Club.logo('pub-crest') + '<span><span class="pub-brand-name">' + esc(Club.info.short) + '</span><span class="pub-brand-sub">Public golf</span></span></a>' +
         '<nav class="pub-nav" aria-label="Main"></nav>' +
-        (Club.i18n ? Club.i18n.switcher('pub-lang') : '') +
         '<div class="pub-me"></div>' +
         '<button type="button" class="pub-menu-btn" aria-label="Open menu">' + Club.icon('menu') + '</button>' +
       '</div></header>' +
@@ -391,6 +390,7 @@
         '<p class="pub-social">' + (Club.info.social || []).map(function (l) { return '<a href="' + esc(l.url) + '" target="_blank" rel="noopener">' + esc(l.label) + '</a>'; }).join(' · ') + '</p>' +
         '<p class="pub-footer-members">Members, <a href="member.html">sign in here</a> to book in the members’ portal.</p>' +
         (Club.info.landAcknowledgement ? '<p class="pub-land">' + esc(Club.info.landAcknowledgement) + '</p>' : '') +
+        (Club.i18n ? '<div class="pub-footer-lang" hidden>' + Club.i18n.switchRow('', Club.icon('globe')) + '</div>' : '') +
       '</div></footer>';
     ui.$('.pub-menu-btn', root).addEventListener('click', openMenu);
     ui.on(root, 'click', '[data-act=signout]', function () { signOut(); });
@@ -405,6 +405,7 @@
     mine.innerHTML = p
       ? '<a class="pub-me-btn" href="#/account" title="My account">' + ui.avatar(p.firstName + ' ' + p.lastName, 'sm') + '<span class="pub-me-name">' + esc(p.firstName) + '</span></a>'
       : '<a class="btn btn-ghost btn-sm pub-signin-link" href="#/signin">Sign in</a><a class="btn btn-brass btn-sm pub-signup-link" href="#/signup">Create account</a>';
+    const fl = ui.$('.pub-footer-lang'); if (fl) fl.hidden = !!p;   /* signed in: language is in My account */
     markActive();
     if (Club.i18n) Club.i18n.translate(ui.$('.pub-header'));   /* French labels are longer: measure those */
     fitNav();
@@ -415,7 +416,7 @@
   function openMenu() {
     const p = me();
     const d = ui.drawer({ eyebrow: Club.info.short, title: p ? 'Hello, ' + p.firstName : 'Public golf',
-      body: '<div class="pub-menu">' + (Club.i18n ? Club.i18n.switchRow('pub-menu-lang', Club.icon('globe')) : '') +
+      body: '<div class="pub-menu">' + (Club.i18n && !p ? Club.i18n.switchRow('pub-menu-lang', Club.icon('globe')) : '') +
         '<a href="#/">' + Club.icon('flag') + '<span>Book a tee time</span>' + Club.icon('chevronRight') + '</a>' +
         /* Pages registered with nav (Become a member, Gift cards, Takeout ...), as in the header menu. */
         pages.filter(function (x) { return x.nav && (!x.nav.auth || p); }).sort(function (a, b) { return (a.nav.order || 50) - (b.nav.order || 50); })

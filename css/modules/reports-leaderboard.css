@@ -87,6 +87,7 @@
   .rlb-list-h { min-height: 44px; padding-bottom: 0; }
   /* Hole records hold several names on a line: there the whole row opens the list of everyone, names included */
   .rlb-hr .rlb-name, .rlb-hr .rlb-more { pointer-events: none; display: inline; padding: 0; margin: 0; }
+  .rlb-hr .rlb-name { text-decoration: none; }
   html body.staff .rlb-hr .rlb-more { min-height: 0; display: inline; }
   .rlb-card-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .rlb-card-stats > div:nth-child(3) { border-left: 0; }

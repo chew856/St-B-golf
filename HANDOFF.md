@@ -108,6 +108,20 @@ others). The same breakdown is the Spending tab on the staff member page.
   signed-out pages.
 - Tested in Chromium only: check in Safari before deploying.
 
+## Leaderboard, month receipts, My account layout (built and deployed Nov 16)
+- Reports has a staff-only Leaderboard tab after Golf (`js/modules/reports-leaderboard.js`): golfers with 10 or more
+  rounds in the Reports period, ranked on lowest scores (gross and net, 18 holes; 9 holes separately), birdies, eagles
+  or better, holes in one, most rounds, most improved, plus hole records and a "Not yet qualified" list. Rounds are
+  every posted score (`scorePosts`) plus completed tournament cards, counted once when both exist for the same day.
+  Net uses placeholder ratings that differ between posts and tournament cards until the club's official ratings are
+  entered in one place.
+- Demo rounds (`js/shared/leaderboard-data.js`, runs once, marker `leaderboard1`, loaded by all three pages): 234
+  made-up posts for 21 demo members, Apr 18 to Nov 12, 2026, including one hole in one (Imogen Whitmore, hole 5,
+  Aug 1) and 7 eagles. Handicaps, friends leagues and Dave's own scores are unchanged.
+- Client breakdown: selecting a month lists its purchases, and each opens its receipt (made on demand for older
+  charges and online green fees). Public My account: short panels moved to the right column.
+- Tested in Chromium only.
+
 ## Still to do or decide
 1. **Resolved Nov 13**: run alone, `xpo-test.mjs` (Group outings) passes all 192 checks and `xe-checkout.mjs`
    passes 418. The one failure is the outside weather service answering 503, not the site.

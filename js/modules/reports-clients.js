@@ -80,8 +80,21 @@
     const payIds = {}; all('payments').forEach(function (p) { payIds[p.id] = 1; });
 
     /* 1. The members' ledger */
-    const charges = all('charges'), undone = {};
-    charges.forEach(function (c) { if (c.reversedBy) { undone[c.id] = 1; undone[c.reversedBy] = 1; } if (c.reverses) { undone[c.id] = 1; undone[c.reverses] = 1; } });
+    /* A charge and its reversal cancel out. Undoing a correction reverses the reversal ("Charged again"), so a chain
+       charge -> reversal -> re-charge -> ... pairs off from its start, and a last link left unpaired is live and counts. */
+    const charges = all('charges'), undone = {}, byId = {}, isReversal = {};
+    charges.forEach(function (c) { byId[c.id] = c; if (c.reversedBy) isReversal[c.reversedBy] = 1; });
+    charges.forEach(function (c) {
+      if (c.reverses) { if (!byId[c.reverses]) undone[c.id] = 1; return; }   /* only chain starts; a reversal of nothing on file is skipped */
+      if (isReversal[c.id]) return;
+      for (let x = c, n = 0; x && x.reversedBy && n < 1000; n++) {
+        const y = byId[x.reversedBy];
+        undone[x.id] = 1;
+        if (!y) break;
+        undone[y.id] = 1;
+        x = y.reversedBy ? byId[y.reversedBy] : null;
+      }
+    });
     charges.forEach(function (c) {
       if (!c.memberId || undone[c.id] || c.refId === 'opening' || /^Balance brought forward/i.test(c.description || '')) return;
       const rc = byCharge[c.id];
@@ -414,10 +427,29 @@
     }
     if (ref.publicPaymentId) {
       const p = S.find('publicPayments', ref.publicPaymentId); if (!p) return null;
-      return Club.receipts.create({ publicPlayerId: p.publicPlayerId, date: p.date, title: 'Green fees', lines: (p.lines || []).map(function (l) { return { name: l.label, qty: 1, price: l.amount }; }),
-        total: p.amount, method: 'card', source: 'public', refId: p.id, channel: 'online' });
+      /* The payment's own receipt when the public site (or an earlier open) made one; never a second one. */
+      const have = Club.receipts.forRef('public', p.id).filter(function (r) { return r.kind === 'sale'; })[0];
+      return have || Club.receipts.create(publicReceipt(p));
     }
     return null;
+  }
+  /** The sale receipt the public site makes for a tee time paid online (js/public/site.js ensureReceipts), same shape:
+      lines, total, tenders (gift card and card parts), how it was paid, the tee time note, stamped when it was paid. */
+  function publicReceipt(pay) {
+    const free = !(num(pay.amount) > 0), gift = pay.giftCardId ? r2(pay.giftAmount) : 0, card = pay.giftCardId ? r2(pay.cardAmount) : r2(pay.amount);
+    const tenders = [];
+    if (gift > 0) tenders.push({ method: 'gift', amount: gift, online: true, ref: pay.giftCardId });
+    if (card > 0) tenders.push({ method: 'card', amount: card, online: true, ref: pay.id });
+    const paidWith = pay.giftCardId && Club.giftcards ? Club.giftcards.paidWith(pay) : free && pay.promo ? 'Promo code ' + pay.promo.code : Club.receipts.cardLabel(pay.brand, pay.last4);
+    const conf = 'Confirmation ' + String(pay.id).replace(/^[a-z]+_?/i, '').toUpperCase();
+    const longDate = function (d) { return F.toDate(d).toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric' }); };
+    const note = pay.teeDate ? 'Tee time ' + longDate(pay.teeDate) + (pay.teeTime ? ' at ' + F.time(pay.teeTime) : '') + (pay.holes ? ', ' + pay.holes + ' holes' : '') + '. ' + conf + '.' : conf + '.';
+    const p = String(pay.date).split('-');
+    const at = pay.createdAt && S.iso(new Date(pay.createdAt)) === pay.date ? pay.createdAt : pay.date === today() ? new Date().toISOString() : new Date(+p[0], +p[1] - 1, +p[2], 12).toISOString();
+    return { publicPlayerId: pay.publicPlayerId, kind: 'sale', title: 'Tee time' + (pay.teeDate ? ', ' + F.dateShort(pay.teeDate) : ''), at: at, date: pay.date,
+      lines: (pay.lines || []).map(function (l) { return { name: l.label, qty: 1, price: l.amount }; }), total: pay.amount,
+      method: free || (pay.giftCardId && !(num(pay.cardAmount) > 0)) ? 'other' : 'card', methodLabel: paidWith, source: 'public', refId: pay.id, note: note,
+      tenders: tenders, channel: 'online' };
   }
   function openMonth(d) {
     const key = d.clKey, mo = d.clMonth, inc = d.clInc === '1', L = buildLedger(), w = who(key);
@@ -434,7 +466,9 @@
         }).join('') + '</ul>';
     const api = U.modal({ title: d.clLabel, eyebrow: w.name, body: body, actions: [{ label: 'Close', kind: 'ghost' }] });
     if (api && api.el) U.on(api.el, 'click', '[data-cl-rc]', function (e, b) {
-      const rc = receiptFor(list[+b.dataset.clRc].ref);
+      const en = list[+b.dataset.clRc], rc = receiptFor(en.ref);
+      /* Remember the receipt, so opening the row again goes straight to it. */
+      if (rc && !en.ref.receiptId) en.ref = Object.assign({}, en.ref, { receiptId: rc.id });
       if (rc) Club.receipts.open(rc); else U.toast('That receipt is not available', 'bad');
     });
   }

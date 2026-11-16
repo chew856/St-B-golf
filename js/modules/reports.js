@@ -111,6 +111,17 @@
       if (Array.isArray(r.tenders) && r.tenders.length && r.tenders.every(function (t) { return t.method === 'account'; })) return;
       put(ix.rc, r.date, r);
     });
+    /* A green fee paid online counts once whether or not its receipt has been made yet (the public site makes it when
+       the golfer opens it, Reports when staff open it): a payment without its sale receipt stands in for it, and a
+       refund without its credit receipt likewise. Same date and amount the receipt would have (js/public/site.js). */
+    const pubRc = {};
+    all('receipts').forEach(function (r) { if (r.source === 'public' && r.refId) pubRc[r.refId + ':' + r.kind] = 1; });
+    all('publicPayments').forEach(function (p) {
+      if (!p.date || !(num(p.amount) > 0) || p.reversedBy || p.reverses || (p.status !== 'paid' && p.status !== 'refunded')) return;   /* an undone payment nets to nothing */
+      if (!pubRc[p.id + ':sale'] && p.date <= today) put(ix.rc, p.date, { source: 'public', kind: 'sale', total: num(p.amount), date: p.date, publicPaymentId: p.id });
+      const on = p.refundedOn || p.date;
+      if (p.status === 'refunded' && !pubRc[p.id + ':credit'] && on <= today) put(ix.rc, on, { source: 'public', kind: 'credit', total: num(p.amount), date: on, publicPaymentId: p.id });
+    });
     const ops = ['tee', 'res', 'sales'].map(function (k) { return ix.first[k]; }).filter(Boolean);
     ix.liveMin = ops.length ? ops.reduce(minD) : null;   // the earliest any daily operations record exists
     ix.liveFrom = ops.length ? ops.reduce(maxD) : null;  // from here every operational collection is on file

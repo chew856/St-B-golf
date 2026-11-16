@@ -55,3 +55,19 @@ button.cl-month-row:focus-visible { outline: 2px solid var(--forest-700); outlin
 .cl-month-a { flex: none; font-variant-numeric: tabular-nums; font-weight: 600; }
 tr:has(> td > .cl-month) { cursor: pointer; }
 @media (hover: hover) { tr:has(> td > .cl-month):hover { background: var(--sage-50); } }
+
+/* Member Spending tab: period dropdown and custom dates */
+.cl-period { display: inline-flex; align-items: center; gap: var(--s2); min-width: 0; }
+.cl-period-l { font-size: var(--fs-12); color: var(--text-2); white-space: nowrap; }
+.cl-period .cs-btn, .cl-period .select, .cl-period .input { min-height: 40px; width: auto; min-width: 10.5rem; }
+.cl-dates { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s3); }
+.cl-dates .cs-btn, .cl-dates .input { min-width: 9.5rem; }
+.cl-tab-head { flex-wrap: wrap; }
+.cl-date-err { flex-basis: 100%; margin: var(--s2) 0 0; text-align: right; }
+.cl-date-err[hidden] { display: none; }
+@media (max-width: 760px) {
+  .cl-period { flex: 1 1 100%; justify-content: space-between; }
+  .cl-period .cs-btn, .cl-period .select, .cl-period .input { flex: 1 1 auto; min-height: 44px; }
+  .cl-dates { flex: 1 1 100%; }
+  .cl-date-err { text-align: left; }
+}

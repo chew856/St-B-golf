@@ -320,16 +320,34 @@
 
   /* ---------------- The Spending tab on the staff member page ---------------- */
   const TAB_KEY = 'stboniface.members.spending';
-  const TAB_PERIODS = [{ value: 'season', label: 'This season' }, { value: 'm12', label: 'Last 12 months' }, { value: 'all', label: 'All time' }];
-  function tabRange(kind, L) {
-    const T = today(), y = +T.slice(0, 4);
+  /* The member tab's period: a dropdown of ready-made periods plus "Custom dates" (two date fields). */
+  const TAB_PERIODS = [
+    { value: 'month', label: 'This month' }, { value: 'lastmonth', label: 'Last month' }, { value: 'm3', label: 'Last 3 months' },
+    { value: 'season', label: 'This season' }, { value: 'm12', label: 'Last 12 months' }, { value: 'ytd', label: 'This year' },
+    { value: 'lastyear', label: 'Last year' }, { value: 'all', label: 'All time' }, { value: 'custom', label: 'Custom dates' }
+  ];
+  function isoOK(v) { return /^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) && !isNaN(F.toDate(v)); }
+  function tabRange(kind, L, custom) {
+    const T = today(), y = +T.slice(0, 4), mk = T.slice(0, 7);
+    const months = function (n, label, prevLabel) {   /* the last n months, this one included */
+      const from = H.shiftKey(mk, -(n - 1)) + '-01', pf = H.shiftKey(from.slice(0, 7), -n) + '-01';
+      return { from: from, to: T, label: label, prev: { from: pf, to: Dt.addDays(from, -1), label: prevLabel } };
+    };
     if (kind === 'season') {
       const sy = T < y + '-04-01' ? y - 1 : y, to = T < sy + '-10-31' ? T : sy + '-10-31';
       return { from: sy + '-04-01', to: to, label: 'the ' + sy + ' season, April to October', prev: { from: (sy - 1) + '-04-01', to: (sy - 1) + to.slice(4), label: 'the ' + (sy - 1) + ' season' } };
     }
     if (kind === 'all') { const f = L.first.spend && L.first.spend < T ? L.first.spend : T; return { from: f, to: T, label: 'all the records on file, from ' + F.date(f), prev: null, all: true }; }
-    const from = H.shiftKey(T.slice(0, 7), -11) + '-01', pf = H.shiftKey(from.slice(0, 7), -12) + '-01';
-    return { from: from, to: T, label: 'the last 12 months', prev: { from: pf, to: Dt.addDays(from, -1), label: 'the 12 months before' } };
+    if (kind === 'month') { const pk = H.shiftKey(mk, -1); return { from: mk + '-01', to: T, label: 'this month so far', prev: { from: pk + '-01', to: monthEnd(pk), label: 'last month' } }; }
+    if (kind === 'lastmonth') { const k = H.shiftKey(mk, -1), pk = H.shiftKey(mk, -2); return { from: k + '-01', to: monthEnd(k), label: 'last month', prev: { from: pk + '-01', to: monthEnd(pk), label: 'the month before' } }; }
+    if (kind === 'm3') return months(3, 'the last 3 months', 'the 3 months before');
+    if (kind === 'ytd') return { from: y + '-01-01', to: T, label: 'this year so far', prev: { from: (y - 1) + '-01-01', to: (y - 1) + T.slice(4), label: 'the same days last year' } };
+    if (kind === 'lastyear') return { from: (y - 1) + '-01-01', to: (y - 1) + '-12-31', label: 'last year', prev: { from: (y - 2) + '-01-01', to: (y - 2) + '-12-31', label: 'the year before' } };
+    if (kind === 'custom' && custom && isoOK(custom.from) && isoOK(custom.to) && custom.from <= custom.to) {
+      const days = Math.round((F.toDate(custom.to) - F.toDate(custom.from)) / 86400000) + 1, pt = Dt.addDays(custom.from, -1);
+      return { from: custom.from, to: custom.to, label: F.date(custom.from) + ' to ' + F.date(custom.to), prev: { from: Dt.addDays(pt, -(days - 1)), to: pt, label: 'the ' + days + ' ' + plural(days, 'day') + ' before' } };
+    }
+    return months(12, 'the last 12 months', 'the 12 months before');
   }
   function seg(items, selected, name, label) {
     return '<div class="segmented" role="group" aria-label="' + esc(label) + '" data-name="' + esc(name) + '">' + items.map(function (i) {
@@ -338,23 +356,46 @@
   }
   const DUES_OPTS = [{ value: 'ex', label: 'Excluding dues' }, { value: 'in', label: 'Including dues' }];
   function memberTab(p, m) {
-    /* The tab always opens on Including dues (owner's choice, Nov 16); only the period is remembered. */
-    let period = 'm12', inc = true;
-    try { const o = JSON.parse(localStorage.getItem(TAB_KEY) || 'null'); if (o && TAB_PERIODS.some(function (x) { return x.value === o.period; })) period = o.period; } catch (e) { /* storage unavailable */ }
+    /* The tab always opens on Including dues (owner's choice, Nov 16); the period (and custom dates) are remembered. */
+    let period = 'm12', inc = true, custom = null;
+    try {
+      const o = JSON.parse(localStorage.getItem(TAB_KEY) || 'null');
+      if (o && TAB_PERIODS.some(function (x) { return x.value === o.period; })) period = o.period;
+      if (o && isoOK(o.from) && isoOK(o.to) && o.from <= o.to) custom = { from: o.from, to: o.to };
+    } catch (e) { /* storage unavailable */ }
+    if (period === 'custom' && !custom) period = 'm12';
+    function save() { try { localStorage.setItem(TAB_KEY, JSON.stringify(Object.assign({ period: period }, custom || {}))); } catch (err) { /* ignore */ } }
     function draw(focus) {
-      const L = buildLedger(), range = tabRange(period, L), st = forClient('m:' + m.id, range, inc, L);
+      const L = buildLedger(), T = today(), range = tabRange(period, L, custom), st = forClient('m:' + m.id, range, inc, L);
+      const earliest = L.first.spend && L.first.spend < T ? L.first.spend : T;
       p.innerHTML = '<section class="panel cl-tab" data-reveal><div class="panel-head cl-tab-head"><div><h3>Spending</h3><p class="cl-tab-range">' + esc(F.date(range.from) + ' to ' + F.date(range.to)) + '</p></div>' +
-        '<div class="cl-filters">' + seg(TAB_PERIODS, period, 'period', 'Period') + seg(DUES_OPTS, inc ? 'in' : 'ex', 'dues', 'Dues') + '</div></div>' +
+        '<div class="cl-filters">' +
+          '<label class="cl-period"><span class="cl-period-l">Period</span><select class="select cl-period-sel" name="period" aria-label="Period">' + U.options(TAB_PERIODS, period) + '</select></label>' +
+          (period === 'custom' ? '<div class="cl-dates" role="group" aria-label="Custom dates">' +
+            '<label class="cl-period"><span class="cl-period-l">From</span><input class="input cl-date" type="date" name="from" aria-label="From" value="' + esc(range.from) + '" min="' + esc(earliest) + '" max="' + esc(T) + '"></label>' +
+            '<label class="cl-period"><span class="cl-period-l">To</span><input class="input cl-date" type="date" name="to" aria-label="To" value="' + esc(range.to) + '" min="' + esc(earliest) + '" max="' + esc(T) + '"></label></div>' : '') +
+          seg(DUES_OPTS, inc ? 'in' : 'ex', 'dues', 'Dues') + '</div>' +
+        '<p class="field-error cl-date-err" role="alert" hidden></p></div>' +
         '<div class="panel-body"><div class="rd cl-rd">' + breakdownHTML(st) + '</div>' +
         '<p class="cl-tab-foot"><a class="s-link" href="#/reports/clients">See every client in Reports</a></p></div></section>';
       U.animateIn(p);
-      if (focus) { const b = p.querySelector('.segmented[data-name="' + focus + '"] button.active'); if (b) b.focus(); }
+      if (focus === 'dues') { const b = p.querySelector('.segmented[data-name="dues"] button.active'); if (b) b.focus(); }
+      else if (focus) { const sel = p.querySelector('[name="' + focus + '"]'); const b = sel && (document.getElementById(sel.id + '-btn') || sel.previousElementSibling); if (b && b.focus) setTimeout(function () { b.focus(); }, 0); }
     }
-    U.on(p, 'click', '.cl-filters .segmented button', function (e, b) {
-      const name = b.closest('.segmented').dataset.name;
-      if (name === 'period') period = b.dataset.value; else inc = b.dataset.value === 'in';
-      try { localStorage.setItem(TAB_KEY, JSON.stringify({ period: period })); } catch (err) { /* ignore */ }
-      draw(name);
+    U.on(p, 'click', '.cl-filters .segmented button', function (e, b) { inc = b.dataset.value === 'in'; draw('dues'); });
+    p.addEventListener('change', function (e) {
+      const t = e.target; if (!t || !t.name || !t.closest('.cl-filters')) return;
+      if (t.name === 'period') {
+        if (t.value === 'custom' && !custom) { const r = tabRange(period, buildLedger(), custom); custom = { from: r.from, to: r.to }; }   /* start from what is on screen */
+        period = t.value; save(); draw('period'); return;
+      }
+      if (t.name !== 'from' && t.name !== 'to') return;
+      const f = p.querySelector('[name=from]').value, to = p.querySelector('[name=to]').value, err = p.querySelector('.cl-date-err'), T = today();
+      const fail = function (msg) { err.textContent = msg; err.hidden = false; };
+      if (!isoOK(f) || !isoOK(to)) return fail('Choose both a start date and an end date.');
+      if (f > to) return fail('The start date needs to be on or before the end date.');
+      if (to > T) return fail('The end date can be today at the latest.');
+      custom = { from: f, to: to }; save(); draw(t.name);
     });
     draw();
   }

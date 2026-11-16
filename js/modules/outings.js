@@ -181,6 +181,11 @@
   }
 
   /* ---------------- Deposits ---------------- */
+  /** A deposit without the cardholder name or expiry (older card deposits kept them); brand and last four stay. */
+  function noCardDetails(d) {
+    if (!d || (d.name === undefined && d.expMonth === undefined && d.expYear === undefined)) return d;
+    const o = Object.assign({}, d); delete o.name; delete o.expMonth; delete o.expYear; return o;
+  }
   function brandName(b) { const x = (Club.cards.brands || []).find(function (y) { return y.id === b; }); return x ? x.name : 'Card'; }
   /* Receipts for deposits and payments (source 'outings', refId the outing, card fee as its own line): made by Club.accounting
      (js/modules/accounting.js) so they count in that day's close; removing a payment record makes a credit receipt. */
@@ -218,10 +223,10 @@
       const dep = { id: S.uid('odep'), date: d.date, amount: round2(d.amount), method: method, last4: '' };
       if (method === 'Card') {
         const r = card.validate(); if (!r.ok) return false;
-        dep.brand = r.card.brand; dep.last4 = r.card.last4; dep.name = r.card.name; dep.expMonth = r.card.expMonth; dep.expYear = r.card.expYear; dep.fee = round2(dep.amount * CARD_FEE);
+        dep.brand = r.card.brand; dep.last4 = r.card.last4; dep.fee = round2(dep.amount * CARD_FEE);   /* no saved cards: brand and last four only */
       } else if (d.reference) dep.reference = d.reference;
       const fresh = S.find('outings', o.id);
-      const deps = (fresh.deposits || []).concat([dep]);
+      const deps = (fresh.deposits || []).map(noCardDetails).concat([dep]);
       const note = money(dep.amount) + ' received by ' + (method === 'Card' ? brandName(dep.brand) + ' ending ' + dep.last4 + ' (plus ' + money(dep.fee) + ' processing fee)' : method.toLowerCase());
       const moved = FLOW.indexOf(fresh.stage) < 2 || fresh.stage === 'Lost', was = fresh.stage;
       undoRun(function () {

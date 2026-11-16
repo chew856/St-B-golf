@@ -168,7 +168,13 @@
     if (used >= total) return { ok: false, reason: 'All ' + total + ' league games are played or booked' };
     const upTo = posted.filter(function (p) { return p.date <= date; }).length + booked.filter(function (t) { return t.date <= date; }).length;
     const w = weekOf(lg, date);
-    if (upTo >= w * lg.perWeek) return { ok: false, reason: 'Week ' + w + ' is already full. League games can be caught up but not played ahead' };
+    /* Every game in this week or earlier takes a slot up to this week, even one dated later in the week; and
+       a game in a later week must still find its slot once this round is in. */
+    const dates = posted.map(function (p) { return p.date; }).concat(booked.map(function (t) { return t.date; }));
+    for (let v = w; v <= lg.weeks; v++) {
+      const inWeeks = dates.filter(function (d) { return weekOf(lg, d) <= v; }).length;
+      if (inWeeks >= v * lg.perWeek) return { ok: false, reason: 'Week ' + v + ' is already full. League games can be caught up but not played ahead' };
+    }
     const week = Math.floor(upTo / lg.perWeek) + 1;
     return { ok: true, week: week, game: upTo % lg.perWeek + 1, late: week < w, reason: '' };
   }

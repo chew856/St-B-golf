@@ -153,10 +153,10 @@
       const dep = { id: S.uid('dep'), date: d.date, amount: round2(d.amount), method: method, last4: '' };
       if (method === 'Card') {
         const r = card.validate(); if (!r.ok) return false;
-        dep.brand = r.card.brand; dep.last4 = r.card.last4; dep.name = r.card.name; dep.expMonth = r.card.expMonth; dep.expYear = r.card.expYear;
+        dep.brand = r.card.brand; dep.last4 = r.card.last4;   /* no saved cards: brand and last four only */
       } else if (d.reference) dep.reference = d.reference;
       const fresh = S.find('functions', f.id);
-      const deps = (fresh.deposits || []).concat([dep]);
+      const deps = (fresh.deposits || []).map(noCardDetails).concat([dep]);
       const note = money(dep.amount) + ' received by ' + (method === 'Card' ? brandName(dep.brand) + ' ending ' + dep.last4 : method.toLowerCase());
       const moved = FLOW.indexOf(fresh.stage) < 3 || fresh.stage === 'Lost', was = fresh.stage;
       undoRun(function () {
@@ -166,6 +166,11 @@
       }, undoOpts(Word + ' of ' + money(dep.amount) + ' recorded' + (moved ? '. Moved to deposit paid' : ''), Word + ' taken off with a credit receipt' + (moved ? '. Back in ' + was.toLowerCase() : '')));
       if (done) done(f.id);
     }
+  }
+  /** A deposit without the cardholder name or expiry (older card deposits kept them); brand and last four stay. */
+  function noCardDetails(d) {
+    if (!d || (d.name === undefined && d.expMonth === undefined && d.expYear === undefined)) return d;
+    const o = Object.assign({}, d); delete o.name; delete o.expMonth; delete o.expYear; return o;
   }
   function brandName(b) { const x = (Club.cards.brands || []).find(function (y) { return y.id === b; }); return x ? x.name : 'Card'; }
   /* Receipts for deposits (source 'functions', refId the function): made by Club.accounting (js/modules/accounting.js) so

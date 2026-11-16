@@ -46,7 +46,7 @@
 
   /* ---------------- My account: golf shop orders ---------------- */
   Pub.addAccountSection({
-    order: 25,
+    order: 25, side: true,   /* right column of My account, to balance the two columns */
     html: function (p) {
       const list = SH.forPublic(p.id).slice(0, 4);
       return '<section class="panel sh-acc" data-reveal aria-labelledby="sh-acc-h"><div class="panel-head"><div><div class="eyebrow">Golf shop</div><h3 id="sh-acc-h">Online shop orders</h3></div>' +

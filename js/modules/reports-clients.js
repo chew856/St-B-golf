@@ -65,12 +65,12 @@
     const T = today(), entries = [], visits = [], first = {};
     function seen(k, d) { if (d && (!first[k] || d < first[k])) first[k] = d; }
     /* online: paid on the website, so the day of the purchase is not a visit to the club. A credit takes its items back. */
-    function add(key, date, amount, dept, items, online) {
+    function add(key, date, amount, dept, items, online, ref) {
       amount = r2(amount);
       if (!key || !date || date > T || !amount) return;
       seen('spend', date);
       const its = dept === 'Dues' ? [] : amount > 0 ? items || [] : (items || []).map(function (it) { return { name: it.name, qty: -it.qty, amount: -it.amount }; });
-      entries.push({ key: key, date: date, amount: amount, dept: dept, items: its, online: !!online });
+      entries.push({ key: key, date: date, amount: amount, dept: dept, items: its, online: !!online, ref: ref || null });
     }
     const receipts = all('receipts'), byCharge = {}, hasRef = {}, publicRef = {};
     receipts.forEach(function (r) {
@@ -85,7 +85,8 @@
     charges.forEach(function (c) {
       if (!c.memberId || undone[c.id] || c.refId === 'opening' || /^Balance brought forward/i.test(c.description || '')) return;
       const rc = byCharge[c.id];
-      add('m:' + c.memberId, c.date, c.amount, chargeDept(c), rc && rc.lines && rc.lines.length ? itemsOf(rc.lines, 'name', 'price') : [{ name: c.description || 'House charge', qty: 1, amount: Math.abs(num(c.amount)) }], rc && rc.channel === 'online');
+      add('m:' + c.memberId, c.date, c.amount, chargeDept(c), rc && rc.lines && rc.lines.length ? itemsOf(rc.lines, 'name', 'price') : [{ name: c.description || 'House charge', qty: 1, amount: Math.abs(num(c.amount)) }], rc && rc.channel === 'online',
+        { label: c.description || 'House charge', receiptId: rc ? rc.id : null, chargeId: c.id });
     });
 
     /* 2. Purchases paid by card or cash: receipts that are not on the ledger and are not account payments */
@@ -95,13 +96,13 @@
       let amt;
       if (Array.isArray(r.tenders) && r.tenders.length) amt = sum(r.tenders.filter(function (t) { return t && t.method !== 'account' && t.method !== 'gift'; }), function (t) { return t.amount; });
       else amt = r.method === 'account' ? 0 : num(r.total);
-      add(key, r.date, r.kind === 'credit' ? -amt : amt, receiptDept(r), itemsOf(r.lines, 'name', 'price'), r.channel === 'online');
+      add(key, r.date, r.kind === 'credit' ? -amt : amt, receiptDept(r), itemsOf(r.lines, 'name', 'price'), r.channel === 'online', { label: r.title || 'Purchase', receiptId: r.id });
     });
 
     /* 3. Green fees paid online by public golfers, when the payment has no receipt of its own */
     all('publicPayments').forEach(function (p) {
       if (!p.publicPlayerId || p.status !== 'paid' || publicRef[p.id]) return;
-      add('p:' + p.publicPlayerId, p.date, p.giftCardId ? num(p.cardAmount) : num(p.amount), 'Golf', itemsOf(p.lines, 'label', 'amount'), true);
+      add('p:' + p.publicPlayerId, p.date, p.giftCardId ? num(p.cardAmount) : num(p.amount), 'Golf', itemsOf(p.lines, 'label', 'amount'), true, { label: 'Green fees paid online', publicPaymentId: p.id });
     });
 
     /* 4. Pro shop counter sales by card or cash with a customer picked, when the sale has no receipt.
@@ -109,13 +110,13 @@
     all('sales').forEach(function (s) {
       const key = s.memberId ? 'm:' + s.memberId : s.publicPlayerId ? 'p:' + s.publicPlayerId : null;
       if (!key || s.payment === 'Member account' || s.orderId || hasRef[s.id] || (s.refundOf && hasRef[s.refundOf])) return;
-      add(key, s.date, num(s.total) - (num(s.total) > 0 ? num(s.giftAmount) : 0), 'Pro Shop', itemsOf(s.items, 'name', 'price'));
+      add(key, s.date, num(s.total) - (num(s.total) > 0 ? num(s.giftAmount) : 0), 'Pro Shop', itemsOf(s.items, 'name', 'price'), false, { label: 'Pro shop sale' + (s.number ? ' ' + s.number : '') });
     });
 
     /* 5. Dining checks a member paid by card, when the check has no receipt */
     all('diningOrders').forEach(function (o) {
       if (!o.memberId || o.status !== 'closed' || !o.payment || o.payment === 'Member account' || hasRef[o.id]) return;
-      add('m:' + o.memberId, o.date, o.grandTotal != null ? o.grandTotal : o.total, 'Dining', itemsOf(o.items, 'name', 'price'));
+      add('m:' + o.memberId, o.date, o.grandTotal != null ? o.grandTotal : o.total, 'Dining', itemsOf(o.items, 'name', 'price'), false, { label: 'Dining check' });
     });
 
     /* Visits that are not purchases: rounds played, dining reservations honoured, lessons taken */
@@ -269,12 +270,12 @@
         const p = i ? ms[i - 1] : null;
         let ch = '<span class="muted">-</span>';
         if (p && p.whole && m.whole && p.value > 0) { const d = H.pctChange(m.value, p.value); ch = '<span class="rd-chg ' + (d >= 0 ? 'up' : 'down') + '">' + (d >= 0 ? '+' : '') + d + '%</span>'; }
-        return ['<span class="primary-cell">' + esc(m.label + (m.whole ? '' : '*')) + '</span>', ch, '<strong>' + esc(money0(m.value)) + '</strong>'];
+        return ['<button type="button" class="cl-month primary-cell" data-cl-month="' + esc(m.key) + '" data-cl-key="' + esc(st.key) + '" data-cl-from="' + esc(st.range.from) + '" data-cl-to="' + esc(st.range.to) + '" data-cl-inc="' + (st.inc ? 1 : 0) + '" data-cl-label="' + esc(m.label) + '" aria-haspopup="dialog" title="See the purchases and receipts">' + esc(m.label + (m.whole ? '' : '*')) + Club.icon('chevronRight') + '</button>', ch, '<strong>' + esc(money0(m.value)) + '</strong>'];
       }).reverse();
       html += H.rSec('Over time', 'Spend by month',
         (ms.length > 1 ? Club.charts.bar({ labels: ms.map(function (m) { return m.label.replace(/ \d{4}$/, '') + (m.whole ? '' : '*'); }), series: [{ name: 'Spend', values: ms.map(function (m) { return Math.max(0, m.value); }), color: 'var(--viz-1)' }], money: true, height: H.px(180) }) : '') +
         H.rTable([{ label: 'Month' }, { label: 'Change', num: true }, { label: 'Spend', num: true }], rows, ['Total', changeCell(st.value, st.prevValue, st.prevOn), esc(money0(v))]) +
-        H.rNote((ms.some(function (m) { return !m.whole; }) ? 'Months marked * are partial, so they are not compared. ' : '') + 'Each month is compared with the month before; the total with ' +
+        H.rNote('Select a month to see its purchases and open their receipts. ' + (ms.some(function (m) { return !m.whole; }) ? 'Months marked * are partial, so they are not compared. ' : '') + 'Each month is compared with the month before; the total with ' +
           (st.range.all ? 'nothing, because this is everything on file.' : !st.range.prev ? 'the period before, which is not on file.' : st.prevOn ? st.range.prev.label + '.' : st.range.prev.label + ', which is not on file.')));
     }
 
@@ -356,6 +357,52 @@
     });
     draw();
   }
+
+  /* ---------------- A month's purchases and their receipts ---------------- */
+  /** The receipt for one ledger entry. One that was never written (older charges, online green fees) is made now from
+      the record it stands for; Club.receipts.create never duplicates. */
+  function receiptFor(ref) {
+    if (!ref || !Club.receipts) return null;
+    if (ref.receiptId) return Club.receipts.get(ref.receiptId);
+    if (ref.chargeId) {
+      const c = S.find('charges', ref.chargeId); if (!c) return null;
+      const amt = r2(c.amount);
+      return Club.receipts.create({ memberId: c.memberId, kind: amt < 0 ? 'credit' : 'sale', date: c.date, at: c.createdAt || undefined, title: c.title || c.description || 'Account charge',
+        lines: c.lines || [{ name: c.description || 'Account charge', qty: 1, price: Math.abs(amt) }], total: Math.abs(amt), method: 'account', source: c.source, refId: c.refId, chargeId: c.id });
+    }
+    if (ref.publicPaymentId) {
+      const p = S.find('publicPayments', ref.publicPaymentId); if (!p) return null;
+      return Club.receipts.create({ publicPlayerId: p.publicPlayerId, date: p.date, title: 'Green fees', lines: (p.lines || []).map(function (l) { return { name: l.label, qty: 1, price: l.amount }; }),
+        total: p.amount, method: 'card', source: 'public', refId: p.id, channel: 'online' });
+    }
+    return null;
+  }
+  function openMonth(d) {
+    const key = d.clKey, mo = d.clMonth, inc = d.clInc === '1', L = buildLedger(), w = who(key);
+    const list = L.entries.filter(function (e) { return e.key === key && e.date.slice(0, 7) === mo && e.date >= d.clFrom && e.date <= d.clTo && (inc || e.dept !== 'Dues'); })
+      .sort(function (a, b) { return b.date.localeCompare(a.date); });
+    const total = sum(list, function (e) { return e.amount; });
+    const can = function (e) { return !!(e.ref && (e.ref.receiptId || e.ref.chargeId || e.ref.publicPaymentId)); };
+    const body = !list.length ? H.rNote('No purchases in ' + d.clLabel + (inc ? '.' : ' beyond dues.'))
+      : '<p class="cl-month-sum">' + esc(list.length + (list.length === 1 ? ' purchase, ' : ' purchases, ') + F.money(total) + (inc ? ', dues included' : ', dues excluded') + '. Select one to open its receipt.') + '</p>' +
+        '<ul class="cl-month-list">' + list.map(function (e, i) {
+          const label = (e.ref && e.ref.label) || e.dept, inner = '<span class="cl-month-d">' + esc(F.dateShort(e.date)) + '</span><span class="cl-month-w"><span class="cl-month-t">' + esc(label) + '</span><span class="cl-month-s">' + esc(e.dept + (e.amount < 0 ? ' credit' : '')) + '</span></span><span class="cl-month-a">' + esc(F.money(e.amount)) + '</span>';
+          return '<li>' + (can(e) ? '<button type="button" class="cl-month-row" data-cl-rc="' + i + '" aria-label="' + esc(F.dateShort(e.date) + ', ' + label + ', ' + F.money(e.amount) + '. Open receipt') + '">' + inner + Club.icon('chevronRight') + '</button>'
+            : '<div class="cl-month-row is-plain">' + inner + '<span class="cl-month-none">No receipt</span></div>') + '</li>';
+        }).join('') + '</ul>';
+    const api = U.modal({ title: d.clLabel, eyebrow: w.name, body: body, actions: [{ label: 'Close', kind: 'ghost' }] });
+    if (api && api.el) U.on(api.el, 'click', '[data-cl-rc]', function (e, b) {
+      const rc = receiptFor(list[+b.dataset.clRc].ref);
+      if (rc) Club.receipts.open(rc); else U.toast('That receipt is not available', 'bad');
+    });
+  }
+  /* One listener for every breakdown (the Reports drawer and the member page Spending tab) */
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest) return;
+    const tr = e.target.closest('tr');   /* the whole month row is the target, not only its name */
+    const b = e.target.closest('[data-cl-month]') || (tr && !e.target.closest('a, button') ? tr.querySelector('[data-cl-month]') : null);
+    if (b) openMonth(b.dataset);
+  });
 
   Club.clientStats = { ledger: buildLedger, forClient: forClient, breakdownHTML: breakdownHTML, csv: clientCSV, memberTab: memberTab };
 

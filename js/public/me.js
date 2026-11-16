@@ -284,7 +284,7 @@
               '</form></div></section>' +
             receiptsPanel(p) +
             /* Sections other files add (Pub.addAccountSection in js/public/site.js), in order. */
-            Pub.accountSections.slice().sort(function (a, b) { return (a.order || 50) - (b.order || 50); }).map(function (sec) { try { return sec.html(p) || ''; } catch (e) { console.error(e); return ''; } }).join('') +
+            sectionsHTML(p, false) +
             '</div>' +
             '<div class="stack">' +
               '<section class="panel" data-reveal><div class="panel-head"><div><div class="eyebrow">Security</div><h3>Change password</h3></div></div><div class="panel-body">' +
@@ -293,6 +293,7 @@
               '</div></section>' +
               '<section class="panel pub-acc-sum" data-reveal><div class="panel-body"><div><span class="label-caps">Bookings</span><strong class="serif">' + pays.length + '</strong></div><div><span class="label-caps">Green fees paid</span><strong class="serif">' + esc(fmt.money(spent)) + '</strong></div>' +
                 '<button type="button" class="btn btn-ghost btn-sm" data-act="signout">' + Club.icon('logout') + '<span>Sign out</span></button></div></section>' +
+              sectionsHTML(p, true) +   /* short settings panels (side: true) sit here so the right column is not left empty */
             '</div>' +
           '</div>';
         const df = ui.$('.pub-details', view), pf = ui.$('.pub-pwform', view);
@@ -336,11 +337,17 @@
     }
   });
 
+  /** The panels other files add (Pub.addAccountSection), in order: side panels for the right column, the rest for the left. */
+  function sectionsHTML(p, side) {
+    return Pub.accountSections.filter(function (sec) { return !!sec.side === side; }).sort(function (a, b) { return (a.order || 50) - (b.order || 50); })
+      .map(function (sec) { try { return sec.html(p) || ''; } catch (e) { console.error(e); return ''; } }).join('');
+  }
+
   /* ---------------- My account: club news by email ----------------
      The opt-in from sign up, changed here at any time. Saved as soon as the box changes: marketingOptIn (bool) and
      marketingOptInAt (ISO when they opted in, null when off). */
   Pub.addAccountSection({
-    order: 5,
+    order: 5, side: true,
     html: function (p) {
       return '<section class="panel pub-optin-panel" data-reveal aria-labelledby="pub-optin-h"><div class="panel-head"><div><div class="eyebrow">Email preferences</div><h3 id="pub-optin-h">Club news and offers</h3></div>' + Club.icon('mail', 'pub-head-icon') + '</div><div class="panel-body">' +
         '<label class="check pub-optin"><input type="checkbox" name="marketingOptIn" data-act="optin"' + (p.marketingOptIn ? ' checked' : '') + '> ' + OPTIN_TEXT + '</label>' +
@@ -360,7 +367,7 @@
   });
   /* ---------------- My account: language ---------------- */
   if (Club.i18n) Pub.addAccountSection({
-    order: 90,
+    order: 90, side: true,
     html: function () {
       return '<section class="panel pub-lang-panel" data-reveal aria-labelledby="pub-lang-h"><div class="panel-head"><div><div class="eyebrow">Settings</div><h3 id="pub-lang-h">Language</h3></div>' + Club.icon('globe', 'pub-head-icon') + '</div><div class="panel-body">' +
         '<div class="pub-lang-line"><p class="pub-fine pub-lang-note">Choose English or French for this site.</p>' + Club.i18n.switchRow('pub-lang-set') + '</div></div></section>';

@@ -34,3 +34,24 @@
   .cl-bar { margin-bottom: var(--s4); }
 }
 @media print { .cl-bar, .cl-more { display: none !important; } }
+
+/* A month in a client's breakdown opens its purchases; each purchase opens its receipt */
+.cl-month { display: inline-flex; align-items: center; gap: var(--s1); min-height: 40px; padding: 0; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; text-align: left; }
+.cl-month svg { width: 14px; height: 14px; color: var(--text-3); }
+@media (hover: hover) { .cl-month:hover { text-decoration: underline; text-underline-offset: 3px; } }
+.cl-month:focus-visible { outline: 2px solid var(--forest-700); outline-offset: 2px; border-radius: var(--r-control); }
+.cl-month-sum { margin: 0 0 var(--s3); color: var(--text-2); font-size: var(--fs-13); }
+.cl-month-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--border); border-radius: var(--r-control); overflow: hidden; }
+.cl-month-list > li + li { border-top: 1px solid var(--border); }
+.cl-month-row { display: flex; align-items: center; gap: var(--s3); width: 100%; min-height: 52px; padding: var(--s2) var(--s3); border: 0; background: none; font: inherit; color: inherit; text-align: left; }
+button.cl-month-row { cursor: pointer; }
+@media (hover: hover) { button.cl-month-row:hover { background: var(--sage-50); } }
+button.cl-month-row:focus-visible { outline: 2px solid var(--forest-700); outline-offset: -2px; }
+.cl-month-row > svg { width: 16px; height: 16px; flex: none; color: var(--text-3); }
+.cl-month-d { flex: none; width: 4.5rem; color: var(--text-2); font-size: var(--fs-13); font-variant-numeric: tabular-nums; }
+.cl-month-w { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.cl-month-t { font-weight: 500; overflow-wrap: anywhere; }
+.cl-month-s, .cl-month-none { color: var(--text-2); font-size: var(--fs-12); }
+.cl-month-a { flex: none; font-variant-numeric: tabular-nums; font-weight: 600; }
+tr:has(> td > .cl-month) { cursor: pointer; }
+@media (hover: hover) { tr:has(> td > .cl-month):hover { background: var(--sage-50); } }

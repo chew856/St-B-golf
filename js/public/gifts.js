@@ -240,7 +240,7 @@
 
   /* ---------------- My account: gift cards I bought ---------------- */
   Pub.addAccountSection({
-    order: 30,
+    order: 30, side: true,   /* right column of My account, to balance the two columns */
     html: function (p) {
       const list = G.all().filter(function (c) { return c.buyer && c.buyer.publicPlayerId === p.id; }).sort(function (a, b) { return String(b.createdAt).localeCompare(String(a.createdAt)); });
       return '<section class="panel gp-acc" data-reveal aria-labelledby="gp-acc-h"><div class="panel-head"><div><div class="eyebrow">Gifts you sent</div><h3 id="gp-acc-h">Gift cards</h3></div>' + Club.icon('gift', 'pub-head-icon') + '</div>' +

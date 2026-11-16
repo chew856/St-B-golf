@@ -98,8 +98,8 @@
         if (cards[m.id + '|' + date]) date = Club.date.addDays(date, -1);
         const n = p[3] && i % p[3] === p[3] - 1 ? 9 : 18, nine = n === 9 ? (i % 2 ? 'back' : 'front') : null;
         const hs = n === 9 ? (nine === 'back' ? all18.slice(9) : all18.slice(0, 9)) : all18;
-        const form = (R.rand() + R.rand() - 1) * 4.5;                                   /* a good day or a bad one */
-        const e = (indexOn(m, date) * 1.08 + 1.2 + form) / 18;
+        const form = (R.rand() + R.rand() - 1) * 3.2;                                   /* a good day or a bad one */
+        const e = Math.max(-0.03, (indexOn(m, date) * 1.08 + 1.2 + form) / 18);
         const scores = hs.map(function (h) { return holeScore(h.par, Math.min(1.7, e + (9.5 - h.handicap) / 17 * 0.25)); });
         const plant = PLANT[p[0] + ':' + i];
         if (plant && n === 18) scores[plant[0] - 1] = plant[1];
@@ -125,12 +125,13 @@
   }
   function run() {
     if (aside) { aside.forEach(function (d) { if (!S.find('scorePosts', d.id)) S.insert('scorePosts', d); }); aside = null; }
-    if (S.find('demoBackfills', MARK)) return;
+    const done = S.find('demoBackfills', MARK);
+    if (done && S.all('scorePosts').some(mine)) return;         /* (a marker with no rounds left: the page closed mid-way; put them back) */
     const docs = build().filter(function (d) { return !S.find('scorePosts', d.id); });
     if (!docs.length) return;                                   /* no scorecard or members on file yet: try again next time */
     docs.forEach(function (d) { S.insert('scorePosts', d); });
     const who = {}; docs.forEach(function (d) { who[d.memberId] = 1; });
-    S.insert('demoBackfills', { id: MARK, at: new Date().toISOString(), posts: docs.length, members: Object.keys(who).length });
+    if (!done) S.insert('demoBackfills', { id: MARK, at: new Date().toISOString(), posts: docs.length, members: Object.keys(who).length });
   }
   if (portal && document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
   else if (portal) setTimeout(run, 0);

@@ -1,0 +1,101 @@
+/* Reports, Leaderboard (js/modules/reports-leaderboard.js): the ranked lists, hole records, the "Not yet qualified"
+   list and the scorecard. Everything else reuses css/modules/reports.css and reports-extra.css. Tokens only. */
+
+/* ---- Lists side by side inside a panel ---- */
+.rlb-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s5) var(--s6); }
+.rlb-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.rlb-nines { margin-top: var(--s5); padding-top: var(--s4); border-top: 1px solid var(--border); row-gap: var(--s3); }
+.rlb-split { grid-column: 1 / -1; margin: 0; font-size: 0.8125rem; color: var(--text-2); }
+.rlb-list { min-width: 0; }
+.rlb-list-h { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); min-height: 32px; padding-bottom: 6px; border-bottom: 1px solid var(--border-strong); }
+.rp-page .rlb-list-h h3 { margin: 0; font: 600 0.875rem/1.3 var(--sans); color: var(--text); }
+.rlb-list .rp-empty { margin: var(--s3) 0 0; }
+
+/* ---- One ranked row: place, golfer (a link to the member), figure. The row opens the rounds behind the figure. ---- */
+.rlb-rows { list-style: none; margin: 0; padding: 0; }
+.rlb-row { display: grid; grid-template-columns: 1.75rem minmax(0, 1fr) auto 16px; align-items: center; column-gap: var(--s3); min-height: 52px; padding: 6px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+.rlb-rows > .rlb-row:last-child { border-bottom: 0; }
+@media (hover: hover) { .rlb-row:hover { background: var(--sage-50); box-shadow: -8px 0 0 var(--sage-50), 8px 0 0 var(--sage-50); } }
+.rlb-row:focus-visible { outline: 2px solid var(--forest-700); outline-offset: -2px; }
+.rlb-pos { font-size: 0.875rem; font-weight: 600; color: var(--text-3); text-align: center; font-variant-numeric: tabular-nums; }
+.rlb-who { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; }
+.rlb-name { font-size: 0.875rem; font-weight: 500; color: var(--text); overflow-wrap: anywhere; text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 4px; border-radius: 2px; }
+@media (hover: hover) { a.rlb-name:hover { text-decoration-color: currentColor; } }
+.rlb-name.muted { text-decoration: none; color: var(--text-3); }
+.rlb-sub { font-size: 0.8125rem; color: var(--text-3); overflow-wrap: anywhere; }
+.rlb-val { display: flex; flex-direction: column; align-items: flex-end; font-size: 1.0625rem; font-weight: 600; color: var(--text); font-variant-numeric: lining-nums tabular-nums; white-space: nowrap; line-height: 1.25; }
+.rlb-val-s { font-size: 0.75rem; font-weight: 400; color: var(--text-3); }
+.rlb-need { font-size: 0.875rem; }
+.rlb-go { width: 16px; height: 16px; color: var(--text-3); }
+
+/* ---- Hole records: hole and par, who holds the record, the score ---- */
+.rlb-hr { grid-template-columns: 3.25rem minmax(0, 1fr) auto 16px; }
+.rlb-hr.is-none { grid-template-columns: 3.25rem minmax(0, 1fr); cursor: default; }
+@media (hover: hover) { .rlb-hr.is-none:hover { background: none; box-shadow: none; } }
+.rlb-hr-no { display: flex; flex-direction: column; line-height: 1.25; }
+.rlb-hr-no b { font-size: 1rem; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+.rlb-hr-no span { font-size: 0.75rem; color: var(--text-3); }
+.rlb-hr-names { font-size: 0.875rem; color: var(--text-2); line-height: 1.5; }
+.rlb-hr-d { font-size: 0.8125rem; color: var(--text-3); white-space: nowrap; }
+.rlb-more { font-size: 0.8125rem; }
+
+/* ---- Not yet qualified: two columns, read down then across ---- */
+.rlb-unq { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(var(--lb-n, 4), auto); grid-auto-flow: column; column-gap: var(--s6); }
+.rlb-unq .rlb-row { grid-template-columns: minmax(0, 1fr) auto 16px; }
+.rlb-unq > .rlb-row:last-child { border-bottom: 1px solid var(--border); }
+
+/* ---- Drawers ---- */
+.rlb-lead { margin: 0; font-size: 0.9375rem; color: var(--text-2); max-width: 68ch; }
+.rlb-table td { vertical-align: top; }
+.rlb-table td.num { white-space: nowrap; }
+.rlb-table tbody tr:focus-visible { outline: 2px solid var(--forest-700); outline-offset: -2px; }
+@media (hover: hover) { .rlb-table tbody tr.clickable:hover { background: var(--sage-50); } }
+.rlb-table .badge { margin-left: 4px; }
+
+/* ---- Scorecard (the grid of the portal's posted score) ---- */
+.rlb-cardbox { display: flex; flex-direction: column; gap: var(--s4); }
+.rlb-card-sub { margin: 0; color: var(--text-2); font-size: 0.9375rem; }
+.rlb-card-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: var(--sage-50); border-radius: var(--radius-card); }
+.rlb-card-stats > div { display: flex; flex-direction: column; gap: 2px; padding: var(--s3) var(--s4); border-left: 1px solid var(--border); min-width: 0; }
+.rlb-card-stats > div:first-child { border-left: 0; }
+.rlb-card-stats strong { font-family: var(--serif); font-size: 1.5rem; font-weight: 500; color: var(--text); line-height: 1.15; font-variant-numeric: lining-nums tabular-nums; }
+.rlb-card-wrap { overflow-x: auto; }
+.rlb-card { width: 100%; border-collapse: collapse; font-size: 0.875rem; font-variant-numeric: tabular-nums; table-layout: fixed; min-width: 300px; }
+.rlb-card th, .rlb-card td { padding: 6px 0; text-align: center; border-bottom: 1px solid var(--border); font-weight: 400; color: var(--text); }
+.rlb-card th[scope=row] { width: 3.4rem; text-align: left; color: var(--text-2); font-size: 0.8125rem; }
+.rlb-card tr:first-child th { color: var(--text-2); font-size: 0.8125rem; }
+.rlb-card th:last-child, .rlb-card td:last-child { font-weight: 600; width: 2.6rem; }
+.rlb-card-you td { font-weight: 500; }
+.rlb-sc { display: inline-flex; align-items: center; justify-content: center; min-width: 1.6em; height: 1.6em; border-radius: 4px; }
+.rlb-sc.is-birdie { border-radius: 50%; box-shadow: inset 0 0 0 1px var(--forest-700); }
+.rlb-sc.is-eagle { border-radius: 50%; background: var(--forest-700); color: var(--surface); }
+.rlb-sc.is-bogey { box-shadow: inset 0 0 0 1px var(--border-strong); }
+.rlb-sc.is-double { background: var(--sage-200); box-shadow: inset 0 0 0 1px var(--forest-500); }
+.rlb-legend { display: flex; flex-wrap: wrap; gap: 6px var(--s4); margin: 0; font-size: 0.8125rem; color: var(--text-2); }
+.rlb-legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.rlb-legend .rlb-sc { font-size: 0.75rem; }
+.rlb-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+@media (max-width: 1100px) { .rlb-cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 768px) {
+  .rlb-cols, .rlb-cols-3 { grid-template-columns: minmax(0, 1fr); }
+  .rlb-unq { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-auto-flow: row; }
+  /* Tap targets: the row is the big one; the golfer's name and "See all" get 44px of their own */
+  .rlb-row { min-height: 60px; padding: 10px 0; }
+  .rlb-name { display: inline-block; padding: 12px 0; margin: -12px 0; }
+  html body.staff .rlb-list-h .rp-link { min-height: 44px; }
+  .rlb-list-h { min-height: 44px; padding-bottom: 0; }
+  /* Hole records hold several names on a line: there the whole row opens the list of everyone, names included */
+  .rlb-hr .rlb-name, .rlb-hr .rlb-more { pointer-events: none; display: inline; padding: 0; margin: 0; }
+  html body.staff .rlb-hr .rlb-more { min-height: 0; display: inline; }
+  .rlb-card-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rlb-card-stats > div:nth-child(3) { border-left: 0; }
+  .rlb-card-stats > div:nth-child(n+3) { border-top: 1px solid var(--border); }
+  .rlb-card-stats strong { font-size: 1.25rem; }
+  .rlb-card th[scope=row] { width: 2.9rem; }
+  .rlb-card th:last-child, .rlb-card td:last-child { width: 2.2rem; }
+}
+@media print {
+  .rlb-go { display: none; }
+  .rlb-row { break-inside: avoid; }
+}

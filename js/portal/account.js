@@ -34,8 +34,16 @@
   /* Members only see statements the club has issued (drafts stay with the office). */
   function myStatements(id) { return S.all('statements').filter(function (s) { return s.memberId === id && s.status !== 'draft'; }).sort(function (a, b) { return b.period.localeCompare(a.period); }); }
   function openStatements(id) { return myStatements(id).filter(function (s) { return s.status === 'sent' || s.status === 'overdue'; }); }
-  /* Same rule as the staff "Mark paid": what is owed on a statement is the lesser of its total and the live balance. */
-  function owedOn(s, m) { return r2(Math.max(0, Math.min((m && m.balance) || 0, s.total || 0))); }
+  /* A statement's total is the balance due at the end of its period, so every payment the statement does not already
+     count goes toward it: payments dated after the period (the rule js/shared/billing-data.js uses when it marks seeded
+     statements paid), plus any dated inside the period but recorded after it was made. Several part payments add up. */
+  function paidToward(s) {
+    const start = s.period + '-01';
+    return r2(Math.max(0, sum(myPayments(s.memberId).filter(function (p) { return p.date >= start; }), function (p) { return p.amount; }) - (+s.paymentsTotal || 0)));
+  }
+  /* What is still owed on a statement: its total less what has been paid toward it, never more than the live balance
+     (so a credit counts) and never charges made after the statement. */
+  function owedOn(s, m) { return r2(Math.max(0, Math.min((m && m.balance) || 0, (s.total || 0) - paidToward(s)))); }
 
   function rows(id) {
     const out = myCharges(id).map(function (c) {
@@ -122,7 +130,7 @@
 
     let dueLine, dueSub;
     if (bal <= 0.005) { dueLine = bal < -0.005 ? 'In credit' : 'Settled'; dueSub = bal < -0.005 ? money(-bal) + ' will go toward your next charges' : 'Nothing is due. Thank you.'; }
-    else if (open.length) { const s = open[0]; dueLine = s.dueOn ? fmt.date(s.dueOn) : 'On receipt'; dueSub = (s.status === 'overdue' ? 'Past due · ' : '') + monthLabel(s.period) + ' statement'; }
+    else if (open.some(function (s) { return owedOn(s, m) > 0.005; })) { const s = open.find(function (s) { return owedOn(s, m) > 0.005; }); dueLine = s.dueOn ? fmt.date(s.dueOn) : 'On receipt'; dueSub = (s.status === 'overdue' ? 'Past due · ' : '') + monthLabel(s.period) + ' statement'; }
     else { dueLine = 'Next statement'; dueSub = 'New charges will be on your ' + monthName(key) + ' statement'; }
 
     view.innerHTML = hero(m, 'My account', 'Your balance, statements and payments in one place.') + subnav('') +
@@ -636,9 +644,10 @@
     S.update('members', memberId, { balance: r2(before - amt) });
     const after = r2(before - amt);
     const settled = [];
-    open.forEach(function (s) {
-      const owed = r2(Math.max(0, Math.min(before, s.total || 0)));
-      if (after <= 0.005 || amt >= owed - 0.005) { S.update('statements', s.id, { status: 'paid', paidOn: date }); settled.push(s); }
+    /* Oldest first. A statement is paid once the payments toward it (this one included) cover its total; paying the
+       whole balance pays them all. A payment larger than one statement carries on to the next, as totals carry over. */
+    open.slice().reverse().forEach(function (s) {
+      if (after <= 0.005 || paidToward(s) >= r2(s.total || 0) - 0.005) { S.update('statements', s.id, { status: 'paid', paidOn: date }); settled.push(s); }
     });
     const receipt = Club.receipts ? Club.receipts.create({ memberId: memberId, paymentId: p.id, title: 'Account payment', date: date,
       lines: [{ name: 'Payment on account', qty: 1, price: amt }], total: amt, method: 'card', methodLabel: Club.receipts.cardLabel(brand, last4), source: 'portal',

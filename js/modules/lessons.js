@@ -1,4 +1,5 @@
-/* Lessons & Academy: weekly teaching schedule by pro, lesson bookings, rate card and group programs. */
+/* Lessons & Academy: the teaching schedule (a day with a column for each pro, or the week with a row for each pro),
+   lesson bookings, rate card and group programs. */
 (function () {
   const S = Club.store, ui = Club.ui, esc = ui.esc, fmt = Club.fmt, R = S.R;
   /* Data helpers shared with the members' portal and public site: js/shared/lessons-data.js */
@@ -17,29 +18,12 @@
   function validDate(d) { return /^\d{4}-\d{2}-\d{2}$/.test(d || '') && !isNaN(fmt.toDate(d)); }
   function range(t, dur) { return fmt.time(t) + ' to ' + fmt.time(toHM(toMin(t) + dur)); }
   function hrs(m) { const h = m / 60; return (Math.round(h * 10) / 10).toString(); }
-  /* Soft hyphens at rough syllable breaks (Pem-ber-ton, Win-slow), so a name in a narrow block wraps
-     onto a second line at a sensible point. Hidden unless the line actually breaks there. */
-  const ONSET = /^(bl|br|cl|cr|dr|fl|fr|gl|gr|pl|pr|sc|sk|sl|sm|sn|sp|st|sw|tr|wh|ch|sh|th|ph|qu)$/i;
-  function softBreaks(name) {
-    const w = String(name || '');
-    if (w.length < 6 || /[^A-Za-z]/.test(w)) return w;
-    const vowel = function (c) { return /[aeiouy]/i.test(c); };
-    const cuts = [];
-    for (let i = 1; i < w.length - 1; i++) {
-      if (!vowel(w[i - 1]) || vowel(w[i])) continue;
-      let j = i; while (j < w.length && !vowel(w[j])) j++;
-      if (j >= w.length) break;
-      const cl = w.slice(i, j);
-      const at = cl.length === 1 || /^(ch|sh|th|ph|wh)$/i.test(cl) ? i : (ONSET.test(cl.slice(-2)) && cl.length > 2 ? j - 2 : j - 1);
-      if (at >= 3 && w.length - at >= 2) cuts.push(at);
-      i = j - 1;
-    }
-    let out = '', last = 0; cuts.forEach(function (c) { out += w.slice(last, c) + '\u00AD'; last = c; });
-    return out + w.slice(last);
-  }
-  /* Calendar layout for one day: items ({s, e} in minutes) that overlap in time share the width in the
-     fewest columns; an item with no overlap gets the full width, and items stretch right into free columns.
-     Sets col, span and cols on each item. */
+  function plural(n, word) { return n + ' ' + word + (n === 1 ? '' : 's'); }
+  /* Clock time without AM or PM (the hour scale beside the grid gives that): 9:00, 12:15 */
+  function clock(m) { return fmt.time(toHM(m)).replace(/ [AP]M$/, ''); }
+  /* Calendar layout for one pro's day: items ({s, e} in minutes) that overlap in time (a data oddity for one pro)
+     share the column's width in the fewest lanes; an item with no overlap gets the full width, and items stretch
+     right into free lanes. Sets col, span and cols on each item. */
   function layoutDay(items) {
     items.sort(function (a, b) { return a.s - b.s || (b.e - b.s) - (a.e - a.s); });
     let cluster = [], end = -1;

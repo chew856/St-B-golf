@@ -135,6 +135,21 @@ The combined week grid on Lessons & Academy is replaced by two views with a Day 
 - Member Spending tab (Nov 16): opens on Including dues; Period is a dropdown with Custom dates.
 - Tested in Chromium only.
 
+## Bug hunt and first fixes (Nov 16, NOT DEPLOYED YET)
+A six-tester bug hunt found 9 high, 26 medium and about 40 low bugs (list kept outside the repo; ask Claude for it).
+Fixed and tested in Chromium:
+- Portal statements paid in parts are marked paid (`js/portal/account.js` paidToward, owedOn, postPayment).
+- Client spending: an online green fee receipt opened twice is reused, not duplicated (`reports-clients.js` receiptFor,
+  publicReceipt); Revenue counts every paid online green fee once, with or without a receipt (`reports.js` liveIndex);
+  a charge reversed and charged again counts again (`reports-clients.js` buildLedger correction chains).
+- Friends leagues: a one-game week can no longer take two games when the later day is booked first
+  (`friendleagues.js` canCount loops over the round's week and later weeks).
+- Wedding, event and outing card deposits keep only brand and last four (`functions.js`, `outings.js`); older deposits
+  lose the extra fields the next time a deposit is recorded on that record.
+Still open from the hunt: browser storage (two tabs saving at once, storage nearly full, Safari's smaller limit), staff
+"Record payment" and "Mark paid" still ignore earlier part payments (`billing.js`), two same-amount payments seconds
+apart give one receipt (`receipts.js` double-click guard), and the medium and low items.
+
 ## Still to do or decide
 1. **Resolved Nov 13**: run alone, `xpo-test.mjs` (Group outings) passes all 192 checks and `xe-checkout.mjs`
    passes 418. The one failure is the outside weather service answering 503, not the site.

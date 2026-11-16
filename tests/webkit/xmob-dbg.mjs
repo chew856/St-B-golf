@@ -1,7 +1,7 @@
 import { webkit } from 'playwright';
 const b = await webkit.launch(); const p = await (await b.newContext({ viewport: { width: 390, height: 844 } })).newPage();
 await p.goto('http://localhost:8001/site/index.html#/lessons'); await p.waitForTimeout(1500);
-await p.locator('.page-head [data-action=book]').click(); await p.waitForTimeout(500);
+await p.locator('.ls-sched-head [data-action=book]').click(); await p.waitForTimeout(500);
 console.log(await p.evaluate(() => {
   document.documentElement.style.setProperty('--kb', '300px');
   const m = document.querySelector('.overlay .modal'); const cs = getComputedStyle(m);

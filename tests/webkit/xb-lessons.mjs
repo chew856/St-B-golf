@@ -1,4 +1,4 @@
-import { suite, open, human, undo, toastText, modalBtn, noHScroll, setVal, money } from './xb-lib.mjs';
+import { suite, open, human, lessonBlock, undo, toastText, modalBtn, noHScroll, setVal, money } from './xb-lib.mjs';
 const T = suite(); const { ok } = T;
 for (const W of [1440, 390]) {
   const { b, p } = await open(W, 'lessons', T);
@@ -15,7 +15,7 @@ for (const W of [1440, 390]) {
 
   /* 1. book, then undo */
   const n0 = await ev(() => Club.store.all('lessons').length);
-  await human(p, '.page-head [data-action=book]');
+  await human(p, '.ls-sched-head [data-action=book]');
   const slot = await ev(() => { const S = Club.store, d = Club.date.fromToday(1); const pros = S.all('staff').filter(s => /Golf Professional|Director of Golf/.test(s.role || '') && s.status !== 'inactive');
     const toMin = t => +t.split(':')[0] * 60 + +t.split(':')[1];
     for (const t of ['17:00', '17:15', '17:30', '16:00', '15:00', '14:00', '12:00']) for (const pr of pros) {
@@ -34,7 +34,7 @@ for (const W of [1440, 390]) {
 
   /* 2. complete with a fee, then undo */
   const m0 = await money(p, [info.memberId]);
-  await human(p, '.ls-block[data-id="' + L + '"]'); await modalBtn(p, 'Mark completed'); await p.waitForTimeout(500);
+  await lessonBlock(p, L); await modalBtn(p, 'Mark completed'); await p.waitForTimeout(500);
   const m1 = await money(p, [info.memberId]); const st1 = await ev(id => Club.store.find('lessons', id), L);
   ok(st1.status === 'completed' && st1.charged && (+m1.bal[0] - +m0.bal[0]).toFixed(2) === (+info.price).toFixed(2) && m1.charges === m0.charges + 1 && m1.receipts === m0.receipts + 1, W + ': completed, fee posted with a receipt', { m0, m1, st1 });
   await undo(p);
@@ -44,9 +44,9 @@ for (const W of [1440, 390]) {
   ok(/credited back/.test(await toastText(p)), W + ': undo toast says the fee was credited back');
 
   /* 3. complete again, then the permanent step back from the lesson details */
-  await human(p, '.ls-block[data-id="' + L + '"]'); await modalBtn(p, 'Mark completed'); await p.waitForTimeout(500);
+  await lessonBlock(p, L); await modalBtn(p, 'Mark completed'); await p.waitForTimeout(500);
   const m3 = await money(p, [info.memberId]);
-  await human(p, '.ls-block[data-id="' + L + '"]');
+  await lessonBlock(p, L);
   const hasBack = await p.locator('.modal-foot button', { hasText: 'Back to booked' }).count();
   await modalBtn(p, 'Back to booked'); await p.waitForTimeout(500);
   const m4 = await money(p, [info.memberId]); const st4 = await ev(id => Club.store.find('lessons', id), L);
@@ -56,7 +56,7 @@ for (const W of [1440, 390]) {
   ok(st5.status === 'completed' && m5.bal[0] === m3.bal[0] && m5.charges === m4.charges + 1, W + ': Undo of the step back completes it again and re-posts the fee', { m5, st5 });
 
   /* 4. cancel, then undo */
-  await human(p, '.ls-block[data-id="' + L2 + '"]'); await modalBtn(p, 'Cancel lesson'); await p.waitForTimeout(300); await modalBtn(p, 'Cancel lesson'); await p.waitForTimeout(500);
+  await lessonBlock(p, L2); await modalBtn(p, 'Cancel lesson'); await p.waitForTimeout(300); await modalBtn(p, 'Cancel lesson'); await p.waitForTimeout(500);
   const c1 = await ev(id => Club.store.find('lessons', id).status, L2);
   await undo(p);
   ok(c1 === 'cancelled' && await ev(id => Club.store.find('lessons', id).status, L2) === 'scheduled', W + ': cancel, then Undo restores the lesson', c1);
@@ -103,7 +103,7 @@ for (const W of [1440, 390]) {
 
   /* 7. closed day: the money step back is refused */
   if (W === 1440) {
-    await human(p, '.ls-block[data-id="' + L + '"]');
+    await lessonBlock(p, L);
     await ev(() => { window.__ic = Club.accounting.isClosed; Club.accounting.isClosed = () => true; });
     await modalBtn(p, 'Back to booked'); await p.waitForTimeout(300);
     ok(await ev(id => Club.store.find('lessons', id).status, L) === 'completed' && /closed in Accounting/.test(await toastText(p)), W + ': step back refused when today is closed');

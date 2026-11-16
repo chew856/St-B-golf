@@ -35,101 +35,239 @@ body.staff .ls-stats .stat-meta { font-size: 0.8125rem; }
 .ls-pro-metrics b { font-weight: 500; font-size: 0.9375rem; color: var(--text); line-height: 1.3; font-variant-numeric: tabular-nums; }
 .ls-pro-bar > span { background: var(--pc); transition: width var(--t-slow) var(--ease-ui); }
 
-/* ---------- Schedule ---------- */
-.ls-sched-panel { margin-bottom: 16px; }
-.ls-sched-head { flex-wrap: wrap; }
-.ls-weeknav { display: flex; align-items: center; gap: var(--s1); }
-.ls-weeknav .btn-ghost { width: 32px; padding: 0; }
-.ls-weektitle { margin-left: 10px; font-size: 1.0625rem; }
+/* ---------- Schedule ----------
+   One panel, two views (js/modules/lessons.js): Day, a time grid with a column for each pro, and Week, a row for
+   each pro with a cell for each day. The panel is a size container, so the layout follows the panel's own width
+   (sidebar open or closed, phone or desktop) and not the window's. */
+.ls-sched-panel { margin-bottom: 16px; container: lssched / inline-size; }
+
+/* Toolbar: week arrows, title, pro filter, Day | Week, Book lesson */
+.ls-sched-head { flex-wrap: wrap; justify-content: flex-start; gap: 0.625rem 0.75rem; padding: 0.875rem 1.125rem; }
+.ls-weeknav { display: flex; align-items: center; gap: 0.375rem; }
+body.staff .ls-weeknav .btn-icon { color: var(--text-2); }
+body.staff .ls-sched-head .ls-weektitle { margin: 0 auto 0 0.25rem; font-size: 1.1875rem; line-height: 1.3; white-space: nowrap; }
+.ls-profilter, .ls-viewsw { display: flex; min-width: 0; }
 .ls-profilter .segmented { flex-wrap: wrap; }
-.ls-sched { overflow-x: auto; scrollbar-width: thin; }
-.ls-grid {
-  --hour: 54px; --hour-col: 56px; --day-min: 108px; --lane-min: 2.75rem;
-  display: grid; grid-template-columns: var(--hour-col) repeat(7, minmax(var(--day-min), 1fr)); min-width: 860px;
-  grid-template-rows: auto calc(var(--hour) * 12);
+.ls-sched-head > .btn { flex: none; }
+/* Not enough room for everything on one line: the pro filter takes its own line under the toolbar */
+@container lssched (max-width: 66rem) {
+  .ls-profilter { order: 9; flex-basis: 100%; }
 }
-.ls-corner { border-bottom: 1px solid var(--border-strong); }
-.ls-dayhead { display: grid; grid-template-columns: auto 1fr; grid-template-areas: "wk n" "c c"; align-items: baseline; gap: 0 6px; padding: 10px 12px 8px; border-bottom: 1px solid var(--border-strong); border-left: 1px solid var(--border); }
-.ls-dh-wk { grid-area: wk; font-size: 0.8125rem; color: var(--text-2); }
-.ls-dh-n { grid-area: n; font-size: 1.0625rem; font-weight: 500; line-height: 1.2; color: var(--text); justify-self: end; font-variant-numeric: tabular-nums; }
-.ls-dh-c { grid-area: c; font-size: 0.75rem; color: var(--text-2); }
-.ls-dayhead.today { background: var(--sage-50); }
-.ls-dayhead.today .ls-dh-wk { color: var(--forest-800); font-weight: 500; }
 
+/* ----- Day view: the week's days ----- */
+.ls-strip { position: relative; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.5rem; padding: 0.875rem 1.125rem; border-bottom: 1px solid var(--border); }
+.ls-dpill {
+  display: grid; grid-template-columns: auto 1fr; align-items: baseline; column-gap: 0.5rem; min-width: 0; padding: 0.5rem 0.75rem;
+  text-align: left; font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 0.75rem; cursor: pointer;
+  transition: background var(--t-ui) var(--ease), border-color var(--t-ui) var(--ease), color var(--t-ui) var(--ease);
+}
+.ls-dp-wk { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); }
+.ls-dp-n { font-size: 1.25rem; line-height: 1.3; font-variant-numeric: tabular-nums; }
+.ls-dp-c { grid-column: 1 / -1; font-size: 0.78125rem; color: var(--text-2); white-space: nowrap; }
+.ls-dpill.today .ls-dp-wk { color: var(--forest-800); }
+@media (hover: hover) { .ls-dpill:not(.on):hover { background: var(--sage-50); border-color: var(--forest-500); } }
+.ls-dpill.on { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); }
+.ls-dpill.on .ls-dp-wk, .ls-dpill.on .ls-dp-c { color: var(--on-dark-2); }
+.ls-propick { display: none; }
+
+/* ----- Day view: a column for each pro ----- */
+.ls-daygrid { --hour: 4.25rem; --hour-col: 4rem; }
+.ls-dhead, .ls-dbody { display: grid; grid-template-columns: var(--hour-col) repeat(var(--n, 4), minmax(0, 1fr)); }
+/* The pros' names stay in sight while the hours scroll under the top bar */
+.ls-dhead { position: sticky; top: var(--topbar-h, 64px); z-index: 8; background: var(--surface); border-bottom: 1px solid var(--border); }
+.ls-ph { container-type: inline-size; min-width: 0; padding: 0; text-align: left; font: inherit; color: inherit; background: none; border: 0; border-left: 1px solid var(--border); cursor: pointer; transition: background var(--t-ui) var(--ease); }
+@media (hover: hover) { .ls-ph:hover, .ls-wp:hover { background: var(--sage-50); } }
+.ls-ph-in { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.125rem 0.625rem; padding: 0.75rem 0.875rem; }
+body.staff .ls-ph .avatar, body.staff .ls-wp .avatar { width: 2.125rem; height: 2.125rem; font-size: 0.8125rem; letter-spacing: 0; background: var(--pc); color: var(--pc-ink); }
+.ls-ph-id { display: flex; flex-direction: column; min-width: 0; }
+.ls-ph-id b { font-size: 0.875rem; font-weight: 600; line-height: 1.3; color: var(--text); }
+.ls-ph-id small { font-size: 0.78125rem; line-height: 1.35; color: var(--text-2); white-space: nowrap; }
+.ls-open { padding: 0.1875rem 0.5rem; border-radius: 999px; background: var(--sage-100); color: var(--good); font-size: 0.75rem; line-height: 1.3; white-space: nowrap; }
+/* Narrow column: the open time sits under the name */
+@container (max-width: 15.5rem) {
+  .ls-ph-in { grid-template-columns: auto minmax(0, 1fr); align-items: start; }
+  .ls-ph-in .avatar { grid-row: 1 / span 2; }
+  .ls-open { grid-column: 2; justify-self: start; margin-top: 0.1875rem; }
+}
+
+.ls-dbody { position: relative; height: calc(var(--hour) * var(--hours, 12)); }
 .ls-hours { position: relative; }
-.ls-hours span { position: absolute; right: 8px; transform: translateY(-50%); font-size: 0.75rem; color: var(--text-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
-.ls-hours span:first-child { transform: none; }
-.ls-day {
-  position: relative; border-left: 1px solid var(--border); cursor: copy;
-  background: repeating-linear-gradient(180deg, transparent 0 calc(var(--hour) - 1px), var(--border) calc(var(--hour) - 1px) var(--hour));
+.ls-hours span { position: absolute; right: 0.625rem; transform: translateY(-50%); font-size: 0.75rem; line-height: 1; color: var(--text-3); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ls-hours span:first-child { transform: translateY(0.3125rem); }
+.ls-hours .ls-h-off { visibility: hidden; }
+.ls-col {
+  position: relative; min-width: 0; border-left: 1px solid var(--border); cursor: copy;
+  background-image: linear-gradient(var(--border) 1px, transparent 1px); background-size: 100% var(--hour); background-position: 0 -1px;
 }
-.ls-day.today { background-color: color-mix(in srgb, var(--sage-50) 45%, transparent); }
-.ls-day.past { background-color: color-mix(in srgb, var(--border) 35%, transparent); }
-.ls-day.past { cursor: default; }
-/* Hover preview of the slot a click would book */
-.ls-ghost {
-  position: absolute; left: 2px; right: 2px; z-index: 0; pointer-events: none; display: none;
-  padding: 3px 6px; border-radius: var(--r-control); background: color-mix(in srgb, var(--sage-100) 70%, transparent); box-shadow: inset 0 0 0 1px var(--border-strong);
-  font-size: 0.75rem; line-height: 1.25; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.ls-ghost.on { display: block; }
+.ls-col.alt { background-color: color-mix(in srgb, var(--sage-50) 45%, transparent); }
+.ls-col.full { cursor: default; }
 
+/* A lesson. --col / --span / --cols come from the overlap layout: a lesson alone in its time has the pro's whole
+   column; two of one pro's lessons at the same time (a data oddity) sit side by side inside the column. */
 .ls-block {
-  /* --col / --span / --cols come from the overlap layout: a lesson alone in its time gets the full day width */
-  position: absolute; z-index: 1; overflow: hidden; container-type: inline-size;
-  left: calc(var(--col, 0) / var(--cols, 1) * 100% + 1px); width: calc(var(--span, 1) / var(--cols, 1) * 100% - 2px);
-  display: flex; flex-direction: column; align-items: stretch; gap: 0; padding: 3px 5px; text-align: left;
-  background: var(--pc); color: var(--pc-ink); border: 0; border-radius: var(--r-control); cursor: pointer;
-  box-shadow: 0 0 0 1px var(--surface);
-  font-size: 0.75rem; line-height: 1.25;
-  transition: filter var(--t-ui) var(--ease), transform var(--t-ui) var(--ease), opacity var(--t-ui) var(--ease);
+  position: absolute; z-index: 1; overflow: hidden;
+  left: calc(0.5rem + (100% - 1rem) * var(--col, 0) / var(--cols, 1) + 1px); width: calc((100% - 1rem) * var(--span, 1) / var(--cols, 1) - 2px);
+  display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 0; padding: 0.3125rem 0.625rem 0.3125rem 0.875rem;
+  text-align: left; font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-ctl);
+  box-shadow: var(--shadow-card); cursor: pointer;
+  transition: border-color var(--t-ui) var(--ease), background var(--t-ui) var(--ease);
   animation: ls-in 480ms var(--ease-ui) both;
 }
-@media (hover: hover) { .ls-block:hover { filter: brightness(1.08); z-index: 2; } }
+.ls-block::before, .ls-chip::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 0.3125rem; background: var(--pc); }
+@media (hover: hover) { .ls-block:hover { border-color: var(--forest-500); z-index: 2; } }
 .ls-block:focus-visible { z-index: 3; }
-.ls-block > span { display: block; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ls-b-time { font-variant-numeric: tabular-nums; }
-.ls-block > .ls-b-who { display: flex; flex-wrap: wrap; height: 1.25em; font-weight: 600; }
-.ls-b-last { flex: 0 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ls-b-ini { flex: none; white-space: pre; }
-.ls-block > .ls-b-sub { display: none; }
-.ls-block.tall > .ls-b-sub { display: block; }
-/* 30 minutes: time and name share one line */
-.ls-block.tiny { flex-direction: row; align-items: baseline; gap: 4px; padding-top: 2px; padding-bottom: 0; }
-.ls-block.tiny .ls-b-time { flex: none; }
-.ls-block.tiny .ls-b-who { flex: 1 1 auto; }
-/* Narrow 30-minute blocks: the name matters more than the time, which the grid and tooltip give */
-@container (max-width: 88px) { .ls-block.tiny > .ls-b-time { display: none; } }
-/* Narrow blocks (several lessons at once): text uses most of the side padding, and in an hour or longer
-   the last name may run onto a second line instead of being cut. The pro is still told by the colour. */
-@container (max-width: 88px) {
-  .ls-block > span { margin: 0 -2px; }
-  .ls-block.tall > .ls-b-who { height: auto; max-height: 2.5em; }
-  .ls-block.tall .ls-b-last { white-space: normal; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-  .ls-block.tall .ls-b-ini { display: none; }
-  .ls-block.tall:not(.xl) > .ls-b-sub { display: none; }
+.ls-block > span { flex: none; min-width: 0; }
+/* Time on the left, "Completed" on the right; where both do not fit the label wraps out of sight */
+.ls-b-top { display: flex; flex-wrap: wrap; justify-content: space-between; column-gap: 0.5rem; height: 1rem; overflow: hidden; font-size: 0.75rem; line-height: 1rem; color: var(--text-2); }
+.ls-b-time { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ls-b-st { font-weight: 600; color: var(--good); white-space: nowrap; }
+.ls-b-who { font-size: 0.875rem; font-weight: 600; line-height: 1.125rem; overflow-wrap: anywhere; }
+.ls-b-sub { font-size: 0.78125rem; line-height: 1rem; color: var(--text-2); }
+/* Shorter blocks show fewer lines (data-fit is set by fitBlocks): 1 drops the lesson type, 2 is one line (start
+   time and name), 3 is the name alone where even that line is too narrow for both */
+.ls-block:is([data-fit="1"], [data-fit="2"], [data-fit="3"]) .ls-b-sub, .ls-block:is([data-fit="2"], [data-fit="3"]) :is(.ls-b-end, .ls-b-st), .ls-block[data-fit="3"] .ls-b-top { display: none; }
+.ls-block:is([data-fit="2"], [data-fit="3"]) { flex-direction: row; align-items: center; gap: 0.4375rem; padding-top: 0; padding-bottom: 0; }
+.ls-block[data-fit="2"] .ls-b-top { height: auto; line-height: 1.125rem; }
+.ls-block:is([data-fit="2"], [data-fit="3"]) .ls-b-who { flex: 1 1 auto; font-size: 0.8125rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ls-block.st-completed { background: var(--sage-50); box-shadow: none; }
+.ls-block.st-completed .ls-b-who { color: var(--text-2); font-weight: 500; }
+.ls-progblock { border-style: dashed; box-shadow: none; }
+.ls-progblock .ls-b-who { font-weight: 500; }
+.ls-block.ls-new, .ls-chip.ls-new { animation: ls-new 900ms var(--ease-ui) both; }
+
+/* The slot a click would book: follows the pointer over open time, and takes the keyboard's focus */
+.ls-ghost {
+  position: absolute; left: calc(0.5rem + 1px); right: calc(0.5rem + 1px); z-index: 0; display: grid; place-items: center; padding: 0 0.5rem;
+  font: inherit; font-size: 0.78125rem; font-weight: 500; color: var(--forest-500); white-space: nowrap; overflow: hidden;
+  background: color-mix(in srgb, var(--surface) 70%, transparent); border: 1px dashed var(--border-strong); border-radius: var(--radius-ctl);
+  opacity: 0; pointer-events: none;
 }
-.ls-block.st-completed { background: color-mix(in srgb, var(--pc) 20%, var(--surface)); color: var(--text); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pc) 45%, var(--surface)); }
-.ls-block.st-completed .ls-b-who { text-decoration: none; }
-.ls-progblock {
-  background: var(--sage-50); color: var(--forest-800);
-  box-shadow: inset 0 0 0 1px var(--forest-500);
-}
-.ls-block.ls-new { animation: ls-new 900ms var(--ease-ui) both; }
-.ls-now { position: absolute; left: 0; right: 0; height: 0; border-top: 3px solid var(--danger); margin-top: -1.5px; z-index: 6; pointer-events: none; box-shadow: 0 0 0 1px color-mix(in srgb, var(--surface) 70%, transparent); }
-.ls-now-t { position: absolute; right: 2px; top: -10px; padding: 1px 6px; border-radius: 999px; background: var(--danger); color: var(--on-dark); font-size: 0.6875rem; font-weight: 600; line-height: 16px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.ls-now::before { content: ""; position: absolute; left: -6px; top: -7.5px; width: 12px; height: 12px; border-radius: 50%; background: var(--danger); }
+.ls-ghost.on, .ls-ghost:focus-visible { opacity: 1; }
+
+/* Now (today only): a line across every column, the time in the hour column */
+.ls-now { position: absolute; left: var(--hour-col); right: 0; height: 0; margin-top: -1px; border-top: 2px solid var(--danger); z-index: 6; pointer-events: none; }
+.ls-now[hidden] { display: none; }
+.ls-now-t { position: absolute; right: calc(100% + 0.25rem); top: -0.6875rem; padding: 0 0.4375rem; border-radius: 999px; background: var(--danger); color: var(--on-dark); font-size: 0.75rem; font-weight: 600; line-height: 1.25rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 @keyframes ls-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-@keyframes ls-new { 0% { opacity: 0; transform: scale(0.92); box-shadow: 0 0 0 0 var(--forest-500); } 60% { opacity: 1; transform: none; box-shadow: 0 0 0 3px var(--on-dark); } 100% { box-shadow: 0 0 0 0 transparent; } }
+@keyframes ls-new { 0% { opacity: 0; transform: scale(0.96); } 45% { opacity: 1; transform: none; box-shadow: 0 0 0 3px var(--forest-500); } }
+@media (prefers-reduced-motion: reduce) { .ls-block, .ls-chip, .ls-block.ls-new, .ls-chip.ls-new { animation: none; } }
 
-.ls-legend { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s5); padding: var(--s3) var(--s5); border-top: 1px solid var(--border); font-size: var(--fs-12); color: var(--text-2); }
-.ls-legend span { display: inline-flex; align-items: center; gap: 6px; }
-.ls-legend i { width: 10px; height: 10px; border-radius: 3px; background: var(--pc); }
-.ls-legend .ls-leg-prog i { background: var(--sage-50); box-shadow: inset 0 0 0 1px var(--forest-500); }
-.ls-legend .ls-leg-done i { background: color-mix(in srgb, var(--c1) 20%, var(--surface)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c1) 45%, var(--surface)); }
+/* ----- Week view: a row for each pro ----- */
+.ls-wscroll { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+.ls-wgrid { --wpro: 11.5rem; display: grid; grid-template-columns: var(--wpro) repeat(7, minmax(0, 1fr)); min-width: 57.5rem; }
+.ls-wh, .ls-wc-day {
+  display: flex; align-items: baseline; gap: 0.375rem; padding: 0.625rem 0.75rem; text-align: left; font: inherit; font-size: 0.75rem; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); background: none; border: 0; border-left: 1px solid var(--border); cursor: pointer;
+  transition: background var(--t-ui) var(--ease);
+}
+.ls-wh b, .ls-wc-day b { font-size: 1.125rem; font-weight: 500; line-height: 1.3; letter-spacing: 0; text-transform: none; color: var(--text); font-variant-numeric: tabular-nums; }
+.ls-wh.today { background: var(--sage-50); color: var(--forest-800); }
+@media (hover: hover) { .ls-wh:hover { background: var(--sage-100); } }
+.ls-wc-day { display: none; }
+/* The pro column stays put where the week scrolls sideways inside its box (narrow panels) */
+.ls-wcorner { position: sticky; left: 0; z-index: 2; background: var(--surface); }
+.ls-wp {
+  position: sticky; left: 0; z-index: 2; display: flex; align-items: flex-start; gap: 0.625rem; min-width: 0; padding: 0.875rem 0.75rem;
+  text-align: left; font: inherit; color: inherit; background: var(--surface); border: 0; border-top: 1px solid var(--border); cursor: pointer;
+  transition: background var(--t-ui) var(--ease);
+}
+.ls-wp-id { min-width: 0; }
+.ls-wp-id b { display: block; font-size: 0.875rem; font-weight: 600; line-height: 1.3; color: var(--text); }
+.ls-wp-id small { display: block; font-size: 0.75rem; line-height: 1.45; color: var(--text-2); }
+.ls-wc {
+  container-type: inline-size; display: flex; flex-direction: column; gap: 0.3125rem; min-width: 0; min-height: 9.375rem; padding: 0.375rem;
+  border-top: 1px solid var(--border); border-left: 1px solid var(--border); cursor: pointer; transition: background var(--t-ui) var(--ease);
+}
+.ls-wc.today { background: var(--sage-50); }
+@media (hover: hover) {
+  .ls-wc:hover { background: color-mix(in srgb, var(--sage-50) 55%, transparent); }
+  .ls-wc.today:hover { background: color-mix(in srgb, var(--sage-100) 60%, var(--sage-50)); }
+}
+.ls-wc-items { display: flex; flex-direction: column; gap: 0.3125rem; min-width: 0; }
+/* A lesson in a cell: time, then the last name. A name too long for the line goes under the time, never cut */
+.ls-chip {
+  position: relative; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.3125rem; min-width: 0; padding: 0.3125rem 0.25rem 0.3125rem 0.5625rem; overflow: hidden;
+  text-align: left; font: inherit; font-size: 0.78125rem; line-height: 1.3; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 0.5rem; cursor: pointer;
+  transition: border-color var(--t-ui) var(--ease);
+  animation: ls-in 480ms var(--ease-ui) both;
+}
+.ls-chip::before { width: 0.25rem; }
+@media (hover: hover) { .ls-chip:hover { border-color: var(--forest-500); } }
+.ls-c-t { flex: none; width: 2.0625rem; font-size: 0.75rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.ls-c-w { flex: 0 1 auto; min-width: 0; font-weight: 500; overflow-wrap: anywhere; }
+.ls-chip.st-completed { background: transparent; color: var(--text-2); }
+.ls-chip.st-completed .ls-c-w { font-weight: 400; }
+.ls-chip-prog { border-style: dashed; background: transparent; }
+/* Narrow day cells (under about 127px across): every lesson puts the name under the time, so a cell reads evenly */
+@container (max-width: 7rem) {
+  .ls-chip { flex-direction: column; flex-wrap: nowrap; align-items: stretch; }
+  .ls-c-t { width: auto; }
+}
+.ls-more { align-self: flex-start; padding: 0.125rem 0.25rem; font: inherit; font-size: 0.78125rem; font-weight: 500; color: var(--forest-500); background: none; border: 0; border-radius: 0.375rem; cursor: pointer; }
+@media (hover: hover) { .ls-more:hover { color: var(--forest-800); text-decoration: underline; } }
+.ls-wc-tot { margin-top: auto; padding: 0.125rem 0.25rem; font-size: 0.75rem; color: var(--text-3); }
+.ls-wc-tot.ls-wc-none { margin-top: 0; }
+/* Less room (sidebar open on a small laptop): a slimmer pro column, so each day keeps room for a full last name */
+@container lssched (max-width: 66rem) {
+  .ls-wgrid { --wpro: 10.5rem; }
+  .ls-wp { gap: 0.5rem; padding-left: 0.625rem; padding-right: 0.625rem; }
+  .ls-wc { padding: 0.3125rem; }
+  .ls-chip { padding-left: 0.5rem; }
+}
+
+.ls-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.125rem; padding: 0.75rem 1.125rem; border-top: 1px solid var(--border); font-size: 0.78125rem; color: var(--text-2); }
+.ls-legend span { display: inline-flex; align-items: center; gap: 0.375rem; }
+.ls-legend i { width: 0.75rem; height: 0.75rem; border-radius: 3px; border: 1px solid var(--border-strong); background: var(--surface); }
+.ls-legend .ls-leg-done i { background: var(--sage-100); }
+.ls-legend .ls-leg-prog i { border-style: dashed; background: transparent; }
 .ls-leg-hint { margin-left: auto; }
-.ls-cxl { font-size: var(--fs-12); margin: 0; padding: var(--s2) var(--s5) 0; }
+.ls-cxl { font-size: var(--fs-12); margin: 0; padding: var(--s3) 1.125rem; border-top: 1px solid var(--border); }
+
+/* ----- Phones and narrow panels (under about 700px of panel) -----
+   Day view: one pro at a time, chosen above the grid; the day strip scrolls sideways inside its own box.
+   Week view: stacked, a block for each pro with a line for each day. Nothing makes the page scroll sideways. */
+@container lssched (max-width: 44rem) {
+  .ls-sched-head { padding: 0.75rem 1rem; gap: 0.5rem; }
+  body.staff .ls-sched-head .ls-weektitle { order: 1; flex: 1 1 auto; margin: 0; font-size: 1.0625rem; }
+  .ls-sched-head > .btn { order: 2; }
+  .ls-weeknav { order: 3; margin-right: auto; }
+  .ls-viewsw { order: 4; }
+  .ls-sched-panel[data-view="day"] .ls-profilter { display: none; }
+
+  .ls-strip { grid-template-columns: repeat(7, minmax(5.75rem, 1fr)); padding: 0.75rem 1rem; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; scrollbar-width: none; }
+  .ls-strip::-webkit-scrollbar { display: none; }
+  .ls-dpill { scroll-snap-align: center; min-height: 2.75rem; }
+  .ls-propick { display: block; padding: 0.625rem 1rem; border-bottom: 1px solid var(--border); }
+  body.staff .ls-propick .segmented { display: flex; }
+  body.staff .ls-propick .segmented button { flex: 1 1 0; min-width: 0; padding-left: 0.25rem; padding-right: 0.25rem; }
+  /* Taller hours, so a half-hour lesson is still a 40px tap target */
+  .ls-daygrid { --hour: 5.25rem; --hour-col: 3.25rem; }
+  .ls-dhead, .ls-dbody { grid-template-columns: var(--hour-col) minmax(0, 1fr); }
+  .ls-ph:not(.ls-pon), .ls-col:not(.ls-pon) { display: none; }
+  .ls-col.alt { background-color: transparent; }
+  .ls-hours span { right: 0.375rem; }
+  .ls-now-t { right: calc(100% + 0.125rem); padding: 0 0.3125rem; }
+
+  .ls-wscroll { overflow-x: visible; }
+  .ls-wgrid { min-width: 0; grid-template-columns: minmax(0, 1fr); }
+  .ls-wcorner, .ls-wh { display: none; }
+  .ls-wp { position: static; align-items: center; padding: 0.75rem 1rem; background: var(--bg); }
+  .ls-wp-id small { display: inline; }
+  .ls-wp-id small + small::before { content: " · "; }
+  .ls-wc { display: grid; grid-template-columns: 3.25rem minmax(0, 1fr); align-items: start; gap: 0.25rem 0.625rem; min-height: 0; padding: 0.5rem 1rem; border-left: 0; }
+  .ls-wc-day { display: flex; flex-direction: column; align-items: flex-start; gap: 0; grid-row: 1 / span 2; min-height: 2.5rem; padding: 0.1875rem 0; border-left: 0; }
+  .ls-wc-items { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.375rem; grid-column: 2; }
+  .ls-chip { min-height: 2.5rem; align-content: center; padding-left: 0.625rem; }
+  .ls-c-t { width: 2.25rem; }
+  .ls-more { grid-column: 1 / -1; justify-self: start; min-height: 2.5rem; padding: 0 0.5rem; }
+  .ls-wc-tot { grid-column: 2; margin: 0; padding: 0 0.125rem; }
+  .ls-wc-tot.ls-wc-none { align-self: center; }
+
+  .ls-legend { gap: 0.375rem 1rem; padding: 0.625rem 1rem; }
+  .ls-leg-hint { margin-left: 0; flex-basis: 100%; }
+  .ls-cxl { padding: 0.625rem 1rem; }
+}
 
 /* ---------- Lower: programs and side ---------- */
 .ls-lower { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
@@ -197,9 +335,6 @@ body.staff .ls-dark-btn.due { border-color: var(--forest-800); color: var(--fore
   .ls-side { grid-template-columns: minmax(0, 1fr); }
   .ls-proggrid { grid-template-columns: minmax(0, 1fr); }
   .ls-prog:nth-child(odd) { border-right: 0; }
-  .ls-weektitle { flex-basis: 100%; margin: var(--s2) 0 0; }
-  .ls-weeknav { flex-wrap: wrap; }
-  .ls-leg-hint { margin-left: 0; }
 }
 @media (max-width: 560px) {
   .ls-pro-spec { min-height: 0; }
@@ -226,20 +361,7 @@ body.staff .ls-dark-btn.due { border-color: var(--forest-800); color: var(--fore
   .ls-pro-spec { font-size: var(--fs-13); line-height: 1.4; min-height: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .ls-pro-metrics { padding-top: var(--s2); }
 
-  /* Week schedule: compact header, filters in one row, grid scrolls inside its panel */
   .ls-sched-panel { margin-bottom: var(--s4); }
-  .ls-sched-head { gap: var(--s2); }
-  .ls-weeknav .btn-ghost { width: 34px; min-width: 34px; }
-  .ls-weektitle { font-size: 1.0625rem; margin-top: 4px; }
-  .ls-profilter { max-width: 100%; min-width: 0; }
-  .ls-profilter .segmented { flex-wrap: nowrap; }
-  .ls-grid { --hour: 50px; --hour-col: 44px; --day-min: 104px; --lane-min: 56px; min-width: 780px; }
-  .ls-dayhead { padding: 6px 8px; }
-  .ls-dh-n { font-size: 1.125rem; }
-  .ls-hours span { right: 5px; font-size: 0.5625rem; }
-  .ls-block { padding: 2px 4px; }
-  .ls-legend { gap: 4px var(--s4); padding: 10px var(--s4); font-size: 0.6875rem; }
-  .ls-cxl { padding: var(--s2) var(--s4) 0; font-size: 0.6875rem; }
 
   /* Programs and side panels */
   .ls-lower, .ls-side { gap: var(--s4); }

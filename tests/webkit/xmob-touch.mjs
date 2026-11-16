@@ -10,7 +10,7 @@ const b = await webkit.launch();
   const bg1 = await btn.evaluate(e => getComputedStyle(e).backgroundColor);
   ok(bg0 !== bg1, 'desktop: hovering a button still changes its background', { bg0, bg1 });
   await p.goto(B + 'index.html#/lessons'); await p.waitForTimeout(1500);
-  await p.locator('.page-head [data-action=book]').click(); await p.waitForTimeout(400);
+  await p.locator('.ls-sched-head [data-action=book]').click(); await p.waitForTimeout(400);
   ok(await p.evaluate(() => /INPUT|SELECT|TEXTAREA|BUTTON/.test(document.activeElement.tagName) && !!document.activeElement.closest('.modal')), 'desktop: dialog focuses its first control', await p.evaluate(() => document.activeElement.tagName));
   ok(await p.evaluate(() => document.documentElement.style.overflow === 'hidden'), 'desktop: page behind the dialog is locked');
 }
@@ -18,7 +18,7 @@ const b = await webkit.launch();
 { const c = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
   await c.addInitScript(() => { const mm = window.matchMedia.bind(window); window.matchMedia = q => /hover: none|pointer: coarse/.test(q) ? { matches: true, media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} } : mm(q); });
   const p = await c.newPage(); await p.goto(B + 'index.html#/lessons'); await p.waitForTimeout(1800);
-  await p.locator('.page-head [data-action=book]').tap(); await p.waitForTimeout(500);
+  await p.locator('.ls-sched-head [data-action=book]').tap(); await p.waitForTimeout(500);
   const f = await p.evaluate(() => ({ tag: document.activeElement.tagName, cls: document.activeElement.className }));
   ok(!/INPUT|TEXTAREA|SELECT/.test(f.tag), 'phone: opening a dialog does not pop the keyboard', f);
   const fs = await p.evaluate(() => [...document.querySelectorAll('.modal input.input, .modal textarea, .topbar .search input')].filter(e => e.getBoundingClientRect().width).map(e => parseFloat(getComputedStyle(e).fontSize)));

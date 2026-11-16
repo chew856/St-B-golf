@@ -122,6 +122,19 @@ others). The same breakdown is the Spending tab on the staff member page.
   charges and online green fees). Public My account: short panels moved to the right column.
 - Tested in Chromium only.
 
+## Lessons schedule redesign (built and deployed Nov 16)
+The combined week grid on Lessons & Academy is replaced by two views with a Day | Week switch (approved mock-ups):
+- Day (default): a strip of the seven days, then a time grid with one column per professional. Blocks show the time
+  range, the client's full name and the lesson type; each column header shows lessons, hours and "h open" (the 7 AM
+  to 7 PM span minus that pro's lessons and academy sessions; the data has no days off). Open space books with that
+  pro, date and time. On phones one pro shows at a time.
+- Week: a row per professional, each day listing lessons as time and last name, three shown and "N more".
+- The pro filter, roster cards, dialogs and Undo are unchanged. Book lesson moved into the schedule toolbar.
+- Tests: `tests/webkit/xls-grid.mjs` was rewritten for the new views; xb-lessons, xls-pay, xmob-touch and xb-lib were
+  updated. xls-hover, xls-measure and xls-trunc probed the old grid and no longer apply. Item 2 below is obsolete.
+- Member Spending tab (Nov 16): opens on Including dues; Period is a dropdown with Custom dates.
+- Tested in Chromium only.
+
 ## Still to do or decide
 1. **Resolved Nov 13**: run alone, `xpo-test.mjs` (Group outings) passes all 192 checks and `xe-checkout.mjs`
    passes 418. The one failure is the outside weather service answering 503, not the site.

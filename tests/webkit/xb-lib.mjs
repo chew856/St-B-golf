@@ -30,6 +30,16 @@ export async function undo(p) {
   let prev = null; for (let i = 0; i < 20; i++) { const bx = await loc.boundingBox(); if (prev && bx && Math.abs(bx.y - prev.y) < 0.5) break; prev = bx; await p.waitForTimeout(120); }
   await human(p, loc); await p.waitForTimeout(300);
 }
+/** Lessons page (Day | Week schedule, Nov 16): click a lesson's block in the Day view. A block shows when the view is Day,
+    its day is chosen in the strip and, on a phone (one pro at a time), its pro is chosen in the picker above the grid. */
+export async function lessonBlock(p, id) {
+  const l = await p.evaluate(id => { const l = Club.store.find('lessons', id); return { date: l.date, pro: l.proId }; }, id);
+  if (await p.locator('.ls-sched-panel[data-view=week]').count()) await human(p, '.segmented[data-name=lsview] button[data-value=day]');
+  if (!(await p.locator('.ls-dpill.on[data-date="' + l.date + '"]').count())) await human(p, '.ls-dpill[data-date="' + l.date + '"]');
+  const pick = p.locator('.ls-propick button[data-value="' + l.pro + '"]:not(.active)');
+  if (await pick.count() && await pick.isVisible()) await human(p, pick);
+  await human(p, '.ls-block[data-id="' + id + '"]');
+}
 export async function toastText(p) { return p.evaluate(() => [...document.querySelectorAll('.toast')].map(t => t.textContent).join(' | ')); }
 export async function modalBtn(p, text) { await human(p, p.locator('.modal-foot button', { hasText: text }).last()); }
 export async function noHScroll(p) { return p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1); }

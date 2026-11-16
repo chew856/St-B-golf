@@ -1,4 +1,4 @@
-import { suite, open, human, undo, toastText, modalBtn, setVal, noHScroll } from './xb-lib.mjs';
+import { suite, open, human, lessonBlock, undo, toastText, modalBtn, setVal, noHScroll } from './xb-lib.mjs';
 const T = suite(); const { ok } = T;
 const SH = './shots/';
 for (const W of [1440, 390]) {
@@ -20,7 +20,7 @@ for (const W of [1440, 390]) {
     const fill = async (s) => { await setVal(p, '.ls-modal [name=proId]', s.pro); await setVal(p, '.ls-modal [name=date]', D); await setVal(p, '.ls-modal [name=time]', s.t); };
 
     /* 1. non-member: name required, phone formats, books as pays-at-shop */
-    await human(p, '.page-head [data-action=book]');
+    await human(p, '.ls-sched-head [data-action=book]');
     await human(p, '.ls-modal .segmented[data-name=who] button[data-value=guest]');
     const vis = await ev(() => ({ mem: !document.querySelector('.ls-modal [data-for-who=member]').hidden, g: !document.querySelector('.ls-modal [data-for-who=guest]').hidden, box: document.querySelector('.ls-paybox').textContent }));
     ok(!vis.mem && vis.g && /Non-members pay at the golf shop/.test(vis.box), W + ': Non-member shows name/phone/email and the golf shop note', vis);
@@ -38,7 +38,7 @@ for (const W of [1440, 390]) {
     ok(await p.locator('.ls-block[data-id="' + L1.id + '"]').count() === 1 && /Testerson/.test((await p.locator('.ls-block[data-id="' + L1.id + '"]').textContent()).replace(/\u00AD/g, '')), W + ': block shows the non-member name');
 
     /* 2. take payment from the lesson: card; receipt by name; undo credits it */
-    await human(p, '.ls-block[data-id="' + L1.id + '"]');
+    await lessonBlock(p, L1.id);
     if (W === 1440) await p.screenshot({ path: SH + 'lspay-edit-guest.png' });
     await human(p, '.ls-modal [data-lsp=take]'); await p.waitForTimeout(500);
     ok(await p.locator('.ts-pay-modal').count() === 1 && /Lesson payment/.test(await p.locator('.ts-pay-modal').textContent()), W + ': the golf shop till opens for the lesson');
@@ -61,7 +61,7 @@ for (const W of [1440, 390]) {
     const C1 = await ev(id => Club.store.find('lessons', id), L1.id); const s3b = await snap();
     ok(C1.status === 'completed' && C1.paid && C1.shopPay.method === 'cash' && s3b.ch === s3.ch && s3b.rc === s3.rc + 1 && /paid at the golf shop/.test(await toastText(p)), W + ': completed and paid in cash, no account charge', { st: C1.status, s3, s3b, t: await toastText(p) });
     /* refund from the completed lesson */
-    await human(p, '.ls-block[data-id="' + L1.id + '"]'); await p.waitForTimeout(300);
+    await lessonBlock(p, L1.id); await p.waitForTimeout(300);
     await modalBtn(p, 'Refund payment'); await p.waitForTimeout(300);
     await human(p, p.locator('.modal-foot button', { hasText: 'Refund payment' }).last()); await p.waitForTimeout(600);
     const R1 = await ev(id => { const S = Club.store, l = S.find('lessons', id); return { paid: !!l.paid, st: l.status, cr: S.all('receipts').filter(r => r.refId === id && r.kind === 'credit').length }; }, L1.id);
@@ -70,7 +70,7 @@ for (const W of [1440, 390]) {
 
     /* 4. member paying at the golf shop: Book and take payment; no account charge; receipt on the member */
     const mem = await ev(d => Club.store.all('members').find(m => m.status === 'active' && m.tierId !== 'tier_social' && !Club.store.all('lessons').some(l => l.memberId === m.id && l.date === d)).id, D);
-    await human(p, '.page-head [data-action=book]');
+    await human(p, '.ls-sched-head [data-action=book]');
     await setVal(p, '.ls-modal [name=memberId]', mem); await fill(slots[1]);
     let box = await ev(() => document.querySelector('.ls-paybox').textContent);
     ok(/posts to the member/.test(box), W + ': member defaults to Charge to account', box);
@@ -82,7 +82,7 @@ for (const W of [1440, 390]) {
     const rc4 = await ev(id => { const l = Club.store.find('lessons', id); const r = Club.store.find('receipts', l.shopPay.receiptId); return { m: r.memberId, k: r.kind }; }, L4.id);
     ok(L4.memberId === mem && L4.pays === 'shop' && L4.paid && s4b.ls === s4.ls + 1 && s4b.ch === s4.ch && rc4.m === mem && /Lesson booked and/.test(await toastText(p)), W + ': member booked and paid at the shop in one step; receipt on the member; no account charge', { L4, rc4, s4, s4b });
     /* cancel a paid lesson refunds it; undo restores */
-    await human(p, '.ls-block[data-id="' + L4.id + '"]'); await modalBtn(p, 'Cancel lesson'); await p.waitForTimeout(300);
+    await lessonBlock(p, L4.id); await modalBtn(p, 'Cancel lesson'); await p.waitForTimeout(300);
     const ctext = await ev(() => document.querySelector('.modal:last-of-type, .modal').textContent);
     await human(p, p.locator('.modal-foot button', { hasText: 'Cancel lesson' }).last()); await p.waitForTimeout(600);
     const C4 = await ev(id => { const S = Club.store, l = S.find('lessons', id); return { st: l.status, paid: !!l.paid, cr: S.all('receipts').filter(r => r.refId === id && r.kind === 'credit').length }; }, L4.id);

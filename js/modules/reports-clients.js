@@ -338,8 +338,9 @@
   }
   const DUES_OPTS = [{ value: 'ex', label: 'Excluding dues' }, { value: 'in', label: 'Including dues' }];
   function memberTab(p, m) {
-    let period = 'm12', inc = false;
-    try { const o = JSON.parse(localStorage.getItem(TAB_KEY) || 'null'); if (o && TAB_PERIODS.some(function (x) { return x.value === o.period; })) { period = o.period; inc = !!o.inc; } } catch (e) { /* storage unavailable */ }
+    /* The tab always opens on Including dues (owner's choice, Nov 16); only the period is remembered. */
+    let period = 'm12', inc = true;
+    try { const o = JSON.parse(localStorage.getItem(TAB_KEY) || 'null'); if (o && TAB_PERIODS.some(function (x) { return x.value === o.period; })) period = o.period; } catch (e) { /* storage unavailable */ }
     function draw(focus) {
       const L = buildLedger(), range = tabRange(period, L), st = forClient('m:' + m.id, range, inc, L);
       p.innerHTML = '<section class="panel cl-tab" data-reveal><div class="panel-head cl-tab-head"><div><h3>Spending</h3><p class="cl-tab-range">' + esc(F.date(range.from) + ' to ' + F.date(range.to)) + '</p></div>' +
@@ -352,7 +353,7 @@
     U.on(p, 'click', '.cl-filters .segmented button', function (e, b) {
       const name = b.closest('.segmented').dataset.name;
       if (name === 'period') period = b.dataset.value; else inc = b.dataset.value === 'in';
-      try { localStorage.setItem(TAB_KEY, JSON.stringify({ period: period, inc: inc })); } catch (err) { /* ignore */ }
+      try { localStorage.setItem(TAB_KEY, JSON.stringify({ period: period })); } catch (err) { /* ignore */ }
       draw(name);
     });
     draw();

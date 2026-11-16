@@ -409,7 +409,8 @@
       const doc = res.doc; const added = model.players.slice(1); sendAuto(me, doc, added);
       sh.setContent('<div class="fr-joinbox fr-done"><span class="fr-done-ic">' + Club.icon('check') + '</span><h3 class="fr-done-h">You’re in</h3>' +
         '<p class="fr-join-what">' + esc(teeLabel(doc) + ' · ' + doc.holes + ' holes') + '</p>' +
-        '<p class="fr-join-sub">' + esc((doc.players || []).map(function (p) { return p.memberId === me ? 'You' : p.type === 'guest' && p.hostId === me ? p.name + ' (your guest)' : Portal.playerLabel(p, me); }).join(', ')) + '</p>' +
+        /* one span per player, so "You" and "(your guest)" translate on their own in French */
+        '<p class="fr-join-sub">' + (doc.players || []).map(function (p) { return '<span>' + esc(p.memberId === me ? 'You' : p.type === 'guest' && p.hostId === me ? p.name + ' (your guest)' : Portal.playerLabel(p, me)) + '</span>'; }).join(', ') + '</p>' +
         '<p class="fr-quiet">' + Club.icon('flag') + '<span>It’s in My tee times. ' + esc(namesOf(fids)) + (fids.length === 1 ? ' has' : ' have') + ' a message that you joined.</span></p></div>');
       sh.setFooter('<div class="fr-done-acts"><button type="button" class="btn" data-fr="ics">' + Club.icon('calendar') + '<span>Add to calendar</span></button><button type="button" class="btn btn-primary" data-fr="done">Done</button></div>');
       ui.$('[data-fr=ics]', sh.foot).addEventListener('click', function () { T.downloadIcs(doc); });

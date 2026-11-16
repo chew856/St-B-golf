@@ -41,6 +41,7 @@ body.portal .pe-cal-head h2 { margin: 0 !important; }
 body.portal .pe-filter-f { flex: 0 1 auto; min-width: 0; }
 body.portal .pe-filter-f .pk-select { min-height: 44px; padding: 6px 10px 6px 12px; gap: 6px; font-size: 0.9375rem; }
 body.portal .pe-filter-f .pk-select-main::before { content: "Showing: "; font-weight: 400; color: var(--text-2); }
+html[lang="fr-CA"] body.portal .pe-filter-f .pk-select-main::before { content: "Affichage\00a0: "; }   /* French mode (js/core/i18n.js sets the lang) */
 body.portal .pe-quiet { margin: 0; padding: 14px 16px; background: var(--sage-50); border-radius: var(--radius-card); color: var(--text-2); font-size: 0.9375rem; }
 
 /* ---------- My events: inset grouped list ---------- */

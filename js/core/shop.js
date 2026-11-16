@@ -39,6 +39,8 @@
   'use strict';
   window.Club = window.Club || {};
   const S = Club.store, ui = Club.ui, esc = ui.esc, fmt = Club.fmt;
+  /* Stored text (the order log) is always English: Club.fmtEn on the public site and portal, where Club.fmt can be French. */
+  const EN = Club.fmtEn || fmt;
   const COLL = 'shopOrders';
   const CART_KEY = 'stboniface.shop.cart.';
   /* The order shoppers browse in (the pro shop till keeps its own). */
@@ -271,7 +273,7 @@
       if (promo) Club.promos.redeem(promo.promoId, { source: 'shop', refId: order.id, discount: promo.discount, publicPlayerId: publicPlayerId, memberId: null, email: c.email || null });
       const out0 = S.update(COLL, order.id, { pay: { method: 'pickup', rest: null, label: 'Pay at pickup', due: t.total, paidAt: null, paidBy: null, paidTotal: null, discount: null,
         brand: null, last4: null, giftCardId: null, giftLast4: null, giftAmount: 0, cardAmount: 0, accountAmount: 0, cashAmount: 0, receiptId: null, chargeId: null },
-        log: order.log.concat([{ at: at, text: 'To pay at pickup: ' + fmt.money(t.total) }]) });
+        log: order.log.concat([{ at: at, text: 'To pay at pickup: ' + EN.money(t.total) }]) });
       return { ok: true, order: out0, receipt: null };
     }
     const title = 'Online shop order ' + no;
@@ -359,7 +361,7 @@
     const out = S.update(COLL, id, { saleId: sale.id,
       pay: Object.assign({}, o.pay, { paidAt: at, paidBy: ctx.staffName || 'staff', paidTotal: till.total, discount: disc, rest: m, label: 'Paid at pickup · ' + methodLabel,
         giftCardId: g ? g.id : null, giftLast4: g ? g.last4 : null, giftAmount: g ? g.amount : 0, cardAmount: m === 'card' ? rest : 0, cashAmount: m === 'cash' ? rest : 0, accountAmount: 0, receiptId: rc ? rc.id : null }),
-      log: (o.log || []).concat([{ at: at, text: 'Paid at the golf shop, ' + fmt.money(till.total) + ' (' + methodLabel.charAt(0).toLowerCase() + methodLabel.slice(1) + '), taken by ' + (ctx.staffName || 'staff') }]) });
+      log: (o.log || []).concat([{ at: at, text: 'Paid at the golf shop, ' + EN.money(till.total) + ' (' + methodLabel.charAt(0).toLowerCase() + methodLabel.slice(1) + '), taken by ' + (ctx.staffName || 'staff') }]) });
     return { ok: true, order: out, receipt: rc };
   }
   /** Customers can cancel online until the golf shop has the order ready. */
@@ -411,7 +413,7 @@
     }
     const out = S.update(COLL, id, { status: 'cancelled', cancelledAt: at, cancelledBy: staff ? (ctx.staffName || 'staff') : 'customer', cancelReason: String(ctx.reason || '').trim(),
       refund: { amount: paidTotal, receiptId: rc ? rc.id : null, at: at },
-      log: (o.log || []).concat([{ at: at, text: (staff ? 'Cancelled by ' + (ctx.staffName || 'staff') : 'Cancelled online by the customer') + (ctx.reason ? ': ' + ctx.reason : '') + '. ' + (notPaid ? 'Nothing was charged' : 'Refunded ' + fmt.money(paidTotal)) + ', stock put back.' }]) });
+      log: (o.log || []).concat([{ at: at, text: (staff ? 'Cancelled by ' + (ctx.staffName || 'staff') : 'Cancelled online by the customer') + (ctx.reason ? ': ' + ctx.reason : '') + '. ' + (notPaid ? 'Nothing was charged' : 'Refunded ' + EN.money(paidTotal)) + ', stock put back.' }]) });
     return { ok: true, order: out, receipt: rc };
   }
 

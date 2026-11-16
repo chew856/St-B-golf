@@ -4,6 +4,7 @@
 (function () {
   'use strict';
   const S = Club.store, ui = Club.ui, esc = ui.esc, fmt = Club.fmt, rules = Club.teeRules;
+  const EN = Club.fmtEn;   /* English formatting for stored text (js/i18n/fr-shared.js) */
   const SESSION = 'stboniface.public.session';
   const DEFAULTS = { interval: 9, first: '06:30', last: '19:00', guestFee: 66, cartFee: 28 };
   const PACE = { 18: 255, 9: 135 };
@@ -260,7 +261,7 @@
      idempotent: it only adds what a payment is missing. */
   function teeNote(pay) {
     const conf = 'Confirmation ' + String(pay.id).replace(/^[a-z]+_?/i, '').toUpperCase();
-    return pay.teeDate ? 'Tee time ' + longDate(pay.teeDate) + (pay.teeTime ? ' at ' + fmt.time(pay.teeTime) : '') + (pay.holes ? ', ' + pay.holes + ' holes' : '') + '. ' + conf + '.' : conf + '.';
+    return pay.teeDate ? 'Tee time ' + EN.longDate(pay.teeDate) + (pay.teeTime ? ' at ' + EN.time(pay.teeTime) : '') + (pay.holes ? ', ' + pay.holes + ' holes' : '') + '. ' + conf + '.' : conf + '.';
   }
   function midday(iso) { const p = String(iso).split('-'); return new Date(+p[0], +p[1] - 1, +p[2], 12).toISOString(); }
   /** How a tee time payment was paid: 'Visa ending 4242', 'Gift card ending 7KQ2 and Visa ending 4242', or 'Promo code
@@ -289,7 +290,7 @@
     const base = { publicPlayerId: pay.publicPlayerId, lines: (pay.lines || []).map(function (l) { return { name: l.label, qty: 1, price: l.amount }; }), total: pay.amount,
       method: free || (pay.giftCardId && !(+pay.cardAmount > 0)) ? 'other' : 'card', methodLabel: paidWith(pay), source: 'public', refId: pay.id, note: teeNote(pay),
       tenders: tenders, channel: 'online' };
-    const day = pay.teeDate ? ', ' + fmt.dateShort(pay.teeDate) : '';
+    const day = pay.teeDate ? ', ' + EN.dateShort(pay.teeDate) : '';
     /* Receipts made elsewhere (the gift card refund, older backfills) gain the tenders and channel they lack. */
     const fill = function (r) {
       if (!r || (r.channel && (r.tenders || !tenders.length))) return r;

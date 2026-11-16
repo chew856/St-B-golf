@@ -53,6 +53,7 @@ body.portal .p-list.gc-duelist > li, body.portal .p-list.gc-hlist > li { padding
 .gc-h-date { grid-area: date; font-size: 0.9375rem; font-weight: 500; font-variant-numeric: tabular-nums; }
 .gc-h-sub { grid-area: sub; min-width: 0; font-size: 0.8125rem; line-height: 1.4; color: var(--text-2); }
 .gc-h-att::before { content: " · Attested by "; }
+html[lang="fr-CA"] .gc-h-att:not(.is-none)::before { content: " · Attesté par "; }   /* French mode (js/core/i18n.js sets the lang) */
 .gc-h-att.is-none::before { content: " · "; }
 .gc-h-score { grid-area: score; justify-self: end; font-size: 1rem; font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .gc-slash { margin: 0 3px; color: var(--text-3); font-weight: 400; }

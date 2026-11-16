@@ -207,23 +207,39 @@
   }
   /* Which hand the member plays: asked once, at sign-in, when the club has no answer on record. It cannot be skipped
      (no close button, Escape or tap outside); it can be changed later in Profile > Golf. */
-  let askingHand = false;
+  let handSheet = null, handFor = null;
+  function closeHand() { const s = handSheet; handSheet = null; handFor = null; if (s) s.close(); }
   function askHand() {
     const m = Portal.member();
-    if (!m || askingHand || Club.members.hand(m)) return;
-    askingHand = true;
-    const sh = Portal.openSheet({ title: 'Which hand do you play?', locked: true, content:
+    /* The question is for one member: drop it when another member signed in (or out) in another tab, or when this
+       member's hand was answered elsewhere. */
+    if (handSheet) {
+      const was = handFor && Club.store.find('members', handFor);
+      if (!m || m.id !== handFor || !was || Club.members.hand(was)) closeHand();
+    }
+    if (!m || handSheet || Club.members.hand(m)) return;
+    const forId = m.id;
+    const sh = Portal.openSheet({ title: 'Which hand do you play?', locked: true, onClose: function () { if (handSheet === sh) { handSheet = null; handFor = null; } }, content:
       '<div class="p-hand-ask"><p class="p-hand-q">Welcome, ' + esc(m.firstName) + '. One quick question before you start.</p>' +
         '<div class="p-hand-opts">' + Club.members.HANDS.map(function (h) { return '<button type="button" class="btn p-hand-btn" data-hand="' + h.value + '">' + esc(h.label) + '</button>'; }).join('') + '</div>' +
         '<p class="p-hand-note">Your friends at the club and the golf shop can see this. You can change it in Profile.</p></div>' });
+    if (sh.duplicate) return;
+    handSheet = sh; handFor = forId;
     ui.on(sh.body, 'click', '[data-hand]', function (e, b) {
-      const fresh = Portal.member(); if (fresh) Club.store.update('members', fresh.id, { hand: b.dataset.hand });
-      askingHand = false; sh.close(true);
+      if (handSheet !== sh) return;
+      const who = Club.store.find('members', forId), cur = Portal.member();
+      /* Only the member the question was shown for, while signed in here, and only if nobody has answered yet */
+      if (!who || !cur || cur.id !== forId || Club.members.hand(who)) { closeHand(); askHand(); return; }
+      Club.store.update('members', forId, { hand: b.dataset.hand });
+      closeHand();
       ui.toast('Saved: ' + Club.members.hand({ hand: b.dataset.hand }));
     });
     const first = ui.$('[data-hand]', sh.body); if (first) setTimeout(function () { first.focus(); }, 50);
   }
-  window.addEventListener('hashchange', function () { if (Portal.member()) render(); });
+  /* Any page change re-asks while the hand is still missing (a locked sheet is never closed by the router, but a
+     sheet closed some other way must come back). */
+  window.addEventListener('hashchange', function () { if (Portal.member()) { render(); askHand(); } });
+  Club.store.subscribe('members', function () { if (handSheet) askHand(); });
   /* Signed in or out in another tab: this tab follows straight away rather than mixing two members. */
   window.addEventListener('storage', function (e) { if (e.key === SESSION) boot(); });
   /* Background redraws (new weather, another tab's change). Pages can ask Portal.background() to keep what the

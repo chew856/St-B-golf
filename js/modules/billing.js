@@ -213,15 +213,18 @@
           if (v.memberId && !mem) { setErr(form, 'memberId', 'Select a member.'); ok = false; }
           if (!ok) { const f = ui.$('.invalid', form); if (f) f.focus(); return false; }
           const amt = r2(v.amount);
+          const forSt = o.statement && v.memberId === o.statement.memberId;
+          let stPaid = false;
           const p = undoRun(function () {
             const p0 = S.insert('payments', { memberId: v.memberId, date: v.date, amount: amt, method: v.method, reference: v.reference || '' });
             S.update('members', v.memberId, { balance: r2((mem.balance || 0) - amt) });
-            /* A statement is paid only when this payment covers what is owed on it; a part payment leaves it open. */
-            if (o.statement && amt >= r2(o.amount || 0) - 0.005) S.update('statements', o.statement.id, { status: 'paid', paidOn: v.date });
+            /* A statement is paid when this payment covers what is still owed on it, or earlier part payments and this one
+               together cover its total; a part payment leaves it open. */
+            if (forSt && (amt >= r2(o.amount || 0) - 0.005 || paidToward(o.statement) >= r2(o.statement.total || 0) - 0.005)) { stPaid = true; S.update('statements', o.statement.id, { status: 'paid', paidOn: v.date }); }
             paymentReceipt(p0);
             return p0;
-          }, { message: 'Payment of ' + fmt.money(amt) + ' recorded for ' + mname(v.memberId) + (o.statement ? (amt >= r2(o.amount || 0) - 0.005 ? '. Statement marked paid' : '. Part payment: the statement stays open') : ''),
-            undone: 'Payment reversed. ' + fmt.money(amt) + ' is back on the balance' + (o.statement && amt >= r2(o.amount || 0) - 0.005 ? ' and the statement is open again' : ''), after: rerenderAfterUndo });
+          }, { message: function () { return 'Payment of ' + fmt.money(amt) + ' recorded for ' + mname(v.memberId) + (forSt ? (stPaid ? '. Statement marked paid' : '. Part payment: the statement stays open') : ''); },
+            undone: function () { return 'Payment reversed. ' + fmt.money(amt) + ' is back on the balance' + (stPaid ? ' and the statement is open again' : ''); }, after: rerenderAfterUndo });
           if (done) done(p);
         }
       }]
@@ -365,7 +368,7 @@
       const pages = Math.max(1, Math.ceil(rows.length / LEDGER_PAGE)); if (lf.page >= pages) lf.page = pages - 1; if (lf.page < 0) lf.page = 0;
       const shown = rows.slice().reverse().slice(lf.page * LEDGER_PAGE, (lf.page + 1) * LEDGER_PAGE);
       host.innerHTML = '<div class="bil-ledger-sum"><span><span class="bil-sum-label">Entries</span><strong>' + fmt.num(rows.length) + '</strong></span><span><span class="bil-sum-label">Charges</span><strong>' + money(ch) + '</strong></span><span><span class="bil-sum-label">Payments</span><strong>' + money(py) + '</strong></span><span><span class="bil-sum-label">Net</span><strong>' + money(ch - py) + '</strong></span></div>' +
-        '<div class="table-wrap"><table class="table bil-ledger-table"><thead><tr><th>Date</th><th>Member</th><th>Description</th><th>Category</th><th class="num">Charge</th><th class="num">Payment</th><th class="num">Running net</th></tr></thead><tbody>' +
+        '<div class="table-wrap" tabindex="0" role="region" aria-label="Ledger entries"><table class="table bil-ledger-table"><thead><tr><th>Date</th><th>Member</th><th>Description</th><th>Category</th><th class="num">Charge</th><th class="num">Payment</th><th class="num">Running net</th></tr></thead><tbody>' +
         shown.map(function (r) {
           return '<tr class="clickable" data-href="billing/' + esc(r.memberId) + '"><td class="nowrap" title="' + esc(fmt.date(r.date)) + '">' + esc(fmt.dateShort(r.date)) + '</td><td class="nowrap">' + esc(mname(r.memberId)) + '</td><td>' + esc(r.description) + '</td><td class="bil-cat-cell">' + (r.kind === 'payment' ? ui.badge('Payment', 'good') : '<span class="ink-2 nowrap">' + esc(r.category) + '</span>') + '<span class="bil-src">' + esc(r.source) + '</span></td>' +
             '<td class="num' + (r.kind === 'charge' && r.amount < 0 ? ' bil-credit' : '') + '">' + (r.kind === 'charge' ? money(r.amount) : '') + '</td><td class="num">' + (r.kind === 'payment' ? money(r.amount) : '') + '</td><td class="num ink-2">' + money(r.run) + '</td></tr>';
@@ -570,10 +573,18 @@
     return h;
   }
   function markSent(id) { S.update('statements', id, { status: 'sent', sentOn: today(), issuedOn: today(), dueOn: Club.date.addDays(today(), DUE_DAYS) }); }
+  /* What has been paid toward a statement: payments since the start of its period, less the payments the statement
+     already counts (paymentsTotal). The same rule as the members' portal (js/portal/account.js paidToward). */
+  function paidToward(s) {
+    const start = s.period + '-01';
+    return r2(Math.max(0, sum(S.all('payments').filter(function (p) { return p.memberId === s.memberId && p.date >= start; }), function (p) { return p.amount; }) - (+s.paymentsTotal || 0)));
+  }
+  /* Still owed on a statement: its total less what has been paid toward it, never more than the live balance. */
+  function owedOn(s, m) { return r2(Math.max(0, Math.min(m ? (m.balance || 0) : (s.total || 0), (s.total || 0) - paidToward(s)))); }
   function markPaid(id, done) {
     const s = S.find('statements', id); if (!s) return;
     const m = S.find('members', s.memberId);
-    const owed = m ? Math.min(m.balance || 0, s.total) : s.total;
+    const owed = owedOn(s, m);
     if (owed <= 0.005) {
       undoRun(function () { S.update('statements', id, { status: 'paid', paidOn: today() }); }, { message: 'Statement marked paid', undone: 'Statement is ' + s.status + ' again', after: rerenderAfterUndo });
       if (done) done(); return;

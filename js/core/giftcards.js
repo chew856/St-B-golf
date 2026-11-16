@@ -31,6 +31,8 @@
   'use strict';
   window.Club = window.Club || {};
   const S = Club.store, ui = Club.ui, esc = ui.esc, fmt = Club.fmt;
+  /* Stored text (notes, titles) is always English: Club.fmtEn on the public site and portal, where Club.fmt can be French. */
+  const EN = Club.fmtEn || fmt;
   const COLL = 'giftCards';
   const ALPHA = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
   /* Placeholders: the club has not published gift card amounts. Staff change them on the Gift cards page. */
@@ -112,7 +114,7 @@
         title: 'Gift card', lines: lines.concat((t.lines || []).filter(function (l) { return l.price < 0; })), total: t.total, method: m || 'other', methodLabel: methodLabel,
         source: 'giftcards', refId: card.id, channel: 'counter', fresh: true,
         tenders: (g ? [{ method: 'gift', amount: g.amount, ref: g.id }] : []).concat(m ? [{ method: m, amount: rest }] : []),
-        note: note + (t.discount ? ' Discount: ' + t.discount.reason + '.' : '') + (t.change > 0 ? ' Cash tendered ' + fmt.money(t.cashTendered) + ', change ' + fmt.money(t.change) + '.' : '') });
+        note: note + (t.discount ? ' Discount: ' + t.discount.reason + '.' : '') + (t.change > 0 ? ' Cash tendered ' + EN.money(t.cashTendered) + ', change ' + EN.money(t.change) + '.' : '') });
     } else {
       methodLabel = Club.receipts ? Club.receipts.cardLabel(pay.brand, pay.last4) : 'Card';
       if (Club.receipts) rc = Club.receipts.create({ memberId: card.buyer.memberId, publicPlayerId: card.buyer.memberId ? null : card.buyer.publicPlayerId,
@@ -154,8 +156,8 @@
     if (!Club.receipts) return null;
     const g = o.gift, rest = o.rest || { amount: 0 };
     const restOn = r2(rest.amount) > 0;
-    const parts = [label(g.card) + ': ' + fmt.money(g.amount)];
-    if (restOn) parts.push((rest.label || 'Card') + ': ' + fmt.money(rest.amount));
+    const parts = [label(g.card) + ': ' + EN.money(g.amount)];
+    if (restOn) parts.push((rest.label || 'Card') + ': ' + EN.money(rest.amount));
     return Club.receipts.create({ memberId: o.memberId || null, publicPlayerId: o.memberId ? null : (o.publicPlayerId || null), name: o.name || undefined,
       kind: o.kind === 'credit' ? 'credit' : 'sale', title: o.title, lines: o.lines, total: o.total, method: restOn ? (rest.method || 'other') : 'other',
       methodLabel: label(g.card) + (restOn ? ' and ' + (rest.method === 'account' ? 'member account' : rest.label || 'card') : ''),
@@ -279,13 +281,13 @@
   function settleTeeTime(payment, g) {
     const card = get(g.card.id); if (!card) return payment;
     const amount = r2(Math.min(card.balance, g.amount, payment.amount));
-    const res = redeem(card.id, amount, { where: 'public', refId: payment.id, note: 'Tee time ' + (payment.teeDate ? fmt.dateShort(payment.teeDate) : '') + (payment.teeTime ? ' at ' + fmt.time(payment.teeTime) : '') });
+    const res = redeem(card.id, amount, { where: 'public', refId: payment.id, note: 'Tee time ' + (payment.teeDate ? EN.dateShort(payment.teeDate) : '') + (payment.teeTime ? ' at ' + EN.time(payment.teeTime) : '') });
     if (!res.ok) return payment;
     const cardAmount = r2(payment.amount - amount);
     const p = S.update('publicPayments', payment.id, { giftCardId: card.id, giftLast4: last4(card), giftAmount: amount, cardAmount: cardAmount });
     const conf = 'Confirmation ' + String(payment.id).replace(/^[a-z]+_?/i, '').toUpperCase() + '.';
-    const tee = payment.teeDate ? 'Tee time ' + (window.Pub ? Pub.longDate(payment.teeDate) : fmt.date(payment.teeDate)) + (payment.teeTime ? ' at ' + fmt.time(payment.teeTime) : '') + (payment.holes ? ', ' + payment.holes + ' holes' : '') + '. ' : '';
-    receipt({ publicPlayerId: payment.publicPlayerId, title: 'Tee time' + (payment.teeDate ? ', ' + fmt.dateShort(payment.teeDate) : ''),
+    const tee = payment.teeDate ? 'Tee time ' + (EN.longDate ? EN.longDate(payment.teeDate) : window.Pub ? Pub.longDate(payment.teeDate) : EN.date(payment.teeDate)) + (payment.teeTime ? ' at ' + EN.time(payment.teeTime) : '') + (payment.holes ? ', ' + payment.holes + ' holes' : '') + '. ' : '';
+    receipt({ publicPlayerId: payment.publicPlayerId, title: 'Tee time' + (payment.teeDate ? ', ' + EN.dateShort(payment.teeDate) : ''),
       lines: (payment.lines || []).map(function (l) { return { name: l.label, qty: 1, price: l.amount }; }), total: payment.amount,
       gift: { card: card, amount: amount }, rest: { method: 'card', label: Club.receipts.cardLabel(payment.brand, payment.last4), amount: cardAmount },
       source: 'public', refId: payment.id, note: tee + conf, online: true });
@@ -306,11 +308,11 @@
       refund(card.id, p.giftAmount, { where: 'public', refId: p.id, note: 'Tee time cancelled online' });
       if (Club.receipts && !Club.receipts.forRef('public', p.id).some(function (r) { return r.kind === 'credit'; })) {
         try {
-          Club.receipts.create({ publicPlayerId: p.publicPlayerId, kind: 'credit', title: 'Tee time refund' + (p.teeDate ? ', ' + fmt.dateShort(p.teeDate) : ''),
+          Club.receipts.create({ publicPlayerId: p.publicPlayerId, kind: 'credit', title: 'Tee time refund' + (p.teeDate ? ', ' + EN.dateShort(p.teeDate) : ''),
             lines: (p.lines || []).map(function (l) { return { name: l.label, qty: 1, price: l.amount }; }), total: p.amount, method: +p.cardAmount > 0 ? 'card' : 'other',
             methodLabel: paidWith(p), source: 'public', refId: p.id, channel: 'online',
             tenders: [{ method: 'gift', amount: p.giftAmount, online: true, ref: card.id }].concat(+p.cardAmount > 0 ? [{ method: 'card', amount: p.cardAmount, online: true }] : []),
-            note: label(card) + ': ' + fmt.money(p.giftAmount) + ' back on the card.' + (+p.cardAmount > 0 ? ' ' + Club.receipts.cardLabel(p.brand, p.last4) + ': ' + fmt.money(p.cardAmount) + ' refunded.' : '') });
+            note: label(card) + ': ' + EN.money(p.giftAmount) + ' back on the card.' + (+p.cardAmount > 0 ? ' ' + Club.receipts.cardLabel(p.brand, p.last4) + ': ' + EN.money(p.cardAmount) + ' refunded.' : '') });
         } catch (e) { console.error('Refund receipt failed for ' + p.id, e); }
       }
     });

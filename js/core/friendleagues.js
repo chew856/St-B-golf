@@ -187,6 +187,8 @@
 
   /* ---------------- Standings ---------------- */
   function sum(a) { return a.reduce(function (x, y) { return x + y; }, 0); }
+  /* Sums of averages carry floating-point noise (65 + 65.1666... vs 65.3333... + 64.8333...): compare to a millionth */
+  function clean(v) { return v == null ? null : Math.round(v * 1e6) / 1e6; }
   /** Every number the league page shows. */
   function standings(lg) {
     const ids = memberIds(lg), fmt = fmtOf(lg), isBetter = better(lg), done = status(lg) === 'complete';
@@ -219,6 +221,7 @@
     });
     /* Weekly finish points (players or teams) for weeks everyone has completed */
     function placePoints(entries) {   /* entries [{ key, total }] lower total is better (net) */
+      entries = entries.map(function (e) { return { key: e.key, total: clean(e.total) }; });
       const sorted = entries.slice().sort(function (a, b) { return a.total - b.total; }), out = {};
       sorted.forEach(function (e, i) {
         const first = sorted.findIndex(function (x) { return x.total === e.total; });
@@ -260,6 +263,7 @@
   }
   /** Sorts rows on `key` (nulls last) and sets pos ('1', 'T2', ...). */
   function rank(rows, high) {
+    rows.forEach(function (r) { r.key = clean(r.key); });
     rows.sort(function (a, b) {
       if (a.key == null && b.key == null) return 0; if (a.key == null) return 1; if (b.key == null) return -1;
       return high ? b.key - a.key : a.key - b.key;

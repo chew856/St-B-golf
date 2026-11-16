@@ -17,7 +17,9 @@
   function feeFor(ev, guests) { return Math.round((+ev.price || 0) * (1 + (+guests || 0)) * 100) / 100; }
   function shortName(id) { const m = Club.members.get(id); return m ? m.firstName.charAt(0) + '. ' + m.lastName : 'Former member'; }
   function byDate(a, b) { return (a.date + (a.start || '')).localeCompare(b.date + (b.start || '')); }
-  function priceLabel(p) { return +p ? fmt.money0(p) + ' per person' : 'Complimentary'; }
+  /* Whole dollars read "$25"; a price with cents keeps them ("$25.50"), so the label matches what is charged. */
+  function price(v) { v = +v || 0; return Math.abs(v - Math.round(v)) > 0.004 ? fmt.money(v) : fmt.money0(v); }
+  function priceLabel(p) { return +p ? price(p) + ' per person' : 'Complimentary'; }
   function timeRange(ev) { return ev.start ? fmt.time(ev.start) + (ev.end ? ' – ' + fmt.time(ev.end) : '') : 'Time to be confirmed'; }
   function monthOf(iso) { return iso.slice(0, 7); }
   function monthLabel(ym) { const p = ym.split('-'); return new Date(+p[0], +p[1] - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }); }
@@ -172,7 +174,7 @@
     function upd() {
       const d = ui.formData(form); const g = Math.max(0, d.guests || 0);
       const after = seats(ev) + 1 + g;
-      ui.$('.ev-reg-summary', form).innerHTML = '<dl class="kv"><dt>Seats remaining</dt><dd>' + remaining + ' of ' + ev.capacity + '</dd><dt>After this registration</dt><dd class="' + (after > ev.capacity ? 'ev-over' : '') + '">' + after + ' of ' + ev.capacity + (after > ev.capacity ? ' · over capacity' : '') + '</dd><dt>Charge to account</dt><dd>' + (+ev.price ? fmt.money(feeFor(ev, g)) + ' <span class="muted">(' + (1 + g) + ' x ' + fmt.money0(ev.price) + ', Events)</span>' : 'No charge') + '</dd></dl>';
+      ui.$('.ev-reg-summary', form).innerHTML = '<dl class="kv"><dt>Seats remaining</dt><dd>' + remaining + ' of ' + ev.capacity + '</dd><dt>After this registration</dt><dd class="' + (after > ev.capacity ? 'ev-over' : '') + '">' + after + ' of ' + ev.capacity + (after > ev.capacity ? ' · over capacity' : '') + '</dd><dt>Charge to account</dt><dd>' + (+ev.price ? fmt.money(feeFor(ev, g)) + ' <span class="muted">(' + (1 + g) + ' x ' + price(ev.price) + ', Events)</span>' : 'No charge') + '</dd></dl>';
     }
     form.addEventListener('input', upd); upd();
   }
@@ -210,7 +212,7 @@
     ]);
     if (!list.length) return { title: 'Next 30 days', body: html + DR.empty('No events in the next 30 days', 'Published events dated in the next month appear here.', 'events'), go: 'events', goLabel: 'Open calendar' };
     html += DR.sec('Coming up', plural(list.length, 'event'), DR.table([{ label: 'Date' }, { label: 'Event' }, { label: 'Seats' }, { label: 'Status' }, { label: 'Revenue', num: true }],
-      list.map(function (e) { return ['<span class="nowrap">' + esc(fmt.dateShort(e.date)) + '</span>' + (e.start ? '<div class="dd-sub">' + esc(fmt.time(e.start)) + '</div>' : ''), evCell(e), seatsCell(e), fillBadge(e) || '<span class="muted">Open</span>', esc(+e.price ? fmt.money0(revenueOf(e)) : 'Free')]; })));
+      list.map(function (e) { return ['<span class="nowrap">' + esc(fmt.dateShort(e.date)) + '</span>' + (e.start ? '<div class="dd-sub">' + esc(fmt.time(e.start)) + '</div>' : ''), evCell(e), seatsCell(e), fillBadge(e) || '<span class="muted">Open</span>', esc(+e.price ? price(revenueOf(e)) : 'Free')]; })));
     const types = {}; list.forEach(function (e) { const k = e.type || 'Event'; const x = types[k] = types[k] || { n: 0, seats: 0 }; x.n++; x.seats += seats(e); });
     html += DR.sec('By type', '', DR.table([{ label: 'Type' }, { label: 'Share of seats' }, { label: 'Events', num: true }, { label: 'Seats', num: true }],
       Object.keys(types).sort(function (a, b) { return types[b].seats - types[a].seats; }).map(function (k) { return ['<span class="primary-cell">' + esc(k) + '</span>', DR.share(types[k].seats, n), types[k].n, types[k].seats]; })));
@@ -252,8 +254,8 @@
     html += '<div class="dd-two" data-reveal>' + DR.sec('By type', '', items.length ? Club.charts.donut({ items: items, size: 150, money: true, center: { value: total >= 1000 ? '$' + (total / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : fmt.money0(total), label: 'Committed' } }) : DR.note('No registrations on paid events yet.')) +
       DR.sec('Where it comes from', '', DR.note(plural(paid.length, 'paid event') + ' and ' + plural(paidSeats, 'seat') + '. ' + (total - charged > 0.5 ? fmt.money0(total - charged) + ' is committed but not yet on accounts (registered by the office or settled separately).' : 'Everything committed is already on member accounts.'))) + '</div>';
     html += DR.sec('By event', 'Largest first', DR.table([{ label: 'Event' }, { label: 'Date' }, { label: 'Share' }, { label: 'Price', num: true }, { label: 'Seats', num: true }, { label: 'Revenue', num: true }],
-      paid.slice().sort(function (a, b) { return revenueOf(b) - revenueOf(a); }).map(function (e) { return [evCell(e), esc(fmt.dateShort(e.date)), DR.share(revenueOf(e), total), esc(fmt.money0(e.price)), seats(e), esc(fmt.money0(revenueOf(e)))]; }),
-      ['Total', '', '', '', paidSeats, esc(fmt.money0(total))]));
+      paid.slice().sort(function (a, b) { return revenueOf(b) - revenueOf(a); }).map(function (e) { return [evCell(e), esc(fmt.dateShort(e.date)), DR.share(revenueOf(e), total), esc(price(e.price)), seats(e), esc(price(revenueOf(e)))]; }),
+      ['Total', '', '', '', paidSeats, esc(price(total))]));
     return { title: 'Committed revenue', body: html, go: 'billing', goLabel: 'Open billing' };
   }
   function drillLive() {
@@ -457,9 +459,9 @@
         regs.map(function (r, ri) {
           const m = Club.members.get(r.memberId); const tier = Club.members.tier(m);
           return '<tr' + (ri >= REG_TOP && !showAllRegs ? ' class="ev-reg-more" hidden' : ri >= REG_TOP ? ' class="ev-reg-more"' : '') + '><td>' + (m ? '<a href="#/members/' + esc(m.id) + '" class="ev-person-link">' + ui.person(memberName(r.memberId), esc((tier ? tier.name : 'Member') + ' · #' + m.memberNo)) + '</a>' : ui.person('Former member', 'Record removed')) + '</td>' +
-            '<td class="num">' + (+r.guests || 0) + '</td><td class="nowrap ev-hide-sm">' + esc(fmt.dateShort(r.registeredAt || ev.date)) + '</td><td class="num">' + (billedFor(ev, r) ? fmt.money0(billedFor(ev, r)) : '<span class="muted">None</span>') + '</td>' +
+            '<td class="num">' + (+r.guests || 0) + '</td><td class="nowrap ev-hide-sm">' + esc(fmt.dateShort(r.registeredAt || ev.date)) + '</td><td class="num">' + (billedFor(ev, r) ? price(billedFor(ev, r)) : '<span class="muted">None</span>') + '</td>' +
             '<td class="right">' + (canRemove ? ui.btn('', { kind: 'ghost', sm: true, icon: 'close', action: 'unregister', id: r.memberId, title: 'Remove registration' }) : '') + '</td></tr>';
-        }).join('') + '</tbody><tfoot><tr><td>' + regs.length + ' registrations</td><td class="num">' + guests + '</td><td class="ev-hide-sm"></td><td class="num">' + fmt.money0(total) + '</td><td></td></tr></tfoot></table></div>' +
+        }).join('') + '</tbody><tfoot><tr><td>' + regs.length + ' registrations</td><td class="num">' + guests + '</td><td class="ev-hide-sm"></td><td class="num">' + price(total) + '</td><td></td></tr></tfoot></table></div>' +
           (regs.length > REG_TOP ? '<div class="ev-reg-all"><button type="button" class="s-link" data-action="regs-all" aria-expanded="' + showAllRegs + '">' + (showAllRegs ? 'Show first ' + REG_TOP : 'View all registrations (' + regs.length + ')') + '</button></div>' : '')
         : ui.empty({ icon: 'members', title: 'No registrations yet', text: open ? 'Register members as they reply. Fees post to their member account automatically.' : 'No members registered for this event.', action: open ? ui.btn('Register member', { kind: 'primary', icon: 'plus', action: 'register' }) : '' })) +
       '</div></div></div>' +
@@ -467,7 +469,7 @@
       '<div class="panel" data-reveal><div class="panel-head"><h3>Capacity</h3><span class="label-caps">' + pct + '% full</span></div><div class="panel-body">' +
       '<div class="ev-cap-num"><span class="serif">' + s + '</span><span class="muted"> of ' + ev.capacity + ' seats</span></div>' +
       '<div class="bar ev-cap-bar' + (pct >= 90 ? ' brass' : '') + '"><span style="width:' + pct + '%"></span></div>' +
-      '<dl class="kv ev-cap-kv"><dt>Members</dt><dd>' + regs.length + '</dd><dt>Guests</dt><dd>' + guests + '</dd><dt>Seats remaining</dt><dd>' + Math.max(0, ev.capacity - s) + '</dd><dt>Billed to accounts</dt><dd>' + fmt.money0(total) + '</dd></dl>' +
+      '<dl class="kv ev-cap-kv"><dt>Members</dt><dd>' + regs.length + '</dd><dt>Guests</dt><dd>' + guests + '</dd><dt>Seats remaining</dt><dd>' + Math.max(0, ev.capacity - s) + '</dd><dt>Billed to accounts</dt><dd>' + price(total) + '</dd></dl>' +
       (s >= ev.capacity ? '<p class="ev-full-note">' + Club.icon('info') + 'This event is full. Remove a registration or raise the capacity to admit more.</p>' : '') +
       '</div></div>' +
       (GOLF_TYPES.indexOf(ev.type) >= 0 || trns.length ? '<div class="panel" data-reveal><div class="panel-head"><h3>Competition</h3></div><div class="panel-body">' +

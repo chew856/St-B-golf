@@ -39,7 +39,7 @@
 .bil-filters .input { min-height: 40px; }
 .bil-search { position: relative; flex: 1 1 12rem; min-width: 0; }
 .bil-search svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-3); }
-.bil-search .input { padding-left: 34px; }
+.bil-search .input, .bil-search .input:not(.x) { padding-left: 34px; }   /* beats the phone .input:not(.x) padding in mobile.css, so text clears the icon */
 .bil-date { display: inline-flex; align-items: center; gap: 6px; font-size: 0.875rem; color: var(--text-2); }
 .bil-date .input { width: 9.5rem; }
 .bil-ledger-sum { display: flex; flex-wrap: wrap; gap: 0.5rem 2rem; padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border); background: var(--sage-50); }
@@ -191,7 +191,8 @@
   .bil-age-val { font-size: 1.25rem; }
 
   /* Ledger filters: one row that scrolls sideways */
-  .bil-filters { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; gap: 6px; padding: 0.625rem 0.75rem; }
+  /* position: relative keeps the pickers' hidden date inputs (absolutely placed) inside this scroller, so the page itself never scrolls sideways */
+  .bil-filters { position: relative; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; gap: 6px; padding: 0.625rem 0.75rem; }
   .bil-filters::-webkit-scrollbar { display: none; }
   .bil-filters > * { flex: none; }
   .bil-filters .bil-search { flex: 0 0 11rem; }

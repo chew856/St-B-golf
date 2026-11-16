@@ -3,6 +3,7 @@
 (function () {
   'use strict';
   const S = Club.store, ui = Club.ui, esc = ui.esc, fmt = Club.fmt, rules = Club.teeRules;
+  const EN = Club.fmtEn;   /* English formatting for stored text (js/i18n/fr-shared.js) */
   const RATES = rules.RATES;
 
   /* Booking state survives sign in and route changes within this visit. */
@@ -587,7 +588,7 @@
         if (!tt) return null;
         const payment = S.insert('publicPayments', {
           id: S.uid('ppay'), publicPlayerId: p.id, teeTimeId: tt.id, date: Pub.today(), amount: r2(q.total - (pr ? pr.discount : 0)), tax: 0, brand: pay.brand, last4: pay.last4,
-          status: 'paid', refundedOn: null, description: 'Green fees, ' + Pub.longDate(st.date) + ' at ' + fmt.time(st.time) + ' (' + Pub.plural(party.length, 'golfer') + ', ' + st.holes + ' holes)',
+          status: 'paid', refundedOn: null, description: 'Green fees, ' + EN.longDate(st.date) + ' at ' + EN.time(st.time) + ' (' + Pub.plural(party.length, 'golfer') + ', ' + st.holes + ' holes)',
           lines: lines, promo: pr ? { promoId: pr.promoId, code: pr.code, discount: pr.discount } : null, players: party.length, holes: st.holes, teeDate: st.date, teeTime: st.time
         });
         if (pr && Club.promos) Club.promos.redeem(pr.promoId, { source: 'public', refId: payment.id, discount: pr.discount, publicPlayerId: p.id });

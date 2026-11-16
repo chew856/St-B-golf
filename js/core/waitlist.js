@@ -14,6 +14,8 @@
 (function () {
   window.Club = window.Club || {};
   const S = Club.store, fmt = Club.fmt;
+  /* The history is stored, so it is always English: Club.fmtEn on the public site and portal, where Club.fmt can be French. */
+  const EN = Club.fmtEn || fmt;
   const COLL = 'teeWaitlist';
   const HOLD_MIN = 30;
   const DEFAULTS = { interval: 9, first: '06:30', last: '19:00' };
@@ -115,7 +117,7 @@
     list.forEach(function (e) {
       if (expired(e)) { S.update(COLL, e.id, { status: 'expired', expiredAt: at, history: log(e, 'Expired: the tee time passed') }); return; }
       const bk = bookedTee(e);
-      if (bk) { S.update(COLL, e.id, { status: 'booked', bookedAt: at, bookedTeeTimeId: bk.id, history: log(e, 'Booked the ' + fmt.time(bk.time) + ' tee time') }); return; }
+      if (bk) { S.update(COLL, e.id, { status: 'booked', bookedAt: at, bookedTeeTimeId: bk.id, history: log(e, 'Booked the ' + EN.time(bk.time) + ' tee time') }); return; }
       live.push(e);
     });
     const claims = {};
@@ -129,8 +131,8 @@
         const t2 = firstFit(e, base, claims, prefer);
         if (t2) {
           claims[t2] = (claims[t2] || 0) + e.players;
-          S.update(COLL, e.id, { offerTime: t2, holdUntil: new Date(now + HOLD_MIN * 60000).toISOString(), history: log(e, 'The ' + fmt.time(e.offerTime) + ' spot was taken. Told about ' + fmt.time(t2) + ' instead') });
-        } else S.update(COLL, e.id, { status: 'waiting', offerTime: null, holdUntil: null, history: log(e, 'The ' + fmt.time(e.offerTime) + ' spot was taken before they booked. Back on the list') });
+          S.update(COLL, e.id, { offerTime: t2, holdUntil: new Date(now + HOLD_MIN * 60000).toISOString(), history: log(e, 'The ' + EN.time(e.offerTime) + ' spot was taken. Told about ' + EN.time(t2) + ' instead') });
+        } else S.update(COLL, e.id, { status: 'waiting', offerTime: null, holdUntil: null, history: log(e, 'The ' + EN.time(e.offerTime) + ' spot was taken before they booked. Back on the list') });
         return;
       }
       const t = firstFit(e, base, claims, prefer);
@@ -138,7 +140,7 @@
       claims[t] = (claims[t] || 0) + e.players;
       const n = base[t];
       out.push(S.update(COLL, e.id, { status: 'notified', notifiedAt: at, offerTime: t, holdUntil: new Date(now + HOLD_MIN * 60000).toISOString(),
-        history: log(e, 'Notified: ' + n + (n === 1 ? ' place' : ' places') + ' open at ' + fmt.time(t) + (reason ? ' (' + reason + ')' : '')) }));
+        history: log(e, 'Notified: ' + n + (n === 1 ? ' place' : ' places') + ' open at ' + EN.time(t) + (reason ? ' (' + reason + ')' : '')) }));
     });
     return out;
   }
@@ -152,9 +154,9 @@
   const api = {
     COLL: COLL, HOLD_MIN: HOLD_MIN, WINDOWS: WINDOWS,
     windowOf: windowOf, timesFor: timesFor, contact: contact, isActive: isActive,
-    /** "at 10:12 AM", "any time", "in the morning (before 11:00 AM)" */
-    whenText: function (e) {
-      if (e.time) return 'at ' + fmt.time(e.time);
+    /** "at 10:12 AM", "any time", "in the morning (before 11:00 AM)". en: English whatever the display language (stored history). */
+    whenText: function (e, en) {
+      if (e.time) return 'at ' + (en ? EN : fmt).time(e.time);
       const w = windowOf(e.window);
       return w.id === 'any' ? 'any time' : 'in the ' + w.label.toLowerCase() + ' (' + w.sub.charAt(0).toLowerCase() + w.sub.slice(1) + ')';
     },
@@ -197,7 +199,7 @@
       if (free) return { ok: false, code: 'open', time: free, msg: 'There is a spot open at ' + fmt.time(free) + ' right now.' };
       e.had = S.all('teeTimes').filter(function (t) { return t.date === e.date && t.status !== 'cancelled' && inGroup(t, e); }).map(function (t) { return t.id; });
       e.status = 'waiting'; e.notifiedAt = null; e.offerTime = null; e.holdUntil = null;
-      e.history = [{ at: stamp(), text: 'Joined the waitlist for ' + players + (players === 1 ? ' player' : ' players') + ', ' + api.whenText(e) }];
+      e.history = [{ at: stamp(), text: 'Joined the waitlist for ' + players + (players === 1 ? ' player' : ' players') + ', ' + api.whenText(e, true) }];
       return { ok: true, entry: S.insert(COLL, Object.assign({ id: S.uid('wl'), createdAt: stamp() }, e)) };
     },
     /** Leave the list (by: 'golfer' | 'staff'). The place passes to the next in line. */

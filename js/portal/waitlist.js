@@ -107,7 +107,8 @@
       const e = r.entry;
       sh.setContent('<div class="tt-done" role="status"><span class="tt-done-ok">' + Club.icon('check') + '</span>' +
         '<h3 class="tt-done-h">You’re on the waitlist</h3>' +
-        '<p class="tt-done-d">' + esc(dayName(e.date) + ', ' + W().whenText(e)) + ' · ' + esc(plural(e.players, 'player')) + '</p>' +
+        /* one piece per text node, so "Today", the time and the players each translate in French */
+        '<p class="tt-done-d"><span>' + esc(dayName(e.date)) + '</span>, <span>' + esc(W().whenText(e)) + '</span> · <span>' + esc(plural(e.players, 'player')) + '</span></p>' +
         '<p class="tt-done-p">' + esc(W().position(e) === 1 ? 'You are next in line.' : 'You are ' + ordinal(W().position(e)) + ' in line.') + ' We will let you know on Home and on Tee times when a spot opens.</p></div>');
       sh.setFooter('<button type="button" class="btn btn-primary tt-full" data-wl="done">Done</button>');
       const doneAt = Date.now();   /* a double tap on Notify me must not also press Done */

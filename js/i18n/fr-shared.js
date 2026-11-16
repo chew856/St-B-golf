@@ -3,6 +3,88 @@
    the beverage cart golfer view (js/portal/cart.js with the golfer messages of js/modules/cart.js and cartdispatch).
    Exact strings match the trimmed text of a text node (or placeholder, aria-label, title, alt); patterns take text with
    names, numbers, times or dates inside (those parts are already French in French mode, e.g. "13 h 30", "8,50 $"). */
+
+/* Club.fmtEn: English formatters for text that is STORED (receipt titles and notes, payment descriptions, gift card,
+   takeout, shop and waitlist history). In French mode Club.fmt and the toLocale* calls switch to fr-CA (js/core/i18n.js)
+   and fmt.time adds an invisible U+2060 mark, but stored values must stay English, so code that builds stored text uses
+   Club.fmtEn. It uses no locale APIs, so it is English in both languages; the French display translates the stored
+   English through the patterns below (enDates). The staff site does not load this file: its Club.fmt is English, so
+   callers use (Club.fmtEn || Club.fmt). */
+(function () {
+  'use strict';
+  window.Club = window.Club || {};
+  var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  var DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  function toDate(d) {
+    if (d instanceof Date) return d;
+    if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) { var p = d.split('-'); return new Date(+p[0], +p[1] - 1, +p[2], 12); }
+    return new Date(d);
+  }
+  function group(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+  function money(v, cents) {
+    v = +v || 0;
+    var c = cents !== false, a = Math.abs(v), s = c ? a.toFixed(2) : String(Math.round(a)), p = s.split('.');
+    return (v < 0 && +s !== 0 ? '-' : '') + '$' + group(p[0]) + (p[1] ? '.' + p[1] : '');
+  }
+  function time(t) {
+    if (!t) return '';
+    var h, m;
+    if (t instanceof Date) { h = t.getHours(); m = String(t.getMinutes()).padStart(2, '0'); }
+    else { var p = String(t).split(':'); h = +p[0]; m = p[1] || '00'; }
+    return (h % 12 || 12) + ':' + m + ' ' + (h >= 12 ? 'PM' : 'AM');
+  }
+  var mon = function (d, long) { var n = MONTHS[toDate(d).getMonth()]; return long ? n : n.slice(0, 3); };
+  var day = function (d, long) { var n = DAYS[toDate(d).getDay()]; return long ? n : n.slice(0, 3); };
+  Club.fmtEn = {
+    money: money,
+    money0: function (v) { return money(v, false); },
+    time: time,
+    /** "Nov 21, 2026" */
+    date: function (d) { return mon(d) + ' ' + toDate(d).getDate() + ', ' + toDate(d).getFullYear(); },
+    /** "Nov 21" */
+    dateShort: function (d) { return mon(d) + ' ' + toDate(d).getDate(); },
+    /** "Saturday, November 21, 2026" */
+    dateLong: function (d) { return day(d, true) + ', ' + mon(d, true) + ' ' + toDate(d).getDate() + ', ' + toDate(d).getFullYear(); },
+    /** "Saturday, November 21" (the public site's long day, Pub.longDate) */
+    longDate: function (d) { return day(d, true) + ', ' + mon(d, true) + ' ' + toDate(d).getDate(); },
+    /** "Saturday, Nov 21" */
+    dayShortMonth: function (d) { return day(d, true) + ', ' + mon(d) + ' ' + toDate(d).getDate(); },
+    weekday: function (d) { return day(d); },
+    /** French display of the English dates, clock times and money inside stored text (used by the patterns that
+        translate it): "Saturday, November 21 at 7:30 AM" -> "samedi 21 novembre at 7 h 30", "Nov 21" -> "21 nov.",
+        "$12.50" -> "12,50 $". The words around them are left to the pattern. */
+    fr: function (s) { return frBits(s); }
+  };
+
+  var NB = ' ', NNB = ' ';
+  var JOURS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+  var MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+  var MOIS3 = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juill.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+  var MON_RE = '(January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sept|Sep|Oct|Nov|Dec)\\.?';
+  var DAY_RE = '(Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sun|Mon|Tue|Wed|Thu|Fri|Sat)';
+  function monthIx(w) { w = w.replace('.', ''); for (var i = 0; i < 12; i++) if (MONTHS[i] === w || MONTHS[i].slice(0, 3) === w.slice(0, 3)) return i; return -1; }
+  function mois(w, i) { return MONTHS.indexOf(w) >= 0 ? MOIS[i] : MOIS3[i]; }   /* "November" -> "novembre", "Nov" -> "nov." */
+  function dayIx(w) { for (var i = 0; i < 7; i++) if (DAYS[i] === w || DAYS[i].slice(0, 3) === w) return i; return -1; }
+  function frBits(s) {
+    if (s == null) return s;
+    return String(s)
+      .replace(/\b(\d{1,2}):(\d{2}) ?([AP])\.?M\.?/g, function (x, h, m, ap) {
+        h = +h % 12; if (ap === 'P') h += 12;
+        return h + NB + 'h' + (m !== '00' ? NB + m : '');
+      })
+      .replace(new RegExp('\\b' + DAY_RE + ',? ' + MON_RE + ' (\\d{1,2})(?:, (\\d{4}))?\\b', 'g'), function (x, d, mo, n, y) {
+        var di = dayIx(d), mi = monthIx(mo);
+        return (d.length > 3 ? JOURS[di] : JOURS[di].slice(0, 3) + '.') + ' ' + n + ' ' + mois(mo, mi) + (y ? ' ' + y : '');
+      })
+      .replace(new RegExp('\\b' + MON_RE + ' (\\d{1,2})(?:, (\\d{4}))?\\b', 'g'), function (x, mo, n, y) {
+        return n + ' ' + mois(mo, monthIx(mo)) + (y ? ' ' + y : '');
+      })
+      .replace(/([-−]?)\$(\d{1,3}(?:,\d{3})*|\d+)(?:\.(\d{2}))?/g, function (x, sign, n, c) {
+        return sign + n.replace(/,/g, NNB) + (c ? ',' + c : '') + NB + '$';
+      });
+  }
+})();
+
 (function () {
   'use strict';
   var NB = ' ';
@@ -18,6 +100,8 @@
     return s;
   }
   function pl(n, one, many) { return n + ' ' + (Math.abs(+n) <= 1 ? one : many); }
+  /** Stored text is English (Club.fmtEn): its dates, times and money shown in French. */
+  function F(s) { return window.Club && Club.fmtEn ? Club.fmtEn.fr(s) : s; }
   function ord(n) { return +n === 1 ? '1er' : n + 'e'; }
   function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
   /** "Visa ending 4242" -> "Visa se terminant par 4242" (Card, Gift card are translated; brand names are kept). */
@@ -505,7 +589,7 @@
     [/^(.+) applied · (.+) left on the card after this$/, '$1 appliqué · $2 restant sur la carte après cet achat'],
     [/^(.+) left on the card after this$/, '$1 restant sur la carte après cet achat'],
     [/^(.+) will be applied to this (.+) total\.$/, '$1 sera appliqué à ce total de $2.'],
-    [/^(Gift card ending \w{4}): (.+?) back on the card\.(?: (.+ ending \d{4}): (.+) refunded\.)?$/, function (m, g, a, c, b) { return card(g) + ' : ' + a + ' remis sur la carte.' + (c ? ' ' + card(c) + ' : ' + b + ' remboursé.' : ''); }],
+    [/^(Gift card ending \w{4}): (.+?) back on the card\.(?: (.+ ending \d{4}): (.+) refunded\.)?$/, function (m, g, a, c, b) { return card(g) + ' : ' + F(a) + ' remis sur la carte.' + (c ? ' ' + card(c) + ' : ' + F(b) + ' remboursé.' : ''); }],
     /* ---------- takeout ---------- */
     [/^(.+) is for pickup on Fridays only\.( There is no Friday open for orders right now\.)?$/, function (m, i, x) { return i + ' : cueillette le vendredi seulement.' + (x ? ' Aucun vendredi n’est ouvert aux commandes pour le moment.' : ''); }],
     [/^(.+) is ready from (.+)\.$/, '$1 : prête à partir de $2.'],
@@ -607,8 +691,8 @@
   function pickup(w) {
     var m = /^(.+) at (.+)$/.exec(w);
     if (!m) return w;
-    var d = /^today$/i.test(m[1]) ? 'aujourd’hui' : 'le ' + m[1];
-    return d + ' à ' + m[2];
+    var d = /^today$/i.test(m[1]) ? 'aujourd’hui' : 'le ' + F(m[1]);
+    return d + ' à ' + F(m[2]);
   }
   function refundBit(s) {
     var m;

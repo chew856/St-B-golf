@@ -235,6 +235,8 @@
     return S.all('teeTimes').filter(function (t) { return t && Array.isArray(t.players) && t.players.some(function (p) { return p && p.memberId === id; }); });
   }
   const TT_KIND = { booked: 'info', 'checked-in': 'brass', 'on-course': 'good', completed: 'plain', 'no-show': 'bad', cancelled: 'outline' };
+  /* Stored statuses are lower case ('no-show'); show them as words: 'No show' */
+  function resLabel(s) { s = String(s || ''); return s ? (s.charAt(0).toUpperCase() + s.slice(1)).replace(/-/g, ' ') : ''; }
   const RES_KIND = { confirmed: 'info', seated: 'brass', completed: 'plain', cancelled: 'outline', 'no-show': 'bad', scheduled: 'info', published: 'info', draft: 'outline' };
 
   function renderProfile(view, id) {
@@ -294,6 +296,7 @@
       b.closest('.panel').querySelector('.mem-notes-meta').textContent = 'Saved ' + fmt.date(today());
     });
     ui.on(view, 'click', 'tr[data-href]', function (e, tr) { Club.app.go(tr.dataset.href); });
+    ui.on(view, 'keydown', 'tr[data-href]', function (e, tr) { if (e.key === 'Enter') Club.app.go(tr.dataset.href); });
   }
 
   function kv(rows) {
@@ -383,14 +386,15 @@
     }
     p.innerHTML = '<div class="stack">' +
       panel('Dining reservations', 'dining', dining, 'Reservations made in Dining appear here.', ['Date', 'Venue', { t: 'Party', num: true }, 'Occasion', 'Status'], function (r) {
-        return '<tr><td class="nowrap">' + esc(fmt.date(r.date)) + (r.time ? ' <span class="muted">' + esc(fmt.time(r.time)) + '</span>' : '') + '</td><td>' + esc(r.venue || '') + '</td><td class="num">' + esc(r.partySize || '') + '</td><td class="ink-2">' + esc(r.occasion || '') + '</td><td>' + ui.badge(r.status || 'confirmed', RES_KIND[r.status] || 'plain') + '</td></tr>';
+        return '<tr><td class="nowrap">' + esc(fmt.date(r.date)) + (r.time ? ' <span class="muted">' + esc(fmt.time(r.time)) + '</span>' : '') + '</td><td>' + esc(r.venue || '') + '</td><td class="num">' + esc(r.partySize || '') + '</td><td class="ink-2">' + esc(r.occasion || '') + '</td><td>' + ui.badge(resLabel(r.status || 'confirmed'), RES_KIND[r.status] || 'plain') + '</td></tr>';
       }) +
       panel('Event registrations', 'events', events, 'Events this member registers for appear here.', ['Event', 'Date', 'Type', { t: 'Guests', num: true }, 'Status'], function (e) {
         const reg = e.registrations.find(function (r) { return r && r.memberId === m.id; }) || {};
-        return '<tr class="clickable" data-href="events/' + esc(e.id) + '"><td class="primary-cell">' + esc(e.title || 'Event') + '</td><td class="nowrap">' + esc(fmt.date(e.date)) + '</td><td>' + esc(e.type || '') + '</td><td class="num">' + esc(reg.guests || 0) + '</td><td>' + ui.badge(e.status || 'published', RES_KIND[e.status] || 'plain') + '</td></tr>';
+        return '<tr class="clickable" data-href="events/' + esc(e.id) + '" tabindex="0"><td class="primary-cell">' + esc(e.title || 'Event') + '</td><td class="nowrap">' + esc(fmt.date(e.date)) + '</td><td>' + esc(e.type || '') + '</td><td class="num">' + esc(reg.guests || 0) + '</td><td>' + ui.badge(resLabel(e.status || 'published'), RES_KIND[e.status] || 'plain') + '</td></tr>';
       }) +
       panel('Lessons', 'lesson', lessons, 'Lessons booked with our CPGA professionals appear here.', ['Date', 'Type', 'Professional', { t: 'Price', num: true }, 'Status'], function (l) {
-        return '<tr><td class="nowrap">' + esc(fmt.date(l.date)) + (l.time ? ' <span class="muted">' + esc(fmt.time(l.time)) + '</span>' : '') + '</td><td>' + esc(l.type || '') + '</td><td>' + esc(Club.staff.name(l.proId)) + '</td><td class="num">' + esc(fmt.money(l.price || 0)) + '</td><td>' + ui.badge(l.status || 'scheduled', RES_KIND[l.status] || 'plain') + '</td></tr>';
+        /* Opens Lessons on that day; the lesson id follows, for Lessons to open the lesson itself */
+        return '<tr class="clickable" data-href="lessons/' + esc(l.date) + '/' + esc(l.id) + '" tabindex="0"><td class="nowrap">' + esc(fmt.date(l.date)) + (l.time ? ' <span class="muted">' + esc(fmt.time(l.time)) + '</span>' : '') + '</td><td>' + esc(l.type || '') + '</td><td>' + esc(Club.staff.name(l.proId)) + '</td><td class="num">' + esc(fmt.money(l.price || 0)) + '</td><td>' + ui.badge(resLabel(l.status || 'scheduled'), RES_KIND[l.status] || 'plain') + '</td></tr>';
       }) + '</div>';
     ui.on(p, 'click', '[data-action=act-all]', function (e, b) {
       const rest = ui.$('.mem-act-rest', b.closest('.mem-act')); if (!rest) return;
@@ -501,6 +505,10 @@
               Club.app.go('members/' + created.id);
             } else {
               const prevH = m.handicap;
+              /* A status changed here is recorded in the status history like the Change status dialog, so the profile
+                 offers the same step back. */
+              const cur = S.find('members', m.id) || m;
+              if (doc.status !== cur.status) doc.statusHistory = (cur.statusHistory || []).concat([{ from: cur.status, to: doc.status, on: today(), reason: '' }]);
               undoable(function () {
                 S.update('members', m.id, doc);
                 if (doc.handicap != null && doc.handicap !== prevH) S.insert('handicapHistory', { memberId: m.id, date: today(), index: doc.handicap });

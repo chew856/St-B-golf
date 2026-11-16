@@ -17,9 +17,17 @@
   Club.modules = modules;
 
   function go(path) { location.hash = '#/' + path.replace(/^#?\/?/, ''); }
+  /* #/page/a/b, or #/page?date=2026-11-20 (a query after the page name is not part of its id: a date in it is passed as
+     the first parameter, the same as #/page/2026-11-20). The page checks that the date exists. */
+  function dec(x) { try { return decodeURIComponent(x); } catch (e) { return x; } }
   function parse() {
-    const h = location.hash.replace(/^#\/?/, ''); const parts = h.split('/').filter(Boolean).map(decodeURIComponent);
-    return { id: parts[0] || 'dashboard', params: parts.slice(1) };
+    const h = location.hash.replace(/^#\/?/, ''); const qi = h.indexOf('?');
+    const parts = (qi < 0 ? h : h.slice(0, qi)).split('/').filter(Boolean).map(dec);
+    const query = qi < 0 ? '' : h.slice(qi + 1);
+    const params = parts.slice(1);
+    const qd = /(?:^|&)date=([^&]*)/.exec(query);
+    if (qd && !params.length) params.push(dec(qd[1]));
+    return { id: parts[0] || 'dashboard', params: params };
   }
 
   /* ---------------- Sidebar ---------------- */

@@ -22,6 +22,8 @@
   'use strict';
   window.Club = window.Club || {};
   const S = Club.store, ui = Club.ui, esc = ui.esc, fmt = Club.fmt;
+  /* Stored text (receipt notes) is always English: Club.fmtEn on the public site and portal, where Club.fmt can be French. */
+  const EN = Club.fmtEn || fmt;
   const COLL = 'takeoutOrders';
   /* Placeholders taken from what the portal already shows for the Gallery (js/portal/dining.js: 7:00 AM to 9:30 PM, dinner
      from 5:30 PM). Breakfast until 2:00 PM is the club's published rule. Staff change these on the Takeout page. */
@@ -130,7 +132,11 @@
   }
   function code(o) { return 'T' + o.no; }
   function itemsText(items) { return items.map(function (l) { return (l.qty > 1 ? l.qty + ' x ' : '') + l.name; }).join(', '); }
-  function pickupText(o) { return (o.date === today() ? 'Today' : fmt.toDate(o.date).toLocaleDateString('en-CA', { weekday: 'long', month: 'short', day: 'numeric' })) + ' at ' + fmt.time(o.time); }
+  /** 'Today at 7:30 AM' / 'Saturday, Nov 21 at 7:30 AM'. en: English whatever the display language (for stored text). */
+  function pickupText(o, en) {
+    const F = en ? EN : fmt;
+    return (o.date === today() ? 'Today' : F.dayShortMonth ? F.dayShortMonth(o.date) : fmt.toDate(o.date).toLocaleDateString('en-CA', { weekday: 'long', month: 'short', day: 'numeric' })) + ' at ' + F.time(o.time);
+  }
   function nextNo() { let n = +S.getObj('takeoutSeq', 1000) || 1000; S.all(COLL).forEach(function (o) { if (o.no > n) n = o.no; }); n++; S.setObj('takeoutSeq', n); return n; }
 
   /* ---------------- Placing an order ---------------- */
@@ -154,7 +160,7 @@
       payment: null, receiptId: null, refund: null, history: [{ at: new Date().toISOString(), status: 'new', by: c.kind === 'member' ? 'member' : 'customer' }] });
     const title = 'Takeout order ' + code(order);
     const lines = receiptLines(items, t.total);
-    const note = 'Pickup ' + pickupText(order) + ' at the Gallery Taphouse & Grill.';
+    const note = 'Pickup ' + pickupText(order, true) + ' at the Gallery Taphouse & Grill.';
     const cardLabel = method === 'card' || (pay.card && due > 0) ? Club.receipts.cardLabel(pay.card.brand, pay.card.last4) : null;
     if (g && giftAmount > 0) Club.giftcards.redeem(g.id, giftAmount, { where: 'takeout', refId: order.id, note: title });
     let chargeId = null, rc = null;

@@ -7,6 +7,7 @@
 
   const TYPES = ['Private lesson', 'Playing lesson', 'Club fitting', 'Junior clinic', 'Group clinic'];
   const DURATIONS = [30, 45, 60, 90];
+  const FIT = [60, 45, 30];                                      /* lengths an open slot offers, longest first */
   const SPECIALTY = {
     /* stf_2 Steve Wood is the club's real Director of Golf: state his title only. stf_3..stf_5 are fictional demo pros. */
     stf_2: 'Leads golf operations and the CPGA professional staff at St. Boniface.',
@@ -15,7 +16,22 @@
     stf_5: 'CPGA professional. Adult beginners, Junior Golf clinics and club fitting.'
   };
   const WEEKLY_HOURS = 30;
-  function validDate(d) { return /^\d{4}-\d{2}-\d{2}$/.test(d || '') && !isNaN(fmt.toDate(d)); }
+  /* A real calendar date as YYYY-MM-DD. The Date object rolls 2026-02-30 over to March 2, so the parts must come back unchanged. */
+  function validDate(d) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(d || '')) return false;
+    const x = fmt.toDate(d);
+    return !isNaN(x) && x.getFullYear() === +d.slice(0, 4) && x.getMonth() + 1 === +d.slice(5, 7) && x.getDate() === +d.slice(8, 10);
+  }
+  /* The date a link asks for: #/lessons/2026-11-20 or #/lessons?date=2026-11-20 (the router passes either as the first
+     parameter; the query is also read from the address in case it reaches here unparsed). Returns { date, bad }: date is
+     null when the link has none, bad is the text of a date that does not exist. */
+  function routeDate(params) {
+    const q = /[?&]date=([^&/]*)/.exec(location.hash), p0 = String((params && params[0]) || '');
+    let raw = q ? q[1] : p0.replace(/^\?/, '').replace(/^date=/, '').split(/[?&]/)[0];
+    try { raw = decodeURIComponent(raw); } catch (e) { /* keep it as it is */ }
+    if (!raw) return { date: null, bad: null };
+    return validDate(raw) ? { date: raw, bad: null } : { date: null, bad: raw };
+  }
   function range(t, dur) { return fmt.time(t) + ' to ' + fmt.time(toHM(toMin(t) + dur)); }
   function hrs(m) { const h = m / 60; return (Math.round(h * 10) / 10).toString(); }
   function plural(n, word) { return n + ' ' + word + (n === 1 ? '' : 's'); }
@@ -155,6 +171,8 @@
   try { if (localStorage.getItem(VIEW_KEY) === 'week') schedView = 'week'; } catch (e) { /* storage unavailable */ }
   let phonePro = null;                                           /* the pro shown in the day view on a phone (one at a time) */
   const accOpen = {};                                            /* secondary panels' open state, kept across weeks */
+  let cxlOpen = false;                                           /* the week's cancelled lessons listed under the schedule */
+  let nextFlash = null;                                          /* a lesson to highlight when the page is next drawn (Undo of a move) */
 
   Club.register({
     id: 'lessons', label: 'Lessons & Academy', icon: 'lesson', section: 'Golf', order: 20,
@@ -172,11 +190,15 @@
 
   function render(view, params) {
     const today = Club.date.today();
-    const anchor = validDate(params[0]) ? params[0] : today;
+    /* A link to a date that does not exist (2026-02-30, banana) opens this week and says so, never a rolled-over day. */
+    const rd = routeDate(params);
+    if (rd.bad) setTimeout(function () { ui.toast('There is no date ' + rd.bad + '. Showing this week.', 'bad'); }, 0);
+    const anchor = rd.date || today;
     const week = Club.date.week(anchor);
     /* day: the day shown in the day view. A dated link (search results, a new booking, week arrows) opens on that day;
        with no date it is today. more: week view cells showing all their lessons ('proId|date'). */
-    const state = { week: week, flash: null, day: anchor, more: {} };
+    const state = { week: week, flash: nextFlash, day: anchor, more: {} };
+    nextFlash = null;
     const P = pros();
     if (proFilter !== 'all' && !P.some(function (p) { return p.id === proFilter; })) proFilter = 'all';
 
@@ -310,16 +332,43 @@
 
     /* ---- Day view: a strip of the week's days, then a time grid with a column for each pro ---- */
     const dayCols = {};                                           /* proId: the items in that pro's column of the day shown */
+    /* The hours the day grid shows: 7 AM to 7 PM, stretched to whole hours on a day with a lesson or session outside
+       them (older or imported bookings), so it is drawn at its real time. New bookings stay within 7 AM to 7 PM. */
+    let gS = DAY_START, gE = DAY_END;
     function busyAt(pro, m, len) { return (dayCols[pro] || []).some(function (it) { return overlap(m, len, it.s, it.e - it.s); }); }
     function isPast(d, m) { return d < today || (d === today && m < nowMin()); }
+    /* The longest usual lesson (an hour, then 45 or 30 minutes) that fits at minute m before the next lesson and by 7 PM. */
+    function fitLen(busy, m) {
+      for (let i = 0; i < FIT.length; i++) if (m + FIT[i] <= DAY_END && !busy(m, FIT[i])) return FIT[i];
+      return 30;
+    }
+    /* The next time a lesson can still be booked with a pro on day d (any day, not only the one shown): { m, len } or null. */
+    function openSlot(pro, d) {
+      const its = itemsFor(pro, d);
+      const busy = function (m, len) { return its.some(function (it) { return overlap(m, len, it.s, it.e - it.s); }); };
+      for (let m = DAY_START; m <= DAY_END - 30; m += 15) if (!isPast(d, m) && !busy(m, 30)) return { m: m, len: fitLen(busy, m) };
+      return null;
+    }
+    /* Book lesson in the toolbar: the next open time from the day shown (today if that day has passed), with the pro
+       chosen in the filter or else the first pro free at that time. Never a past date or time. */
+    function bookDefaults() {
+      const d0 = schedView === 'day' && state.day >= today ? state.day : week.indexOf(today) >= 0 ? today : week[0] > today ? week[0] : today;
+      const cand = proFilter !== 'all' ? P.filter(function (p) { return p.id === proFilter; }) : P;
+      for (let i = 0, d = d0; i < 28; i++, d = Club.date.addDays(d, 1)) {
+        let best = null;
+        cand.forEach(function (p) { const sl = openSlot(p.id, d); if (sl && (!best || sl.m < best.m)) best = { pro: p.id, m: sl.m, len: sl.len }; });
+        if (best) return { date: d, time: toHM(best.m), proId: best.pro, duration: best.len };
+      }
+      return { date: d0, proId: proFilter !== 'all' ? proFilter : null };
+    }
     /* The first open slot a lesson could still be booked in: a free hour if there is one, or else a free half hour. */
     function firstFree(pro, d) {
       for (let len = 60; len >= 30; len -= 30) for (let m = DAY_START; m <= DAY_END - len; m += 15) if (!isPast(d, m) && !busyAt(pro, m, len)) return m;
       return null;
     }
     function blockHTML(it, pc) {
-      const top = Math.max(0, Math.min(SPAN - 15, it.s - DAY_START)), bottom = Math.max(top + 15, Math.min(SPAN, it.e - DAY_START)), mins = it.e - it.s;
-      const attrs = ' style="top:' + (top / SPAN * 100) + '%;height:calc(' + ((bottom - top) / SPAN * 100) + '% - 2px);--col:' + it.col + ';--span:' + it.span + ';--cols:' + it.cols + '"' +
+      const span = gE - gS, top = Math.max(0, Math.min(span - 15, it.s - gS)), bottom = Math.max(top + 15, Math.min(span, it.e - gS)), mins = it.e - it.s;
+      const attrs = ' style="top:' + (top / span * 100) + '%;height:calc(' + ((bottom - top) / span * 100) + '% - 2px);--col:' + it.col + ';--span:' + it.span + ';--cols:' + it.cols + '"' +
         ' data-fit="' + (mins <= 30 ? 2 : mins <= 45 ? 1 : 0) + '"' + tipAttrs(it);
       const time = '<span class="ls-b-time">' + clock(it.s) + '<span class="ls-b-end"> to ' + clock(it.e) + '</span></span>';
       if (it.prog) {
@@ -344,8 +393,15 @@
       }).join('') + '</div>';
       /* Phones show one pro at a time: this picker chooses which (hidden on wider screens, where every column shows). */
       const pick = '<div class="ls-propick">' + ui.segmented(P.map(function (p) { return { value: p.id, label: p.firstName }; }), onPhone, 'lsphone') + '</div>';
+      gS = DAY_START; gE = DAY_END;
+      shown.forEach(function (p) { itemsFor(p.id, d).forEach(function (it) { gS = Math.min(gS, Math.floor(it.s / 60) * 60); gE = Math.max(gE, Math.ceil(it.e / 60) * 60); }); });
+      gS = Math.max(0, gS); gE = Math.min(24 * 60, gE);
+      const span = gE - gS;
       let hours = '';
-      for (let h = DAY_START; h < DAY_END; h += 60) hours += '<span data-m="' + h + '" style="top:' + ((h - DAY_START) / SPAN * 100) + '%">' + fmt.time(toHM(h)).replace(':00', '') + '</span>';
+      for (let h = gS; h < gE; h += 60) hours += '<span data-m="' + h + '" style="top:' + ((h - gS) / span * 100) + '%">' + fmt.time(toHM(h)).replace(':00', '') + '</span>';
+      /* Hours outside 7 AM to 7 PM, shown only for a lesson there: shaded, and not offered for booking. */
+      const off = (gS < DAY_START ? '<i class="ls-offhrs" style="top:0;height:' + ((DAY_START - gS) / span * 100) + '%"></i>' : '') +
+        (gE > DAY_END ? '<i class="ls-offhrs" style="bottom:0;height:' + ((gE - DAY_END) / span * 100) + '%"></i>' : '');
       Object.keys(dayCols).forEach(function (k) { delete dayCols[k]; });
       let heads = '', cols = '';
       shown.forEach(function (p, i) {
@@ -357,11 +413,11 @@
         const free = firstFree(p.id, d);
         cols += '<div class="ls-col' + pc + on + (i % 2 ? ' alt' : '') + (free == null ? ' full' : '') + '" data-date="' + d + '" data-pro="' + esc(p.id) + '" role="group" aria-label="' + esc(name + ', ' + fmt.dateLong(d)) + '">' +
           items.map(function (it) { return blockHTML(it, pc); }).join('') +
-          (free == null ? '' : '<button type="button" class="ls-ghost"></button>') + '</div>';
+          off + (free == null ? '' : '<button type="button" class="ls-ghost"></button>') + '</div>';
       });
       const now = d === today ? '<span class="ls-now" role="img" hidden><span class="ls-now-t"></span></span>' : '';
       ui.$('.ls-sched', view).innerHTML = strip + (P.length > 1 ? pick : '') +
-        '<div class="ls-daygrid" style="--n:' + Math.max(1, shown.length) + ';--hours:' + (SPAN / 60) + '"><div class="ls-dhead"><div class="ls-corner"></div>' + heads + '</div>' +
+        '<div class="ls-daygrid" style="--n:' + Math.max(1, shown.length) + ';--hours:' + (span / 60) + '"><div class="ls-dhead"><div class="ls-corner"></div>' + heads + '</div>' +
         '<div class="ls-dbody"><div class="ls-hours" aria-hidden="true">' + hours + '</div>' + cols + now + '</div></div>';
       const pk = ui.$('.ls-propick', view); if (pk) pressed(pk);
       /* The slot each column offers to the keyboard starts at its first open time. */
@@ -371,14 +427,17 @@
       const st = ui.$('.ls-strip', view), cur = ui.$('.ls-dpill.on', view);
       if (st && cur && st.scrollWidth > st.clientWidth + 1) st.scrollLeft = cur.offsetLeft - (st.clientWidth - cur.offsetWidth) / 2;
     }
-    /* Lesson blocks do not show cut-off text: when a block is too short for its three lines (time, name, type) the
-       type goes first (1), then the block becomes one line, start time and name (2); if the name still does not fit
-       that line, the time steps aside for it (3: the hour scale and the tooltip still give it).
+    /* Lesson blocks do not show cut-off text: a long name wraps to two lines at most (the tooltip has it in full). When
+       a block is too short for its lines (time, name, type) the type goes first (1), then the name keeps to one line
+       (data-clamp), then the block becomes one line, start time and name (2); if the name still does not fit that
+       line, the time steps aside for it (3: the hour scale and the tooltip still give it).
        Run after drawing and when the width changes. */
     function fitBlocks() {
       ui.$$('.ls-block', view).forEach(function (b) {
-        let lvl = 0; b.setAttribute('data-fit', lvl);
-        while (lvl < 2 && b.scrollHeight > b.clientHeight + 1) { lvl++; b.setAttribute('data-fit', lvl); }
+        let lvl = 0; b.setAttribute('data-fit', lvl); b.removeAttribute('data-clamp');
+        const over = function () { return b.scrollHeight > b.clientHeight + 1; };
+        if (over()) { lvl = 1; b.setAttribute('data-fit', 1); }
+        if (over()) { b.setAttribute('data-clamp', '1'); if (over()) { b.removeAttribute('data-clamp'); lvl = 2; b.setAttribute('data-fit', 2); } }
         const who = lvl === 2 ? ui.$('.ls-b-who', b) : null;
         if (who && who.scrollWidth > who.clientWidth + 1) b.setAttribute('data-fit', 3);
       });
@@ -386,22 +445,22 @@
     /* The red line at the time now (today only). The hour label it would sit on steps aside. */
     function placeNow() {
       const n = ui.$('.ls-now', view); if (!n) return;
-      const v = nowMin(), on = v > DAY_START && v < DAY_END;
+      const v = nowMin(), on = v > gS && v < gE;
       n.hidden = !on;
       ui.$$('.ls-hours span', view).forEach(function (s) { s.classList.toggle('ls-h-off', on && Math.abs(+s.dataset.m - v) < 13); });
       if (!on) return;
-      n.style.top = ((v - DAY_START) / SPAN * 100) + '%';
+      n.style.top = ((v - gS) / (gE - gS) * 100) + '%';
       ui.$('.ls-now-t', n).textContent = clock(v);
       n.setAttribute('aria-label', 'Now, ' + fmt.time(toHM(v)));
     }
-    /* The dashed "+ Book 2:00 PM with Steve" slot of a column, placed at minute m. It ends at the next lesson, or after an hour. */
+    /* The dashed "+ Book 2:00 PM with Steve" slot of a column, placed at minute m. Its height is the length the booking
+       form fills in: an hour, or 45 or 30 minutes where only that fits before the next lesson or 7 PM. */
     function setGhost(col, m) {
       const g = ui.$('.ls-ghost', col); if (!g) return null;
-      const pro = col.dataset.pro;
-      const next = (dayCols[pro] || []).reduce(function (a, it) { return it.s > m && it.s < a ? it.s : a; }, DAY_END);
-      const len = Math.max(30, Math.min(60, next - m));
-      g.style.top = ((m - DAY_START) / SPAN * 100) + '%'; g.style.height = 'calc(' + (len / SPAN * 100) + '% - 2px)';
-      g.dataset.m = m;
+      const pro = col.dataset.pro, span = gE - gS;
+      const len = fitLen(function (a, b) { return busyAt(pro, a, b); }, m);
+      g.style.top = ((m - gS) / span * 100) + '%'; g.style.height = 'calc(' + (len / span * 100) + '% - 2px)';
+      g.dataset.m = m; g.dataset.len = len;
       g.textContent = '+ Book ' + fmt.time(toHM(m)) + ' with ' + proFirst(pro);
       g.setAttribute('aria-label', 'Book ' + fmt.time(toHM(m)) + ' with ' + Club.staff.name(pro) + ', ' + fmt.dateLong(col.dataset.date) + '. The up and down arrow keys change the time');
       return g;
@@ -442,8 +501,17 @@
     function renderSchedule() {
       if (week.indexOf(state.day) < 0) state.day = week.indexOf(today) >= 0 ? today : week[0];
       if (schedView === 'week') renderWeek(); else renderDay();
-      const cancelled = weekLessons().filter(function (l) { return l.status === 'cancelled'; }).length;
-      if (cancelled) ui.$('.ls-sched', view).insertAdjacentHTML('beforeend', '<p class="muted ls-cxl">' + cancelled + ' cancelled lesson' + (cancelled === 1 ? ' this week is' : 's this week are') + ' hidden from the schedule.</p>');
+      /* The week's cancelled lessons are kept off the schedule; the note under it lists them on request, and each opens
+         its detail (with Restore lesson while it is still ahead). */
+      const cx = weekLessons().filter(function (l) { return l.status === 'cancelled'; }).sort(function (a, b) { return (a.date + a.time) < (b.date + b.time) ? -1 : 1; });
+      if (cx.length) ui.$('.ls-sched', view).insertAdjacentHTML('beforeend', '<div class="ls-cxl"><p class="muted">' + cx.length + ' cancelled lesson' + (cx.length === 1 ? ' this week is' : 's this week are') + ' hidden from the schedule. ' +
+        '<button type="button" class="ls-cxl-btn" data-action="cxl" aria-expanded="' + cxlOpen + '">' + (cxlOpen ? 'Hide' : (cx.length === 1 ? 'Show it' : 'Show them')) + '</button></p>' +
+        (cxlOpen ? '<ul class="ls-cxl-list">' + cx.map(function (l) {
+          return '<li><button type="button" class="ls-cxl-row" data-action="lesson" data-id="' + esc(l.id) + '" aria-label="' + esc('Cancelled: ' + studentName(l) + ', ' + fmt.dateLong(l.date) + ' at ' + fmt.time(l.time) + ', ' + l.type + ' with ' + Club.staff.name(l.proId)) + '">' +
+            '<span class="ls-cxl-when">' + esc(fmt.weekday(l.date) + ' ' + fmt.toDate(l.date).getDate() + ' · ' + fmt.time(l.time)) + '</span>' +
+            '<span class="ls-cxl-who">' + esc(studentName(l)) + '</span>' +
+            '<span class="ls-cxl-sub">' + esc(l.type + ' with ' + proFirst(l.proId)) + '</span></button></li>';
+        }).join('') + '</ul>' : '') + '</div>');
       state.flash = null;
     }
     function setView(v) {
@@ -513,6 +581,17 @@
     function refresh() { renderStats(false); renderRoster(); renderFilter(); renderSchedule(); renderToday(); renderPrograms(); renderRates(); }
     /* After an Undo: redraw this page if it is still showing, or the lessons page staff moved to. */
     function again() { if (document.body.contains(view)) refresh(); else if (/^#\/lessons/.test(location.hash)) Club.app.render(); }
+    /* After an Undo that puts a lesson back on another day: the schedule follows it to that day (and, on a phone, its
+       pro), redrawing this page when that day is in its week or opening its week otherwise. Only while staff are on Lessons. */
+    function follow(to) {
+      if (!/^#\/lessons/.test(location.hash)) return;
+      phonePro = to.proId;
+      if (proFilter !== 'all' && proFilter !== to.proId) proFilter = 'all';
+      if (document.body.contains(view) && week.indexOf(to.date) >= 0) { state.day = to.date; state.flash = to.id; refresh(); return; }
+      nextFlash = to.id;
+      const h = '#/lessons/' + to.date;
+      if (location.hash === h) Club.app.render(); else Club.app.go(h);
+    }
     renderStats(true); renderRoster(); renderFilter(); renderSchedule(); renderToday(); renderPrograms(); renderRates();
 
     /* ---- events ---- */
@@ -525,12 +604,13 @@
         Club.app.go('lessons/' + (Club.date.week(to).indexOf(today) >= 0 ? today : to));
       }
       else if (a === 'this-week') { if (week.indexOf(today) >= 0) { state.day = today; renderSchedule(); } else Club.app.go('lessons/' + today); }
-      else if (a === 'book') openLesson({ date: schedView === 'day' && state.day >= today ? state.day : (week.indexOf(today) >= 0 ? today : week[0]), proId: proFilter !== 'all' ? proFilter : null });
+      else if (a === 'book') openLesson(bookDefaults());
       else if (a === 'lesson') { e.stopPropagation(); const l = S.find('lessons', id); if (l) openLesson({ lesson: l }); }
       else if (a === 'program') { e.stopPropagation(); openRoster(id); }
       else if (a === 'pro') { const inSched = !!b.closest('.ls-sched'); setPro(proFilter === id ? 'all' : id); if (inSched) refocus(e, '.ls-sched [data-action=pro][data-id="' + id + '"]'); }
       else if (a === 'day') { showDay(b.dataset.date); refocus(e, '.ls-dpill.on'); }
       else if (a === 'more') { const k = b.dataset.key; state.more[k] = !state.more[k]; renderSchedule(); refocus(e, '.ls-more[data-key="' + k + '"]'); }
+      else if (a === 'cxl') { cxlOpen = !cxlOpen; renderSchedule(); refocus(e, '.ls-cxl-btn'); }
       else if (a === 'complete') completeLesson(id);
       else if (a === 'rates') openRates();
       else if (a === 'new-program') openProgram(null);
@@ -551,7 +631,9 @@
        Returns null where nothing can start (a lesson is there, or the gap is too short). */
     function slotAt(col, e) {
       const r = col.getBoundingClientRect(), pro = col.dataset.pro;
-      let m = DAY_START + Math.floor(((e.clientY - r.top) / r.height * SPAN) / 15) * 15;
+      const at = gS + (e.clientY - r.top) / r.height * (gE - gS);
+      if (at < DAY_START || at >= DAY_END) return null;            /* the shaded hours outside 7 AM to 7 PM */
+      let m = Math.floor(at / 15) * 15;
       m = Math.max(DAY_START, Math.min(DAY_END - 30, m));
       if (busyAt(pro, m, 30)) {
         if (busyAt(pro, m, 15) || m - 15 < DAY_START || busyAt(pro, m - 15, 30)) return null;
@@ -565,7 +647,7 @@
       const g = e.target.closest('.ls-ghost'), d = col.dataset.date, m = g ? +g.dataset.m : slotAt(col, e);
       if (m == null) return;
       if (isPast(d, m)) { ui.toast('That time has passed. Choose a later slot', 'bad'); return; }
-      openLesson({ date: d, time: toHM(m), proId: col.dataset.pro });
+      openLesson({ date: d, time: toHM(m), proId: col.dataset.pro, duration: fitLen(function (a, b) { return busyAt(col.dataset.pro, a, b); }, m) });
     });
     view.addEventListener('mousemove', function (e) {
       const col = e.target.closest && e.target.closest('.ls-col');
@@ -605,7 +687,7 @@
     function openLesson(o) {
       const l = o.lesson || null; const isEdit = !!l;
       if (isEdit && l.status !== 'scheduled') return openLessonDetail(l);
-      const data = isEdit ? l : { date: o.date || today, time: o.time || '09:00', proId: o.proId || (P[0] && P[0].id), memberId: '', type: 'Private lesson', duration: 60, notes: '' };
+      const data = isEdit ? l : { date: o.date || today, time: o.time || '09:00', proId: o.proId || (P[0] && P[0].id), memberId: '', type: 'Private lesson', duration: DURATIONS.indexOf(o.duration) >= 0 ? o.duration : 60, notes: '' };
       const who0 = isEdit && !l.memberId ? 'guest' : 'member', pays0 = isEdit && l.pays === 'shop' ? 'shop' : 'account', g0 = (isEdit && l.guest) || {};
       const times = []; for (let m = DAY_START; m <= DAY_END - 30; m += 15) times.push({ value: toHM(m), label: fmt.time(toHM(m)) });
       if (times.every(function (t) { return t.value !== data.time; })) times.push({ value: data.time, label: fmt.time(data.time) });
@@ -676,7 +758,7 @@
             let saved = null;
             const rec = Club.undo.track(function () { saved = write(doc); recordPay(saved, pay); return saved; });
             state.flash = saved.id; state.day = saved.date; phonePro = saved.proId;
-            undoOffer((isEdit ? 'Payment of ' : 'Lesson booked and ') + (isEdit ? fmt.money(pay.total) + ' recorded for ' + studentName(saved) : fmt.money(pay.total) + ' paid at the golf shop'), rec, { after: again, undone: isEdit ? 'Payment undone' : 'Booking and payment undone' });
+            undoOffer((isEdit ? 'Payment of ' : 'Lesson booked and ') + (isEdit ? fmt.money(pay.total) + ' recorded for ' + studentName(saved) : fmt.money(pay.total) + ' paid at the golf shop'), rec, { after: afterUndo, undone: isEdit ? 'Payment undone' : 'Booking and payment undone' });
             if (week.indexOf(saved.date) < 0) Club.app.go('lessons/' + saved.date); else refresh();
           });
         } else if (b.dataset.lsp === 'refund') {
@@ -725,12 +807,15 @@
           guest: guest ? { name: gname, phone: String(f.gphone || '').trim(), email: gemail, publicPlayerId: pp ? pp.id : null } : null };
       }
       function write(doc) { return isEdit ? S.update('lessons', l.id, doc) : S.insert('lessons', Object.assign({}, doc, { status: 'scheduled', charged: false })); }
+      /* Undo of a change to a booked lesson shows it back where it was (its old day and pro), even in another week. */
+      const was = isEdit ? { id: l.id, date: l.date, proId: l.proId } : null;
+      const afterUndo = isEdit ? function () { follow(was); } : again;
       function save(quiet) {
         const doc = check(); if (!doc) return false;
         const f = doc;
         /* quiet: Mark completed saves first, inside the completion's own Undo record. */
         const saved = quiet ? write(doc) : undoRun(function () { return write(doc); }, { message: isEdit ? 'Lesson updated' : 'Lesson booked with ' + proFirst(f.proId) + ' on ' + fmt.dateShort(f.date) + ' at ' + fmt.time(f.time),
-          after: again, undone: isEdit ? 'Lesson changes undone' : 'Booking removed' });
+          after: afterUndo, undone: isEdit ? 'Lesson changes undone' : 'Booking removed' });
         state.flash = saved.id; state.day = f.date; phonePro = f.proId;   /* the day view follows the lesson to its day (and, on a phone, its pro) */
         if (week.indexOf(f.date) < 0) { m.close(); Club.app.go('lessons/' + f.date); return; }
         if (proFilter !== 'all' && proFilter !== f.proId) proFilter = 'all';
@@ -877,10 +962,14 @@
         f.duration = +f.duration || 60;
         if (!validDate(f.startDate)) errs.push('Choose a valid first session date.');
         else if (dayName(f.startDate) !== f.day) { errs.push('The first session falls on a ' + dayName(f.startDate) + '. Choose a ' + f.day + ', such as ' + fmt.dateShort(alignTo(f.startDate, f.day)) + '.'); form.startDate.classList.add('invalid'); }
-        if (!(f.weeks >= 1)) errs.push('Run the program for at least one week.');
-        if (!(f.capacity >= 1)) errs.push('Capacity must be at least one place.');
+        /* Weeks and places are whole numbers (as the fields' limits say); the fee is dollars and cents. */
+        if (!(f.weeks >= 1)) { errs.push('Run the program for at least one week.'); form.weeks.classList.add('invalid'); }
+        else if (!Number.isInteger(f.weeks) || f.weeks > 52) { errs.push('Weeks must be a whole number from 1 to 52.'); form.weeks.classList.add('invalid'); }
+        if (!(f.capacity >= 1)) { errs.push('Capacity must be at least one place.'); form.capacity.classList.add('invalid'); }
+        else if (!Number.isInteger(f.capacity) || f.capacity > 60) { errs.push('Capacity must be a whole number of places from 1 to 60.'); form.capacity.classList.add('invalid'); }
         else if (isEdit && f.capacity < (p.enrolled || []).length) { errs.push('Capacity cannot be below the ' + p.enrolled.length + ' members already enrolled.'); form.capacity.classList.add('invalid'); }
-        if (f.price == null || f.price < 0) errs.push('Enter a fee of zero or more.');
+        if (f.price == null || !(f.price >= 0)) { errs.push('Enter a fee of zero or more.'); form.price.classList.add('invalid'); }
+        else if (Math.abs(f.price * 100 - Math.round(f.price * 100)) > 1e-6) { errs.push('Enter the fee in dollars and cents, such as 400 or 399.50.'); form.price.classList.add('invalid'); }
         if (toMin(f.time) + f.duration > DAY_END) errs.push('Sessions must finish by ' + fmt.time(toHM(DAY_END)) + '.');
         if (errs.length) { al.innerHTML = Club.icon('alert') + '<div>' + errs.map(function (x) { return '<div>' + esc(x) + '</div>'; }).join('') + '</div>'; al.hidden = false; return false; }
         const doc = { name: f.name, coach: f.coach, day: f.day, time: f.time, duration: f.duration, weeks: f.weeks, startDate: f.startDate, capacity: f.capacity, price: f.price, level: f.level, description: f.description };

@@ -68,7 +68,7 @@
     if (top && top.title === (o.title || '') && Date.now() - top.openedAt < 700) {
       return { el: sheet, body: body, foot: foot, close: function () {}, setContent: setContent, setFooter: setFooter, duplicate: true };
     }
-    api.title = o.title || ''; api.openedAt = Date.now();
+    api.title = o.title || ''; api.openedAt = Date.now(); api.locked = !!o.locked;
     document.body.appendChild(scrim); document.body.appendChild(sheet);
     stack.push(api);
     document.body.classList.add('ps-open');
@@ -284,7 +284,8 @@
     openReceipts(String(b.dataset.receipts).split(' ').filter(Boolean));
   }, true);
 
-  Portal.resetChrome = function () { Portal.actionBar.hide(); while (stack.length) stack[stack.length - 1].close(); };
+  /* A locked sheet (the required hand question) stays open across page changes: only its own answer closes it. */
+  Portal.resetChrome = function () { Portal.actionBar.hide(); stack.slice().reverse().forEach(function (s) { if (!s.locked) s.close(); }); };
 
   /* ---------------- Remembered defaults ---------------- */
   function key() { let m = null; try { m = localStorage.getItem('stboniface.portal.session'); } catch (e) { /* storage blocked */ } return 'stboniface.portal.prefs.' + (m || 'anon'); }

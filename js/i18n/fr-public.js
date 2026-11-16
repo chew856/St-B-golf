@@ -20,6 +20,13 @@
   var BANDS = { 'Weekday': 'Semaine', 'Twilight': 'Crépuscule', 'Weekend & holiday': 'Fin de semaine et fériés' };
   function band(b) { return BANDS[b] || b; }
   var DAYWORD = { 'Today': 'aujourd’hui', 'Tomorrow': 'demain' };
+  /** Stored text is English (Club.fmtEn): its dates, times and money shown in French. */
+  function F(s) { return window.Club && Club.fmtEn ? Club.fmtEn.fr(s) : s; }
+  /** A receipt note's payment split: "Gift card ending 7KQ2: $20.00. Visa ending 4242: $5.00." */
+  function parts(s) {
+    var a = s.split('. ');
+    return a.map(function (x, i) { if (i < a.length - 1) x += '.'; var m = /^(.+? ending [0-9A-Z]{4}|Card|Cash|Member account): (.+)\.$/.exec(x); return m ? (/ ending /.test(m[1]) ? T(m[1].replace(/ ending .*/, '')) + ' se terminant par ' + m[1].slice(-4) : T(m[1])) + ' : ' + F(m[2]) + '.' : T(x); }).join(' ');
+  }
 
   var S = {
     /* ---------- public.html / shell (site.js) ---------- */
@@ -284,13 +291,13 @@
     [/^Guest (\d+) full name$/, 'Nom complet de l’invité $1'],
     [/^Guest (\d+) transport$/, 'Transport de l’invité $1'],
     [/^Remove guest (\d+)$/, 'Retirer l’invité $1'],
-    [/^Green fees, (.+) at (.+) \((\d+) golfers?, (\d+) holes\)$/, function (m, d, t, n, h) { return 'Droits de jeu, ' + d + ' à ' + t + ' (' + pl(n, 'golfeur', 'golfeurs') + ', ' + h + ' trous)'; }],
+    [/^Green fees, (.+) at (.+) \((\d+) golfers?, (\d+) holes\)$/, function (m, d, t, n, h) { return 'Droits de jeu, ' + F(d) + ' à ' + F(t) + ' (' + pl(n, 'golfeur', 'golfeurs') + ', ' + h + ' trous)'; }],
     /* ---------- receipts (site.js slip and Club.receipts titles/notes) ---------- */
     [/^Refunded (.+)$/, 'Remboursé le $1'],
-    [/^Tee time, (.+)$/, 'Heure de départ, $1'],
-    [/^Tee time refund, (.+)$/, 'Remboursement d’heure de départ, $1'],
+    [/^Tee time, (.+)$/, function (m, d) { return 'Heure de départ, ' + F(d); }],
+    [/^Tee time refund, (.+)$/, function (m, d) { return 'Remboursement d’heure de départ, ' + F(d); }],
     [/^Tee time refund$/, 'Remboursement d’heure de départ'],
-    [/^Tee time (.+?)(?: at (.+?))?(?:, (\d+) holes)?\. Confirmation ([A-Z0-9]+)\.$/, function (m, d, t, h, c) { return 'Départ le ' + d + (t ? ' à ' + t : '') + (h ? ', ' + h + ' trous' : '') + '. Confirmation ' + c + '.'; }],
+    [/^Tee time (.+?)(?: at (.+?))?(?:, (\d+) holes)?\. Confirmation ([A-Z0-9]+)\.(?: (.+))?$/, function (m, d, t, h, c, x) { return 'Départ le ' + F(d) + (t ? ' à ' + F(t) : '') + (h ? ', ' + h + ' trous' : '') + '. Confirmation ' + c + '.' + (x ? ' ' + parts(x) : ''); }],
     [/^Confirmation ([A-Z0-9]+)\.$/, 'Confirmation $1.'],
     /* ---------- home ---------- */
     [/^Weekend and holiday mornings, 6:00 AM to 1:00 PM, are (.+) when you play with a member, so ask your member host to book\. Nine holes are 60% of the 18-hole fee\.$/,

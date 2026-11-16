@@ -1778,6 +1778,7 @@
     'It may have been cancelled. You can still post a score for a round that is not in the app.': 'Elle a peut-être été annulée. Vous pouvez tout de même inscrire un score pour une partie qui n’est pas dans l’application.',
     'Post a score': 'Inscrire un score',
     'This round is already posted': 'Cette partie est déjà inscrite',
+    'This score is already posted': 'Ce score est déjà inscrit',
     'View score': 'Voir le score',
     'This round has not finished yet': 'Cette partie n’est pas encore terminée',
     'You can post your score once the round is complete.': 'Vous pourrez inscrire votre score une fois la partie terminée.',

@@ -95,6 +95,8 @@
   function partnerName(p) { return Portal.playerLabel(p); }   /* friends in full, everyone else "Tom R." */
   function partners(tt, mid) { return (tt.players || []).filter(function (p) { return p.memberId !== mid; }); }
   function niceList(arr) { return arr.length < 2 ? arr.join('') : arr.slice(0, -1).join(', ') + ' and ' + arr[arr.length - 1]; }
+  /* A list of names shown on its own (no sentence around it for the French patterns to work on): "et" in French */
+  function namesList(arr) { const fr = Club.i18n && Club.i18n.lang && Club.i18n.lang() === 'fr'; return arr.length < 2 ? arr.join('') : arr.slice(0, -1).join(', ') + (fr ? ' et ' : ' and ') + arr[arr.length - 1]; }
   function indexOn(mid, date, fallback) {
     const h = S.all('handicapHistory').filter(function (x) { return x.memberId === mid && typeof x.index === 'number' && x.date <= date; })
       .sort(function (a, b) { return b.date.localeCompare(a.date); })[0];
@@ -239,7 +241,7 @@
       '<dl class="gc-kv">' +
         '<div><dt>Course handicap</dt><dd>' + p.courseHandicap + ' ' + demoPill() + '</dd></div>' +
         '<div><dt>Playing conditions</dt><dd>Calculated by Golf Canada</dd></div>' +
-        '<div><dt>Played with</dt><dd>' + esc(p.playedWith && p.playedWith.length ? niceList(p.playedWith) : tt ? (Portal.member() && Portal.member().id !== p.memberId ? 'Played alone' : 'Just you') : 'Not recorded') + '</dd></div>' +
+        '<div><dt>Played with</dt><dd>' + esc(p.playedWith && p.playedWith.length ? namesList(p.playedWith) : tt ? (Portal.member() && Portal.member().id !== p.memberId ? 'Played alone' : 'Just you') : 'Not recorded') + '</dd></div>' +
         '<div><dt>Attested by</dt><dd>' + esc(att || 'Not attested') + '</dd></div>' +
         (p.estimate ? '<div><dt>Index after this score</dt><dd>' + esc(fmt.handicap(p.estimate.index)) + ' ' + demoPill('Demo estimate') + '</dd></div>' : '') +
       '</dl>' + bannerHTML(true) + '</div>' });
@@ -537,9 +539,22 @@
         friendLeagueId: leagueOf(tt, m.id)
       };
     }
+    /* The same score already in the history: posted from this flow, or an identical manual entry minutes ago
+       (a second tab, or the flow left open and posted again). */
+    function samePost(d) {
+      const key = function (x) { return [x.date, x.time || '', x.teeTimeId || '', x.holes, x.nine || '', x.tees, x.entry, x.gross, x.adjusted, (x.holeScores || []).join(','), x.attestedBy || ''].join('|'); };
+      const k = key(d), since = new Date(Date.now() - 10 * 60000).toISOString();
+      return postsOf(m.id).find(function (p) { return !p.seed && String(p.postedAt || '') >= since && key(p) === k; }) || null;
+    }
+    let posted = null;
+    const flowHash = location.hash;
+    function leave() { if (location.hash === flowHash) Portal.go(tt ? 'tee-times/mine' : 'scores'); }
     function review() {
+      if (posted) { ui.toast('This score is already posted', 'bad'); leave(); return; }
       const d = buildDoc();
       const sh = Portal.openSheet({ title: 'Review your score', size: 'full',
+        /* After posting, closing the confirmation any way (Done, X, Escape, tap outside) leaves the flow */
+        onClose: function () { if (posted) leave(); },
         content: '<div class="gc-review">' + bannerHTML(false) +
           '<p class="gc-review-round">' + esc([dayShort(d.date), d.time ? fmt.time(d.time) : '', d.holes + ' holes' + (d.nine ? ' (' + d.nine + ' nine)' : ''), teeLabel(d.tees) + ' tees'].filter(Boolean).join(' · ')) + '</p>' +
           statsHTML(d.gross, d.adjusted, d.differential) +
@@ -552,8 +567,11 @@
           '<p class="gc-hint">The differential uses placeholder ratings' + (d.holes === 9 ? ' and the nine-hole expected score' : '') + ', so it is a demo figure. Golf Canada calculates the real one.</p></div>',
         footer: '<button type="button" class="btn btn-primary gc-full" data-act="post">Post to Golf Canada (demo)</button>' });
       ui.$('[data-act=post]', sh.foot).addEventListener('click', function () {
+        if (posted) return;
         if (tt && postFor(m.id, tt.id)) { sh.close(); ui.toast('This round is already posted', 'bad'); Portal.go('scores'); return; }
+        if (samePost(d)) { posted = samePost(d); ui.toast('This score is already posted', 'bad'); sh.close(); return; }
         const doc = S.insert('scorePosts', d);
+        posted = doc;
         const est = estimateFor(m.id);
         S.update('scorePosts', doc.id, { estimate: est ? { index: est.index, used: est.used, of: est.of } : null });
         Portal.actionBar.hide();
@@ -573,7 +591,7 @@
           : '<p class="gc-hint">Post at least 3 scores to see a demo estimate of your index.</p>') +
         '</div>');
       sh.setFooter('<div class="gc-done-acts"><a class="btn" href="#/scores">Score history</a><button type="button" class="btn btn-primary" data-act="done">Done</button></div>');
-      ui.$('[data-act=done]', sh.foot).addEventListener('click', function () { sh.close(); Portal.go(tt ? 'tee-times/mine' : 'scores'); });
+      ui.$('[data-act=done]', sh.foot).addEventListener('click', function () { sh.close(); });
       const t = ui.$('.gc-done-h', sh.body); if (t) { t.setAttribute('tabindex', '-1'); t.focus(); }
     }
 

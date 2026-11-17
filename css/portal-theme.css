@@ -7,7 +7,7 @@
    remapped onto this palette, so existing components follow it.
 
    Contrast (WCAG): --text on --surface 15.6:1, --text-2 on --surface 6.9:1,
-   --text-3 on --surface 5.0:1 (on --bg 4.7:1), --on-dark on --forest-950 16.2:1,
+   --text-3 on --surface 5.3:1 (on --bg 4.9:1, on --sage-100 4.55:1), --on-dark on --forest-950 16.2:1,
    --on-dark-2 on --forest-950 9.0:1, --forest-500 on --surface 5.6:1,
    --danger on --surface 7.4:1.
    ========================================================================== */
@@ -30,7 +30,7 @@ body.portal {
   --border-strong: #C8D0C7;
   --text: #16201A;
   --text-2: #4F5A53;
-  --text-3: #66716A;
+  --text-3: #616C65;
   --on-dark: #F3F6F2;
   --on-dark-2: rgba(243, 246, 242, 0.72);
   --danger: #9B2C2C;
@@ -200,7 +200,7 @@ body.portal .empty svg { color: var(--forest-500); }
 body.portal svg.icon { stroke-width: 1.5; }
 
 /* ---------- Dialogs, sheets, toasts ---------- */
-body.portal .overlay { background: rgba(16, 30, 23, 0.42); z-index: 140; }   /* confirm dialogs sit above kit sheets */
+body.portal .overlay { background: var(--forest-scrim); z-index: 140; }   /* confirm dialogs sit above kit sheets */
 body.portal .modal, body.portal .drawer { background: var(--surface); border-top: 0; border-radius: var(--radius-card); box-shadow: var(--shadow-sheet); }
 body.portal .drawer { border-left: 1px solid var(--border); border-radius: 0; }
 body.portal .modal-head h3, body.portal .drawer .modal-head h3 { font-family: var(--serif); font-size: 1.375rem; font-weight: 500; }
@@ -208,6 +208,9 @@ body.portal .modal-foot { background: var(--surface); border-top: 1px solid var(
 body.portal .toast { background: var(--forest-950); color: var(--on-dark); border-left: 0; border-radius: var(--radius-ctl); font-size: 0.9375rem; }
 body.portal .toast svg { color: var(--on-dark); }
 @media (max-width: 768px) {
+  /* Phone tap targets: footer links and the basket's item names (the public site does the same in public-theme.css). */
+  body.portal .p-footer .p-social a { display: inline-flex; align-items: center; min-height: 40px; }
+  body.portal .sh-line-name { display: inline-flex; align-items: center; min-height: 44px; }
   body.portal .modal { border-radius: 18px 18px 0 0; }
   body.portal .modal::before { content: ""; display: block; width: 36px; height: 4px; border-radius: 2px; background: var(--border-strong); margin: 8px auto 0; flex: none; }
 }
@@ -225,10 +228,10 @@ body.portal .p-nav a.active { color: var(--on-dark); }
 @media (hover: hover) { body.portal .p-nav a:hover { color: var(--on-dark); } }
 body.portal .p-nav-ink { background: var(--on-dark); height: 2px; }
 body.portal .p-me-btn { border: 0; padding: 0; min-height: 44px; min-width: 44px; gap: 4px; background: none; }
-body.portal .p-me-btn .avatar { width: 36px; height: 36px; font-size: min(0.9375rem, 15px); background: transparent; color: var(--on-dark); box-shadow: inset 0 0 0 1px rgba(243, 246, 242, 0.4); }
+body.portal .p-me-btn .avatar { width: 36px; height: 36px; font-size: min(0.9375rem, 15px); background: transparent; color: var(--on-dark); box-shadow: inset 0 0 0 1px var(--on-dark-a40); }
 body.portal .p-me-btn svg { color: var(--on-dark-2); width: 16px; height: 16px; }
 body.portal .p-me-name { color: var(--on-dark); font-weight: 500; font-size: 0.9375rem; }
-body.portal .p-me-menu { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card), 0 12px 28px rgba(16, 30, 23, 0.12); width: min(280px, calc(100vw - 24px)); max-width: calc(100vw - 24px); }
+body.portal .p-me-menu { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card), var(--shadow-drop); width: min(280px, calc(100vw - 24px)); max-width: calc(100vw - 24px); }
 body.portal .p-me-menu:not(.x) { visibility: hidden; }
 body.portal .p-me.open .p-me-menu { visibility: visible; }
 body.portal .p-me-menu a, body.portal .p-me-menu button { min-height: 48px; font-size: 0.9375rem; color: var(--text); }
@@ -266,7 +269,7 @@ body.portal .toasts { bottom: calc(80px + env(safe-area-inset-bottom)); }
 
 /* ---------- Sign in ---------- */
 body.portal.signed-out { background: var(--forest-950); }
-body.portal .p-signin-card { border-top: 0; border-radius: 18px; background: var(--surface); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35); }
+body.portal .p-signin-card { border-top: 0; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-signin); }
 body.portal .p-signin h1 { font-family: var(--serif); font-size: 1.875rem; font-weight: 500; }
 body.portal .p-signin-sub { color: var(--text-2); font-size: 0.9375rem; }
 body.portal .p-demo-btn { min-height: 60px; border: 1px solid var(--border); border-radius: var(--radius-ctl); background: var(--surface); }

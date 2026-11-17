@@ -285,7 +285,7 @@ body.portal .tt-add-qty { align-self: center; }
 .tt-chip.selected .tee-head { color: var(--on-dark); }
 .tt-chip.selected .tee-head.is-taken { color: var(--on-dark-2); }
 .tt-chip.selected .tee-head.is-taken .icon { stroke: var(--forest-800); }
-.tt-chip.selected .tt-chip-fee { color: var(--on-dark); border-top-color: rgba(243, 246, 242, 0.25); }
+.tt-chip.selected .tt-chip-fee { color: var(--on-dark); border-top-color: var(--on-dark-a25); }
 .tt-chip[disabled] .tee-head { color: var(--text-3); opacity: 0.7; }
 .tt-chip.st-mine .tee-head { color: var(--forest-800); }
 .tt-hold-note { margin: 12px 0 0; }

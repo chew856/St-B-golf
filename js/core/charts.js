@@ -11,11 +11,14 @@
     const p = Math.pow(10, Math.floor(Math.log10(v))); const n = v / p;
     return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * p;
   }
+  /* Axis numbers. French (portal and public site) writes the decimal with a comma: 2,5 not 2.5. */
   function short(v, money) {
     const pre = money ? '$' : '';
-    if (Math.abs(v) >= 1e6) return pre + (v / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
-    if (Math.abs(v) >= 1e3) return pre + (v / 1e3).toFixed(1).replace(/\.0$/, '') + 'k';
-    return pre + (Math.abs(v) < 10 && v % 1 ? v.toFixed(1) : Math.round(v));
+    let t;
+    if (Math.abs(v) >= 1e6) t = pre + (v / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
+    else if (Math.abs(v) >= 1e3) t = pre + (v / 1e3).toFixed(1).replace(/\.0$/, '') + 'k';
+    else t = pre + (Math.abs(v) < 10 && v % 1 ? v.toFixed(1) : Math.round(v));
+    return Club.i18n && Club.i18n.lang && Club.i18n.lang() === 'fr' ? t.replace('.', ',') : t;
   }
   function legend(series) {
     if (series.length < 2) return '';

@@ -508,12 +508,26 @@
               /* A status changed here is recorded in the status history like the Change status dialog, so the profile
                  offers the same step back. */
               const cur = S.find('members', m.id) || m;
-              if (doc.status !== cur.status) doc.statusHistory = (cur.statusHistory || []).concat([{ from: cur.status, to: doc.status, on: today(), reason: '' }]);
-              undoable(function () {
-                S.update('members', m.id, doc);
-                if (doc.handicap != null && doc.handicap !== prevH) S.insert('handicapHistory', { memberId: m.id, date: today(), index: doc.handicap });
-              }, 'Member saved', 'Member details restored');
-              rerender();
+              const moved = doc.status !== cur.status, meta = statusMeta(doc.status);
+              if (moved) doc.statusHistory = (cur.statusHistory || []).concat([{ from: cur.status, to: doc.status, on: today(), reason: '' }]);
+              const save = function () {
+                undoable(function () {
+                  S.update('members', m.id, doc);
+                  if (doc.handicap != null && doc.handicap !== prevH) S.insert('handicapHistory', { memberId: m.id, date: today(), index: doc.handicap });
+                }, moved ? 'Member saved. ' + fullName(doc) + ' is now ' + meta.label.toLowerCase() : 'Member saved', 'Member details restored');
+                api.close(); rerender();
+              };
+              /* Suspending or resigning a member through Edit asks first, the same as the Change status dialog. */
+              if (moved && (doc.status === 'suspended' || doc.status === 'resigned')) {
+                ui.confirm({
+                  title: 'Mark as ' + meta.label.toLowerCase() + '?',
+                  text: fullName(doc) + ' will move from ' + statusMeta(cur.status).label.toLowerCase() + ' to ' + meta.label.toLowerCase() + '. ' + meta.text,
+                  confirmLabel: 'Save and change status', danger: true
+                }).then(function (yes) { if (yes) save(); });
+                return false;
+              }
+              save();
+              return false;
             }
           }
         }

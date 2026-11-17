@@ -513,7 +513,7 @@
       if (hit.length && o.stage !== 'Completed') tee += '<div class="fn-warn">' + Club.icon('alert') + '<div>' + hit.length + ' tee time' + (hit.length === 1 ? ' is' : 's are') + ' booked in this window.</div></div>';
     } else tee = '<div class="ot-block">' + Club.icon('teesheet') + '<div><strong>Tee times from ' + esc(fmt.time(o.start)) + '</strong><div class="muted">Tee time events do not have sole use of the course. Reserve the groups on the tee sheet.</div></div></div>';
     return '<div class="panel" data-reveal><div class="panel-head"><h3>Contact</h3>' + ui.btn('', { kind: 'ghost', sm: true, icon: 'edit', action: 'edit', title: 'Edit outing' }) + '</div><div class="panel-body">' +
-        ui.person(o.contactName, esc(o.organization), 'lg') + '<dl class="kv fn-kv">' + (o.email ? '<dt>Email</dt><dd><a href="mailto:' + esc(o.email) + '">' + esc(o.email) + '</a></dd>' : '') + (o.phone ? '<dt>Phone</dt><dd><a href="tel:' + esc(o.phone) + '">' + esc(o.phone) + '</a></dd>' : '') +
+        ui.person(o.contactName, esc(o.organization), 'lg') + '<dl class="kv fn-kv">' + (o.email ? '<dt>Email</dt><dd><a href="mailto:' + esc(o.email) + '">' + esc(o.email) + '</a></dd>' : '') + (o.phone ? '<dt>Phone</dt><dd><a href="tel:' + esc(String(o.phone).replace(/[^\d+]/g, '')) + '">' + esc(o.phone) + '</a></dd>' : '') +
         (function (mb) { return mb ? '<dt>Member</dt><dd><a href="#/members/' + esc(mb.id) + '">' + esc(mb.firstName + ' ' + mb.lastName) + '</a> <span class="muted">#' + esc(mb.memberNo) + '</span></dd>' : ''; })(memberOf(o)) +
         (fromPortal(o) ? '<dt>Source</dt><dd>' + portalBadge(o) + '</dd>' : '') +
         '<dt>In stage</dt><dd>' + daysInStage(o) + ' day' + (daysInStage(o) === 1 ? '' : 's') + '</dd></dl></div></div>' +

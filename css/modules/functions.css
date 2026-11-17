@@ -68,7 +68,7 @@ body.staff .fn-card-name { font-size: 0.9375rem; font-weight: 500; margin: 2px 0
 @media (hover: hover) { .fn-move-next:hover { background: var(--sage-100); border-color: var(--border); color: var(--forest-800); } }
 .fn-move-text { grid-column: 2 / 4; justify-self: end; color: var(--forest-800); }
 .fn-card.fn-moved { border-color: var(--forest-800); animation: fn-glow 1.4s var(--ease-ui) 0.3s both; }
-@keyframes fn-glow { 0% { box-shadow: 0 0 0 0 rgba(28, 51, 38, 0.3); } 100% { box-shadow: 0 0 0 8px rgba(28, 51, 38, 0); } }
+@keyframes fn-glow { 0% { box-shadow: 0 0 0 0 var(--forest-glow); } 100% { box-shadow: 0 0 0 8px var(--forest-glow-0); } }
 
 /* ---------- Calendar ---------- */
 .fn-cal-bar { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.75rem; }

@@ -77,7 +77,7 @@ body.staff .mem-app .btn-icon { padding: 0; }
 /* Profile header */
 .mem-hero { padding: 1.5rem; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1.25rem 2rem; position: relative; overflow: hidden; }
 .mem-hero-main { display: flex; gap: 1.25rem; align-items: center; min-width: 0; position: relative; }
-body.staff .mem-hero .avatar.xl { background: var(--forest-800); color: var(--on-dark); box-shadow: 0 0 0 1px rgba(243, 246, 242, 0.4); }
+body.staff .mem-hero .avatar.xl { background: var(--forest-800); color: var(--on-dark); box-shadow: 0 0 0 1px var(--on-dark-a40); }
 .mem-hero-id { min-width: 0; }
 .mem-hero .eyebrow { color: var(--on-dark-2); }
 body.staff .mem-hero-name { color: var(--on-dark); font-size: 1.875rem; line-height: 1.15; margin: 4px 0 0.5rem; overflow-wrap: anywhere; }
@@ -87,21 +87,21 @@ body.staff .mem-hero-name { color: var(--on-dark); font-size: 1.875rem; line-hei
 .mem-status-back svg { width: 14px; height: 14px; }
 @media (hover: hover) { .mem-status-back:hover { background: var(--forest-800); } }
 .mem-status-back:focus-visible { outline: 2px solid var(--on-dark); outline-offset: 2px; }
-body.staff .mem-hero .badge.plain { background: rgba(243, 246, 242, 0.1); color: var(--on-dark); border-color: rgba(243, 246, 242, 0.24); }
+body.staff .mem-hero .badge.plain { background: var(--on-dark-a10); color: var(--on-dark); border-color: var(--on-dark-a25); }
 .mem-since { font-size: 0.9375rem; color: var(--on-dark-2); margin: 0.5rem 0 0; }
 .mem-facts { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(8rem, auto)); gap: 0.875rem 2rem; align-content: center; position: relative; }
-.mem-facts > div { border-top: 1px solid rgba(243, 246, 242, 0.15); padding-top: 0.5rem; }
+.mem-facts > div { border-top: 1px solid var(--on-dark-a15); padding-top: 0.5rem; }
 .mem-facts dt { font-size: 0.8125rem; color: var(--on-dark-2); }
 .mem-facts dd { margin: 2px 0 0; font-size: 1rem; color: var(--on-dark); display: flex; align-items: center; gap: 0.75rem; font-variant-numeric: tabular-nums lining-nums; }
 .mem-fact-big { font-family: var(--serif); font-weight: 500; font-size: 1.625rem; line-height: 1; }
-.mem-fact-link { color: var(--on-dark); text-decoration: underline; text-decoration-color: rgba(243, 246, 242, 0.4); text-underline-offset: 4px; }
+.mem-fact-link { color: var(--on-dark); text-decoration: underline; text-decoration-color: var(--on-dark-a40); text-underline-offset: 4px; }
 @media (hover: hover) { .mem-fact-link:hover { color: var(--on-dark); text-decoration-color: var(--on-dark); } }
 .mem-spark { display: inline-flex; }
 .mem-hero .muted { color: var(--on-dark-2); }
-.mem-hero-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 0.5rem; padding-top: 1rem; border-top: 1px solid rgba(243, 246, 242, 0.15); position: relative; }
+.mem-hero-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 0.5rem; padding-top: 1rem; border-top: 1px solid var(--on-dark-a15); position: relative; }
 body.staff .mem-hero-actions .btn-brass { background: var(--on-dark); border-color: var(--on-dark); color: var(--forest-950); }
 @media (hover: hover) { body.staff .mem-hero-actions .btn-brass:hover { background: var(--sage-100); border-color: var(--sage-100); color: var(--forest-950); } }
-body.staff .mem-hero-actions .btn:not(.btn-brass) { background: transparent; color: var(--on-dark); border-color: rgba(243, 246, 242, 0.3); }
+body.staff .mem-hero-actions .btn:not(.btn-brass) { background: transparent; color: var(--on-dark); border-color: var(--on-dark-a30); }
 @media (hover: hover) { body.staff .mem-hero-actions .btn:not(.btn-brass):hover { background: var(--forest-900); border-color: var(--on-dark-2); } }
 .mem-tabs { margin-top: 1rem; }
 

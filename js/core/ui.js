@@ -193,19 +193,70 @@
     const onVV = function () { if (!vvRaf) vvRaf = requestAnimationFrame(syncVV); };
     vv.addEventListener('resize', onVV); vv.addEventListener('scroll', onVV);
   }
+  /* Where focus goes back to when a dialog closes. A dialog opened by clicking something that cannot take focus (a card
+     body) leaves focus on the page, so the last thing pressed is remembered and focus returns to it, or to the first
+     control inside the card or row it belongs to. */
+  const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]):not([type=hidden]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]), [contenteditable="true"]';
+  let lastPress = null;
+  document.addEventListener('pointerdown', function (e) { lastPress = e.target; }, true);
+  function opener() {
+    const a = document.activeElement;
+    /* A click on plain content focuses the page itself (body, or a container such as <main tabindex="-1">). */
+    const page = !a || a === document.body || a === document.documentElement || a.getAttribute('tabindex') === '-1';
+    if (!page) return a;
+    const t = lastPress && lastPress.closest ? lastPress : null;
+    if (t && document.contains(t)) {
+      const f = t.closest(FOCUSABLE); if (f) return f;
+      const BOX = '[data-id], [data-href], article, li, tr, .card, .panel';
+      for (let box = t.closest(BOX); box; box = box.parentElement && box.parentElement.closest(BOX)) { const f2 = $(FOCUSABLE, box); if (f2) return f2; }
+    }
+    return a && a !== document.body && a !== document.documentElement ? a : null;
+  }
+  /* The controls Tab can reach inside a dialog, in order: visible ones only, and one stop per radio group (the checked
+     radio, else the first). The hidden native controls behind the custom pickers are skipped. */
+  function tabStops(root) {
+    const seen = {};
+    return $$(FOCUSABLE, root).filter(function (x) {
+      if (x.classList.contains('cs-native') || !x.getClientRects().length || getComputedStyle(x).visibility === 'hidden') return false;
+      if (x.type === 'radio' && x.name) {
+        if (seen[x.name]) return false;
+        const group = $$('input[type=radio]', root).filter(function (r) { return r.name === x.name; });
+        const pick = group.find(function (r) { return r.checked; }) || group[0];
+        if (pick !== x) return false;
+        seen[x.name] = 1;
+      }
+      return true;
+    });
+  }
   function makeOverlay(inner, cls, onClose) {
     const ov = el('<div class="overlay ' + (cls || '') + '" role="dialog" aria-modal="true"></div>');
     ov.appendChild(inner);
-    const prevFocus = document.activeElement;
+    const prevFocus = opener();
     let closed = false;
     function close(result) {
       if (closed) return; closed = true;
       ov.classList.add('closing');
       document.removeEventListener('keydown', onKey);
-      setTimeout(function () { ov.remove(); openCount--; if (!openCount) { document.body.style.overflow = ''; document.documentElement.style.overflow = ''; } if (prevFocus && prevFocus.focus && !touchUI()) prevFocus.focus(); }, 170);
+      setTimeout(function () { ov.remove(); openCount--; if (!openCount) { document.body.style.overflow = ''; document.documentElement.style.overflow = ''; } if (prevFocus && prevFocus.focus && document.contains(prevFocus) && !touchUI()) prevFocus.focus({ preventScroll: true }); }, 170);
       if (onClose) onClose(result);
     }
-    function onKey(e) { if (e.key === 'Escape' && ov === $$('.overlay').pop()) close(); }
+    /* Keyboard focus stays inside the top dialog: Tab from the last control goes to the first and Shift+Tab from the
+       first to the last. A picker list (js/core/pickers.js) or a members' portal sheet opened above it keeps its own keys. */
+    function isTop() { return ov === $$('.overlay:not(.closing)').pop(); }
+    function elsewhere(n) { return !!(n && n.closest && n.closest('.cs-pop, .ps-sheet, .toasts')); }
+    function onKey(e) {
+      if (e.key === 'Escape' && ov === $$('.overlay').pop()) { close(); return; }
+      if (e.key !== 'Tab' || e.defaultPrevented || !isTop() || elsewhere(document.activeElement)) return;
+      const f = tabStops(inner), a = document.activeElement;
+      if (!f.length) { e.preventDefault(); if (!inner.hasAttribute('tabindex')) inner.setAttribute('tabindex', '-1'); inner.focus(); return; }
+      const first = f[0], last = f[f.length - 1];
+      if (!inner.contains(a) || a === inner) { e.preventDefault(); (e.shiftKey ? last : first).focus(); return; }
+      if (e.shiftKey && a === first) { e.preventDefault(); last.focus(); return; }
+      if (!e.shiftKey && a === last) { e.preventDefault(); first.focus(); return; }
+      /* Anything the list above missed (a control that hides when it loses focus): if Tab still left the dialog, bring it back. */
+      const back = e.shiftKey ? last : first;
+      setTimeout(function () { const n = document.activeElement; if (!closed && isTop() && !inner.contains(n) && !elsewhere(n)) back.focus(); }, 0);
+    }
     ov.addEventListener('mousedown', function (e) { if (e.target === ov) close(); });
     document.addEventListener('keydown', onKey);
     document.body.appendChild(ov); openCount++; document.body.style.overflow = 'hidden'; document.documentElement.style.overflow = 'hidden';
@@ -213,7 +264,10 @@
        (keyboard and screen reader users still land inside it). */
     setTimeout(function () {
       if (touchUI()) { inner.setAttribute('tabindex', '-1'); inner.focus({ preventScroll: true }); return; }
-      const f = $('[autofocus], input:not([type=hidden]), select, textarea, button.btn-primary', inner); if (f) f.focus();
+      const f = $('[autofocus], input:not([type=hidden]), select, textarea, button.btn-primary', inner);
+      /* Nothing to start on (a confirm that deletes something, a menu of links): focus the dialog itself, so the
+         keyboard is inside it and Tab starts at its first control. */
+      if (f) f.focus(); else { if (!inner.hasAttribute('tabindex')) inner.setAttribute('tabindex', '-1'); inner.focus({ preventScroll: true }); }
     }, 60);
     return close;
   }
@@ -369,10 +423,13 @@
   /* ---------------- Phone numbers: (204) 555-0100 everywhere ----------------
      Every phone field (input[type=tel]) formats itself as the person types, on all three sites. Numbers with an
      extension or letters ("x215") and numbers that are not 10 digits are left as typed. ui.phone(v) formats a stored
-     value; a one-time pass (flag $phoneFmt) rewrites the phone fields already on file. */
+     value, an extension included: "204-233-2497 x215" -> "(204) 233-2497 ext. 215"; a pass after each load rewrites the
+     phone fields already on file. */
   function phoneDigits(v) { let d = String(v == null ? '' : v).replace(/\D/g, ''); if (d.length === 11 && d[0] === '1') d = d.slice(1); return d; }
   function phonePlain(v) { return !/[a-z]/i.test(String(v == null ? '' : v)); }
   ui.phone = function (v) {
+    const x = String(v == null ? '' : v).trim().match(/^(.*?)\s*(?:x|ext\.?|extension)\s*(\d{1,6})$/i);
+    if (x && phonePlain(x[1]) && phoneDigits(x[1]).length === 10) return ui.phone(x[1]) + ' ext. ' + x[2];
     const d = phoneDigits(v);
     return d.length === 10 && phonePlain(v) ? '(' + d.slice(0, 3) + ') ' + d.slice(3, 6) + '-' + d.slice(6) : String(v == null ? '' : v).trim();
   };

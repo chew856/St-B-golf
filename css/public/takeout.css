@@ -160,3 +160,7 @@ body.to-has-bar { padding-bottom: 76px; }
   .to-oline-amt { grid-column: 2; }
 }
 @media (prefers-reduced-motion: reduce) { .to-pbar { transition: none; } }
+/* Phone: the clubhouse number in the small print gets a taller hit area without moving the text around it. */
+@media (max-width: 768px) {
+  .to-fine a { display: inline-block; padding: 12px 0; margin: -12px 0; }
+}

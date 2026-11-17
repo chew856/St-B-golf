@@ -664,7 +664,8 @@
     if (dave) ensureDemoTee({ type: 'member', id: dave.id }, 50, { memberId: dave.id, name: dave.firstName + ' ' + dave.lastName, type: 'member', cart: true, paid: true });
     ensureDemoPublic();
     const pub = S.find('publicPlayers', DEMO_PUBLIC_ID);
-    if (pub) ensureDemoTee({ type: 'public', id: pub.id }, 30, { memberId: null, name: pub.firstName + ' ' + pub.lastName, type: 'public', publicPlayerId: pub.id, cart: true, paid: true });
+    /* Not paid: no online payment is recorded for this demo tee time, so the green fee is taken at the golf shop. */
+    if (pub) ensureDemoTee({ type: 'public', id: pub.id }, 30, { memberId: null, name: pub.firstName + ' ' + pub.lastName, type: 'public', publicPlayerId: pub.id, cart: true, paid: false });
 
     /* One cart on shift (Amara Osei, a server, from the staff list) with two members already in line */
     const staffer = Club.staff.get('stf_15');

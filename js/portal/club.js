@@ -42,11 +42,11 @@
   function tierOf(m) { return m ? S.find('membershipTiers', m.tierId) : null; }
   function staffBy(role) { return S.all('staff').find(function (s) { return s.role === role && s.status !== 'inactive' && s.status !== 'terminated'; }) || null; }
   function tel(p) { return 'tel:' + String(p || '').replace(/[^\d+]/g, ''); }
-  /** '204-233-2497 x215' -> { href: 'tel:2042332497,215', label: '204-233-2497 ext. 215' } */
+  /** '(204) 233-2497 ext. 215' (or an older '204-233-2497 x215') -> { href: 'tel:2042332497,215', label: '(204) 233-2497 ext. 215' } */
   function phoneOf(p) {
     const m = String(p || Club.info.phone).match(/^(.*?)\s*(?:x|ext\.?)\s*(\d+)$/i);
-    if (!m) return { href: tel(p || Club.info.phone), label: p || Club.info.phone };
-    return { href: tel(m[1]) + ',' + m[2], label: m[1] + ' ext. ' + m[2] };
+    if (!m) return { href: tel(p || Club.info.phone), label: ui.phone(p || Club.info.phone) };
+    return { href: tel(m[1]) + ',' + m[2], label: ui.phone(m[1]) + ' ext. ' + m[2] };
   }
   function stamp(iso) {
     if (!iso) return 'Today’s report is not in yet';

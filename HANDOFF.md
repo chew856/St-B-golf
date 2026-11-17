@@ -148,14 +148,46 @@ Fixed and tested in Chromium:
   lose the extra fields the next time a deposit is recorded on that record.
 Still open from the hunt: browser storage (two tabs saving at once, storage nearly full, Safari's smaller limit), staff
 "Record payment" and "Mark paid" still ignore earlier part payments (`billing.js`), two same-amount payments seconds
-apart give one receipt (`receipts.js` double-click guard), and the medium and low items.
+apart give one receipt (`receipts.js` double-click guard), and the medium and low items. These were fixed in batch 2 (next section).
+
+## Bug fix batch 2 and final pass (Nov 16 to 17, NOT DEPLOYED YET)
+Fixed and tested in Chromium (the WebKit suites need a Mac run before deploying):
+- **Browser storage** (`js/core/store.js`). Each collection is saved in a compact table form (key names and repeated
+  strings once), about a third of plain JSON, so all three sites' demo data fits inside Safari's smaller storage.
+  Older saves still read and are rewritten compactly on load. A save is all or none: if storage is full, nothing of
+  that save is written, the warning shows, and everything is tried again on the next save. When two tabs change the
+  same collection, the changes merge document by document and field by field. Read raw saved data with
+  `Club.store.stored(name)`, never `JSON.parse(localStorage...)`. **After deploying, reload any open tabs** (staff
+  tills, portal, public site): a tab still running the old code would save in the old format.
+- **Stored text stays English**: notes, titles, receipts and histories are built with `Club.fmtEn` (in
+  `js/i18n/fr-shared.js`; callers use `Club.fmtEn || Club.fmt`, since the staff page does not load it). French
+  displays translate them. The seed builders in `js/shared/` now use it too.
+- Staff "Record payment" and "Mark paid" count earlier part payments; two quick same-amount payments get two receipts;
+  Reports (short periods average per day, members who joined later are left out of earlier periods, prorated months,
+  the tab bar scrolls); tee sheet step back has its own Undo; Lessons (cancelled lessons, defaults, off-hours, Undo of
+  a move, deep links, and `#/lessons/<date>/<lessonId>` from a member's Activity tab opens that lesson); portal and
+  friends leagues (hand question, duplicate scores, ties, Undo); public site (label taps, header fit, My account).
+- Final pass: the club phone shows as (204) 233-2497 everywhere, staff extensions as "(204) 233-2497 ext. 209"
+  ("poste" in French), tel: links digits only. Dialogs keep keyboard focus inside them (Tab and Shift+Tab cycle,
+  Escape closes, focus goes back to what opened them, also after a mouse click on a card). `--text-3` is a touch
+  darker (#616C65) so small grey text passes 4.5:1 on the light sage fills. Raw colours in the stylesheets are now
+  tokens defined once in `css/theme.css` and `css/staff-theme.css`. Phone tap targets 44px (40px compact) on the
+  remaining staff links, tabs, pagers and table controls. Suspending or resigning a member through Edit asks first
+  and the toast names the new status. The build no longer copies `js/`, `css/` or `shots/` into `dist/` (11 MB to
+  5 MB) and checks that every file a built page refers to is there.
+Waiting on the owner:
+- Receipts backfill runs once, on whichever page opens first: a browser that opens the portal or public site first
+  never gets receipts for the ~2,800 staff-seeded demo charges. Keep, or run it on every page?
+- French tables show a tied place as "É1". Confirm the wording.
+- Reports Leaderboard: the 18 hole buttons are 35 by 46px on phones (9 in a row). Needs a layout decision.
+- Left as they are: card network brand colours (`css/cards.css`, `js/core/cards.js`) and mask colours.
 
 ## Still to do or decide
 1. **Resolved Nov 13**: run alone, `xpo-test.mjs` (Group outings) passes all 192 checks and `xe-checkout.mjs`
    passes 418. The one failure is the outside weather service answering 503, not the site.
    The earlier failures came from running many suites at once.
-2. **Lessons grid test** (`xls-grid.mjs`) wants at least 10 lessons with a whole day column to themselves; today's
-   demo week gives 8 of 69. It is date-dependent. Either relax the test or improve the layout further.
+2. **Resolved Nov 16**: the Lessons grid test (`xls-grid.mjs`) was rewritten with the new Day and Week views; the
+   old "at least 10 lessons with a whole day column" check is gone (every lesson now has its pro's whole column).
 3. **Dining undo bug: fixed Nov 13, NOT DEPLOYED YET.** Adding more of an item to an existing line on a dining
    check, then pressing Undo, used to keep the higher quantity. `js/modules/dining.js` now updates a copy of the line.
    The test is `tests/webkit/xdn-addundo.mjs` (7 of 7 pass); xa-hosp, xdn-dining and xd-undo still pass.

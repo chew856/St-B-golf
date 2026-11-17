@@ -592,7 +592,20 @@
       const h = '#/lessons/' + to.date;
       if (location.hash === h) Club.app.render(); else Club.app.go(h);
     }
+    /* A link to one lesson (#/lessons/<date>/<lessonId>, from a member's Activity tab) opens it on its day, cancelled and
+       completed ones included. The address then drops the lesson id, so drawing the page again does not reopen it. */
+    const linkId = params && params[1] ? String(params[1]) : '';
+    const linked = linkId ? S.find('lessons', linkId) : null;
+    if (linked && week.indexOf(linked.date) >= 0) {
+      state.day = linked.date; state.flash = linked.id; phonePro = linked.proId;
+      if (proFilter !== 'all' && proFilter !== linked.proId) proFilter = 'all';
+    }
     renderStats(true); renderRoster(); renderFilter(); renderSchedule(); renderToday(); renderPrograms(); renderRates();
+    if (linkId) setTimeout(function () {
+      if (!document.body.contains(view)) return;
+      if (history.replaceState) history.replaceState(null, '', '#/lessons/' + (linked ? linked.date : anchor));
+      if (linked) openLesson({ lesson: linked }); else ui.toast('That lesson is no longer on file.', 'bad');
+    }, 0);
 
     /* ---- events ---- */
     function setPro(id) { proFilter = id; renderRoster(); renderFilter(); renderSchedule(); }

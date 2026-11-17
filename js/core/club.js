@@ -4,7 +4,7 @@
   Club.info = Object.assign({
     name: 'St. Boniface Golf Club', short: 'St. Boniface', est: 1931,
     tagline: 'The private club experience without the private club price',
-    address: '100 Youville Street, Winnipeg, Manitoba', city: 'Winnipeg', phone: '204-233-2497', email: '',
+    address: '100 Youville Street, Winnipeg, Manitoba', city: 'Winnipeg', phone: '(204) 233-2497', email: '',
     landAcknowledgement: 'St. Boniface Golf Club is located on Treaty One lands, the traditional territories of the Anishinaabe, Cree, Oji-Cree, Dakota and Dene peoples, and the homeland of the Métis Nation.',
     website: 'https://www.stbonifacegolfclub.com',
     eventsWebsite: 'https://www.stbonifaceevents.com',

@@ -25,6 +25,7 @@ for (const W of [1440, 390]) {
   try {
     /* 1. public books and pays; the staff tee sheet (open, not reloaded) shows the booking */
     const n0 = await staff.evaluate(() => Club.store.all('teeTimes').length);
+    const ids0 = await staff.evaluate(() => Club.store.all('teeTimes').map(t => t.id));
     const chip = pub.locator('button.pub-chip[data-time]:not([disabled])');
     const time = await chip.nth(2).getAttribute('data-time');
     await click(pub, chip.nth(2), { wait: 900 });
@@ -42,7 +43,9 @@ for (const W of [1440, 390]) {
       const row = document.querySelector('.ts-row[data-time="' + t + '"]');
       return { inStore: !!tt, n: S.all('teeTimes').length, rowHasName: !!row && row.textContent.includes(pl.lastName), pay: S.all('publicPayments').some(p => p.publicPlayerId === pid) };
     }, [booked, time, pid]);
-    ok(seen.inStore && seen.n === n0 + 1 && seen.rowHasName && seen.pay, W + ': staff tee sheet shows it without reload', seen);
+    /* A public golfer may join a group already on that time (no new tee time), depending on the day and hour the test runs. */
+    seen.joined = ids0.includes(booked);
+    ok(seen.inStore && seen.n === n0 + (seen.joined ? 0 : 1) && seen.rowHasName && seen.pay, W + ': staff tee sheet shows it without reload', seen);
 
     /* 2. staff cancels it on the tee sheet tab: the public tab sees the slot open again */
     await staff.evaluate(id => Club.store.update('teeTimes', id, { status: 'cancelled' }), booked);
@@ -62,7 +65,7 @@ for (const W of [1440, 390]) {
     await pub.evaluate(id => Club.store.update('teeTimes', id, { notes: 'from public' }), ids[1]);
     await staff.waitForTimeout(700);
     const both = await Promise.all([staff, pub, portal].map(p => p.evaluate(ids => { const S = Club.store; return [S.find('teeTimes', ids[0]).notes, S.find('teeTimes', ids[1]).notes]; }, ids)));
-    const disk = await staff.evaluate(ids => { const a = JSON.parse(localStorage.getItem(Club.store.KEY + ':teeTimes')); return ids.map(id => a.find(t => t.id === id).notes); }, ids);
+    const disk = await staff.evaluate(ids => { const a = Club.store.stored('teeTimes'); return ids.map(id => a.find(t => t.id === id).notes); }, ids);
     ok(both.every(x => x[0] === 'from staff' && x[1] === 'from public') && disk[0] === 'from staff' && disk[1] === 'from public', W + ': overlapping edits from two tabs both kept (all tabs and storage)', { both, disk });
     /* 4b. truly simultaneous saves (both tabs write within the same millisecond, before either hears of the other):
        last save wins, as with the old store; every tab must end up agreeing with storage */
@@ -72,7 +75,7 @@ for (const W of [1440, 390]) {
     ]);
     await staff.waitForTimeout(700);
     const sim = await Promise.all([staff, pub, portal].map(p => p.evaluate(ids => { const S = Club.store; return [S.find('teeTimes', ids[2]).notes, S.find('teeTimes', ids[0]).notes].join('|'); }, ids)));
-    const simDisk = await staff.evaluate(ids => { const a = JSON.parse(localStorage.getItem(Club.store.KEY + ':teeTimes')); return [a.find(t => t.id === ids[2]).notes, a.find(t => t.id === ids[0]).notes].join('|'); }, ids);
+    const simDisk = await staff.evaluate(ids => { const a = Club.store.stored('teeTimes'); return [a.find(t => t.id === ids[2]).notes, a.find(t => t.id === ids[0]).notes].join('|'); }, ids);
     ok(sim.every(x => x === simDisk), W + ': simultaneous saves: all tabs agree with storage (' + simDisk + ')', { sim, simDisk });
 
     /* 5. stored() reads the other tab's change straight from storage */

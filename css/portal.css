@@ -22,7 +22,7 @@ body.portal { background: var(--linen); }
 .p-section-head h2 { font-size: var(--fs-32); }
 
 /* ---------------- Header ---------------- */
-.p-header { background: var(--night); color: var(--on-night); position: sticky; top: 0; z-index: 40; border-bottom: 1px solid rgba(135, 146, 104, 0.3); }
+.p-header { background: var(--night); color: var(--on-night); position: sticky; top: 0; z-index: 40; border-bottom: 1px solid var(--olive-a30); }
 .p-header-inner { max-width: 1120px; margin: 0 auto; padding: 0 var(--s5); height: 72px; display: flex; align-items: center; gap: var(--s5); }
 .p-brand { display: flex; align-items: center; gap: var(--s3); color: var(--on-night); flex: none; }
 @media (hover: hover) { .p-brand:hover { text-decoration: none; } }
@@ -34,7 +34,7 @@ body.portal { background: var(--linen); }
 .p-nav a.active { color: var(--on-night); }
 .p-nav-ink { position: absolute; left: 0; bottom: 0; height: 2px; background: var(--brass); transition: transform var(--t-med) var(--ease-out), width var(--t-med) var(--ease-out), opacity var(--t-fast); }
 .p-me { position: relative; flex: none; }
-.p-me-btn { display: flex; align-items: center; gap: var(--s2); background: none; border: 1px solid rgba(217, 199, 161, 0.3); border-radius: var(--r-round); padding: 3px 12px 3px 3px; color: var(--on-night); cursor: pointer; transition: border-color var(--t-fast); }
+.p-me-btn { display: flex; align-items: center; gap: var(--s2); background: none; border: 1px solid var(--khaki-a30); border-radius: var(--r-round); padding: 3px 12px 3px 3px; color: var(--on-night); cursor: pointer; transition: border-color var(--t-fast); }
 @media (hover: hover) { .p-me-btn:hover { border-color: var(--brass); } }
 .p-me-btn svg { width: 14px; height: 14px; color: var(--brass-soft); }
 .p-me-menu {
@@ -85,7 +85,7 @@ body.signed-out { background: var(--night); }
   .p-header-inner { justify-content: space-between; height: 64px; }
   .p-tabbar {
     display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 45;
-    background: var(--night); border-top: 1px solid rgba(135, 146, 104, 0.35);
+    background: var(--night); border-top: 1px solid var(--olive-a35);
     padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
   }
   .p-tabbar a, .p-tabbar button {

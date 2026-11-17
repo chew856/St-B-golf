@@ -7,7 +7,7 @@
    members' portal and the public site are unaffected. The original token names
    are remapped onto this palette, so every module follows it.
 
-   Contrast (WCAG): --text on --surface 15.6:1, --text-2 6.9:1, --text-3 5.0:1,
+   Contrast (WCAG): --text on --surface 15.6:1, --text-2 6.9:1, --text-3 5.3:1 (4.55:1 on --sage-100),
    --on-dark on --forest-950 16.2:1, --on-dark-2 9.0:1, --forest-500 on --surface 5.6:1.
    ========================================================================== */
 
@@ -15,9 +15,10 @@ body.staff {
   --forest-950: #101E17; --forest-900: #14261D; --forest-800: #1C3326; --forest-700: #27442F; --forest-500: #4E6B57;
   --sage-200: #D5DED5; --sage-100: #E6ECE5; --sage-50: #EFF3EE;
   --bg: #F2F4F1; --surface: #FAFBF9; --border: #E0E5DF; --border-strong: #C8D0C7;
-  --text: #16201A; --text-2: #4F5A53; --text-3: #66716A;
+  --text: #16201A; --text-2: #4F5A53; --text-3: #616C65;
   --on-dark: #F3F6F2; --on-dark-2: rgba(243, 246, 242, 0.72);
-  --danger: #9B2C2C; --warn: #8A5A12; --good: #2F5A3E;
+  --danger: #9B2C2C; --warn: #8A5A12; --good: #2F5A3E; --good-tint: #E3ECE5;
+  --bg-glass: rgba(242, 244, 241, 0.94);   /* the top bar: --bg, a little see-through */
   --radius-card: 14px; --radius-ctl: 10px;
   --shadow-card: 0 1px 2px rgba(16, 30, 23, 0.04), 0 4px 12px rgba(16, 30, 23, 0.04);
   --shadow-thumb: 0 1px 2px rgba(16, 30, 23, 0.08), 0 2px 6px rgba(16, 30, 23, 0.08);
@@ -81,7 +82,7 @@ body.staff :focus-visible { outline: 2px solid var(--forest-700); outline-offset
 
 /* ---------- Shell: forest sidebar, quiet top bar ---------- */
 body.staff .sidebar { background: var(--forest-950); color: var(--on-dark); border-right: 0; }
-body.staff .crest { border-bottom: 1px solid rgba(243, 246, 242, 0.12); }
+body.staff .crest { border-bottom: 1px solid var(--on-dark-a12); }
 body.staff .crest .stb-logo { color: var(--on-dark); }
 body.staff .crest-name { font-family: var(--serif); font-size: 1rem; font-weight: 500; letter-spacing: 0.01em; text-transform: none; color: var(--on-dark); }
 body.staff .nav-section-title { font-size: 0.75rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--on-dark-2); }
@@ -90,15 +91,15 @@ body.staff .nav-link { color: var(--on-dark-2); font-size: 0.9375rem; font-weigh
 body.staff .nav-link.active { background: var(--forest-800); color: var(--on-dark); font-weight: 500; }
 body.staff .nav-link svg { color: inherit; opacity: 0.9; }
 body.staff .nav-link.active svg { color: var(--on-dark); }
-body.staff .nav-link .nav-count { color: var(--on-dark); border: 0; background: rgba(243, 246, 242, 0.14); font-size: 0.75rem; font-weight: 500; }
+body.staff .nav-link .nav-count { color: var(--on-dark); border: 0; background: var(--on-dark-a15); font-size: 0.75rem; font-weight: 500; }
 body.staff .nav-indicator { background: var(--on-dark); width: 2px; }
-body.staff .sidebar-foot { border-top: 1px solid rgba(243, 246, 242, 0.12); color: var(--on-dark-2); font-size: 0.8125rem; }
+body.staff .sidebar-foot { border-top: 1px solid var(--on-dark-a12); color: var(--on-dark-2); font-size: 0.8125rem; }
 body.staff .sidebar-foot .label-caps { color: var(--on-dark-2); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; }
-body.staff .topbar { background: rgba(242, 244, 241, 0.94); border-bottom: 1px solid var(--border); }
+body.staff .topbar { background: var(--bg-glass); border-bottom: 1px solid var(--border); }
 body.staff .topbar-date { font-family: var(--sans); font-style: normal; font-size: 0.9375rem; color: var(--text-2); }
 body.staff .search input { background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-ctl); font-size: 0.9375rem; }
 body.staff .search input:focus { border-color: var(--forest-700); }
-body.staff .search-results { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card), 0 12px 28px rgba(16, 30, 23, 0.12); }
+body.staff .search-results { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card), var(--shadow-drop); }
 body.staff .search-results a.hl { background: var(--sage-50); }
 @media (hover: hover) { body.staff .search-results a:hover { background: var(--sage-50); } }
 body.staff .weather-chip { color: var(--text-2); font-size: 0.875rem; }
@@ -167,17 +168,17 @@ body.staff .table tbody tr.selected { background: var(--sage-100); }
 /* ---------- Badges, avatars ---------- */
 body.staff .badge { font-family: var(--sans); font-size: 0.75rem; font-weight: 500; text-transform: none; letter-spacing: normal; padding: 2px 9px; border-radius: 999px; background: var(--sage-100); color: var(--forest-800); }
 body.staff .badge::before { width: 6px; height: 6px; }
-body.staff .badge.good { background: #E3ECE5; color: var(--good); }
-body.staff .badge.warn { background: #F5EEE2; color: var(--warn); }
-body.staff .badge.bad { background: #F4E9E7; color: var(--danger); }
-body.staff .badge.info { background: #E6ECEE; color: var(--slate); }
+body.staff .badge.good { background: var(--good-tint); color: var(--good); }
+body.staff .badge.warn { background: var(--ochre-tint); color: var(--warn); }
+body.staff .badge.bad { background: var(--oxblood-tint); color: var(--danger); }
+body.staff .badge.info { background: var(--slate-tint); color: var(--slate); }
 body.staff .badge.brass, body.staff .badge.dark { background: var(--sage-100); color: var(--forest-800); }
 body.staff .badge.plain, body.staff .badge.outline { background: var(--surface); color: var(--text-2); border: 1px solid var(--border); }
 body.staff .avatar { background: var(--forest-800); color: var(--on-dark); border: 0; font-family: var(--serif); font-weight: 500; }
 body.staff .avatar.light { background: var(--sage-100); color: var(--forest-800); }
 
 /* ---------- Dialogs, drawers, toasts ---------- */
-body.staff .overlay { background: rgba(16, 30, 23, 0.42); z-index: 140; }
+body.staff .overlay { background: var(--forest-scrim); z-index: 140; }
 body.staff .modal, body.staff .drawer { background: var(--surface); border-top: 0; border-radius: var(--radius-card); box-shadow: var(--shadow-sheet); }
 body.staff .drawer { border-left: 1px solid var(--border); border-radius: 0; }
 body.staff .modal-head h3 { font-family: var(--serif); font-size: 1.375rem; font-weight: 500; }
@@ -214,7 +215,7 @@ body.staff .s-link { background: none; border: 0; padding: 0; min-height: 36px; 
   html.sb-collapsed body.staff .crest .stb-logo { height: 40px; }
   html.sb-collapsed body.staff .crest-name, html.sb-collapsed body.staff .sidebar-foot { display: none; }
   html.sb-collapsed body.staff .nav { padding: 0 10px 16px; }
-  html.sb-collapsed body.staff .nav-section-title { font-size: 0; line-height: 0; height: 1px; padding: 0; margin: 12px 8px 8px; background: rgba(243, 246, 242, 0.12); }
+  html.sb-collapsed body.staff .nav-section-title { font-size: 0; line-height: 0; height: 1px; padding: 0; margin: 12px 8px 8px; background: var(--on-dark-a12); }
   html.sb-collapsed body.staff .nav-link { justify-content: center; gap: 0; padding: 10px 0; }
   html.sb-collapsed body.staff .nav-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   html.sb-collapsed body.staff .nav-link .nav-count { position: absolute; top: 5px; right: 12px; width: 8px; height: 8px; min-width: 0; padding: 0; margin: 0; font-size: 0; line-height: 0; border-radius: 50%; background: var(--on-dark); }

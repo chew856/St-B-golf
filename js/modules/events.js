@@ -368,11 +368,11 @@
     function listRows(list) {
       return '<ul class="list ev-list panel">' + list.map(function (e) {
         const s = seats(e); const pct = Math.min(100, Math.round(s / Math.max(1, e.capacity) * 100));
-        return '<li class="ev-list-row s-' + e.status + '" data-ev="' + esc(e.id) + '" tabindex="0" role="link">' +
+        return '<li><a class="ev-list-row s-' + e.status + '" href="#/events/' + esc(e.id) + '" data-ev="' + esc(e.id) + '">' +
           '<div class="ev-list-date"><span class="ev-list-day">' + (+e.date.slice(8)) + '</span><span class="label-caps">' + esc(fmt.weekday(e.date)) + '</span></div>' +
           '<div class="ev-list-main"><div class="ev-list-title"><span class="ev-type-dot t-' + typeKey(e.type) + '"></span>' + esc(e.title) + '</div><div class="person-sub">' + esc(e.type + ' · ' + timeRange(e) + ' · ' + e.venue) + '</div></div>' +
           '<div class="ev-list-cap"><div class="row between person-sub"><span>' + s + ' / ' + e.capacity + '</span><span>' + pct + '%</span></div><div class="bar' + (pct >= 100 ? ' brass' : '') + '"><span style="width:' + pct + '%"></span></div></div>' +
-          '<div class="ev-list-status">' + statusBadge(e.status) + '</div></li>';
+          '<div class="ev-list-status">' + statusBadge(e.status) + '</div></a></li>';
       }).join('') + '</ul>';
     }
     function listHTML(evs) {
@@ -393,7 +393,6 @@
     ui.on(panel, 'click', '[data-action=new-ev-inline]', function () { openEventForm(null); });
     ui.on(panel, 'click', '.segmented button', function (e, b) { calMode = b.dataset.value; draw(); });
     ui.on(panel, 'click', '[data-ev]', function (e, b) { e.stopPropagation(); Club.app.go('events/' + b.dataset.ev); });
-    ui.on(panel, 'keydown', '.ev-list-row', function (e, b) { if (e.key === 'Enter') Club.app.go('events/' + b.dataset.ev); });
     ui.on(panel, 'click', '.ev-more', function (e, b) { e.stopPropagation(); dayModal(b.dataset.list); });
     ui.on(panel, 'click', '.ev-day', function (e, d) {
       if (e.target.closest('[data-ev], .ev-more')) return;
@@ -1259,15 +1258,18 @@
       finished yet (nobody has points, but scores are in). */
   function flLeader(lg) {
     const sd = Club.friendLeagues.standings(lg);
+    const played = sd.rows.reduce(function (a, x) { return a + (x.played || 0); }, 0);
+    /* A weekly league has no points until its first week is complete: say how many games are in, not a tie of everyone. */
+    const noWeek = lg.format === 'weekly' && !Object.keys(lg.mode === 'teams' ? sd.teamWeekPoints : sd.weekPoints).length;
     if (lg.mode === 'teams') {
       const t = sd.teams[0]; if (!t || !t.played) return null;
+      if (noWeek) return played ? { played: played } : null;
       const top = sd.teams.filter(function (x) { return x.pos === t.pos; });
       return top.length > 1 ? { tied: true, name: top.map(function (x) { return x.name; }).join(', '), value: '' }
         : { name: t.name, value: t.members.map(flName).join(', ') };
     }
     const r = sd.rows[0];
-    const played = sd.rows.reduce(function (a, x) { return a + (x.played || 0); }, 0);
-    if (!r || !r.played || (lg.format === 'weekly' && !Object.keys(sd.weekPoints).length)) return played ? { played: played } : null;
+    if (!r || !r.played || noWeek) return played ? { played: played } : null;
     const top = sd.rows.filter(function (x) { return x.pos === r.pos; });
     const value = lg.format === 'weekly' ? Club.friendLeagues.valueText(lg, r.total) : Club.friendLeagues.valueText(lg, r.avg) + ' a game';
     return { tied: top.length > 1, name: top.map(function (x) { return flName(x.memberId); }).join(', '), value: value };

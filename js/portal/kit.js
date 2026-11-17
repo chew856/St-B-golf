@@ -87,6 +87,9 @@
     }
     function onKey(e) {
       if (stack[stack.length - 1] !== api) return;
+      /* A dialog opened above this sheet (Club.ui.modal or confirm) handles its own Escape and Tab. */
+      const ov = document.querySelector('.overlay:not(.closing)');
+      if (ov && (sheet.compareDocumentPosition(ov) & Node.DOCUMENT_POSITION_FOLLOWING)) return;
       if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); if (!o.locked) close(); return; }
       if (e.key === 'Tab') {                                   /* focus trap */
         const f = ui.$$('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])', sheet).filter(function (x) { return x.offsetParent !== null; });

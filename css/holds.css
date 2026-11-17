@@ -5,7 +5,7 @@
 .hold-timer {
   position: fixed; z-index: 135; right: 16px; bottom: 16px; width: 232px;
   padding: 16px 18px 14px; background: var(--night); color: var(--on-night);
-  border-radius: 6px; box-shadow: 0 18px 40px -14px rgba(16, 30, 23, 0.55);
+  border-radius: 6px; box-shadow: var(--shadow-timer);
   text-align: center; font-family: var(--font-body);
   opacity: 0; transform: translateY(12px); transition: opacity 200ms var(--ease-out), transform 200ms var(--ease-out);
 }
@@ -16,10 +16,10 @@
 .hold-timer-u b { font-family: var(--font-display); font-weight: 500; font-size: 2.5rem; line-height: 1; font-variant-numeric: tabular-nums lining-nums; }
 .hold-timer-u small { font-size: 0.75rem; color: var(--on-night-2); margin-top: 4px; }
 .hold-timer-w { font-size: 0.75rem; color: var(--brass-soft); margin-top: 8px; }
-.hold-timer-bar { height: 3px; margin: 12px -18px -14px; background: rgba(243, 241, 228, 0.14); border-radius: 0 0 6px 6px; overflow: hidden; }
+.hold-timer-bar { height: 3px; margin: 12px -18px -14px; background: var(--on-night-a14); border-radius: 0 0 6px 6px; overflow: hidden; }
 .hold-timer-bar i { display: block; height: 100%; background: var(--brass-soft); transform-origin: left center; transition: transform 250ms linear; }
-.hold-timer.is-low .hold-timer-u b { color: #F2C77B; }
-.hold-timer.is-low .hold-timer-bar i { background: #F2C77B; }
+.hold-timer.is-low .hold-timer-u b { color: var(--amber-on-dark); }
+.hold-timer.is-low .hold-timer-bar i { background: var(--amber-on-dark); }
 .hold-timer .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* Desktop and tablet: a small pill in the corner ("04:50" over "Holding 11:18 AM, Nov 10"), so it never sits on the
@@ -57,16 +57,16 @@
 
 /* ---------------- Head count on time cards ---------------- */
 .tee-heads { display: inline-flex; gap: 3px; margin: 5px 0 3px; }
-.tee-head { width: 17px; height: 17px; border-radius: 50%; border: 1.2px solid currentColor; display: inline-grid; place-items: center; color: var(--green, #344E41); }
+.tee-head { width: 17px; height: 17px; border-radius: 50%; border: 1.2px solid currentColor; display: inline-grid; place-items: center; color: var(--green); }
 .tee-head .icon { width: 11px; height: 11px; stroke-width: 1.8; }
-.tee-head.is-taken { background: currentColor; color: var(--ink-3, #6B6F64); }
-.tee-head.is-taken .icon { color: #fff; stroke: #fff; }
+.tee-head.is-taken { background: currentColor; color: var(--ink-3); }
+.tee-head.is-taken .icon { color: var(--surface); stroke: var(--surface); }
 
 /* ---------------- "Your hold ended" notice ---------------- */
 .hold-ended { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 14px; padding: 12px 14px; border-radius: 4px;
-  background: var(--ochre-tint, #F4EAD2); color: var(--ink, #2A2A2A); font-size: 0.875rem; line-height: 1.45; }
-.hold-ended .icon { flex: none; width: 18px; height: 18px; color: var(--ochre, #A0761E); margin-top: 1px; }
-.hold-note { display: flex; gap: 8px; align-items: center; font-size: 0.8125rem; color: var(--ink-3, #6B6F64); margin: 0 0 12px; }
+  background: var(--ochre-tint); color: var(--ink); font-size: 0.875rem; line-height: 1.45; }
+.hold-ended .icon { flex: none; width: 18px; height: 18px; color: var(--ochre); margin-top: 1px; }
+.hold-note { display: flex; gap: 8px; align-items: center; font-size: 0.8125rem; color: var(--ink-3); margin: 0 0 12px; }
 .hold-note .icon { width: 16px; height: 16px; flex: none; }
 
 /* Toasts never cover the countdown: above the card on the public site, below the top bar in a portal sheet on phones. */

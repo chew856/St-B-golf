@@ -550,7 +550,9 @@
   function dataTab(panel) {
     let raw = '';
     /* Each collection is saved under STORE_KEY + ':' + name (Nov 12); older saves used one STORE_KEY blob. */
-    try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k === STORE_KEY || k.indexOf(STORE_KEY + ':') === 0) raw += k + (localStorage.getItem(k) || ''); } } catch (e) { raw = ''; }
+    /* onDisk: what each collection takes in storage (its compact saved form, js/core/store.js), so the sizes below add up to "used". */
+    const onDisk = {};
+    try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k === STORE_KEY || k.indexOf(STORE_KEY + ':') === 0) { const v = k + (localStorage.getItem(k) || ''); raw += v; if (k !== STORE_KEY) onDisk[k.slice(STORE_KEY.length + 1)] = v.length; } } } catch (e) { raw = ''; }
     let parsed = {};
     try { parsed = JSON.parse(S.exportJSON()) || {}; } catch (e) { parsed = {}; }
     const keys = Object.keys(parsed);
@@ -559,7 +561,7 @@
     const pct = Math.min(100, used / quota * 100);
     const rows = keys.map(function (k) {
       const v = parsed[k];
-      return { key: k, label: k.charAt(0) === '$' ? k.slice(1) : k, docs: Array.isArray(v) ? v.length : null, size: JSON.stringify(v).length };
+      return { key: k, label: k.charAt(0) === '$' ? k.slice(1) : k, docs: Array.isArray(v) ? v.length : null, size: onDisk[k] != null ? onDisk[k] : JSON.stringify(v).length };
     }).sort(function (a, b) { return b.size - a.size; });
     const docs = rows.reduce(function (a, r) { return a + (r.docs || 0); }, 0);
     const maxSize = rows.length ? rows[0].size : 1;

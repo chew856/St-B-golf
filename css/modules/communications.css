@@ -129,8 +129,8 @@ body.staff .cm-tpl h3 { font-size: 1rem; margin: 0 0 0.25rem; }
 .cm-wx svg { width: 20px; height: 20px; color: var(--on-dark-2); }
 .cm-course-big { font-family: var(--serif); font-weight: 500; font-size: 1.625rem; color: var(--on-dark); }
 .cm-course-msg { font-size: 0.9375rem; color: var(--on-dark); margin: 0.5rem 0 1rem; line-height: 1.5; }
-.cm-course-kv { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin: 0 0 0.75rem; border-top: 1px solid rgba(243, 246, 242, 0.15); }
-.cm-course-kv > div { padding: 0.625rem 0; border-bottom: 1px solid rgba(243, 246, 242, 0.1); }
+.cm-course-kv { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin: 0 0 0.75rem; border-top: 1px solid var(--on-dark-a15); }
+.cm-course-kv > div { padding: 0.625rem 0; border-bottom: 1px solid var(--on-dark-a10); }
 .cm-course-kv dt { font-size: 0.8125rem; color: var(--on-dark-2); }
 .cm-course-kv dd { margin: 2px 0 0; font-size: 1rem; font-weight: 500; color: var(--on-dark); }
 .cm-course-holes { font-size: 0.875rem; color: var(--on-dark-2); margin: 0; }

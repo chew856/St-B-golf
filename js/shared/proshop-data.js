@@ -216,7 +216,7 @@
           subtotal: -sale.subtotal, tax: -sale.tax, total: -sale.total, discount: -sale.discount, payment: sale.payment, memberId: sale.memberId, staffId: 'stf_23',
           giftCardId: null, giftLast4: null, giftAmount: 0, channel: 'online', orderId: id, orderNo: x.no, refundOf: sale.id });
         Object.assign(doc, { cancelledAt: cIso, cancelledBy: front, cancelReason: x.cancelReason, refund: { amount: total, receiptId: cr.id, at: cIso } });
-        log.push({ at: cIso, text: 'Cancelled by ' + front + ': ' + x.cancelReason + ' Refunded ' + F.money(total) + ', stock put back.' });
+        log.push({ at: cIso, text: 'Cancelled by ' + front + ': ' + x.cancelReason + ' Refunded ' + (Club.fmtEn || F).money(total) + ', stock put back.' });
       }
       doc.status = x.status;
       S.insert('shopOrders', doc);

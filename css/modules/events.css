@@ -79,7 +79,8 @@
 .ev-list-group + .ev-list-group { margin-top: var(--s6); }
 .ev-list-month { font-size: var(--fs-24); margin-bottom: var(--s3); }
 .ev-list { overflow: hidden; }
-.ev-list-row { cursor: pointer; transition: background var(--t-ui); }
+.ev-list.list > li { padding: 0; }   /* the row link inside takes the padding */
+.ev-list-row { display: flex; align-items: center; gap: var(--s3); flex: 1; min-width: 0; padding: var(--s3) var(--s5); color: inherit; text-decoration: none; cursor: pointer; transition: background var(--t-ui); }
 @media (hover: hover) { .ev-list-row:hover { background: var(--bg); } }
 .ev-list-date { width: 52px; flex: none; display: flex; flex-direction: column; align-items: center; border-right: 1px solid var(--border); padding-right: var(--s3); }
 .ev-list-day { font-family: var(--sans); font-feature-settings: "lnum" 1; font-size: 1.9rem; line-height: 1; color: var(--text); }
@@ -436,9 +437,12 @@
   .ev-trn-grid { grid-template-columns: 1fr; }
   .ev-form-times { grid-template-columns: 1fr 1fr; }
 }
+@media (max-width: 768px) {
+  .ev-list-row { padding: 10px var(--s4); }
+}
 @media (max-width: 420px) {
   .ev-list-status { display: none; }
-  .ev-list > li { padding-left: var(--s3); padding-right: var(--s3); }
+  .ev-list-row { padding-left: var(--s3); padding-right: var(--s3); }
 }
 @media print {
   .sc-card { border: 0; }

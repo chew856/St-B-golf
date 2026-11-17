@@ -948,11 +948,12 @@
     ]);
     html += rSec('Trend', esc('Total revenue per ' + unitWord(ctx)), trend(ctx, 'Revenue', function (r) { return r.total; }, true, 'revenue'));
     const dept = DEPTS.map(function (d) { return { d: d, v: sum(ctx.rows, function (r) { return r.revenue[d.key]; }), pv: ctx.prev ? sum(ctx.prev.rows, function (r) { return r.revenue[d.key]; }) : 0 }; }).sort(function (a, b) { return b.v - a.v; });
-    html += rSec('By department', '', rTable([{ label: 'Department' }, { label: 'Share' }, { label: 'Per ' + unitWord(ctx), num: true }, { label: 'Change', num: true }, { label: 'Total', num: true }],
+    /* The per-unit column follows the headline: per day on a period shorter than a month, not the whole period again. */
+    html += rSec('By department', '', rTable([{ label: 'Department' }, { label: 'Share' }, { label: 'Per ' + avgUnit(ctx), num: true }, { label: 'Change', num: true }, { label: 'Total', num: true }],
       dept.map(function (x) {
         const sh = t ? Math.round(x.v / t * 100) : 0;
-        return ['<span class="primary-cell">' + esc(x.d.label) + '</span>', '<span class="rd-fill"><span class="bar"><span style="width:' + Math.max(0, Math.min(100, sh)) + '%"></span></span>' + sh + '%</span>', esc(F.money0(per(ctx, x.v))), chg(x.v, x.pv, ctx, 'revenue'), '<strong>' + esc(F.money0(x.v)) + '</strong>'];
-      }), ['Total', '', esc(F.money0(per(ctx, t))), chg(t, p, ctx, 'revenue'), esc(F.money0(t))]));
+        return ['<span class="primary-cell">' + esc(x.d.label) + '</span>', '<span class="rd-fill"><span class="bar"><span style="width:' + Math.max(0, Math.min(100, sh)) + '%"></span></span>' + sh + '%</span>', esc(F.money0(avgPer(ctx, x.v))), chg(x.v, x.pv, ctx, 'revenue'), '<strong>' + esc(F.money0(x.v)) + '</strong>'];
+      }), ['Total', '', esc(F.money0(avgPer(ctx, t))), chg(t, p, ctx, 'revenue'), esc(F.money0(t))]));
     html += rSec('Best and worst', '', extremes(ctx, function (r) { return r.total; }, F.money0));
     html += rSec('Per ' + unitWord(ctx), '', perUnitTable(ctx, [{ label: 'Golf', num: true }, { label: 'Dining', num: true }, { label: 'Total', num: true }],
       function (r) { return [esc(F.money0(r.revenue.golf)), esc(F.money0(r.revenue.dining)), '<strong>' + esc(F.money0(r.total)) + '</strong>']; }));

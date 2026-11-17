@@ -225,7 +225,10 @@
     console.warn('Store save failed', e);
     /* Storage full: say so every time a save fails, never fail silently (one warning on screen at a time, not a stack
        of the same one while saves keep failing). */
-    const msg = 'Changes could not be saved: this browser’s storage is full. Export your data in Settings, then reset the demo data.';
+    /* Staff can export and reset in Settings; members and golfers have no Settings page, so they are told what they can do. */
+    const staff = document.body && document.body.classList.contains('staff');
+    const msg = staff ? 'Changes could not be saved: this browser’s storage is full. Export your data in Settings, then reset the demo data.'
+      : 'Your changes could not be saved: this browser’s storage is full. Clear this site’s data in your browser settings, then try again.';
     const showing = Array.prototype.some.call(document.querySelectorAll('.toast.bad:not(.leaving)'), function (t) { return t.textContent.indexOf(msg) >= 0; });
     if (!showing && window.Club && Club.ui && Club.ui.toast) Club.ui.toast(msg, 'bad');
   }
@@ -651,31 +654,31 @@
   })();
 
   store.seed('staff', [
-    { id: 'stf_1', firstName: 'Carly', lastName: 'Dalmyn', role: 'Director of Clubhouse Operations', department: 'Administration', email: 'cdalmyn@stboniface.example', phone: '204-233-2497 x215', hourlyRate: null, status: 'active' },
-    { id: 'stf_2', firstName: 'Steve', lastName: 'Wood', role: 'Director of Golf', department: 'Golf Operations', email: 'swood@stboniface.example', phone: '204-233-2497 x209', hourlyRate: null, status: 'active' },
-    { id: 'stf_3', firstName: 'Declan', lastName: 'Reyes', role: 'Head Golf Professional', department: 'Golf Operations', email: 'dreyes@stboniface.example', phone: '204-233-2497', hourlyRate: null, status: 'active' },
-    { id: 'stf_4', firstName: 'Nora', lastName: 'Lindgren', role: 'Assistant Golf Professional', department: 'Golf Operations', email: 'nlindgren@stboniface.example', phone: '204-233-2497', hourlyRate: 32, status: 'active' },
-    { id: 'stf_5', firstName: 'Tobias', lastName: 'Achebe', role: 'Assistant Golf Professional', department: 'Golf Operations', email: 'tachebe@stboniface.example', phone: '204-233-2497', hourlyRate: 30, status: 'active' },
+    { id: 'stf_1', firstName: 'Carly', lastName: 'Dalmyn', role: 'Director of Clubhouse Operations', department: 'Administration', email: 'cdalmyn@stboniface.example', phone: '(204) 233-2497 ext. 215', hourlyRate: null, status: 'active' },
+    { id: 'stf_2', firstName: 'Steve', lastName: 'Wood', role: 'Director of Golf', department: 'Golf Operations', email: 'swood@stboniface.example', phone: '(204) 233-2497 ext. 209', hourlyRate: null, status: 'active' },
+    { id: 'stf_3', firstName: 'Declan', lastName: 'Reyes', role: 'Head Golf Professional', department: 'Golf Operations', email: 'dreyes@stboniface.example', phone: '(204) 233-2497', hourlyRate: null, status: 'active' },
+    { id: 'stf_4', firstName: 'Nora', lastName: 'Lindgren', role: 'Assistant Golf Professional', department: 'Golf Operations', email: 'nlindgren@stboniface.example', phone: '(204) 233-2497', hourlyRate: 32, status: 'active' },
+    { id: 'stf_5', firstName: 'Tobias', lastName: 'Achebe', role: 'Assistant Golf Professional', department: 'Golf Operations', email: 'tachebe@stboniface.example', phone: '(204) 233-2497', hourlyRate: 30, status: 'active' },
     { id: 'stf_6', firstName: 'Craig', lastName: 'Campbell', role: 'Golf Course Superintendent', department: 'Agronomy', email: 'ccampbell@stboniface.example', phone: '204-235-1549', hourlyRate: null, status: 'active' },
-    { id: 'stf_7', firstName: 'Rosa', lastName: 'Delgado', role: 'Assistant Superintendent', department: 'Agronomy', email: 'rdelgado@stboniface.example', phone: '204-233-2497', hourlyRate: 34, status: 'active' },
-    { id: 'stf_8', firstName: 'Kwame', lastName: 'Mensah', role: 'Equipment Manager', department: 'Agronomy', email: 'kmensah@stboniface.example', phone: '204-233-2497', hourlyRate: 31, status: 'active' },
-    { id: 'stf_9', firstName: 'Liam', lastName: 'Byrne', role: 'Grounds Crew', department: 'Agronomy', email: 'lbyrne@stboniface.example', phone: '204-233-2497', hourlyRate: 19, status: 'active' },
-    { id: 'stf_10', firstName: 'Mateo', lastName: 'Silva', role: 'Grounds Crew', department: 'Agronomy', email: 'msilva@stboniface.example', phone: '204-233-2497', hourlyRate: 19, status: 'active' },
-    { id: 'stf_11', firstName: 'Grace', lastName: 'Thornbury', role: 'Irrigation Technician', department: 'Agronomy', email: 'gthornbury@stboniface.example', phone: '204-233-2497', hourlyRate: 26, status: 'active' },
-    { id: 'stf_12', firstName: 'Ian', lastName: 'Wong', role: 'Executive Chef', department: 'Food & Beverage', email: 'iwong@stboniface.example', phone: '204-233-2497 x206', hourlyRate: null, status: 'active' },
-    { id: 'stf_13', firstName: 'Sienna', lastName: 'Park', role: 'Food & Beverage Manager', department: 'Food & Beverage', email: 'spark@stboniface.example', phone: '204-233-2497', hourlyRate: null, status: 'active' },
-    { id: 'stf_14', firstName: 'Oliver', lastName: 'Quinn', role: 'Sous Chef', department: 'Food & Beverage', email: 'oquinn@stboniface.example', phone: '204-233-2497', hourlyRate: 28, status: 'active' },
-    { id: 'stf_15', firstName: 'Amara', lastName: 'Osei', role: 'Server', department: 'Food & Beverage', email: 'aosei@stboniface.example', phone: '204-233-2497', hourlyRate: 16, status: 'active' },
-    { id: 'stf_16', firstName: 'Ethan', lastName: 'Clarke', role: 'Server', department: 'Food & Beverage', email: 'eclarke@stboniface.example', phone: '204-233-2497', hourlyRate: 16, status: 'active' },
-    { id: 'stf_17', firstName: 'Isabel', lastName: 'Varga', role: 'Bartender', department: 'Food & Beverage', email: 'ivarga@stboniface.example', phone: '204-233-2497', hourlyRate: 18, status: 'active' },
-    { id: 'stf_18', firstName: 'Henrik', lastName: 'Dahl', role: 'Bar Manager', department: 'Food & Beverage', email: 'hdahl@stboniface.example', phone: '204-233-2497', hourlyRate: 27, status: 'active' },
-    { id: 'stf_19', firstName: 'Tori', lastName: 'Sawchyn', role: 'Administrative Assistant', department: 'Administration', email: 'tsawchyn@stboniface.example', phone: '204-233-2497 x200', hourlyRate: null, status: 'active' },
-    { id: 'stf_20', firstName: 'Leslie', lastName: 'Filopoulos', role: 'Controller', department: 'Administration', email: 'lfilopoulos@stboniface.example', phone: '204-233-2497 x202', hourlyRate: null, status: 'active' },
-    { id: 'stf_21', firstName: 'Clara', lastName: 'Bishop', role: 'Special Events Coordinator', department: 'Events', email: 'cbishop@stboniface.example', phone: '204-233-2497', hourlyRate: null, status: 'active' },
-    { id: 'stf_22', firstName: 'Samuel', lastName: 'Ortiz', role: 'Starter', department: 'Golf Operations', email: 'sortiz@stboniface.example', phone: '204-233-2497', hourlyRate: 18, status: 'active' },
-    { id: 'stf_23', firstName: 'Ruby', lastName: 'Fenwick', role: 'Pro Shop Associate', department: 'Golf Operations', email: 'rfenwick@stboniface.example', phone: '204-233-2497', hourlyRate: 17, status: 'active' },
-    { id: 'stf_24', firstName: 'Ahmed', lastName: 'Karim', role: 'Back Shop Supervisor', department: 'Golf Operations', email: 'akarim@stboniface.example', phone: '204-233-2497', hourlyRate: 22, status: 'active' },
-    { id: 'stf_25', firstName: 'Harriet', lastName: 'Vance', role: 'Front Desk', department: 'Administration', email: 'hvance@stboniface.example', phone: '204-233-2497', hourlyRate: 20, status: 'active' }
+    { id: 'stf_7', firstName: 'Rosa', lastName: 'Delgado', role: 'Assistant Superintendent', department: 'Agronomy', email: 'rdelgado@stboniface.example', phone: '(204) 233-2497', hourlyRate: 34, status: 'active' },
+    { id: 'stf_8', firstName: 'Kwame', lastName: 'Mensah', role: 'Equipment Manager', department: 'Agronomy', email: 'kmensah@stboniface.example', phone: '(204) 233-2497', hourlyRate: 31, status: 'active' },
+    { id: 'stf_9', firstName: 'Liam', lastName: 'Byrne', role: 'Grounds Crew', department: 'Agronomy', email: 'lbyrne@stboniface.example', phone: '(204) 233-2497', hourlyRate: 19, status: 'active' },
+    { id: 'stf_10', firstName: 'Mateo', lastName: 'Silva', role: 'Grounds Crew', department: 'Agronomy', email: 'msilva@stboniface.example', phone: '(204) 233-2497', hourlyRate: 19, status: 'active' },
+    { id: 'stf_11', firstName: 'Grace', lastName: 'Thornbury', role: 'Irrigation Technician', department: 'Agronomy', email: 'gthornbury@stboniface.example', phone: '(204) 233-2497', hourlyRate: 26, status: 'active' },
+    { id: 'stf_12', firstName: 'Ian', lastName: 'Wong', role: 'Executive Chef', department: 'Food & Beverage', email: 'iwong@stboniface.example', phone: '(204) 233-2497 ext. 206', hourlyRate: null, status: 'active' },
+    { id: 'stf_13', firstName: 'Sienna', lastName: 'Park', role: 'Food & Beverage Manager', department: 'Food & Beverage', email: 'spark@stboniface.example', phone: '(204) 233-2497', hourlyRate: null, status: 'active' },
+    { id: 'stf_14', firstName: 'Oliver', lastName: 'Quinn', role: 'Sous Chef', department: 'Food & Beverage', email: 'oquinn@stboniface.example', phone: '(204) 233-2497', hourlyRate: 28, status: 'active' },
+    { id: 'stf_15', firstName: 'Amara', lastName: 'Osei', role: 'Server', department: 'Food & Beverage', email: 'aosei@stboniface.example', phone: '(204) 233-2497', hourlyRate: 16, status: 'active' },
+    { id: 'stf_16', firstName: 'Ethan', lastName: 'Clarke', role: 'Server', department: 'Food & Beverage', email: 'eclarke@stboniface.example', phone: '(204) 233-2497', hourlyRate: 16, status: 'active' },
+    { id: 'stf_17', firstName: 'Isabel', lastName: 'Varga', role: 'Bartender', department: 'Food & Beverage', email: 'ivarga@stboniface.example', phone: '(204) 233-2497', hourlyRate: 18, status: 'active' },
+    { id: 'stf_18', firstName: 'Henrik', lastName: 'Dahl', role: 'Bar Manager', department: 'Food & Beverage', email: 'hdahl@stboniface.example', phone: '(204) 233-2497', hourlyRate: 27, status: 'active' },
+    { id: 'stf_19', firstName: 'Tori', lastName: 'Sawchyn', role: 'Administrative Assistant', department: 'Administration', email: 'tsawchyn@stboniface.example', phone: '(204) 233-2497 ext. 200', hourlyRate: null, status: 'active' },
+    { id: 'stf_20', firstName: 'Leslie', lastName: 'Filopoulos', role: 'Controller', department: 'Administration', email: 'lfilopoulos@stboniface.example', phone: '(204) 233-2497 ext. 202', hourlyRate: null, status: 'active' },
+    { id: 'stf_21', firstName: 'Clara', lastName: 'Bishop', role: 'Special Events Coordinator', department: 'Events', email: 'cbishop@stboniface.example', phone: '(204) 233-2497', hourlyRate: null, status: 'active' },
+    { id: 'stf_22', firstName: 'Samuel', lastName: 'Ortiz', role: 'Starter', department: 'Golf Operations', email: 'sortiz@stboniface.example', phone: '(204) 233-2497', hourlyRate: 18, status: 'active' },
+    { id: 'stf_23', firstName: 'Ruby', lastName: 'Fenwick', role: 'Pro Shop Associate', department: 'Golf Operations', email: 'rfenwick@stboniface.example', phone: '(204) 233-2497', hourlyRate: 17, status: 'active' },
+    { id: 'stf_24', firstName: 'Ahmed', lastName: 'Karim', role: 'Back Shop Supervisor', department: 'Golf Operations', email: 'akarim@stboniface.example', phone: '(204) 233-2497', hourlyRate: 22, status: 'active' },
+    { id: 'stf_25', firstName: 'Harriet', lastName: 'Vance', role: 'Front Desk', department: 'Administration', email: 'hvance@stboniface.example', phone: '(204) 233-2497', hourlyRate: 20, status: 'active' }
   ]);
 
   /* From the 2025 St. Boniface scorecard: men's par and handicap, Black / Green / Silver tees. */

@@ -323,7 +323,7 @@
 .cg-col-more { align-self: center; }
 .cg-col-empty { padding: var(--s5) var(--s3); text-align: center; font-size: 0.875rem; color: var(--text-3); }
 .cg-card {
-  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-ctl); padding: 12px 14px; box-shadow: 0 1px 2px rgba(16, 30, 23, 0.04);
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-ctl); padding: 12px 14px; box-shadow: var(--shadow-hair);
   transition: border-color var(--t-ui), opacity var(--t-ui), transform var(--t-ui) var(--ease-ui);
 }
 .cg-card[draggable="true"] { cursor: grab; }

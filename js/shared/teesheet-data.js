@@ -4,6 +4,8 @@
    js/modules/teesheet.js, which reads these helpers from Club.shared.teesheet. */
 (function () {
   const S = Club.store, ui = Club.ui, esc = ui.esc, fmt = Club.fmt, R = S.R;
+  /* Seeded history is stored, so it is English in both languages (Club.fmtEn on the portal and public site). */
+  const EN = Club.fmtEn || fmt;
 
   /* ---------------- Settings & time helpers ---------------- */
   const DEFAULTS = { interval: 9, first: '06:30', last: '19:00', guestFee: 66, cartFee: 28 };
@@ -160,8 +162,8 @@
       const iso = function (ms) { return new Date(ms).toISOString(); };
       demoRefills.push({ id: 'wl_' + tt.id.slice(3) + '_w', date: tt.date, time: tt.time, players: party.length, kind: 'member', memberId: party[0].memberId,
         createdAt: iso(asked), status: 'booked', notifiedAt: iso(told), offerTime: tt.time, bookedAt: iso(booked), bookedTeeTimeId: ref.id,
-        history: [{ at: iso(asked), text: 'Joined the waitlist for ' + party.length + (party.length === 1 ? ' player' : ' players') + ', at ' + fmt.time(tt.time) },
-          { at: iso(booked), text: 'Booked the ' + fmt.time(tt.time) + ' tee time' }] });
+        history: [{ at: iso(asked), text: 'Joined the waitlist for ' + party.length + (party.length === 1 ? ' player' : ' players') + ', at ' + EN.time(tt.time) },
+          { at: iso(booked), text: 'Booked the ' + EN.time(tt.time) + ' tee time' }] });
     });
     return added;
   }
@@ -211,7 +213,7 @@
     const slots = slotList(), WIN = { morning: [0, 660], midday: [660, 840], afternoon: [840, 1440], any: [0, 1440] };
     const days = {}; tees.forEach(function (t) { days[t.date] = 1; });
     const at = function (date, min) { const d = fmt.toDate(date); d.setHours(0, 0, 0, 0); d.setMinutes(min); return d.toISOString(); };
-    const when = function (time, win) { return time ? 'at ' + fmt.time(time) : win === 'any' ? 'any time' : 'in the ' + win + (win === 'morning' ? ' (before 11:00 AM)' : win === 'midday' ? ' (11:00 AM to 2:00 PM)' : ' (after 2:00 PM)'); };
+    const when = function (time, win) { return time ? 'at ' + EN.time(time) : win === 'any' ? 'any time' : 'in the ' + win + (win === 'morning' ? ' (before 11:00 AM)' : win === 'midday' ? ' (11:00 AM to 2:00 PM)' : ' (after 2:00 PM)'); };
     const pub = 'pp_demo_cart';
     Object.keys(days).sort().forEach(function (date) {
       const dow = fmt.toDate(date).getDay(), weekend = dow === 0 || dow === 6;

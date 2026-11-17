@@ -208,7 +208,19 @@
   .check { min-height: 40px; }
   /* Text links and small chips that act as buttons. */
   .s-link { min-height: 44px; display: inline-flex; align-items: center; }
-  html body.staff .rp-link, html body.staff .rp-kpi .v { min-height: 36px; display: inline-flex; align-items: center; }
+  html body.staff .rp-link, html body.staff .rp-kpi .v { min-height: 40px; display: inline-flex; align-items: center; }
+  /* Staff targets their own stylesheets draw smaller (css/staff-theme.css and the module sheets load after this file,
+     so these carry html in front to win): text links 44px, compact controls in toolbars, tables and pagers 40px. */
+  html body.staff .s-link { min-height: 44px; }
+  html body.staff .tab { min-width: 44px; flex-shrink: 0; justify-content: center; }   /* flex-shrink: a min-width would otherwise let a tab shrink under its label */
+  html body.staff .vfs-bar .segmented button, html body.staff .st-promo-tools .segmented button, html body.staff .cg-dt-set .segmented button { min-height: 40px; }
+  html body.staff .table.cg-eq-table td:nth-child(7) .btn-sm, html body.staff .cg-chip, html body.staff .ps-oc-contact a { min-height: 40px; }
+  html body.staff .dn-line-x { width: 40px; height: 40px; }
+  html body.staff .bil-actions .btn-sm, html body.staff .ac-qty, html body.staff .ac-link, html body.staff .cm-note-more { min-height: 40px; }
+  html body.staff .cg-pager-n, html body.staff .ps-pager-n { min-width: 40px; height: 40px; }
+  html body.staff .cg-strip-btn { height: 40px; }
+  /* Names and links inside a line of text: a taller hit area without moving the text around them. */
+  html body.staff .vfs-who a, html body.staff .stat-meta a { display: inline-block; padding: 11px 0; margin: -11px 0; }
   html body.staff .ps-chip { min-height: 40px; }
   html body.staff .ts-slot { min-height: 40px; }
   html body.public .btn { min-height: 44px; }

@@ -19,9 +19,11 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = path.join(ROOT, 'dist');
 const PAGES = ['index.html', 'member.html', 'public.html'];
 const BUILD_DIR = 'build';                       /* bundles go to dist/build/ */
-/* Never copied: build tooling and local-only files. .vercelignore patterns are added below. */
+/* Never copied: build tooling and local-only files. .vercelignore patterns are added below. js/ and css/ are not copied
+   either: every page loads only its bundles from build/, which are made from those sources (the check at the end makes
+   sure each file a built page or bundle refers to is in dist/). */
 const SKIP = new Set(['dist', 'node_modules', 'tools', '.git', '.vercel', '.claude', 'package.json', 'package-lock.json',
-  'vercel.json', '.vercelignore', '.gitignore']);
+  'vercel.json', '.vercelignore', '.gitignore', 'js', 'css', 'shots']);
 
 function ignorePatterns() {
   const f = path.join(ROOT, '.vercelignore');
@@ -152,4 +154,20 @@ for (const page of PAGES) {
     r.css.files + ' stylesheets -> ' + r.css.file + ' (' + Math.round(r.css.bytes / 1024) + ' KB)');
 }
 if (!fs.existsSync(path.join(DIST, 'robots.txt'))) throw new Error('robots.txt missing from dist/');
+/* Every local file a built page (src, href) or bundle (url()) refers to must be in dist/. */
+function checkRefs(rel, text, re) {
+  const dir = path.posix.dirname(rel);
+  let m; while ((m = re.exec(text))) {
+    const u = m[1].split(/[?#]/)[0];
+    if (!u || !isLocal(u) || u.startsWith('#') || u.startsWith('mailto:') || u.startsWith('tel:') || u.startsWith('javascript:')) continue;
+    const target = u.startsWith('/') ? u.slice(1) : path.posix.normalize(path.posix.join(dir, u));
+    if (!fs.existsSync(path.join(DIST, target))) throw new Error(rel + ' refers to ' + u + ', which is not in dist/');
+  }
+}
+for (const page of PAGES) checkRefs(page, fs.readFileSync(path.join(DIST, page), 'utf8'), /(?:src|href)="([^"]+)"/g);
+for (const f of fs.readdirSync(path.join(DIST, BUILD_DIR)).filter(function (f) { return f.endsWith('.css'); })) {
+  /* data: URIs (inline SVG, with url(%23id) inside them) are not files: take them out first. */
+  const css = fs.readFileSync(path.join(DIST, BUILD_DIR, f), 'utf8').replace(/url\(\s*(["'])data:[\s\S]*?\1\s*\)/g, '').replace(/url\(\s*data:[^)]*\)/g, '');
+  checkRefs(BUILD_DIR + '/' + f, css, /url\(\s*["']?([^"')]+)["']?\s*\)/g);
+}
 console.log('Built into dist/');

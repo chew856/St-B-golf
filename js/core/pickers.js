@@ -169,7 +169,9 @@
         return;
       }
       if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(true); return; }
-      if (e.key === 'Tab') { close(); return; }
+      /* Tab from the search box (which sits outside the form) goes back to the button first, so Tab carries on from
+         there, inside the dialog that holds it. */
+      if (e.key === 'Tab') { close(inSearch); return; }
       if (e.key === 'ArrowDown') { e.preventDefault(); step(pop, 1); return; }
       if (e.key === 'ArrowUp') { e.preventDefault(); step(pop, -1); return; }
       if (inSearch && (e.key === 'Home' || e.key === 'End' || e.key === ' ' || e.key.length === 1)) return;   /* typing goes into the search box */

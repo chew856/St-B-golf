@@ -33,7 +33,7 @@
    stepper, sticky action bar
    ========================================================================== */
 body.ps-open { overflow: hidden; }
-.ps-scrim { position: fixed; inset: 0; z-index: 130; background: rgba(16, 30, 23, 0.42); opacity: 0; transition: opacity var(--t-ui) var(--ease-ui); }
+.ps-scrim { position: fixed; inset: 0; z-index: 130; background: var(--forest-scrim); opacity: 0; transition: opacity var(--t-ui) var(--ease-ui); }
 .ps-scrim.open { opacity: 1; }
 .ps-sheet { position: fixed; z-index: 131; left: 0; right: 0; bottom: 0; margin: 0 auto; width: 100%; max-width: 560px; max-height: 88dvh; display: flex; flex-direction: column; background: var(--surface); border-radius: 18px 18px 0 0; box-shadow: var(--shadow-sheet); transform: translateY(100%); transition: transform 200ms var(--ease-ui); padding-bottom: env(safe-area-inset-bottom); }
 .ps-sheet.is-full { height: 94dvh; max-height: 94dvh; }
@@ -101,7 +101,7 @@ body.ps-open { overflow: hidden; }
 .pk-step-unit { font-weight: 400; color: var(--text-2); font-size: 0.875rem; }
 
 /* Sticky action bar, pinned above the bottom nav */
-.pk-bar { position: fixed; z-index: 44; left: 0; right: 0; margin: 0 auto; max-width: 560px; bottom: calc(64px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 12px; padding: 10px 16px 10px 20px; background: var(--surface); border-top: 1px solid var(--border); box-shadow: 0 -6px 20px rgba(16, 30, 23, 0.06); transform: translateY(120%); opacity: 0; transition: transform 200ms var(--ease-ui), opacity 200ms var(--ease-ui); }
+.pk-bar { position: fixed; z-index: 44; left: 0; right: 0; margin: 0 auto; max-width: 560px; bottom: calc(64px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 12px; padding: 10px 16px 10px 20px; background: var(--surface); border-top: 1px solid var(--border); box-shadow: var(--shadow-rise); transform: translateY(120%); opacity: 0; transition: transform 200ms var(--ease-ui), opacity 200ms var(--ease-ui); }
 .pk-bar.open { transform: none; opacity: 1; }
 .pk-bar-sum { flex: 1 1 auto; min-width: 0; font-size: 0.9375rem; font-weight: 500; color: var(--text); line-height: 1.3; font-variant-numeric: tabular-nums; }
 .pk-bar-sum small { display: block; font-size: 0.8125rem; font-weight: 400; color: var(--text-2); }

@@ -117,6 +117,8 @@
   var CARTS = 'la voiturette-bar';
 
   var S = {
+    /* js/core/store.js, when a save fails because the browser's storage is full (portal and public site wording) */
+    'Your changes could not be saved: this browser’s storage is full. Clear this site’s data in your browser settings, then try again.': 'Vos modifications n’ont pas pu être enregistrées : l’espace de stockage de ce navigateur est plein. Effacez les données de ce site dans les réglages de votre navigateur, puis réessayez.'.replace(' :', NB + ':'),
     /* ---------- Shared by the public site and the portal (fr-public.js and fr-portal.js load on one page each) ---------- */
     'St. Boniface Golf Club is located on Treaty One lands, the traditional territories of the Anishinaabe, Cree, Oji-Cree, Dakota and Dene peoples, and the homeland of the Métis Nation.':
       'Le St. Boniface Golf Club est situé sur les terres du Traité n° 1, territoires traditionnels des peuples anishinaabe, cri, oji-cri, dakota et déné, et patrie de la Nation métisse.',

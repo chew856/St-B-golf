@@ -25,3 +25,7 @@ body.portal .to-step button { width: 40px; height: 40px; color: var(--forest-800
 }
 /* The header has room for the Takeout link from 1200px (the brand wraps below that); phones have it in the More list. */
 /* Header links that do not fit move into the More menu (fitNav in js/portal/app.js). */
+/* Phone: the clubhouse number in the small print gets a taller hit area without moving the text around it. */
+@media (max-width: 768px) {
+  .to-fine a { display: inline-block; padding: 12px 0; margin: -12px 0; }
+}

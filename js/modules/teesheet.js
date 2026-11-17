@@ -53,10 +53,6 @@
     if (p.type === 'member' && p.memberId) { const m = Club.members.get(p.memberId); if (m) return m.lastName + ', ' + m.firstName[0] + '.'; }
     const n = String(p.name || 'Guest').split(/\s+/); return n.length > 1 ? n[n.length - 1] + ', ' + n[0][0] + '.' : n[0];
   }
-  function lastName(p) {
-    if (p.type === 'member' && p.memberId) { const m = Club.members.get(p.memberId); if (m) return m.lastName; }
-    const n = String(p.name || 'Guest').split(/\s+/); return n[n.length - 1];
-  }
   function hostOf(tt) { return (tt.players || []).find(function (p) { return p.type === 'member' && p.memberId && Club.members.get(p.memberId); }) || null; }
   /** A guest's host: the member who brought them (p.hostId, set when a member joins a group with guests), else the group's first member. */
   function guestHost(tt, p) { return p && p.hostId && Club.members.get(p.hostId) ? { memberId: p.hostId } : hostOf(tt); }
@@ -659,7 +655,7 @@
     const isNext = !!(tt && ctx.nextId === tt.id);
     const late = !!(tt && tt.status === 'booked' && (ctx.isPast || (ctx.isToday && toMin(time) < ctx.now)));
     /* Passed rows fade, except a group still on the course or waiting to go out. */
-    const fade = past && !(tt && (tt.status === 'on-course' || tt.status === 'checked-in'));
+    const fade = past && ctx.isToday && !(tt && (tt.status === 'on-course' || tt.status === 'checked-in'));
     const data = ' data-time="' + time + '"' + (tt ? ' data-id="' + esc(tt.id) + '" data-status="' + esc(tt.status) + '"' : '') +
       ' data-names="' + esc(names) + '" data-open="' + (bookable ? openCount : 0) + '" data-mem="' + (hasMem ? 1 : 0) + '" data-pub="' + (hasPub ? 1 : 0) + '" style="--i:' + Math.min(idx, 36) + '"';
     const cls = 'ts-row' + (tt ? ' has-group' : ' empty-row') + (fade ? ' past' : '') + (isNext ? ' is-next' : '') + (late ? ' is-late' : '') + (tt && tt.overrides && tt.overrides.length ? ' has-override' : '');
@@ -1203,7 +1199,7 @@
               '<dt>Busiest hour</dt><dd>' + (busy ? fmt.time(busy + ':00') + ' <span class="muted">' + hours[busy] + ' players</span>' : 'None') + '</dd>' +
               (wx ? '<dt>Forecast</dt><dd>' + esc(wx.cond) + ', ' + wx.hi + '°</dd>' : '') +
             '</dl></div>' +
-          '<div class="ts-st-sec"><h3 class="ts-st-h">' + esc(fmt.weekday(state.date)) + '</h3><div class="ts-st-kv">' +
+          '<div class="ts-st-sec"><h3 class="ts-st-h">Bookings</h3><div class="ts-st-kv">' +
             tile(tts.length, tts.length === 1 ? 'group' : 'groups', 'st-filter', plural(tts.length, 'group') + ' booked. Show booked tee times only', ' data-value="booked" data-fk="kv1"') +
             tile(players, 'booked', 'st-filter', plural(players, 'player') + ' booked. Show booked tee times only', ' data-value="booked" data-fk="kv2"') +
             tile(open, 'open', 'st-filter', plural(open, 'tee time') + ' open. Show open tee times only', ' data-value="open" data-fk="kv3"') +

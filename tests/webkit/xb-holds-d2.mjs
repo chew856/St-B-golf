@@ -33,7 +33,7 @@ for (const W of [1440, 390]) {
     ok(await staff.locator('.modal').count() === 0, W + ': clicking a held place opens nothing');
     /* the booking modal opened another way: says the time is held, blocks save, offers another time */
     const n0 = await staff.evaluate(() => Club.store.all('teeTimes').length);
-    await human(staff, '.page-head [data-action=book-new]');
+    await human(staff, '.ts-bar [data-action=book-new]');
     await setVal(staff, '.ts-form [name=time]', chipT); await staff.waitForTimeout(300);
     const note = await staff.locator('.ts-heldnote').textContent();
     ok(await staff.locator('.ts-heldnote').isVisible() && /is held online for \d:\d\d while a golfer books online\. Wait for the hold to end, or choose another time\./.test(note), W + ': booking modal says the time is held', note);

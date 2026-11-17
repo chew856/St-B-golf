@@ -271,9 +271,9 @@ body.staff .ts-st-go { min-height: 38px; padding: 0 16px; font-weight: 600; }
 .ts-st-t { font-family: var(--serif); font-size: 0.9375rem; color: var(--text); font-variant-numeric: tabular-nums lining-nums; white-space: nowrap; }
 .ts-st-n { min-width: 0; color: var(--text); font-size: 0.875rem; font-weight: 500; }
 .ts-st-s { font-size: 0.75rem; color: var(--text-3); white-space: nowrap; }
-.ts-st-kv { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.ts-st-kv { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
 .ts-st-tile {
-  display: flex; flex-direction: column; align-items: flex-start; min-width: 0; padding: 10px; border: 1px solid transparent; border-radius: var(--radius-ctl);
+  display: flex; flex-direction: column; align-items: flex-start; min-width: 0; padding: 10px 8px 10px 10px; border: 1px solid transparent; border-radius: var(--radius-ctl);
   background: var(--sage-50); color: var(--text); font: inherit; text-align: left; cursor: pointer;
   transition: background var(--t-ui) var(--ease-ui), border-color var(--t-ui) var(--ease-ui);
 }
@@ -281,7 +281,7 @@ body.staff .ts-st-go { min-height: 38px; padding: 0 16px; font-weight: 600; }
 .ts-st-tile:focus-visible { outline: 2px solid var(--forest-700); outline-offset: 1px; }
 .ts-st-tile[aria-pressed="true"] { border-color: var(--forest-800); background: var(--surface); }
 .ts-st-tile b { font-family: var(--serif); font-size: 1.375rem; font-weight: 500; line-height: 1.2; font-variant-numeric: tabular-nums lining-nums; }
-.ts-st-tile span { font-size: 0.8125rem; line-height: 1.25; color: var(--text-2); }
+.ts-st-tile span { font-size: 0.8125rem; line-height: 1.25; color: var(--text-2); white-space: nowrap; }
 .ts-st-ocl { list-style: none; margin: 0; padding: 0; }
 .ts-st-ocl li + li { border-top: 1px solid var(--border); }
 .ts-st-oc { grid-template-columns: 44px minmax(0, 1fr) auto; padding: 8px 4px; }

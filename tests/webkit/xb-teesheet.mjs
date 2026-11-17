@@ -15,7 +15,7 @@ for (const W of [1440, 390]) {
     const snapR = () => ev(() => ({ rc: Club.store.all('receipts').length, ts: Club.store.all('teeTimes').length }));
     /* 1. book with a member and a public golfer who pays at the golf shop with a discount; undo */
     const r0 = await snapR();
-    await human(p, '.page-head [data-action=book-new]');
+    await human(p, '.ts-bar [data-action=book-new]');
     await setVal(p, '.ts-form [name=member_0]', mem);
     await human(p, '.ts-form .segmented[data-name=type_1] button[data-value=public]');
     await setVal(p, '.ts-form [name=pub_1]', 'Pat Publicgolfer');
@@ -32,7 +32,7 @@ for (const W of [1440, 390]) {
     const r2 = await snapR();
     ok(!u1.tt && u1.kinds.join() === 'sale,credit' && u1.rev === 1 && u1.tot[0] === u1.tot[1] && r2.rc === r1.rc + 1 && /payment reversed/.test(await toastText(p)), W + ': Undo removes the booking; the shop payment gets a credit receipt, nothing deleted', { u1, t: await toastText(p) });
     /* 2. book again (paid at the shop), then untick paid (refund on save), undo the refund */
-    await human(p, '.page-head [data-action=book-new]');
+    await human(p, '.ts-bar [data-action=book-new]');
     await setVal(p, '.ts-form [name=member_0]', mem);
     await human(p, '.ts-form .segmented[data-name=type_1] button[data-value=public]'); await setVal(p, '.ts-form [name=pub_1]', 'Pat Publicgolfer');
     await human(p, '.ts-form [name=pubpaid_1]'); await modalBtn(p, 'Record payment'); await p.waitForTimeout(300);

@@ -15,7 +15,8 @@ for (const W of [1440, 1900, 390]) {
     });
     ok(info.box && info.scrollable && info.hidden === 0, W + ': the whole day is in one scroll box (' + info.rows + ' rows, none hidden)', info);
     ok(!info.btns.includes('All'), W + ': no All day button', info.btns);
-    ok(info.pageH < info.vh * 2.2, W + ': the page stays short', info);
+    /* Nov 17 (Option C): the starter column is always open now (it was a closed panel on phones), so phones allow a little more. */
+    ok(info.pageH < info.vh * (W < 700 ? 2.5 : 2.2), W + ': the page stays short', info);
     for (const per of ['afternoon', 'evening', 'morning']) {
       await human(p, '.ts-periods button[data-value=' + per + ']'); await p.waitForTimeout(900);
       const r = await p.evaluate(per => {

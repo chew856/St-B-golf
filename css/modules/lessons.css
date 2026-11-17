@@ -71,7 +71,7 @@ body.staff .ls-sched-head .ls-weektitle { margin: 0 auto 0 0.25rem; font-size: 1
 .ls-propick { display: none; }
 
 /* ----- Day view: a column for each pro ----- */
-.ls-daygrid { --hour: 4.25rem; --hour-col: 4rem; }
+.ls-daygrid { --hour: 2.75rem; --hour-col: 4rem; }   /* fits 7 AM to 7 PM on one laptop screen (owner, Nov 17) */
 .ls-dhead, .ls-dbody { display: grid; grid-template-columns: var(--hour-col) repeat(var(--n, 4), minmax(0, 1fr)); }
 /* The pros' names stay in sight while the hours scroll under the top bar */
 .ls-dhead { position: sticky; top: var(--topbar-h, 64px); z-index: 8; background: var(--surface); border-bottom: 1px solid var(--border); }

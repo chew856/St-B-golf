@@ -376,7 +376,7 @@
       pressed(f); pressed(v);
       ui.$('.ls-sched-panel', view).dataset.view = schedView;
       ui.$('.ls-legend', view).innerHTML = '<span class="ls-leg-booked"><i></i>Booked</span><span class="ls-leg-done"><i></i>Completed</span><span class="ls-leg-prog"><i></i>Academy session</span>' +
-        '<span class="ls-leg-hint">' + (schedView === 'day' ? 'Select a lesson to open it, or an open space to book' : 'Select a lesson to open it, or a day to see it hour by hour') + '</span>';
+        '<span class="ls-leg-hint">' + (schedView === 'day' ? 'Select a lesson to open it, drag it to move it, or select an open space to book' : 'Select a lesson to open it, drag it to another day, or select a day to see it hour by hour') + '</span>';
     }
 
     /* ---- what the schedule shows ---- */
@@ -411,7 +411,7 @@
     function tipAttrs(it) {
       let title, text;
       if (it.prog) { const pr = it.prog; title = pr.name; text = 'Academy session with ' + Club.staff.name(pr.coach) + ' · ' + range(pr.time, +pr.duration || 60) + ' · ' + places(pr); }
-      else { const l = it.lesson; title = studentName(l) + (l.memberId ? '' : ', non-member'); text = l.type + ' with ' + Club.staff.name(l.proId) + ' · ' + range(l.time, +l.duration || 60) + (atShop(l) ? ' · ' + payText(l) : '') + (l.status === 'completed' ? ' · Completed' : ''); }
+      else { const l = it.lesson, pk = l.packageId ? LP.get(l.packageId) : null; title = studentName(l) + (l.memberId ? '' : ', non-member'); text = l.type + ' with ' + Club.staff.name(l.proId) + ' · ' + range(l.time, +l.duration || 60) + (pk ? ' · From ' + pk.name : atShop(l) ? ' · ' + payText(l) : '') + (l.seriesId ? ' · Weekly series' : '') + (l.status === 'completed' ? ' · Completed' : l.status === 'scheduled' ? ' · Drag to move' : ''); }
       return ' data-tip-title="' + esc(title) + '" data-tip="' + esc(text) + '" aria-label="' + esc(title + '. ' + text) + '"';
     }
 
@@ -462,7 +462,7 @@
           '<span class="ls-b-top">' + time + '</span><span class="ls-b-who">' + esc(pr.name) + '</span><span class="ls-b-sub">Academy session · ' + places(pr) + '</span></button>';
       }
       const l = it.lesson;
-      return '<button type="button" class="ls-block' + pc + ' st-' + esc(l.status) + (state.flash === l.id ? ' ls-new' : '') + '" data-action="lesson" data-id="' + esc(l.id) + '"' + attrs + '>' +
+      return '<button type="button" class="ls-block' + pc + ' st-' + esc(l.status) + (l.status === 'scheduled' ? ' ls-movable' : '') + (state.flash === l.id ? ' ls-new' : '') + '" data-action="lesson" data-id="' + esc(l.id) + '"' + attrs + '>' +
         '<span class="ls-b-top">' + time + (l.status === 'completed' ? '<span class="ls-b-st">Completed</span>' : '') + '</span>' +
         '<span class="ls-b-who">' + esc(studentName(l)) + '</span><span class="ls-b-sub">' + esc(l.type) + '</span></button>';
     }
@@ -556,7 +556,7 @@
       const t = '<span class="ls-c-t">' + clock(it.s) + '</span>';
       if (it.prog) return '<button type="button" class="ls-chip ls-chip-prog" data-action="program" data-id="' + esc(it.prog.id) + '"' + tipAttrs(it) + '>' + t + '<span class="ls-c-w">' + esc(it.prog.name) + '</span></button>';
       const l = it.lesson;
-      return '<button type="button" class="ls-chip st-' + esc(l.status) + (state.flash === l.id ? ' ls-new' : '') + '" data-action="lesson" data-id="' + esc(l.id) + '"' + tipAttrs(it) + '>' + t + '<span class="ls-c-w">' + esc(lastName(l)) + '</span></button>';
+      return '<button type="button" class="ls-chip st-' + esc(l.status) + (l.status === 'scheduled' ? ' ls-movable' : '') + (state.flash === l.id ? ' ls-new' : '') + '" data-action="lesson" data-id="' + esc(l.id) + '"' + tipAttrs(it) + '>' + t + '<span class="ls-c-w">' + esc(lastName(l)) + '</span></button>';
     }
     function renderWeek() {
       const shown = shownPros();
@@ -571,7 +571,7 @@
           n += nl; mins += lessonMins(items);
           const vis = open || items.length <= 3 ? items : items.slice(0, 3);
           const total = nl || ns ? [nl ? plural(nl, 'lesson') : '', ns ? plural(ns, 'session') : ''].filter(Boolean).join(', ') : 'No lessons';
-          return '<div class="ls-wc' + pc + (d === today ? ' today' : '') + '" data-action="day" data-date="' + d + '">' +
+          return '<div class="ls-wc' + pc + (d === today ? ' today' : '') + '" data-action="day" data-date="' + d + '" data-pro="' + esc(p.id) + '">' +
             '<button type="button" class="ls-wc-day" data-action="day" data-date="' + d + '" aria-label="' + esc(fmt.dateLong(d) + '. Show this day hour by hour') + '">' + esc(fmt.weekday(d)) + ' <b class="serif">' + fmt.toDate(d).getDate() + '</b></button>' +
             (items.length ? '<div class="ls-wc-items">' + vis.map(chipHTML).join('') +
               (items.length > 3 ? '<button type="button" class="ls-more" data-action="more" data-key="' + esc(key) + '" aria-expanded="' + open + '">' + (open ? 'Show fewer' : (items.length - 3) + ' more') + '</button>' : '') + '</div>' : '') +
@@ -639,9 +639,9 @@
     /* Lesson packages in the rate card: each row opens the package; Hide or Show takes it off sale or puts it back. */
     function packagesHTML() {
       const list = LP.defs();
-      return '<section class="ls-pks" aria-labelledby="ls-pks-h"><div class="ls-pks-head"><div><div class="label-caps">Rate card</div><h4 id="ls-pks-h" class="serif">Lesson packages</h4></div>' +
+      return '<section class="ls-pks" aria-labelledby="ls-pks-h"><div class="ls-pks-head"><div><div class="eyebrow">Rate card</div><h4 id="ls-pks-h">Lesson packages</h4></div>' +
         (list.some(function (p) { return p.onSale; }) ? ui.btn('Sell to member', { sm: true, icon: 'tag', action: 'pk-sell' }) : '') + '</div>' +
-        (list.length ? '<div class="ls-pktable" role="table" aria-label="Lesson packages"><div class="ls-pkrow ls-pkhead" role="row"><span role="columnheader">Package</span><span role="columnheader">Covers</span><span role="columnheader" class="num">Lessons</span><span role="columnheader" class="num">Price</span><span role="columnheader">Expires</span><span role="columnheader"><span class="sr-only">On sale</span></span></div>' +
+        (list.length ? '<div class="ls-pktable" role="table" aria-label="Lesson packages"><div class="ls-pkrow ls-pkhead" role="row"><span role="columnheader">Package</span><span role="columnheader">Covers</span><span role="columnheader" class="num">Lessons</span><span role="columnheader" class="num">Price</span><span role="columnheader">Expires</span><span role="columnheader"><span class="ls-sr">On sale</span></span></div>' +
           list.map(function (p) {
             return '<div class="ls-pkrow" role="row" data-action="pk-edit" data-id="' + esc(p.id) + '" tabindex="0" aria-label="' + esc(p.name + ', edit package') + '">' +
               '<span role="cell" class="ls-pk-name">' + esc(p.name) + '</span><span role="cell" class="ls-pk-cov">' + esc(LP.coversText(p.covers)) + '</span>' +
@@ -788,18 +788,192 @@
       }
     });
 
+    /* ---- Drag to move (Nov 17) ----
+       Press and drag a booked lesson (Day view block, or Week view chip) to another time and/or pro, or in the Week
+       view to another day. A dashed target shows where it lands: snapped to the quarter hour, the lesson's own length,
+       or the reason it cannot go there. Dropping runs the same checks as the lesson dialog's Save (hours, the past,
+       clashes, a suspended member, the package it uses) and the same write, with Undo; a refused drop snaps back.
+       A press that moves less than DRAG_PX is a click (it opens the lesson). On touch, the lesson is picked up only
+       after a still press of HOLD_MS, so a swipe still scrolls. Academy sessions, completed and cancelled lessons stay put. */
+    const DRAG_PX = 5, HOLD_MS = 400, TOUCH_SLOP = 8, EDGE = 56;
+    let drag = null, eatClickUntil = 0;
+    /** Why lesson l cannot move to `to` ({ date, time, proId }): { text, short }, or null. 'same' when nothing changes. */
+    function moveWhy(l, to) {
+      if (to.date === l.date && to.time === l.time && to.proId === l.proId) return 'same';
+      const d = Object.assign({}, l, to), s = toMin(to.time), dur = +l.duration || 60;
+      if (!validDate(to.date)) return { text: 'Choose a valid date.', short: 'Not a date' };
+      if (s < DAY_START || s + dur > DAY_END) return { text: 'Lessons are booked between ' + fmt.time(toHM(DAY_START)) + ' and ' + fmt.time(toHM(DAY_END)) + '. ' + fmt.time(to.time) + ' to ' + fmt.time(toHM(s + dur)) + ' is outside those hours.', short: 'Outside hours' };
+      if (to.date < today || (to.date === today && s < nowMin())) return { text: 'That time has already passed. Choose a later slot.', short: 'In the past' };
+      const mem = l.memberId ? Club.members.get(l.memberId) : null;
+      if (mem && mem.status === 'suspended') return { text: memberName(l.memberId) + ' is suspended and cannot book lessons.', short: 'Member suspended' };
+      if (l.packageId) { const why = LP.whyNot(LP.get(l.packageId), d, l.id); if (why) return { text: why + ' Open the lesson to change how it is paid.', short: 'Not on the package' }; }
+      const c = clashes(d, l.id)[0];
+      return c ? { text: c.text, short: c.short } : null;
+    }
+    /** Move a lesson through the lesson dialog's write: one update, the schedule follows it, Undo puts it back. */
+    function moveLesson(l, to) {
+      const was = { id: l.id, date: l.date, proId: l.proId };
+      const sameDay = to.date === l.date;
+      undoRun(function () { return S.update('lessons', l.id, { date: to.date, time: to.time, proId: to.proId }); }, {
+        message: studentName(l) + ' moved to ' + (sameDay ? '' : fmt.weekday(to.date) + ', ' + fmt.dateShort(to.date) + ' at ') + fmt.time(to.time) + ' with ' + Club.staff.name(to.proId),
+        after: function () { follow(was); }, undone: 'Move undone'
+      });
+      state.flash = l.id; state.day = to.date; phonePro = to.proId;
+      if (proFilter !== 'all' && proFilter !== to.proId) proFilter = 'all';
+      refresh();
+    }
+    function dragEl(t) { return t && t.closest ? t.closest('.ls-block[data-action=lesson], .ls-chip[data-action=lesson]') : null; }
+    view.addEventListener('pointerdown', function (e) {
+      if (drag || (e.pointerType === 'mouse' && e.button !== 0)) return;
+      const b = dragEl(e.target); if (!b || !b.classList.contains('ls-movable')) return;
+      const l = S.find('lessons', b.dataset.id); if (!l || l.status !== 'scheduled') return;
+      const r = b.getBoundingClientRect();
+      drag = { el: b, l: l, pid: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, offX: e.clientX - r.left, offY: e.clientY - r.top, w: r.width, h: r.height,
+        week: b.classList.contains('ls-chip'), touch: e.pointerType !== 'mouse', on: false, timer: null, to: null, why: null, scroll: 0 };
+      if (drag.touch) drag.timer = setTimeout(function () { if (drag && !drag.on) startDrag(); }, HOLD_MS);
+      document.addEventListener('pointermove', onMove, { passive: false });
+      document.addEventListener('pointerup', onUp);
+      document.addEventListener('pointercancel', onCancel);
+    });
+    /* While a lesson is held on a touch screen the page must not scroll (or show the long-press menu). */
+    view.addEventListener('touchmove', function (e) { if (drag && drag.on) e.preventDefault(); }, { passive: false });
+    view.addEventListener('contextmenu', function (e) { if (drag && drag.touch) e.preventDefault(); });
+    view.addEventListener('click', function (e) { if (Date.now() < eatClickUntil) { e.stopPropagation(); e.preventDefault(); eatClickUntil = 0; } }, true);
+    function unlisten() {
+      document.removeEventListener('pointermove', onMove, { passive: false });
+      document.removeEventListener('pointerup', onUp);
+      document.removeEventListener('pointercancel', onCancel);
+    }
+    function onMove(e) {
+      if (!drag || e.pointerId !== drag.pid) return;
+      drag.x = e.clientX; drag.y = e.clientY;
+      const dist = Math.hypot(drag.x - drag.x0, drag.y - drag.y0);
+      if (!drag.on) {
+        if (drag.touch) { if (dist > TOUCH_SLOP) end(false); return; }   /* a swipe: let the page scroll */
+        if (dist < DRAG_PX) return;
+        startDrag();
+      }
+      e.preventDefault();
+      track();
+    }
+    function onUp(e) { if (!drag || e.pointerId !== drag.pid) return; if (drag.on) eatClickUntil = Date.now() + 500; end(drag.on); }
+    function onCancel(e) { if (!drag || e.pointerId !== drag.pid) return; end(false); }
+    function startDrag() {
+      const b = drag.el;
+      if (!document.body.contains(b)) { end(false); return; }
+      drag.on = true;
+      if (drag.timer) { clearTimeout(drag.timer); drag.timer = null; }
+      const f = b.cloneNode(true);
+      f.classList.add('ls-float'); f.classList.remove('ls-new'); f.removeAttribute('data-action'); f.removeAttribute('id'); f.setAttribute('aria-hidden', 'true'); f.tabIndex = -1;
+      f.style.width = drag.w + 'px'; f.style.height = drag.h + 'px';
+      document.body.appendChild(f); drag.float = f;
+      b.classList.add('ls-drag-src');
+      document.body.classList.add('ls-dragging');
+      try { if (drag.touch && navigator.vibrate) navigator.vibrate(10); } catch (err) { /* no vibration */ }
+      track();
+    }
+    function track() {
+      if (!drag || !drag.on) return;
+      drag.float.style.transform = 'translate(' + (drag.x - drag.offX) + 'px,' + (drag.y - drag.offY) + 'px) rotate(-1.2deg)';
+      if (drag.week) weekTarget(); else dayTarget();
+      autoScroll();
+    }
+    /* The page scrolls while a lesson is held near the top or bottom of the window. */
+    function autoScroll() {
+      const v = drag.y < EDGE ? -1 : drag.y > window.innerHeight - EDGE ? 1 : 0;
+      if (!v) { if (drag.scroll) { cancelAnimationFrame(drag.scroll); drag.scroll = 0; } return; }
+      if (drag.scroll) return;
+      const step = function () {
+        if (!drag || !drag.on) return;
+        const dir = drag.y < EDGE ? -1 : drag.y > window.innerHeight - EDGE ? 1 : 0;
+        if (!dir) { drag.scroll = 0; return; }
+        window.scrollBy(0, dir * 12);
+        if (drag.week) weekTarget(); else dayTarget();
+        drag.scroll = requestAnimationFrame(step);
+      };
+      drag.scroll = requestAnimationFrame(step);
+    }
+    function clearTarget() {
+      ui.$$('.ls-target', view).forEach(function (t) { t.remove(); });
+      ui.$$('.ls-wc-target', view).forEach(function (c) { c.classList.remove('ls-wc-target', 'bad'); });
+    }
+    function dayTarget() {
+      const cols = ui.$$('.ls-col', view).filter(function (c) { return c.offsetParent; });
+      if (!cols.length) return;
+      let col = cols.find(function (c) { const r = c.getBoundingClientRect(); return drag.x >= r.left && drag.x < r.right; });
+      if (!col) col = drag.x < cols[0].getBoundingClientRect().left ? cols[0] : cols[cols.length - 1];
+      const r = col.getBoundingClientRect(), span = gE - gS, dur = +drag.l.duration || 60;
+      const top = drag.y - drag.offY, m = Math.round((gS + (top - r.top) / r.height * span) / 15) * 15;
+      const to = { date: col.dataset.date, time: toHM(Math.max(0, m)), proId: col.dataset.pro };
+      const why = m < 0 ? { text: 'Lessons are booked between ' + fmt.time(toHM(DAY_START)) + ' and ' + fmt.time(toHM(DAY_END)) + '.', short: 'Outside hours' } : moveWhy(drag.l, to);
+      drag.to = to; drag.why = why;
+      let t = ui.$('.ls-target', col);
+      if (!t) { clearTarget(); t = document.createElement('div'); t.className = 'ls-target'; t.setAttribute('aria-hidden', 'true'); col.appendChild(t); }
+      const shown = Math.max(gS, Math.min(gE - dur, m));
+      t.style.top = ((shown - gS) / span * 100) + '%'; t.style.height = 'calc(' + (dur / span * 100) + '% - 2px)';
+      t.classList.toggle('bad', !!why && why !== 'same');
+      t.textContent = why && why !== 'same' ? why.short : fmt.time(to.time) + ' with ' + proFirst(to.proId);
+    }
+    function weekTarget() {
+      if (drag.float) drag.float.style.visibility = 'hidden';
+      const hit = document.elementFromPoint(drag.x, drag.y);
+      if (drag.float) drag.float.style.visibility = '';
+      const cell = hit && hit.closest ? hit.closest('.ls-wc[data-pro]') : null;
+      if (!cell || !view.contains(cell)) { clearTarget(); drag.to = null; drag.why = null; return; }
+      const to = { date: cell.dataset.date, time: drag.l.time, proId: cell.dataset.pro }, why = moveWhy(drag.l, to);
+      drag.to = to; drag.why = why;
+      if (!cell.classList.contains('ls-wc-target')) clearTarget();
+      cell.classList.add('ls-wc-target'); cell.classList.toggle('bad', !!why && why !== 'same');
+      let t = ui.$('.ls-target', cell);
+      if (!t) { t = document.createElement('div'); t.className = 'ls-target ls-wtarget'; t.setAttribute('aria-hidden', 'true'); cell.appendChild(t); }
+      t.classList.toggle('bad', !!why && why !== 'same');
+      t.textContent = why && why !== 'same' ? why.short : fmt.weekday(to.date) + ' ' + fmt.toDate(to.date).getDate() + ' · ' + fmt.time(to.time) + ' with ' + proFirst(to.proId);
+    }
+    /** End a press: drop (move or refuse with the reason and snap back), or just tidy up. */
+    function end(drop) {
+      const d = drag; drag = null; unlisten();
+      if (!d) return;
+      if (d.timer) clearTimeout(d.timer);
+      if (d.scroll) cancelAnimationFrame(d.scroll);
+      document.body.classList.remove('ls-dragging');
+      clearTarget();
+      if (!d.on) return;
+      const tidy = function () { if (d.float) d.float.remove(); d.el.classList.remove('ls-drag-src'); };
+      const ok = drop && d.to && d.why === null;
+      if (ok) { tidy(); moveLesson(d.l, d.to); return; }
+      if (drop && d.why && d.why !== 'same') ui.toast(d.why.text, 'bad');
+      /* Snap back: the lifted copy glides to where the lesson still is */
+      const r = d.el.getBoundingClientRect(), f = d.float;
+      if (!f || !document.body.contains(d.el) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) { tidy(); return; }
+      f.classList.add('ls-float-back');
+      f.style.transform = 'translate(' + r.left + 'px,' + r.top + 'px)';
+      setTimeout(tidy, 220);
+    }
+
     /* ---- lesson modal ---- */
-    function conflicts(data, selfId) {
-      const errs = [];
+    function memberFirst(id) { const mm = Club.members.get(id); return mm ? mm.firstName : 'The member'; }
+    /** Every clash for a lesson at data's time: [{ kind: 'hours'|'pro'|'member'|'program', text (full sentence),
+        short (a few words for a week chip or a drop target), phrase (what it clashes with) }]. */
+    function clashes(data, selfId) {
+      const out = [];
       const s = toMin(data.time), d = +data.duration;
-      if (s + d > DAY_END) errs.push('Lessons must finish by ' + fmt.time(toHM(DAY_END)) + '.');
+      if (s + d > DAY_END) out.push({ kind: 'hours', text: 'Lessons must finish by ' + fmt.time(toHM(DAY_END)) + '.', short: 'Outside hours' });
       S.where('lessons', function (l) { return l.date === data.date && l.status !== 'cancelled' && l.id !== selfId; }).forEach(function (l) {
         if (!overlap(s, d, toMin(l.time), +l.duration || 60)) return;
-        if (l.proId === data.proId) errs.push(Club.staff.name(l.proId) + ' is already teaching ' + range(l.time, l.duration) + ' (' + l.type.toLowerCase() + ' with ' + studentName(l) + ').');
-        else if (data.memberId && l.memberId === data.memberId) errs.push(memberName(l.memberId) + ' already has a lesson ' + range(l.time, l.duration) + ' with ' + proFirst(l.proId) + '.');
+        if (l.proId === data.proId) out.push({ kind: 'pro', text: Club.staff.name(l.proId) + ' is already teaching ' + range(l.time, l.duration) + ' (' + l.type.toLowerCase() + ' with ' + studentName(l) + ').', short: proFirst(l.proId) + ' busy', phrase: proFirst(l.proId) + '’s ' + fmt.time(l.time) + ' lesson' });
+        else if (data.memberId && l.memberId === data.memberId) out.push({ kind: 'member', text: memberName(l.memberId) + ' already has a lesson ' + range(l.time, l.duration) + ' with ' + proFirst(l.proId) + '.', short: memberFirst(l.memberId) + ' busy', phrase: memberFirst(l.memberId) + '’s ' + fmt.time(l.time) + ' lesson with ' + proFirst(l.proId) });
       });
-      programOn(data.date, data.proId).forEach(function (p) { if (overlap(s, d, toMin(p.time), p.duration || 60)) errs.push(Club.staff.name(p.coach) + ' is coaching ' + p.name + ' ' + range(p.time, p.duration || 60) + '.'); });
-      return errs;
+      programOn(data.date, data.proId).forEach(function (p) { if (overlap(s, d, toMin(p.time), p.duration || 60)) out.push({ kind: 'program', text: Club.staff.name(p.coach) + ' is coaching ' + p.name + ' ' + range(p.time, p.duration || 60) + '.', short: proFirst(p.coach) + ' busy', phrase: proFirst(p.coach) + '’s ' + p.name + ' at ' + fmt.time(p.time) }); });
+      return out;
+    }
+    function conflicts(data, selfId) { return clashes(data, selfId).map(function (c) { return c.text; }); }
+    /** Why a week of a repeat booking cannot be booked at w.time: { short, text } or null. */
+    function weekWhy(w, memberId, proId, dur) {
+      const s = toMin(w.time);
+      if (w.date < today || (w.date === today && s < nowMin())) return { short: 'Past', text: fmt.dateShort(w.date) + ' has already passed.' };
+      if (s < DAY_START || s + dur > DAY_END) return { short: 'Outside hours', text: fmt.dateShort(w.date) + ' at ' + fmt.time(w.time) + ' is outside teaching hours (' + fmt.time(toHM(DAY_START)) + ' to ' + fmt.time(toHM(DAY_END)) + ').' };
+      const c = clashes({ date: w.date, time: w.time, duration: dur, proId: proId, memberId: memberId }, null)[0];
+      return c ? { short: c.short, text: fmt.dateShort(w.date) + ' clashes with ' + (c.phrase || 'another booking') + '.' } : null;
     }
 
     function openLesson(o) {
@@ -809,65 +983,185 @@
       const who0 = isEdit && !l.memberId ? 'guest' : 'member', pays0 = isEdit && l.pays === 'shop' ? 'shop' : 'account', g0 = (isEdit && l.guest) || {};
       const times = []; for (let m = DAY_START; m <= DAY_END - 30; m += 15) times.push({ value: toHM(m), label: fmt.time(toHM(m)) });
       if (times.every(function (t) { return t.value !== data.time; })) times.push({ value: data.time, label: fmt.time(data.time) });
+      /* Repeat weekly (new bookings): a row of the weeks, each Free or the clash; a clashing week is skipped, or booked
+         at another time picked for it. The lessons share a seriesId. */
+      const repeatHTML = isEdit ? '' : '<div class="span-2 ls-rep">' +
+        '<div class="ls-rep-top"><label class="check ls-rep-check"><input type="checkbox" name="repeat"><span class="ls-rep-lab"><b>Repeat weekly</b><small class="ls-rep-sub"></small></span></label>' +
+        '<div class="ls-rep-n" hidden>' + ui.segmented(['4', '6', '8', '10'].map(function (v) { return { value: v, label: v }; }), '6', 'weeks') + '<span class="ls-rep-wk">weeks</span><input type="hidden" name="weeks" value="6"></div></div>' +
+        '<div class="ls-rep-body" hidden><div class="ls-rep-weeks" role="list" aria-label="Weeks in the series"></div><div class="ls-rep-warn" aria-live="polite"></div><div class="ls-rep-pick" hidden></div>' +
+        '<p class="ls-rep-foot">Cancelling one of these later asks: “Just this lesson” or “This and the rest of the series”.</p></div></div>';
       const body = '<form class="ls-form" novalidate><div class="ls-alert" role="alert" hidden></div><div class="form-grid">' +
         '<div class="field span-2 ls-f-who"><label id="ls_who_l">Who is the lesson for?</label>' + ui.segmented([{ value: 'member', label: 'Member' }, { value: 'guest', label: 'Non-member' }], who0, 'who') + '<input type="hidden" name="who" value="' + who0 + '"></div>' +
         '<div class="field span-2" data-for-who="member"><label for="ls_member">Member *</label><select class="select" id="ls_member" name="memberId"' + (who0 === 'member' ? ' required' : '') + '><option value="">Select a member</option>' + Club.members.options(data.memberId) + '</select></div>' +
         '<div class="field span-2" data-for-who="guest"><label for="ls_gname">Name *</label><input class="input" id="ls_gname" name="gname" maxlength="80" autocomplete="off" placeholder="First and last name" value="' + esc(g0.name || '') + '"' + (who0 === 'guest' ? ' required' : '') + '></div>' +
         '<div class="field" data-for-who="guest"><label for="ls_gphone">Phone</label><input class="input" id="ls_gphone" name="gphone" type="tel" autocomplete="off" placeholder="(204) 555-0100" value="' + esc(g0.phone || '') + '"></div>' +
         '<div class="field" data-for-who="guest"><label for="ls_gemail">Email</label><input class="input" id="ls_gemail" name="gemail" type="email" autocomplete="off" placeholder="name@example.com" value="' + esc(g0.email || '') + '"></div>' +
-        '<div class="field span-2" data-for-who="member"><label>How will they pay?</label>' + ui.segmented([{ value: 'account', label: 'Charge to account' }, { value: 'shop', label: 'Pay at the golf shop' }], pays0, 'pays') + '<input type="hidden" name="pays" value="' + pays0 + '"></div>' +
+        '<div class="field span-2 ls-f-pays" data-for-who="member"><label>How will they pay?</label>' + ui.segmented([{ value: 'account', label: 'Charge to account' }, { value: 'shop', label: 'Pay at the golf shop' }], pays0, 'pays') + '<input type="hidden" name="pays" value="' + pays0 + '"></div>' +
         '<div class="span-2 ls-paybox" aria-live="polite"></div>' +
         ui.field({ label: 'Professional', name: 'proId', type: 'select', options: ui.options(P.map(function (p) { return { value: p.id, label: p.firstName + ' ' + p.lastName + ' · ' + p.role }; }), data.proId), required: true }) +
         ui.field({ label: 'Lesson type', name: 'type', type: 'select', options: ui.options(TYPES, data.type), required: true }) +
         ui.field({ label: 'Date', name: 'date', type: 'date', value: data.date, required: true }) +
         ui.field({ label: 'Start time', name: 'time', type: 'select', options: ui.options(times, data.time), required: true }) +
         '<div class="field"><label>Duration</label>' + ui.segmented(DURATIONS.map(function (d) { return { value: String(d), label: d + ' min' }; }), String(data.duration), 'duration') + '<input type="hidden" name="duration" value="' + data.duration + '"></div>' +
-        ui.field({ label: 'Price', name: 'price', type: 'number', value: isEdit ? l.price : priceFor(data.type, data.proId, data.duration), min: 0, step: 5, required: true, hint: 'From the rate card. Adjust for packages or courtesy lessons.' }) +
+        ui.field({ label: 'Price', name: 'price', type: 'number', value: isEdit ? l.price : priceFor(data.type, data.proId, data.duration), min: 0, step: 5, required: true, hint: 'From the rate card. Adjust for courtesy lessons.' }) +
+        '<div class="span-2 ls-pkbox" aria-live="polite" hidden></div>' +
+        repeatHTML +
         ui.field({ label: 'Notes', name: 'notes', type: 'textarea', value: data.notes, placeholder: 'Focus areas, equipment, follow-ups', span2: true }) +
+        (isEdit ? notesHTML(l) : '') +
         '</div></form>';
       const actions = [];
       if (isEdit) actions.push({ label: 'Cancel lesson', kind: 'danger', icon: 'trash', onClick: function (api) { cancelLesson(l, api); return false; } });
       actions.push({ label: isEdit ? 'Close' : 'Cancel', kind: 'ghost' });
       if (isEdit) actions.push({ label: 'Mark completed', kind: 'brass', icon: 'check', onClick: function () { const v = check(); if (!v) return false; return completeLesson(l.id, function () { return save(true); }, v); } });
       actions.push({ label: isEdit ? 'Save changes' : 'Book lesson', kind: 'primary', icon: 'check', onClick: function () { return save(false); } });
-      const m = ui.modal({ eyebrow: isEdit ? 'Scheduled · ' + fmt.dateShort(l.date) : 'Academy booking', title: isEdit ? l.type + ' with ' + proFirst(l.proId) : 'Book lesson', size: 'lg', body: body, actions: actions });
+      const m = ui.modal({ eyebrow: isEdit ? 'Scheduled · ' + fmt.dateShort(l.date) + (l.seriesId ? ' · Weekly series' : '') : 'Academy booking', title: isEdit ? l.type + ' with ' + proFirst(l.proId) : 'Book lesson', size: 'lg', body: body, actions: actions });
       m.el.classList.add('ls-modal');
       const form = ui.$('form', m.body);
+      wireNotes(m.body);
       let priceTouched = isEdit;
-      function reprice() { if (!priceTouched) form.price.value = priceFor(form.type.value, form.proId.value, +form.duration.value); }
+      /* Package state: pkChecked is the "Use <package>" box (on by default for a new booking; an edit keeps what the
+         lesson has); pkPick the package chosen when more than one covers the lesson; pricePrev the price the field had
+         before a package set it to zero, put back when the package is not used. */
+      let pkChecked = isEdit ? !!l.packageId : true, pkPick = isEdit ? l.packageId || null : null, pricePrev = null, lastBase = null;
+      const overrides = {}; let pickFor = null;
+      function pkActive() { return form.classList.contains('ls-pk-on'); }
+      function reprice() {
+        const p = priceFor(form.type.value, form.proId.value, +form.duration.value);
+        if (pkActive()) { if (!priceTouched) pricePrev = p; return; }
+        if (!priceTouched) form.price.value = p;
+      }
+      function repaint() { if (isEdit) paintPkg(); else paintRep(); }
       ui.on(form, 'click', '.segmented button', function (e, b) {
         const seg = b.closest('.segmented'); ui.$$('button', seg).forEach(function (x) { x.classList.toggle('active', x === b); });
         form[seg.dataset.name].value = b.dataset.value; reprice();
+        if (seg.dataset.name === 'who' || seg.dataset.name === 'pays') syncWho(); else repaint();
       });
       form.price.addEventListener('input', function () { priceTouched = true; });
       form.addEventListener('change', function (e) {
-        if (e.target.name === 'type' && !isEdit) { const d = TYPE_DUR[form.type.value] || 60; form.duration.value = d; ui.$$('.segmented[data-name=duration] button', form).forEach(function (x) { x.classList.toggle('active', +x.dataset.value === d); }); }
-        if (e.target.name === 'type' || e.target.name === 'proId') reprice();
+        const n = e.target.name;
+        if (n === 'type' && !isEdit) { const d = TYPE_DUR[form.type.value] || 60; form.duration.value = d; ui.$$('.segmented[data-name=duration] button', form).forEach(function (x) { x.classList.toggle('active', +x.dataset.value === d); }); }
+        if (n === 'type' || n === 'proId') reprice();
+        if (n === 'usePkg') { pkChecked = e.target.checked; paintPkg(); return; }
+        if (n === 'repeat') { if (e.target.checked && !pickFor) pickFor = null; paintRep(); return; }
+        if (['memberId', 'type', 'proId', 'date', 'time'].indexOf(n) >= 0) repaint();
       });
       /* Member or non-member, and how a member pays: show the matching fields and the payment box. */
       function curWho() { return form.who.value === 'guest' ? 'guest' : 'member'; }
-      function curShop() { return curWho() === 'guest' || form.pays.value === 'shop'; }
+      function curShop() { return curWho() === 'guest' || (form.pays.value === 'shop' && !pkActive()); }
       function syncWho() {
         const w = curWho();
         ui.$$('[data-for-who]', form).forEach(function (x) { x.hidden = x.dataset.forWho !== w; });
         form.memberId.required = w === 'member'; form.gname.required = w === 'guest';
         ui.$$('[data-for-who] .invalid', form).forEach(function (x) { x.classList.remove('invalid'); });
         ui.$$('[data-for-who] .field-error', form).forEach(function (x) { x.remove(); });
-        paintPay();
+        repaint();
       }
+      function repOn() { return !isEdit && !!form.repeat && form.repeat.checked; }
       function paintPay() {
         const box = ui.$('.ls-paybox', form); let h = '';
         if (isEdit && l.paid && l.shopPay) {
           const rc = l.shopPay.receiptId ? S.find('receipts', l.shopPay.receiptId) : null;
           h = '<div class="ls-pay-state is-paid">' + Club.icon('check') + '<div><strong>Paid at the golf shop</strong><span>' + esc(paidLine(l.shopPay) + (rc ? ' · Receipt ' + rc.no : '')) + '</span></div>' +
             '<button type="button" class="btn btn-sm btn-ghost" data-lsp="refund">Refund payment</button></div>';
+        } else if (pkActive()) {
+          h = '<p class="field-hint ls-pay-hint">Nothing to pay: the lesson comes out of the member’s package.</p>';
         } else if (curShop()) {
-          h = '<div class="ls-pay-state">' + Club.icon('card') + '<div><strong>' + (curWho() === 'guest' ? 'Non-members pay at the golf shop' : 'Paid at the golf shop') + '</strong><span>Card, cash or gift card. Take it now, or when the lesson is completed.</span></div>' +
-            '<button type="button" class="btn btn-sm" data-lsp="take">' + (isEdit ? 'Take payment' : 'Book and take payment') + '</button></div>';
-        } else h = '<p class="field-hint ls-pay-hint">The lesson fee posts to the member\u2019s account when the lesson is marked completed.</p>';
+          h = '<div class="ls-pay-state">' + Club.icon('card') + '<div><strong>' + (curWho() === 'guest' ? 'Non-members pay at the golf shop' : 'Paid at the golf shop') + '</strong><span>' + (repOn() ? 'Card, cash or gift card, paid for each lesson when it is completed.' : 'Card, cash or gift card. Take it now, or when the lesson is completed.') + '</span></div>' +
+            (repOn() ? '' : '<button type="button" class="btn btn-sm" data-lsp="take">' + (isEdit ? 'Take payment' : 'Book and take payment') + '</button>') + '</div>';
+        } else h = '<p class="field-hint ls-pay-hint">The lesson fee posts to the member’s account when the lesson is marked completed.</p>';
         box.innerHTML = h;
       }
-      ui.on(form, 'click', '.segmented[data-name=who] button, .segmented[data-name=pays] button', function () { syncWho(); });
+
+      /* ---- Use a package: the member's packages that cover this lesson (type, length, pro, date, lessons left) ---- */
+      function pkShape() { return { type: form.type.value, duration: +form.duration.value, proId: form.proId.value, date: form.date.value }; }
+      function pkList() {
+        if (curWho() !== 'member' || !form.memberId.value || (isEdit && l.paid)) return [];
+        return LP.usable(form.memberId.value, pkShape(), isEdit ? l.id : null);
+      }
+      function paintPkg() {
+        const box = ui.$('.ls-pkbox', form), list = pkList();
+        if (!list.some(function (x) { return x.id === pkPick; })) pkPick = list.length ? list[0].id : null;
+        if (!list.length) { box.hidden = true; box.innerHTML = ''; applyPkg(null); return; }
+        const mp = LP.get(pkPick);
+        let note = 'Uses one lesson instead of charging the price. Cancelling the lesson gives it back to the package.';
+        const ws = repOn() ? repWeeks().filter(function (w) { return !w.why; }) : null;
+        if (ws && ws.length > 1) {
+          const k = Math.min(LP.remaining(mp), ws.filter(function (w) { return !LP.whyNot(mp, Object.assign(pkShape(), { date: w.date }), null); }).length);
+          note = k >= ws.length ? 'Uses ' + ws.length + ' lessons from the package, one for each week.' : 'Uses the package for ' + plural(k, 'lesson') + ' of these ' + ws.length + '; the rest are charged at the rate card price.';
+        }
+        box.hidden = false;
+        box.innerHTML = '<label class="check ls-pk-use"><input type="checkbox" name="usePkg"' + (pkChecked ? ' checked' : '') + '><span class="ls-pk-lab"><b>Use ' + esc(mp.name) + '</b><span class="ls-pk-left">' + pkgBar(mp) + '<span>' + esc(pkgLeft(mp)) + '</span></span></span></label>' +
+          (list.length > 1 ? '<div class="ls-pk-choose" role="group" aria-label="Package to use">' + list.map(function (x) { return '<button type="button" class="ls-pk-opt' + (x.id === pkPick ? ' on' : '') + '" data-pk="' + esc(x.id) + '" aria-pressed="' + (x.id === pkPick) + '">' + esc(x.name) + '</button>'; }).join('') + '</div>' : '') +
+          '<p class="field-hint">' + esc(note) + '</p>';
+        applyPkg(pkChecked ? mp : null);
+      }
+      function applyPkg(mp) {
+        const was = pkActive(), price = form.price;
+        form.classList.toggle('ls-pk-on', !!mp);
+        if (mp && !was) { pricePrev = price.value; price.value = 0; price.readOnly = true; price.setAttribute('aria-readonly', 'true'); }
+        else if (!mp && was) {
+          price.readOnly = false; price.removeAttribute('aria-readonly');
+          price.value = pricePrev != null && +pricePrev > 0 ? pricePrev : priceFor(form.type.value, form.proId.value, +form.duration.value); pricePrev = null;
+        }
+        const pf = ui.$('.ls-f-pays', form); if (pf) pf.hidden = curWho() !== 'member' || !!mp;
+        paintPay();
+      }
+      ui.on(form, 'click', '.ls-pk-opt', function (e, b) { pkPick = b.dataset.pk; pkChecked = true; paintPkg(); });
+
+      /* ---- Repeat weekly ---- */
+      function repWeeks() {
+        const n = +(form.weeks && form.weeks.value) || 6, base = form.date.value, t0 = form.time.value, dur = +form.duration.value, pro = form.proId.value;
+        const mid = curWho() === 'member' ? form.memberId.value || null : null;
+        const out = [];
+        if (!validDate(base)) return out;
+        for (let k = 0; k < n; k++) {
+          const date = Club.date.addDays(base, 7 * k), time = overrides[date] || t0;
+          out.push({ date: date, time: time, moved: time !== t0, why: weekWhy({ date: date, time: time }, mid, pro, dur) });
+        }
+        return out;
+      }
+      function openTimes(date) {
+        const dur = +form.duration.value, pro = form.proId.value, mid = curWho() === 'member' ? form.memberId.value || null : null, out = [];
+        for (let mm = DAY_START; mm + dur <= DAY_END; mm += 15) if (!weekWhy({ date: date, time: toHM(mm) }, mid, pro, dur)) out.push(toHM(mm));
+        return out;
+      }
+      function setBookLabel() {
+        const b = ui.$('.modal-foot .btn-primary span', m.el); if (!b || isEdit) return;
+        if (!repOn()) { b.textContent = 'Book lesson'; return; }
+        const n = repWeeks().filter(function (w) { return !w.why; }).length;
+        b.textContent = 'Book ' + plural(n, 'lesson');
+      }
+      function paintRep() {
+        if (isEdit) { paintPkg(); return; }
+        const on = repOn(), box = ui.$('.ls-rep', form), pro = Club.staff.get(form.proId.value);
+        box.classList.toggle('on', on);
+        ui.$('.ls-rep-n', form).hidden = !on; ui.$('.ls-rep-body', form).hidden = !on;
+        ui.$('.ls-rep-sub', form).textContent = validDate(form.date.value) ? 'Every ' + dayName(form.date.value) + ' at ' + fmt.time(form.time.value) + ' with ' + (pro ? pro.firstName : 'the professional') : 'Every week at the same time';
+        if (!on) { pickFor = null; setBookLabel(); paintPkg(); return; }
+        const ws = repWeeks();
+        ui.$('.ls-rep-weeks', form).innerHTML = ws.map(function (w) {
+          const state = w.why ? w.why.short : w.moved ? fmt.time(w.time) : 'Free';
+          return '<button type="button" role="listitem" class="ls-rep-w' + (w.why ? ' clash' : '') + (w.moved && !w.why ? ' moved' : '') + (pickFor === w.date ? ' picking' : '') + '" data-rep="' + w.date + '" aria-label="' + esc(fmt.dateLong(w.date) + ': ' + (w.why ? w.why.short + ', skipped. Pick another time' : (w.moved ? 'booked at ' + fmt.time(w.time) : 'free') + '. Pick another time')) + '"><b>' + esc(fmt.dateShort(w.date)) + '</b><span>' + esc(state) + '</span></button>';
+        }).join('');
+        ui.$('.ls-rep-warn', form).innerHTML = ws.filter(function (w) { return w.why; }).map(function (w) {
+          return '<p>' + esc(w.why.text + ' It will be skipped, or ') + '<button type="button" class="ls-link" data-rep-pick="' + w.date + '">pick another time for ' + esc(fmt.dateShort(w.date)) + '</button>.</p>';
+        }).join('');
+        const pk = ui.$('.ls-rep-pick', form);
+        if (pickFor && ws.some(function (w) { return w.date === pickFor; })) {
+          const opts = openTimes(pickFor), t0 = form.time.value;
+          pk.hidden = false;
+          pk.innerHTML = '<div class="ls-rep-pick-h"><span>' + esc('Open times with ' + (pro ? pro.firstName : 'the professional') + ' on ' + fmt.dateLong(pickFor)) + '</span><button type="button" class="ls-link" data-rep-close>Done</button></div>' +
+            (opts.length ? '<div class="ls-rep-times" role="group" aria-label="Open times">' + opts.map(function (t) { const on2 = (overrides[pickFor] || t0) === t; return '<button type="button" class="ls-rep-t' + (on2 ? ' on' : '') + '" data-rep-time="' + t + '" aria-pressed="' + on2 + '">' + esc(fmt.time(t)) + '</button>'; }).join('') + '</div>'
+              : '<p class="muted">No open time that day for a ' + (+form.duration.value) + '-minute lesson. The week will be skipped.</p>');
+        } else { pickFor = null; pk.hidden = true; pk.innerHTML = ''; }
+        setBookLabel(); paintPkg();
+      }
+      if (!isEdit) {
+        ui.on(form, 'click', '[data-rep], [data-rep-pick]', function (e, b) { const d = b.dataset.rep || b.dataset.repPick; pickFor = pickFor === d && b.dataset.rep ? null : d; paintRep(); const t = ui.$('.ls-rep-t.on, .ls-rep-t', form); if (t && e.detail === 0) t.focus(); });
+        ui.on(form, 'click', '[data-rep-time]', function (e, b) { if (b.dataset.repTime === form.time.value) delete overrides[pickFor]; else overrides[pickFor] = b.dataset.repTime; paintRep(); });
+        ui.on(form, 'click', '[data-rep-close]', function () { pickFor = null; paintRep(); });
+      }
+
       ui.on(form, 'click', '[data-lsp]', function (e, b) {
         if (b.dataset.lsp === 'take') {
           const doc = check(); if (!doc) return;
@@ -881,7 +1175,7 @@
           });
         } else if (b.dataset.lsp === 'refund') {
           if (dayClosed()) { ui.toast('Today is closed in Accounting. Reopen the day to refund the lesson payment.', 'bad'); return; }
-          ui.confirm({ title: 'Refund this payment?', text: fmt.money(l.shopPay.total) + ' paid at the golf shop for ' + studentName(l) + '\u2019s lesson. A credit receipt is made' + (l.shopPay.gift && l.shopPay.gift.amount > 0 ? ' and the gift card part goes back on the card' : '') + '. The lesson stays booked.', confirmLabel: 'Refund payment', danger: true }).then(function (ok) {
+          ui.confirm({ title: 'Refund this payment?', text: fmt.money(l.shopPay.total) + ' paid at the golf shop for ' + studentName(l) + '’s lesson. A credit receipt is made' + (l.shopPay.gift && l.shopPay.gift.amount > 0 ? ' and the gift card part goes back on the card' : '') + '. The lesson stays booked.', confirmLabel: 'Refund payment', danger: true }).then(function (ok) {
             if (!ok) return;
             m.close();
             let back = 0;
@@ -905,73 +1199,140 @@
         const mem = guest ? null : Club.members.get(f.memberId);
         if (mem && mem.status === 'suspended') errs.push(memberName(f.memberId) + ' is suspended and cannot book lessons.');
         const gname = String(f.gname || '').replace(/\s+/g, ' ').trim(), gemail = String(f.gemail || '').trim().toLowerCase();
-        if (guest && gname.length < 2) { errs.push('Enter the non-member\u2019s name.'); form.gname.classList.add('invalid'); }
+        if (guest && gname.length < 2) { errs.push('Enter the non-member’s name.'); form.gname.classList.add('invalid'); }
         if (guest && gemail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(gemail)) { errs.push('Check the email address.'); form.gemail.classList.add('invalid'); }
-        const pays = guest ? 'shop' : (f.pays === 'shop' ? 'shop' : 'account');
+        const pk = !guest && pkActive() ? LP.get(pkPick) : null;
+        const pays = guest ? 'shop' : pk ? 'account' : (f.pays === 'shop' ? 'shop' : 'account');
         if (isEdit && l.paid) {
           if (pays === 'account') errs.push('This lesson is already paid at the golf shop. Refund the payment before charging it to the account.');
           if (r2(f.price) !== r2(l.price)) errs.push('This lesson is already paid at the golf shop. Refund the payment before changing the price.');
         }
+        const rep = repOn();
         if (!validDate(f.date)) errs.push('Choose a valid date.');
-        else if ((!isEdit || f.date !== l.date || f.time !== l.time) && (f.date < today || (f.date === today && toMin(f.time) < nowMin()))) errs.push('That time has already passed. Choose a later slot.');
+        else if (!rep && (!isEdit || f.date !== l.date || f.time !== l.time) && (f.date < today || (f.date === today && toMin(f.time) < nowMin()))) errs.push('That time has already passed. Choose a later slot.');
         if (f.price == null || f.price < 0) { errs.push('Enter a price of zero or more.'); form.price.classList.add('invalid'); }
-        const c = conflicts(f, isEdit ? l.id : null);
+        if (pk && !rep) { const why = LP.whyNot(pk, { type: f.type, duration: f.duration, proId: f.proId, date: f.date }, isEdit ? l.id : null); if (why) errs.push(why); }
+        if (rep && validDate(f.date) && !repWeeks().some(function (w) { return !w.why; })) errs.push('Every week in the series clashes. Pick other times, or turn off Repeat weekly.');
+        const c = rep ? [] : conflicts(f, isEdit ? l.id : null);
         if (c.length) { form.time.classList.add('invalid'); }
         const all = errs.concat(c);
         if (all.length) { al.innerHTML = Club.icon('alert') + '<div>' + all.map(function (x) { return '<div>' + esc(x) + '</div>'; }).join('') + '</div>'; al.hidden = false; al.scrollIntoView({ block: 'nearest' }); return false; }
         /* A non-member with an online golfer account (same email) gets the receipt there too. */
         const pp = guest && gemail ? (S.all('publicPlayers') || []).find(function (x) { return x && String(x.email || '').toLowerCase() === gemail; }) : null;
-        return { date: f.date, time: f.time, duration: f.duration, proId: f.proId, memberId: guest ? null : f.memberId, type: f.type, price: f.price, notes: f.notes, pays: pays,
-          guest: guest ? { name: gname, phone: String(f.gphone || '').trim(), email: gemail, publicPlayerId: pp ? pp.id : null } : null };
+        /* The price for a week of a series that the package cannot cover (it ran out or expired). */
+        lastBase = pk ? (pricePrev != null && +pricePrev > 0 ? +pricePrev : priceFor(f.type, f.proId, f.duration)) : f.price;
+        const doc = { date: f.date, time: f.time, duration: f.duration, proId: f.proId, memberId: guest ? null : f.memberId, type: f.type, price: pk ? 0 : f.price, notes: f.notes, pays: pays,
+          packageId: pk ? pk.id : null, guest: guest ? { name: gname, phone: String(f.gphone || '').trim(), email: gemail, publicPlayerId: pp ? pp.id : null } : null };
+        if (isEdit) doc.lessonNotes = String(f.lessonNotes || '').trim();
+        return doc;
       }
-      function write(doc) { return isEdit ? S.update('lessons', l.id, doc) : S.insert('lessons', Object.assign({}, doc, { status: 'scheduled', charged: false })); }
+      /* A lesson on a package is counted in its `used` list: a new booking takes one, an edit that changes the package
+         (or stops using one) gives the old one back. Call inside the save's Undo record. */
+      function write(doc) {
+        if (isEdit) {
+          const before = S.find('lessons', l.id) || l;
+          const saved = S.update('lessons', l.id, doc);
+          if (before.packageId && before.packageId !== doc.packageId) LP.giveBack(before.packageId, l.id);
+          if (doc.packageId) LP.take(doc.packageId, l.id);
+          return saved;
+        }
+        const saved = S.insert('lessons', Object.assign({}, doc, { status: 'scheduled', charged: false }));
+        if (doc.packageId) LP.take(doc.packageId, saved.id);
+        return saved;
+      }
       /* Undo of a change to a booked lesson shows it back where it was (its old day and pro), even in another week. */
       const was = isEdit ? { id: l.id, date: l.date, proId: l.proId } : null;
       const afterUndo = isEdit ? function () { follow(was); } : again;
       function save(quiet) {
         const doc = check(); if (!doc) return false;
+        if (repOn()) return saveSeries(doc);
         const f = doc;
         /* quiet: Mark completed saves first, inside the completion's own Undo record. */
-        const saved = quiet ? write(doc) : undoRun(function () { return write(doc); }, { message: isEdit ? 'Lesson updated' : 'Lesson booked with ' + proFirst(f.proId) + ' on ' + fmt.dateShort(f.date) + ' at ' + fmt.time(f.time),
+        const saved = quiet ? write(doc) : undoRun(function () { return write(doc); }, { message: isEdit ? 'Lesson updated' : 'Lesson booked with ' + proFirst(f.proId) + ' on ' + fmt.dateShort(f.date) + ' at ' + fmt.time(f.time) + (f.packageId ? ', from ' + LP.get(f.packageId).name : ''),
           after: afterUndo, undone: isEdit ? 'Lesson changes undone' : 'Booking removed' });
         state.flash = saved.id; state.day = f.date; phonePro = f.proId;   /* the day view follows the lesson to its day (and, on a phone, its pro) */
         if (week.indexOf(f.date) < 0) { m.close(); Club.app.go('lessons/' + f.date); return; }
         if (proFilter !== 'all' && proFilter !== f.proId) proFilter = 'all';
         refresh();
       }
+      /** Book every free week of the series (each at its own time where one was picked) in one Undo record. */
+      function saveSeries(doc) {
+        const all = repWeeks(), ws = all.filter(function (w) { return !w.why; }), skipped = all.length - ws.length;
+        const sid = S.uid('lsr'), pkName = doc.packageId ? LP.get(doc.packageId).name : '', base = lastBase;
+        let fromPk = 0;
+        const list = undoRun(function () {
+          return ws.map(function (w) {
+            const d = Object.assign({}, doc, { date: w.date, time: w.time, seriesId: sid });
+            if (d.packageId && LP.whyNot(LP.get(d.packageId), d, null)) { d.packageId = null; d.price = base; }
+            if (d.packageId) fromPk++;
+            return write(d);
+          });
+        }, { message: function (res) {
+          return plural(res.length, 'lesson') + ' booked with ' + proFirst(doc.proId) + ', ' + dayName(ws[0].date) + 's from ' + fmt.dateShort(ws[0].date) +
+            (skipped ? ' (' + plural(skipped, 'week') + ' skipped)' : '') + (fromPk ? '. ' + fromPk + ' from ' + pkName : '');
+        }, after: again, undone: 'Series booking removed' });
+        const first = list[0];
+        state.flash = first.id; state.day = first.date; phonePro = first.proId;
+        if (week.indexOf(first.date) < 0) { m.close(); Club.app.go('lessons/' + first.date); return; }
+        if (proFilter !== 'all' && proFilter !== first.proId) proFilter = 'all';
+        refresh();
+      }
     }
 
     function openLessonDetail(l) {
       const g = l.guest || {};
+      const pk = l.packageId ? LP.get(l.packageId) : null;
       const whoHTML = l.memberId ? '<dt>Member</dt><dd><a href="#/members/' + esc(l.memberId) + '">' + esc(memberName(l.memberId)) + '</a></dd>'
         : '<dt>Non-member</dt><dd>' + esc(studentName(l)) + ([g.phone, g.email].filter(Boolean).length ? '<div class="muted">' + esc([g.phone, g.email].filter(Boolean).join(' · ')) + '</div>' : '') + '</dd>';
       const rc = l.paid && l.shopPay && l.shopPay.receiptId ? S.find('receipts', l.shopPay.receiptId) : null;
-      const payHTML = '<dt>Payment</dt><dd>' + (!atShop(l) ? 'Charged to the member\u2019s account' : l.paid && l.shopPay ? esc(paidLine(l.shopPay) + (rc ? ' · Receipt ' + rc.no : '')) : l.status === 'cancelled' ? 'Nothing paid' : ui.badge('Still to pay at the golf shop', 'warn')) + '</dd>';
-      const body = '<dl class="kv ls-detail">' + whoHTML + '<dt>Professional</dt><dd>' + esc(Club.staff.name(l.proId)) + '</dd><dt>When</dt><dd>' + esc(fmt.dateLong(l.date)) + ', ' + range(l.time, l.duration) + '</dd><dt>Price</dt><dd>' + fmt.money(l.price) + '</dd>' + payHTML + '<dt>Status</dt><dd>' + (l.status === 'completed' ? ui.badge('Completed', 'good') : ui.badge('Cancelled', 'bad')) + '</dd>' + (l.notes ? '<dt>Notes</dt><dd>' + esc(l.notes) + '</dd>' : '') + '</dl>' +
-        '<p class="muted ls-detail-note">' + (l.status === 'completed' ? (atShop(l) ? 'This lesson is paid at the golf shop. Back to booked keeps the payment; refund it here if needed.' : 'The lesson fee was posted to the member’s account when it was completed. Back to booked reverses it with a credit.') : 'This lesson was cancelled and no fee was charged.') + '</p>';
+      const payHTML = '<dt>Payment</dt><dd>' + (l.packageId ? 'From a lesson package' : !atShop(l) ? 'Charged to the member’s account' : l.paid && l.shopPay ? esc(paidLine(l.shopPay) + (rc ? ' · Receipt ' + rc.no : '')) : l.status === 'cancelled' ? 'Nothing paid' : ui.badge('Still to pay at the golf shop', 'warn')) + '</dd>';
+      const priceHTML = l.packageId ? (pk ? '<button type="button" class="ls-link" data-pk-open="' + esc(pk.id) + '">Covered by ' + esc(pk.name) + '</button>' : 'Covered by a lesson package') : fmt.money(l.price);
+      const note = l.packageId ? (l.status === 'completed' ? 'This lesson came out of a lesson package, so nothing was charged for it. Back to booked keeps it on the package.' : 'This lesson was cancelled and went back to the package.')
+        : l.status === 'completed' ? (atShop(l) ? 'This lesson is paid at the golf shop. Back to booked keeps the payment; refund it here if needed.' : 'The lesson fee was posted to the member’s account when it was completed. Back to booked reverses it with a credit.') : 'This lesson was cancelled and no fee was charged.';
+      const body = '<dl class="kv ls-detail">' + whoHTML + '<dt>Professional</dt><dd>' + esc(Club.staff.name(l.proId)) + '</dd><dt>When</dt><dd>' + esc(fmt.dateLong(l.date)) + ', ' + range(l.time, l.duration) + '</dd><dt>Price</dt><dd>' + priceHTML + '</dd>' + payHTML + '<dt>Status</dt><dd>' + (l.status === 'completed' ? ui.badge('Completed', 'good') : ui.badge('Cancelled', 'bad')) + '</dd>' + (l.notes ? '<dt>Notes</dt><dd>' + esc(l.notes) + '</dd>' : '') + '</dl>' +
+        '<p class="muted ls-detail-note">' + note + '</p>' +
+        '<form class="ls-form ls-notes-form" novalidate><div class="form-grid">' + notesHTML(l) + '</div></form>';
       const actions = [{ label: 'Close', kind: 'ghost' }];
+      let primary = false;
       if (l.paid && l.shopPay) actions.push({ label: 'Refund payment', kind: 'ghost', onClick: function () {
         if (dayClosed()) { ui.toast('Today is closed in Accounting. Reopen the day to refund the lesson payment.', 'bad'); return false; }
-        ui.confirm({ title: 'Refund this payment?', text: fmt.money(l.shopPay.total) + ' paid at the golf shop for ' + studentName(l) + '\u2019s lesson. A credit receipt is made.', confirmLabel: 'Refund payment', danger: true }).then(function (ok) {
+        ui.confirm({ title: 'Refund this payment?', text: fmt.money(l.shopPay.total) + ' paid at the golf shop for ' + studentName(l) + '’s lesson. A credit receipt is made.', confirmLabel: 'Refund payment', danger: true }).then(function (ok) {
           if (!ok) return; let back = 0;
           const rec = Club.undo.track(function () { back = refundPay(S.find('lessons', l.id)); });
           state.flash = l.id; undoOffer(fmt.money(back) + ' refunded to ' + studentName(l), rec, { after: again, undone: 'Refund undone' }); refresh();
         });
       } });
-      if (l.status === 'completed' && atShop(l) && !l.paid && +l.price > 0) actions.push({ label: 'Take payment', kind: 'primary', icon: 'check', onClick: function () {
+      if (l.status === 'completed' && atShop(l) && !l.paid && +l.price > 0) { primary = true; actions.push({ label: 'Take payment', kind: 'primary', icon: 'check', onClick: function () {
         takePay(l, function (pay) {
           const rec = Club.undo.track(function () { recordPay(S.find('lessons', l.id), pay); });
           state.flash = l.id; undoOffer('Payment of ' + fmt.money(pay.total) + ' recorded for ' + studentName(l), rec, { after: again, undone: 'Payment undone' }); refresh();
         });
-      } });
+      } }); }
       /* Step back for later corrections: a completed lesson returns to booked and its posted fee is reversed. */
       if (l.status === 'completed') actions.push({ label: 'Back to booked', kind: 'ghost', icon: 'refresh', onClick: function () { return uncompleteLesson(l.id); } });
-      if (l.status === 'cancelled' && (l.date > today || (l.date === today && toMin(l.time) > nowMin()))) actions.push({ label: 'Restore lesson', kind: 'primary', onClick: function () {
+      if (l.status === 'cancelled' && (l.date > today || (l.date === today && toMin(l.time) > nowMin()))) { primary = true; actions.push({ label: 'Restore lesson', kind: 'primary', onClick: function () {
         const c = conflicts(l, l.id); if (c.length) { ui.toast(c[0], 'bad'); return false; }
-        undoRun(function () { return S.update('lessons', l.id, { status: 'scheduled' }); }, { message: 'Lesson restored', after: again, undone: 'Lesson cancelled again' });
+        /* A lesson on a package takes one from it again; when it no longer can (used up, expired), it is restored at the rate card price. */
+        let why = '', price = 0;
+        undoRun(function () {
+          const cur = S.find('lessons', l.id), patch = { status: 'scheduled' };
+          if (cur.packageId) { why = LP.whyNot(LP.get(cur.packageId), cur, null) || ''; if (why) { price = priceFor(cur.type, cur.proId, cur.duration); patch.packageId = null; patch.price = price; } }
+          const res = S.update('lessons', l.id, patch);
+          if (res.packageId) LP.take(res.packageId, res.id);
+          return res;
+        }, { message: function (res) { return 'Lesson restored' + (res && res.packageId ? '. It uses ' + LP.get(res.packageId).name + ' again' : why ? '. ' + why + ' It is charged at ' + fmt.money(price) : ''); }, after: again, undone: 'Lesson cancelled again' });
         state.flash = l.id; refresh();
+      } }); }
+      actions.push({ label: 'Save notes', kind: primary ? '' : 'primary', icon: 'check', onClick: function (api) {
+        const ta = ui.$('textarea[name=lessonNotes]', api.body), v = String(ta.value || '').trim(), cur = S.find('lessons', l.id);
+        if (!cur) return;
+        if (v === String(cur.lessonNotes || '').trim()) { ui.toast('No changes to the notes'); return; }
+        undoRun(function () { return S.update('lessons', l.id, { lessonNotes: v }); }, { message: v ? 'Lesson notes saved' : 'Lesson notes cleared', after: again, undone: 'Lesson notes restored' });
       } });
-      ui.modal({ eyebrow: l.status === 'completed' ? 'Completed lesson' : 'Cancelled lesson', title: l.type, body: body, actions: actions });
+      const md = ui.modal({ eyebrow: l.status === 'completed' ? 'Completed lesson' : 'Cancelled lesson', title: l.type, body: body, size: 'lg', actions: actions });
+      md.el.classList.add('ls-modal');
+      wireNotes(md.body);
+      ui.on(md.body, 'click', '[data-pk-open]', function (e, b) { packageDetail(b.dataset.pkOpen); });
     }
 
     /** Complete a lesson and post its fee. pre: a save to run first in the same Undo record (false stops); v: the values
@@ -1015,14 +1376,51 @@
       state.flash = id; refresh();
       undoOffer(studentName(l) + '’s lesson is back to booked' + (credited ? '. ' + fmt.money(credited) + ' credited back' : ''), rec, { after: again, undone: 'Lesson completed again' });
     }
+    /** Cancel a lesson. One in a weekly series with lessons booked after it asks "Just this lesson" or "This and the
+        rest of the series". One Undo restores everything the cancel did (refunds, package lessons given back). */
     function cancelLesson(l, api) {
-      const paid = l.paid && l.shopPay ? r2(l.shopPay.total) : 0;
-      if (paid && dayClosed()) { ui.toast('Today is closed in Accounting. Reopen the day to refund the lesson payment.', 'bad'); return; }
-      ui.confirm({ title: 'Cancel this lesson?', text: l.type + ' for ' + studentName(l) + ' with ' + Club.staff.name(l.proId) + ', ' + fmt.dateShort(l.date) + ' at ' + fmt.time(l.time) + '. ' + (paid ? 'The ' + fmt.money(paid) + ' paid at the golf shop is refunded with a credit receipt.' : 'No fee will be charged.'), confirmLabel: 'Cancel lesson', danger: true }).then(function (ok) {
-        if (!ok) return;
-        undoRun(function () { const cur = S.find('lessons', l.id); if (cur && cur.paid) refundPay(cur); return S.update('lessons', l.id, { status: 'cancelled' }); }, { message: paid ? 'Lesson cancelled and ' + fmt.money(paid) + ' refunded' : 'Lesson cancelled', after: again, undone: 'Lesson restored' });
-        api.close(); refresh();
-      });
+      const cur0 = S.find('lessons', l.id) || l;
+      const rest = cur0.seriesId ? S.where('lessons', function (x) { return x.seriesId === cur0.seriesId && x.id !== cur0.id && x.status === 'scheduled' && (x.date + x.time) > (cur0.date + cur0.time); })
+        .sort(function (a, b) { return (a.date + a.time).localeCompare(b.date + b.time); }) : [];
+      const paidOf = function (list) { return list.reduce(function (a, x) { return a + (x.paid && x.shopPay ? r2(x.shopPay.total) : 0); }, 0); };
+      const what = l.type + ' for ' + studentName(l) + ' with ' + Club.staff.name(l.proId) + ', ' + fmt.dateShort(l.date) + ' at ' + fmt.time(l.time) + '. ';
+      if (!rest.length) {
+        const paid = paidOf([cur0]);
+        if (paid && dayClosed()) { ui.toast('Today is closed in Accounting. Reopen the day to refund the lesson payment.', 'bad'); return; }
+        const pk = cur0.packageId ? LP.get(cur0.packageId) : null;
+        ui.confirm({ title: 'Cancel this lesson?', text: what + (paid ? 'The ' + fmt.money(paid) + ' paid at the golf shop is refunded with a credit receipt.' : pk ? 'The lesson goes back to ' + pk.name + '.' : 'No fee will be charged.'), confirmLabel: 'Cancel lesson', danger: true }).then(function (ok) {
+          if (ok) cancelSet([cur0], api);
+        });
+        return;
+      }
+      const all = [cur0].concat(rest), last = rest[rest.length - 1];
+      function go(list) {
+        if (paidOf(list) && dayClosed()) { ui.toast('Today is closed in Accounting. Reopen the day to refund the lesson payment.', 'bad'); return false; }
+        cancelSet(list, api);
+      }
+      const q = ui.modal({ eyebrow: 'Weekly series', title: 'Cancel this lesson?', body: '<p class="ink-2">' + esc(what + 'It is part of a weekly series with ' + plural(rest.length, 'more lesson') + ' booked after it, to ' + fmt.dateShort(last.date) + '.') + '</p>' +
+        (paidOf(all) ? '<p class="muted">' + esc('Lessons paid at the golf shop are refunded with a credit receipt.') + '</p>' : '') + (all.some(function (x) { return x.packageId; }) ? '<p class="muted">Lessons from a package go back to the package.</p>' : ''),
+        actions: [
+          { label: 'Keep lessons', kind: 'ghost' },
+          { label: 'Just this lesson', onClick: function () { return go([cur0]); } },
+          { label: 'This and the rest of the series', kind: 'danger', onClick: function () { return go(all); } }
+        ] });
+      q.el.classList.add('ls-modal', 'ls-series-q');
+    }
+    function cancelSet(list, api) {
+      let paid = 0, back = 0, n = 0;
+      undoRun(function () {
+        list.forEach(function (x) {
+          const cur = S.find('lessons', x.id); if (!cur || cur.status !== 'scheduled') return;
+          if (cur.paid) paid += refundPay(cur);
+          if (cur.packageId) { LP.giveBack(cur.packageId, cur.id); back++; }
+          S.update('lessons', cur.id, { status: 'cancelled' }); n++;
+        });
+      }, { message: function () {
+        return (n > 1 ? plural(n, 'lesson') + ' cancelled' : 'Lesson cancelled') + (paid ? ' and ' + fmt.money(paid) + ' refunded' : '') +
+          (back ? '. ' + (back === 1 ? 'One lesson goes' : back + ' lessons go') + ' back to the package' : '');
+      }, after: again, undone: function () { return n > 1 ? plural(n, 'lesson') + ' restored' : 'Lesson restored'; } });
+      if (api) api.close(); refresh();
     }
 
     /* ---- rate card ---- */
@@ -1224,7 +1622,7 @@
     const ro = window.ResizeObserver ? new ResizeObserver(function () { fitBlocks(); }) : null;
     if (ro) ro.observe(ui.$('.ls-sched', view));
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { if (document.body.contains(view)) fitBlocks(); });
-    return function () { clearInterval(timer); if (ro) ro.disconnect(); };
+    return function () { clearInterval(timer); if (ro) ro.disconnect(); if (drag) end(false); };
   }
 
   function weekLabel(week) {

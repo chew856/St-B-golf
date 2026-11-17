@@ -140,3 +140,41 @@ body.portal .pl-side-policy h3 { margin: 0 0 0.375rem; font-size: 1rem; }
 .pl-next-day-h .icon { width: 20px; height: 20px; color: var(--forest-500); flex: none; }
 .pl-next-day .pl-next-row { border: 0; border-top: 1px solid var(--border); border-radius: 0; box-shadow: none; min-height: 48px; padding-left: 44px; }
 @media (hover: hover) { .pl-next-day .pl-next-row:hover { background: var(--sage-50); } }
+
+/* ---------- Packages (Nov 17): yours, with lessons left, and the ones on sale ---------- */
+.pl-pk-cols { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; max-width: 40rem; }
+.pl-pk-card { gap: 10px; }
+.pl-pk-h, .pl-pk-h2 { margin: 0; font-family: var(--serif); font-size: 1.25rem; font-weight: 500; color: var(--text); }
+body.portal .p-page .pl-pk-h2 { margin: 8px 0 0; font-family: var(--sans); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); }
+.pl-pk-list, .pl-pk-offers { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.pl-pk { padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius-ctl); background: var(--sage-50); }
+.pl-pk-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.pl-pk-name { font-weight: 600; font-size: 1rem; color: var(--text); }
+.pl-pk-meter { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+.pl-pk-meter .bar { flex: 1 1 auto; height: 6px; border-radius: 4px; background: var(--sage-200); overflow: hidden; }
+.pl-pk-meter .bar > span { display: block; height: 100%; background: var(--forest-500); border-radius: inherit; }
+.pl-pk-n { font-size: 0.875rem; color: var(--text-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pl-pk-sub { margin: 6px 0 0; font-size: 0.875rem; color: var(--text-2); }
+.pl-pk .p-rc-link { margin-top: 4px; }
+.pl-card.pl-pk-card { display: flex; flex-direction: column; align-items: stretch; }
+.pl-pk.is-exp, .pl-pk.is-done { background: var(--surface); }
+.pl-pk.is-exp .pl-pk-meter .bar > span, .pl-pk.is-done .pl-pk-meter .bar > span { background: var(--text-3); }
+.pl-pk-none { margin: 0; font-size: 0.9375rem; color: var(--text-2); }
+.pl-offer {
+  width: 100%; min-height: 64px; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 8px 12px; padding: 12px 14px;
+  border: 1px solid var(--border); border-radius: var(--radius-ctl); background: var(--surface); color: var(--text); font: inherit; text-align: left; cursor: pointer;
+}
+@media (hover: hover) { .pl-offer:not(:disabled):hover { border-color: var(--forest-500); } }
+.pl-offer:disabled { cursor: default; opacity: 0.7; }
+.pl-offer-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.pl-offer-name { font-weight: 600; font-size: 1rem; }
+.pl-offer-sub { font-size: 0.875rem; color: var(--text-2); }
+.pl-offer-price { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pl-offer-buy { pointer-events: none; min-height: 40px; }
+.pl-pk-note { margin: 0; font-size: 0.875rem; color: var(--text-2); }
+.pl-pk-use { display: flex; gap: 8px; align-items: flex-start; color: var(--text); }
+.pl-pk-use svg { width: 18px; height: 18px; flex: none; color: var(--forest-500); margin-top: 1px; }
+@media (max-width: 420px) {
+  .pl-offer { grid-template-columns: minmax(0, 1fr) auto; }
+  .pl-offer-main { grid-column: 1 / -1; }
+}

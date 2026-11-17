@@ -1057,6 +1057,54 @@
   /* ---------------- Lessons (js/portal/lessons.js) ---------------- */
   var LTYPE = { 'Private lesson': 'Cours privé', 'Playing lesson': 'Cours sur le parcours', 'Club fitting': 'Ajustement de bâtons', 'Junior clinic': 'Clinique junior', 'Group clinic': 'Clinique de groupe' };
   add(LTYPE);
+  /* Lesson packages (Nov 17): the Packages tab, buying one, and booking or cancelling a lesson that uses one.
+     These patterns sit before the general lesson patterns below, which would otherwise take the same text. */
+  add({
+    'Your packages': 'Vos forfaits',
+    'Buy a package': 'Acheter un forfait',
+    'Buy this package': 'Acheter ce forfait',
+    'You have no lesson packages yet.': 'Vous n’avez encore aucun forfait de cours.',
+    'No packages are on sale right now.': 'Aucun forfait n’est en vente pour le moment.',
+    'Charged to your member account. Booking a covered lesson uses one automatically.': 'Porté à votre compte de membre. Réserver un cours couvert en utilise un automatiquement.',
+    'To buy a package, please call the golf shop at': 'Pour acheter un forfait, veuillez appeler la boutique du pro au',
+    'To buy a package, please call the golf shop.': 'Pour acheter un forfait, veuillez appeler la boutique du pro.',
+    'The price is charged to your member account, with a receipt. Booking a covered lesson uses one automatically.': 'Le prix est porté à votre compte de membre, avec un reçu. Réserver un cours couvert en utilise un automatiquement.',
+    'Booking a covered lesson uses one automatically.': 'Réserver un cours couvert en utilise un automatiquement.',
+    'One lesson comes out of your package, so nothing is charged.': 'Un cours est tiré de votre forfait, donc rien n’est facturé.',
+    'From your package': 'Tiré de votre forfait',
+    'Package bought': 'Forfait acheté',
+    'Lesson package': 'Forfait de cours',
+    'That package is no longer offered.': 'Ce forfait n’est plus offert.',
+    'Expired': 'Expiré',
+    'Used up': 'Épuisé',
+    'Expires': 'Expiration',
+    'Price': 'Prix',
+    'No expiry': 'Sans expiration',
+    'no expiry': 'sans expiration',
+    'End of season': 'Fin de saison',
+    /* The demo packages' names (staff name packages in English; these are the ones in the demo) */
+    'Five private lessons': 'Cinq cours privés',
+    'Short game pack': 'Forfait petit jeu',
+    'Junior starter': 'Initiation junior'
+  });
+  function pkExp(x) { var m = /^(\d+) months?$/.exec(x); return m ? m[1] + ' mois' : T(x); }
+  function pkWhat(x) { var p = String(x).split(', '); return (LTYPE[p[0]] || p[0]) + (p[1] ? ', ' + p[1] : ''); }
+  pat(/^(\d+) of (\d+) left$/, '$1 sur $2 restants');
+  pat(/^(Private lesson|Playing lesson|Club fitting|Junior clinic|Group clinic)(?:, (\d+) minutes)?, (any pro|with (.+))$/, function (m) {
+    return LTYPE[m[1]] + (m[2] ? ', ' + m[2] + ' minutes' : '') + ', ' + (m[4] ? 'avec ' + m[4] : 'tout professionnel');
+  });
+  pat(/^expires (.+)$/, 'expire le $1');
+  pat(/^expired (.+)$/, 'expiré le $1');
+  pat(/^(\d+) × (.+?)(?: with (.+?))? · (\d+ months?|End of season|No expiry)$/, function (m) { return m[1] + ' × ' + pkWhat(m[2]) + (m[3] ? ' avec ' + m[3] : '') + ' · ' + pkExp(m[4]); });
+  pat(/^From (.+) \((\d+) of (\d+) left\)$/, function (m) { return 'Tiré de ' + T(m[1]) + ' (' + m[2] + ' sur ' + m[3] + ' restants)'; });
+  pat(/^Buy for (.+)$/, 'Acheter pour $1');
+  pat(/^You bought (.+)\. (.+) is charged to your account\.$/, function (m) { return 'Vous avez acheté ' + T(m[1]) + '. ' + m[2] + ' est porté à votre compte.'; });
+  pat(/^(.+) is not on sale\.$/, function (m) { return T(m[1]) + ' n’est pas en vente.'; });
+  pat(/^(.+) · (\d+) lessons$/, function (m) { return T(m[1]) + ' · ' + m[2] + ' cours'; });
+  pat(/^(Private lesson|Playing lesson|Club fitting|Junior clinic|Group clinic) · (\d+) min · (.+) · From your package$/, function (m) { return LTYPE[m[1]] + ' · ' + m[2] + ' min · ' + m[3] + ' · Tiré de votre forfait'; });
+  pat(/^(Private lesson|Playing lesson|Club fitting|Junior clinic|Group clinic) with (.+), (.+) at (.+)\. You won’t be charged\. The lesson goes back to your package\.$/, function (m) {
+    return LTYPE[m[1]] + ' avec ' + m[2] + ', le ' + m[3] + ' à ' + m[4] + '. Aucuns frais ne vous seront facturés. Le cours retourne à votre forfait.';
+  });
   add({
     'One to one on the practice tee or with our SIM teaching technology.': 'En tête-à-tête sur le champ de pratique ou avec notre technologie d’enseignement SIM.',
     'On the course, strategy and shot selection.': 'Sur le parcours : stratégie et choix de coups.'.replace(' :', NB + ':'),

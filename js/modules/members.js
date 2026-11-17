@@ -368,7 +368,35 @@
       '<div class="grid grid-main-side mem-gap">' +
       '<section class="panel" data-reveal><div class="panel-head"><div><div class="eyebrow">Last 12 revisions</div><h3>Handicap trend</h3></div></div><div class="panel-body">' + trend + '</div></section>' +
       '<section class="panel" data-reveal><div class="panel-head"><h3>Upcoming tee times</h3><a href="#/teesheet">Tee sheet</a></div><div class="panel-body flush">' + upList + '</div></section></div>' +
-      '<section class="panel mem-gap" data-reveal><div class="panel-head"><h3>Recent rounds</h3></div><div class="panel-body flush">' + rows(recent, 'Rounds appear here once they are played.') + '</div></section>';
+      '<section class="panel mem-gap" data-reveal><div class="panel-head"><h3>Recent rounds</h3></div><div class="panel-body flush">' + rows(recent, 'Rounds appear here once they are played.') + '</div></section>' +
+      lessonPanels(m);
+    /* Lesson packages: Sell package (one account charge, with Undo) and each package's details (js/modules/lessons.js) */
+    const LS = Club.lessonsStaff;
+    ui.on(p, 'click', '[data-action=sell-pk]', function () { if (LS) LS.sellPackage({ memberId: m.id, after: function () { if (here()) rerender(); } }); });
+    ui.on(p, 'click', '[data-pk]', function (e, b) { if (LS) LS.packageDetail(b.dataset.pk); });
+  }
+  /* The Golf tab's lesson packages and the pros' lesson notes (staff only: never shown in the members' portal).
+     Each note row opens its lesson on the Lessons page (#/lessons/<date>/<lessonId>). */
+  function lessonPanels(m) {
+    const LP = Club.lessonPacks, LS = Club.lessonsStaff;
+    let out = '';
+    if (LP && LS) {
+      const packs = LP.forMember(m.id);
+      out += '<section class="panel mem-gap mem-pks" data-reveal><div class="panel-head"><div><div class="eyebrow">Lessons</div><h3>Lesson packages</h3></div>' + ui.btn('Sell package', { sm: true, icon: 'tag', action: 'sell-pk' }) + '</div><div class="panel-body flush">' +
+        (packs.length ? '<ul class="list mem-pk-list">' + packs.map(function (mp) {
+          return '<li><button type="button" class="mem-pk' + (LP.expired(mp) || !LP.remaining(mp) ? ' done' : '') + '" data-pk="' + esc(mp.id) + '"><span class="mem-pk-main"><span class="person-name">' + esc(mp.name) + '</span><span class="person-sub">' + esc(LP.coversText(mp.covers) + ' · bought ' + fmt.dateShort(mp.purchasedOn || String(mp.purchasedAt).slice(0, 10))) + '</span></span>' +
+            '<span class="mem-pk-left">' + LS.pkgBar(mp) + '<span>' + esc(LS.pkgLeft(mp)) + '</span>' + LS.pkgStateBadge(mp) + '</span></button></li>';
+        }).join('') + '</ul>' : ui.empty({ icon: 'lesson', title: 'No lesson packages', text: 'Packages this member buys, here or in the members’ portal, appear here.' })) + '</div></section>';
+    }
+    const noted = S.all('lessons').filter(function (l) { return l && l.memberId === m.id && String(l.lessonNotes || '').trim(); })
+      .sort(function (a, b) { return (String(b.date) + b.time).localeCompare(String(a.date) + a.time); });
+    out += '<section class="panel mem-gap mem-lnotes" data-reveal><div class="panel-head"><div><div class="eyebrow">Staff only</div><h3>Lesson notes</h3></div><span class="muted">' + noted.length + ' on record</span></div><div class="panel-body flush">' +
+      (noted.length ? '<div class="table-wrap"><table class="table mem-lnotes-t"><thead><tr><th>Date</th><th>Pro</th><th>Notes</th></tr></thead><tbody>' + noted.map(function (l) {
+        const pro = Club.staff.get(l.proId), first = String(l.lessonNotes).trim().split(/\n/)[0];
+        return '<tr class="clickable" data-href="lessons/' + esc(l.date) + '/' + esc(l.id) + '" tabindex="0" aria-label="' + esc('Open the lesson of ' + fmt.date(l.date)) + '"><td class="nowrap">' + esc(fmt.dateShort(l.date)) + '</td><td class="nowrap">' + esc(pro ? pro.firstName : 'Pro') + '</td><td class="mem-lnote"><span>' + esc(first) + '</span></td></tr>';
+      }).join('') + '</tbody></table></div><p class="muted mem-lnotes-hint">Each row opens the lesson with its full notes.</p>'
+        : ui.empty({ icon: 'lesson', title: 'No lesson notes yet', text: 'Notes the professionals write in a lesson appear here. Members never see them.' })) + '</div></section>';
+    return out;
   }
 
   function tabActivity(p, m) {

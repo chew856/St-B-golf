@@ -3,10 +3,14 @@
    prices come from the lessonRates rate card (base x pro premium x duration, rounded to $5), teaching
    hours 7:00 AM to 7:00 PM, and bookings are refused on pro clashes, academy sessions and member clashes.
    Lessons are charged by staff on completion, so booking never posts a charge. Program enrolment posts
-   the fee exactly as the staff Enroll does ('Academy: <name>', Lessons, source lessons, refId program id). */
+   the fee exactly as the staff Enroll does ('Academy: <name>', Lessons, source lessons, refId program id).
+   Lesson packages (Nov 17, js/shared/lessonpacks-data.js): the Packages tab lists the member's packages and those on
+   sale; buying one posts one account charge with a receipt. Booking a lesson a package covers uses it automatically
+   (price 0, packageId), and cancelling gives the lesson back. Staff lesson notes (lessonNotes) are never shown here. */
 (function () {
   'use strict';
   const S = Club.store, U = Club.ui, F = Club.fmt, esc = U.esc;
+  const LP = Club.lessonPacks || null;
 
   const DAY_START = 7 * 60, DAY_END = 19 * 60;
   const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -127,7 +131,7 @@
     }
     if (draft.pro !== 'any' && !P.some(function (p) { return p.id === draft.pro; })) draft.pro = 'any';
     if (draft.date < today()) { draft.date = today(); draft.period = null; draft.time = null; draft.assigned = null; }   /* page left open overnight */
-    const startTab = { book: 'book', mine: 'mine', academy: 'academy' }[params[0]] || lastTab;
+    const startTab = { book: 'book', mine: 'mine', packages: 'packages', academy: 'academy' }[params[0]] || lastTab;
 
     function myLessons() { return S.where('lessons', function (l) { return l.memberId === member.id; }); }
     function isUpcoming(l) { return l.status === 'scheduled' && minsUntil(l.date, l.time) > -(+l.duration || 60); }
@@ -154,6 +158,7 @@
     const tabsApi = U.tabs(U.$('.pl-tabs', view), [
       { id: 'book', label: 'Book', render: drawBook },
       { id: 'mine', label: 'My lessons', render: drawMine },
+      { id: 'packages', label: 'Packages', render: drawPacks },
       { id: 'academy', label: 'Clinics', render: drawAcademy }
     ], startTab, function (id) { lastTab = id; if (id !== 'book') Portal.actionBar.hide(); });
     function after() { refreshHero(); tabsApi.activate(lastTab); }
@@ -165,7 +170,7 @@
       const sh = Portal.openSheet({
         title: l.type,
         content: '<dl class="pl-kv"><div><dt>When</dt><dd>' + esc(F.dateLong(l.date)) + ', ' + esc(range(l.time, +l.duration || 60)) + '</dd></div>' +
-          '<div><dt>With</dt><dd>' + esc(proName(l.proId)) + '</dd></div><div><dt>Fee</dt><dd>' + F.money0(l.price) + '</dd></div>' +
+          '<div><dt>With</dt><dd>' + esc(proName(l.proId)) + '</dd></div><div><dt>Fee</dt><dd>' + (l.packageId ? '<span>From your package</span>' : F.money0(l.price)) + '</dd></div>' +
           (l.notes ? '<div><dt>Note</dt><dd>' + esc(l.notes) + '</dd></div>' : '') + '</dl>' +
           '<div class="pl-sheet-acts">' + U.btn('Add to calendar', { action: 'ics' }) + (canCancel ? U.btn('Cancel lesson', { kind: 'danger', action: 'cancel' }) : '') + '</div>' +
           (canCancel ? '' : '<p class="pl-sheet-note">Within 24 hours, please call the golf shop at ' + telLink() + ' to make changes.</p>') +
@@ -177,10 +182,11 @@
         sh.close();
         if (a === 'view') tabsApi.activate('mine');
         else if (a === 'cancel') {
-          U.confirm({ title: 'Cancel this lesson?', text: l.type + ' with ' + proName(l.proId) + ', ' + F.dateLong(l.date) + ' at ' + F.time(l.time) + '. You won’t be charged.', confirmLabel: 'Cancel lesson', danger: true }).then(function (ok) {
+          U.confirm({ title: 'Cancel this lesson?', text: l.type + ' with ' + proName(l.proId) + ', ' + F.dateLong(l.date) + ' at ' + F.time(l.time) + '. You won’t be charged.' + (l.packageId ? ' The lesson goes back to your package.' : ''), confirmLabel: 'Cancel lesson', danger: true }).then(function (ok) {
             if (!ok) return;
             const cur = S.find('lessons', l.id);
             if (!cur || cur.status !== 'scheduled' || minsUntil(cur.date, cur.time) <= CUTOFF_MIN) { U.toast('This lesson can no longer be cancelled online', 'bad'); after(); return; }
+            if (cur.packageId && LP) LP.giveBack(cur.packageId, cur.id);
             S.update('lessons', l.id, { status: 'cancelled' });
             U.toast('Your lesson has been cancelled');
             after();
@@ -276,7 +282,7 @@
       }
       function syncBar() {
         if (lastTab !== 'book') return;
-        if (draft.time && !blocked) Portal.actionBar.show({ summary: draft.type + ' · ' + draft.duration + ' min · ' + dayShort(draft.date) + ' · ' + F.time(draft.time), label: 'Book lesson', onClick: confirmSheet });
+        if (draft.time && !blocked) Portal.actionBar.show({ summary: draft.type + ' · ' + draft.duration + ' min · ' + dayShort(draft.date) + ' · ' + F.time(draft.time) + (packFor(draft.pro === 'any' ? draft.assigned : draft.pro) ? ' · From your package' : ''), label: 'Book lesson', onClick: confirmSheet });
         else Portal.actionBar.hide();
       }
       drawPeriods(); drawSide();
@@ -309,14 +315,21 @@
       U.$('[name=notes]', panel).addEventListener('input', function (e) { draft.notes = e.target.value; });
 
       /* Book lesson: confirm sheet with the fee and the cancellation policy, then the same checks and record as before */
+      /** The member's package that would pay for the lesson being booked (null when none covers it). */
+      function packFor(proId) {
+        if (!LP || !proId) return null;
+        return LP.usable(member.id, { type: draft.type, duration: draft.duration, proId: proId, date: draft.date }, null)[0] || null;
+      }
       function confirmSheet() {
         const proId = draft.pro === 'any' ? draft.assigned : draft.pro;
+        const pk0 = packFor(proId);
         const sh = Portal.openSheet({
           title: 'Confirm your lesson',
           content: '<dl class="pl-kv"><div><dt>Lesson</dt><dd>' + esc(draft.type) + ', ' + draft.duration + ' min</dd></div>' +
             '<div><dt>With</dt><dd>' + esc(proId ? proName(proId) : 'First available') + '</dd></div>' +
             '<div><dt>When</dt><dd>' + esc(F.dateLong(draft.date)) + ', ' + esc(range(draft.time, draft.duration)) + '</dd></div>' +
-            '<div><dt>Fee</dt><dd>' + (proId ? F.money0(priceFor(draft.type, proId, draft.duration)) : '') + '</dd></div></dl>' +
+            '<div><dt>Fee</dt><dd>' + (pk0 ? esc('From ' + pk0.name + ' (' + LP.remaining(pk0) + ' of ' + pk0.lessons + ' left)') : proId ? F.money0(priceFor(draft.type, proId, draft.duration)) : '') + '</dd></div></dl>' +
+            (pk0 ? '<p class="pl-sheet-note pl-pk-use">' + Club.icon('check') + '<span>One lesson comes out of your package, so nothing is charged.</span></p>' : '') +
             '<p class="pl-sheet-note">' + esc(POLICY) + '</p><div class="pl-sum-err" role="alert" hidden></div>',
           footer: '<button type="button" class="btn btn-primary" data-action="confirm">Confirm</button>'
         });
@@ -332,16 +345,18 @@
           const notes = String(draft.notes || '').trim();
           if (notes.length > 500) return fail('Please keep your notes under 500 characters.');
           if (draft.date === today() && toMin(draft.time) < nowMin() + LEAD_MIN) { drawPeriods(); return fail('That time is too soon to book online. Please choose a later time.'); }
-          const doc = { date: draft.date, time: draft.time, duration: draft.duration, proId: pid, memberId: m.id, type: draft.type, price: priceFor(draft.type, pid, draft.duration), notes: notes };
+          const pk = packFor(pid);
+          const doc = { date: draft.date, time: draft.time, duration: draft.duration, proId: pid, memberId: m.id, type: draft.type, price: pk ? 0 : priceFor(draft.type, pid, draft.duration), notes: notes, packageId: pk ? pk.id : null };
           const c = conflicts(doc, null);
           if (c.length || !teaches(pid, draft.date)) { drawPeriods(); return fail(c[0] || 'That professional is not teaching on this day.'); }
           const saved = S.insert('lessons', Object.assign(doc, { status: 'scheduled', charged: false }));
+          if (pk) LP.take(pk.id, saved.id);
           Portal.prefs.set('lessonPro', draft.pro);
           draft.time = null; draft.assigned = null; draft.notes = '';
           U.toast('Your lesson with ' + proFirst(pid) + ' is booked');
           Portal.actionBar.hide();
           sh.setContent('<div class="pl-done"><div class="pl-confirm-icon" aria-hidden="true">' + Club.icon('check') + '</div><h3>Your lesson is booked</h3>' +
-            '<p>' + esc(saved.type + ' with ' + proName(pid)) + ' · ' + esc(F.dateLong(saved.date)) + ', ' + esc(range(saved.time, saved.duration)) + ' · ' + F.money0(saved.price) + '</p>' +
+            '<p>' + esc(saved.type + ' with ' + proName(pid)) + ' · ' + esc(F.dateLong(saved.date)) + ', ' + esc(range(saved.time, saved.duration)) + ' · ' + (pk ? '<span>From your package</span>' : F.money0(saved.price)) + '</p>' +
             '<p class="pl-sheet-note">Please arrive 10 minutes early and check in at the golf shop.</p></div>');
           sh.setFooter('<button type="button" class="btn btn-primary" data-action="ics">' + Club.icon('calendar') + '<span>Add to calendar</span></button><button type="button" class="p-link pl-done-x" data-action="done">Done</button>');
           U.$('[data-action=ics]', sh.foot).addEventListener('click', function () { downloadIcs(S.find('lessons', saved.id) || saved); });
@@ -349,6 +364,58 @@
           refreshHero(); drawBook(panel);
         });
       }
+    }
+
+    /* ---------- Packages: yours (lessons left, expiry, receipt) and the ones on sale ---------- */
+    function drawPacks(panel) {
+      lastTab = 'packages';
+      const mine = LP ? LP.forMember(member.id) : [];
+      const offers = LP ? LP.defs().filter(function (p) { return p.onSale && +p.lessons > 0; }) : [];
+      const canBuy = member.status === 'active';
+      panel.innerHTML = '<div class="pl-pk-cols">' +
+        '<section class="pl-card pl-pk-card" data-reveal aria-labelledby="pl-pk-h1"><h2 class="pl-pk-h" id="pl-pk-h1">Your packages</h2>' +
+          (mine.length ? '<ul class="pl-pk-list">' + mine.map(function (mp) {
+            const exp = LP.expired(mp), left = LP.remaining(mp), pct = mp.lessons ? left / mp.lessons * 100 : 0;
+            return '<li class="pl-pk' + (exp ? ' is-exp' : !left ? ' is-done' : '') + '"><div class="pl-pk-top"><span class="pl-pk-name">' + esc(mp.name) + '</span>' + (exp ? U.badge('Expired', 'warn') : !left ? U.badge('Used up', 'outline') : '') + '</div>' +
+              '<div class="pl-pk-meter"><span class="bar" aria-hidden="true"><span style="width:' + pct + '%"></span></span><span class="pl-pk-n">' + esc(left + ' of ' + mp.lessons + ' left') + '</span></div>' +
+              '<p class="pl-pk-sub"><span>' + esc(LP.heldText(mp.covers)) + '</span> · <span>' + esc(mp.expiresOn ? (exp ? 'expired ' : 'expires ') + F.date(mp.expiresOn) : 'no expiry') + '</span></p>' +
+              Portal.receiptLink(Portal.receiptsFor('lessons', mp.id, member.id)) + '</li>';
+          }).join('') + '</ul>' : '<p class="pl-pk-none">You have no lesson packages yet.</p>') +
+        '<h3 class="pl-pk-h2" id="pl-pk-h2">Buy a package</h3>' +
+          (offers.length ? '<ul class="pl-pk-offers">' + offers.map(function (p) {
+            return '<li><button type="button" class="pl-offer" data-buy="' + esc(p.id) + '"' + (canBuy ? '' : ' disabled') + '><span class="pl-offer-main"><span class="pl-offer-name">' + esc(p.name) + '</span><span class="pl-offer-sub">' + esc(LP.offerText(p)) + '</span></span>' +
+              '<span class="pl-offer-price">' + esc(F.money(p.price)) + '</span><span class="btn btn-sm pl-offer-buy" aria-hidden="true">Buy</span></button></li>';
+          }).join('') + '</ul>' : '<p class="pl-pk-none">No packages are on sale right now.</p>') +
+          (canBuy ? '<p class="pl-pk-note">Charged to your member account. Booking a covered lesson uses one automatically.</p>' : '<p class="pl-pk-note">To buy a package, please call the golf shop at ' + telLink() + '.</p>') +
+        '</section></div>';
+      if (panel.dataset.wired) return; panel.dataset.wired = '1';
+      U.on(panel, 'click', '[data-buy]', function (e, b) { buySheet(b.dataset.buy, panel); });
+    }
+    function buySheet(id, panel) {
+      const p = LP && LP.def(id); if (!p) return;
+      const exp = LP.expiryFor(p.expiry, today());
+      const sh = Portal.openSheet({
+        title: 'Buy this package',
+        content: '<dl class="pl-kv"><div><dt>Package</dt><dd>' + esc(p.name) + '</dd></div><div><dt>Lessons</dt><dd>' + esc(LP.offerText(p)) + '</dd></div>' +
+          '<div><dt>Expires</dt><dd>' + esc(exp ? F.date(exp) : 'No expiry') + '</dd></div><div><dt>Price</dt><dd>' + esc(F.money(p.price)) + '</dd></div></dl>' +
+          '<p class="pl-sheet-note">The price is charged to your member account, with a receipt. Booking a covered lesson uses one automatically.</p><div class="pl-sum-err" role="alert" hidden></div>',
+        footer: '<button type="button" class="btn btn-primary" data-action="buy">' + esc('Buy for ' + F.money(p.price)) + '</button>'
+      });
+      U.$('[data-action=buy]', sh.foot).addEventListener('click', function () {
+        const err = U.$('.pl-sum-err', sh.body), m = Portal.member(); if (!m) return;
+        const fail = function (msg) { err.innerHTML = Club.icon('alert') + '<span>' + esc(msg) + '</span>'; err.hidden = false; U.toast(msg, 'bad'); };
+        if (m.status !== 'active') return fail('To buy a package, please call the golf shop.');
+        const res = LP.sell(m.id, id, 'portal');
+        if (res.error) return fail(res.error);
+        U.toast('You bought ' + res.mp.name + '. ' + F.money(res.mp.price) + ' is charged to your account.');
+        const rc = Portal.receiptsFor('lessons', res.mp.id, m.id);
+        sh.setContent('<div class="pl-done"><div class="pl-confirm-icon" aria-hidden="true">' + Club.icon('check') + '</div><h3>Package bought</h3>' +
+          '<p>' + esc(res.mp.name + ' · ' + res.mp.lessons + ' lessons') + '</p><p class="pl-sheet-note">Booking a covered lesson uses one automatically.</p>' + Portal.receiptLink(rc, { btn: true, label: 'View receipt' }) + '</div>');
+        sh.setFooter('<button type="button" class="btn btn-primary" data-action="book">' + Club.icon('lesson') + '<span>Book a lesson</span></button><button type="button" class="p-link pl-done-x" data-action="done">Done</button>');
+        U.$('[data-action=book]', sh.foot).addEventListener('click', function () { sh.close(); tabsApi.activate('book'); });
+        U.$('[data-action=done]', sh.foot).addEventListener('click', function () { sh.close(); });
+        drawPacks(panel); U.animateIn(panel);
+      });
     }
 
     /* ---------- My lessons ---------- */

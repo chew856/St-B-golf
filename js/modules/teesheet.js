@@ -881,8 +881,9 @@
             '</div>' +
             '<div class="ts-tools">' +
               '<div class="ts-search">' + Club.icon('search') + '<input type="search" class="input" placeholder="Find a player" aria-label="Filter by player name"></div>' +
-              ui.segmented([{ value: 'all', label: 'All' }, { value: 'open', label: 'Open' }, { value: 'booked', label: 'Booked' }], 'all', 'tsfilter').replace('class="segmented"', 'class="segmented ts-seg" role="group" aria-label="Show tee times"') +
-              ui.segmented([{ value: 'all', label: 'All players' }, { value: 'members', label: 'Members' }, { value: 'public', label: 'Public' }], 'all', 'tskind').replace('class="segmented"', 'class="segmented ts-seg" role="group" aria-label="Show players"') +
+              /* The two filters are dropdowns (owner, Nov 17) so the bar fits on one line */
+              '<select class="select ts-fsel" name="tsfilter" aria-label="Show tee times">' + ui.options([{ value: 'all', label: 'All times' }, { value: 'open', label: 'Open times' }, { value: 'booked', label: 'Booked times' }], 'all') + '</select>' +
+              '<select class="select ts-fsel" name="tskind" aria-label="Show players">' + ui.options([{ value: 'all', label: 'All players' }, { value: 'members', label: 'Members' }, { value: 'public', label: 'Public golfers' }], 'all') + '</select>' +
             '</div>' +
             '<button type="button" class="btn btn-primary ts-book" data-action="book-new" title="Book a tee time">' + Club.icon('plus') + '<span>Book</span></button>' +
           '</div>' +
@@ -1412,7 +1413,7 @@
       else if (a === 'unblock') removeBlock(b.dataset.id);
       else if (a === 'fees') openFees();
       else if (a === 'wl-remove') removeWaitlist(b.dataset.id);
-      else if (a === 'clear-filter') { state.q = ''; state.filter = 'all'; state.kind = 'all'; ui.$('.ts-search input', view).value = ''; ui.$$('.segmented[data-name=tsfilter] button, .segmented[data-name=tskind] button', view).forEach(function (x) { x.classList.toggle('active', x.dataset.value === 'all'); }); setFilter('all'); }
+      else if (a === 'clear-filter') { state.q = ''; state.filter = 'all'; state.kind = 'all'; ui.$('.ts-search input', view).value = ''; const ks = ui.$('select[name=tskind]', view); if (ks) ks.value = 'all'; setFilter('all'); }
       else if (a === 'jump-now') { const n = ui.$('[data-now]', sheet); if (n) { markPeriod(periodOf(+n.dataset.min).id); scrollBoxTo(n, true, true); } }
       else if (a === 'period-all') setPeriod('all');
       else if (a === 'st-more') { ocAll = !ocAll; renderStarter(); }
@@ -1426,7 +1427,7 @@
     /** The All / Open / Booked filter, also set from the starter column's numbers. */
     function setFilter(v) {
       state.filter = v;
-      ui.$$('.segmented[data-name=tsfilter] button', view).forEach(function (x) { x.classList.toggle('active', x.dataset.value === v); });
+      const fs = ui.$('select[name=tsfilter]', view); if (fs && fs.value !== v) fs.value = v;
       applyFilter();
       ui.$$('.ts-st-tile[data-action=st-filter]', view).forEach(function (x) { x.setAttribute('aria-pressed', String(x.dataset.value === v)); });
     }
@@ -1445,11 +1446,8 @@
     ui.on(view, 'keydown', '.ts-stats .stat[data-drill]', function (e, st) {
       if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') { e.preventDefault(); openStatDrill(st.dataset.drill, state.date, function (tt) { openBooking({ tt: tt }); }); }
     });
-    ui.on(view, 'click', '.segmented[data-name=tsfilter] button', function (e, b) { setFilter(b.dataset.value); });
-    ui.on(view, 'click', '.segmented[data-name=tskind] button', function (e, b) {
-      ui.$$('.segmented[data-name=tskind] button', view).forEach(function (x) { x.classList.toggle('active', x === b); });
-      state.kind = b.dataset.value; applyFilter();
-    });
+    ui.on(view, 'change', 'select[name=tsfilter]', function (e, sel) { setFilter(sel.value); });
+    ui.on(view, 'change', 'select[name=tskind]', function (e, sel) { state.kind = sel.value; applyFilter(); });
     ui.$('.ts-search input', view).addEventListener('input', function (e) { state.q = e.target.value.trim().toLowerCase(); applyFilter(); });
     ui.on(view, 'click', '.ts-periods button', function (e, b) { setPeriod(b.dataset.value); });
 

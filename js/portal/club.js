@@ -120,12 +120,13 @@
     const pace = spd >= 10.5 ? 'fast' : spd >= 9 ? 'medium' : 'slow';
     const tile = function (label, value, note) { return '<div class="pc-tile"><span class="pc-tile-l">' + esc(label) + '</span><span class="pc-tile-v">' + esc(value) + '</span>' + (note ? '<span class="pc-tile-n">' + esc(note) + '</span>' : '') + '</div>'; };
     const lo = w && w.today && w.today.lo != null ? String(w.today.lo).replace('-', '−') : '';
+    const neg = function (v) { return String(v).replace('-', '−'); };   /* every temperature with a true minus sign, as the low already was */
     host.innerHTML =
       '<article class="pc-card pc-cond' + (open ? '' : ' is-closed') + '">' +
         '<header class="pc-cond-head"><div>' +
           '<h2 class="pc-cond-state">' + (open ? 'Open for play' : 'Closed today') + '</h2>' +
           '<p class="pc-stamp">' + esc(stamp(st.updatedAt)) + '</p></div>' +
-          (w && w.today ? '<p class="pc-now">' + Club.icon(w.today.icon) + '<span>' + esc(w.nowTemp) + '° ' + esc(w.today.cond) + '<br><span class="pc-now-c">H ' + esc(w.today.hi) + '° · L ' + esc(lo) + '° · Wind ' + esc(w.today.wind) + ' km/h</span></span></p>' : '') +
+          (w && w.today ? '<p class="pc-now">' + Club.icon(w.today.icon) + '<span>' + esc(neg(w.nowTemp)) + '° ' + esc(w.today.cond) + '<br><span class="pc-now-c">H ' + esc(neg(w.today.hi)) + '° · L ' + esc(lo) + '° · Wind ' + esc(w.today.wind) + ' km/h</span></span></p>' : '') +
         '</header>' +
         '<div class="pc-tiles">' +
           tile('Carts', st.cartRule === '90 degree' ? '90° rule' : (st.cartRule || 'Normal'), cartText[st.cartRule] || '') +
@@ -140,12 +141,12 @@
           body: '<ol class="pc-hole-grid">' + holes.map(function (h) { const lbl = h.status === 'GUR' ? 'ground under repair' : h.status === 'closed' ? 'closed' : 'in play'; return '<li class="h-' + esc(h.status) + '" aria-label="Hole ' + h.number + ': ' + lbl + '"><span>' + h.number + '</span></li>'; }).join('') + '</ol>' +
             '<ul class="pc-legend"><li><i class="h-open"></i>In play</li><li><i class="h-GUR"></i>Ground under repair</li><li><i class="h-closed"></i>Closed</li></ul>' +
             '<p class="pc-holes-note">' + esc(holesNote) + '</p>' }) : '') +
-        Portal.accordion({ id: 'pc-fc', icon: 'calendar', open: wide(), title: '7-day forecast', summary: w.forecast.length > 1 ? 'Tomorrow ' + w.forecast[1].hi + '° · ' + w.forecast[1].cond : '',
+        Portal.accordion({ id: 'pc-fc', icon: 'calendar', open: wide(), title: '7-day forecast', summary: w.forecast.length > 1 ? 'Tomorrow ' + neg(w.forecast[1].hi) + '° · ' + w.forecast[1].cond : '',
           body: '<ol class="pc-fc">' + w.forecast.map(function (d, i) {
             return '<li' + (i === 0 ? ' class="today"' : '') + '><span class="pc-fc-day">' + esc(i === 0 ? 'Today' : fmt.weekday(d.date)) + '</span>' +
               '<span class="pc-fc-cond">' + Club.icon(d.icon) + '<span>' + esc(d.cond) + '</span></span>' +
               '<span class="pc-fc-rain">' + d.rain + '% rain</span>' +
-              '<span class="pc-fc-t">' + d.hi + '° <span>' + String(d.lo).replace('-', '−') + '°</span></span></li>';
+              '<span class="pc-fc-t">' + neg(d.hi) + '° <span>' + String(d.lo).replace('-', '−') + '°</span></span></li>';
           }).join('') + '</ol>' }) +
       '</div>' +
       '<div class="pc-cta"><a class="btn btn-primary" href="#/tee-times">Book a tee time</a><a class="btn" href="' + tel(Club.info.phone) + '">' + Club.icon('phone') + '<span>Call the golf shop</span></a></div>';

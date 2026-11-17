@@ -91,7 +91,7 @@
     if (!nameOk(v.lastName)) { setErr(form, 'lastName', v.lastName ? 'Use letters only, please.' : 'Enter your last name.'); ok = false; }
     if (!EMAIL_RE.test(v.email || '')) { setErr(form, 'email', v.email ? 'That email address does not look right.' : 'Enter your email address.'); ok = false; }
     else { const other = byEmail(v.email); if (other && other.id !== excludeId) { setErr(form, 'email', 'An account already uses this email. Try signing in instead.'); ok = false; } }
-    if (!phoneOk(v.phone)) { setErr(form, 'phone', v.phone ? 'Enter a 10-digit phone number, for example 204-555-0123.' : 'Enter a phone number so the golf shop can reach you.'); ok = false; }
+    if (!phoneOk(v.phone)) { setErr(form, 'phone', v.phone ? 'Enter a 10-digit phone number, for example (204) 555-0123.' : 'Enter a phone number so the golf shop can reach you.'); ok = false; }
     if (!POSTAL_RE.test(String(v.postalCode || '').trim())) { setErr(form, 'postalCode', v.postalCode ? 'Use the Canadian format A1A 1A1.' : 'Enter your postal code.'); ok = false; }
     if (!ok) return null;
     return { firstName: v.firstName.trim().replace(/\s+/g, ' '), lastName: v.lastName.trim().replace(/\s+/g, ' '), email: v.email.trim().toLowerCase(), phone: normPhone(v.phone), postalCode: normPostal(v.postalCode) };   /* marketingOptIn and heardFrom: sign up and My account (me.js) */
@@ -360,7 +360,15 @@
   }
   let fitTimer = null;
   window.addEventListener('resize', function () { clearTimeout(fitTimer); fitTimer = setTimeout(fitNav, 80); });
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { fitNav(); });
+  /* Fit again once the web fonts have really loaded: on a first visit document.fonts.ready can resolve before Inter has
+     even started loading (fonts load when first used), so the bar is measured in the fallback font and then overflows. */
+  const fitSoon = function () { clearTimeout(fitTimer); fitTimer = setTimeout(fitNav, 30); };
+  if (document.fonts) {
+    if (document.fonts.ready) document.fonts.ready.then(fitSoon);
+    if (document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', fitSoon);
+    if (document.fonts.load) Promise.all(['400 15px Inter', '500 15px Inter', '600 15px Inter'].map(function (f) { return document.fonts.load(f); })).then(fitSoon, function () {});
+  }
+  window.addEventListener('load', fitSoon);
   document.addEventListener('click', function (e) {
     const more = ui.$('.pub-more'); if (!more) return;
     const btn = ui.$('.pub-more-btn', more), pop = ui.$('.pub-more-pop', more);

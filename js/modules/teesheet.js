@@ -313,7 +313,7 @@
       { label: 'Players booked', value: s.players, meta: s.groups + ' groups' },
       { label: 'Tee times filled', value: s.util, suffix: '%', meta: s.placeUtil + '% of player places' },
       { label: 'Guests', value: s.guests, meta: s.players ? Math.round(s.guests / s.players * 100) + '% of field' : 'None booked' },
-      { label: 'Public golfers', value: s.publics, meta: s.online ? esc(money(s.online)) + ' paid online' : (s.publics ? s.publicOnline + ' paid online' : 'None booked') },
+      { label: 'Public golfers', value: s.publics, meta: s.online ? esc(money(s.online)) + ' paid online' : (s.publicOnline ? s.publicOnline + ' paid online, no payment on file' : s.publics ? '0 paid online' : 'None booked') },
       { label: 'No-shows', value: s.noShows, meta: s.noShows ? 'Groups marked' : 'All accounted for' },
       { label: 'Rounds completed', value: s.rounds, meta: 'Players finished' }
     ];
@@ -465,7 +465,7 @@
     const due = rows.filter(function (x) { return !x.p.paid; }).length, atShop = rows.filter(function (x) { return x.p.paid && !paidOnline(x.p); }).length;
     let html = ddKpis([
       { label: 'Public golfers', value: fmt.num(s.publics), sub: esc(pctOf(s.publics, s.players) + '% of the field') },
-      { label: 'Paid online', value: fmt.num(s.publicOnline), sub: esc(s.online ? money(s.online) + ' taken online' : 'No online payments') },
+      { label: 'Paid online', value: fmt.num(s.publicOnline), sub: esc(s.online ? money(s.online) + ' taken online' : s.publicOnline ? 'No payment on file' : 'No online payments') },
       { label: 'Paid at the shop', value: fmt.num(atShop), sub: esc('Card, cash or gift card') },
       { label: 'Still to pay', value: fmt.num(due), sub: esc(due ? 'Collect at the golf shop' : 'Everyone is settled') }
     ]);
@@ -1101,9 +1101,11 @@
       const shopRc = Club.receipts ? S.where('receipts', function (r) { return r.source === 'teesheet' && r.channel === 'counter' && ids[r.refId]; }) : [];
       const shopNet = r2(shopRc.reduce(function (a, r) { return a + (r.kind === 'credit' ? -1 : 1) * (+r.total || 0); }, 0));
       const shopN = shopRc.filter(function (r) { return r.kind !== 'credit'; }).length, shopBack = shopRc.length - shopN;
-      setSide('fees', money(total) + ' posted to accounts · ' + money(ds.online) + ' paid online' + (shopRc.length ? ' · ' + money(shopNet) + ' at the shop' : ''),
+      /* Golfers marked paid online with no online payment record (the demo golfer) are said to be so, not shown as $0 paid. */
+      const noRecord = !ds.online && ds.publicOnline;
+      setSide('fees', money(total) + ' posted to accounts · ' + (noRecord ? 'online payment not on file' : money(ds.online) + ' paid online') + (shopRc.length ? ' · ' + money(shopNet) + ' at the shop' : ''),
         '<div class="ts-fee-total"><span class="label-caps">Posted to member accounts</span><span class="ts-fee-v">' + money(total) + '</span><span class="muted">' + posted.length + ' charge' + (posted.length === 1 ? '' : 's') + ' on this day</span></div>' +
-        '<div class="ts-fee-online"><span class="label-caps">Paid online</span><span class="ts-fee-v">' + money(ds.online) + '</span><span class="muted">' + (ds.onlineCount ? ds.onlineCount + ' public green fee' + (ds.onlineCount === 1 ? '' : 's') : 'No online payments for this day') + '</span></div>' +
+        '<div class="ts-fee-online"><span class="label-caps">Paid online</span><span class="ts-fee-v">' + money(ds.online) + '</span><span class="muted">' + (ds.onlineCount ? ds.onlineCount + ' public green fee' + (ds.onlineCount === 1 ? '' : 's') : noRecord ? ds.publicOnline + ' golfer' + (ds.publicOnline === 1 ? '' : 's') + ' marked paid online, no payment on file' : 'No online payments for this day') + '</span></div>' +
         '<div class="ts-fee-online ts-fee-shop"><span class="label-caps">Paid at the golf shop</span><span class="ts-fee-v">' + money(shopNet) + '</span><span class="muted">' + (shopN ? shopN + ' payment' + (shopN === 1 ? '' : 's') + (shopBack ? ' · ' + shopBack + ' refund' + (shopBack === 1 ? '' : 's') : '') : 'No golf shop payments for this day') + '</span></div>' +
         '<dl class="kv ts-fee-kv"><dt>Green fee, weekday</dt><dd>' + money(RT.weekday) + '</dd><dt>Weekend and holiday</dt><dd>' + money(RT.weekend) + '</dd><dt>Twilight</dt><dd>' + money(RT.twilight) + ' <span class="muted">after 5:30 PM</span></dd><dt>Member-only times</dt><dd>' + money(st.guestFee) + ' <span class="muted">guests</span></dd><dt>Cart fee</dt><dd>' + money(st.cartFee) + ' <span class="muted">per rider</span></dd><dt>Nine holes</dt><dd>60% of the full fee</dd></dl>' +
         '<p class="muted ts-fee-note">Members\' guests pay the green fee for their tee time, posted to the host member at check-in. Public golfers pay online or at the golf shop, never on a member account.</p>' +
@@ -1173,7 +1175,8 @@
     ui.on(view, 'accordion', '.ts-acc', function (e, a) { accOpen[a.dataset.side] = e.detail.open; });
 
     /* ---- in-place status change (colour transitions on the row) ---- */
-    function advance(id, target) {
+    /* keep: round times to put back (the Undo of a step back), so a reopened round keeps its real start and finish. */
+    function advance(id, target, keep) {
       const tt = S.find('teeTimes', id); if (!tt) return;
       const next = target || (STATUS[tt.status] || {}).next; if (!next) return;
       const patch = { status: next };
@@ -1191,6 +1194,7 @@
       const t = toHM(nowMin());
       if (next === 'on-course') patch.startedAt = state.date === today ? t : tt.time;
       if (next === 'completed') { patch.startedAt = tt.startedAt || tt.time; patch.finishedAt = state.date === today ? t : toHM(toMin(tt.time) + PACE_TARGET[tt.holes || 18]); }
+      if (keep) { if (keep.s && (next === 'on-course' || next === 'completed')) patch.startedAt = keep.s; if (keep.f && next === 'completed') patch.finishedAt = keep.f; }
       patch.undo = (tt.undo || []).concat([step]).slice(-3);
       S.update('teeTimes', id, patch);
       const row = ui.$('.ts-row[data-id="' + id + '"]', sheet);
@@ -1208,7 +1212,7 @@
       const undo = { action: { label: 'Undo', onClick: function () {
         /* Only undo the step this toast was for: if the group has moved on since, say so instead of undoing a later step. */
         const cur = S.find('teeTimes', id);
-        if (cur && cur.status === next) stepBack(id); else ui.toast(lead + ' has moved on since. Use the tee sheet to step it back.', 'bad');
+        if (cur && cur.status === next) stepBack(id, true); else ui.toast(lead + ' has moved on since. Use the tee sheet to step it back.', 'bad');
       } } };
       if (next === 'checked-in') ui.toast(lead + ' checked in' + (posted ? '. ' + money(posted) + ' posted to accounts' : '') + (shop ? '. ' + shop + (shop === 1 ? ' player' : ' players') + ' to pay at the golf shop' : ''), '', undo);
       else if (next === 'on-course') ui.toast(lead + ' sent off the first tee', '', undo);
@@ -1233,9 +1237,10 @@
     /** Step a tee time back one status. Fees the step posted are credited back (with a credit receipt) and the
         players' paid flags and round times return to what they were. Older records without a saved step fall back
         to the previous status, crediting the tee sheet's unreversed fees when undoing a check-in. */
-    function stepBack(id) {
+    function stepBack(id, viaUndo) {
       const tt = S.find('teeTimes', id); if (!tt) return;
       const b = backStep(tt); if (!b) return;
+      const from = tt.status, keep = { s: tt.startedAt || null, f: tt.finishedAt || null };   /* read before the update below changes tt */
       const patch = { status: b.to };
       const charges = b.step ? (b.step.charges || []) : (tt.status === 'checked-in' ? feeChargeIds(tt.id) : []);
       let credited = 0;
@@ -1258,7 +1263,13 @@
       S.update('teeTimes', id, patch);
       renderSheet(); refreshAside();
       const lead = fresh0(tt);
-      ui.toast(({ booked: lead + ' is back to booked', 'checked-in': lead + ' is back to checked in', 'on-course': lead + ' is back on the course' })[b.to] + (credited ? '. ' + money(credited) + ' credited back to accounts' : ''));
+      /* A step back made with the button gets its own Undo, which takes the step again (fees post again, round times
+         return); the step back made by an advance's Undo is the undo, so it has none. */
+      const again = viaUndo ? null : { action: { label: 'Undo', onClick: function () {
+        const cur = S.find('teeTimes', id);
+        if (cur && cur.status === b.to) advance(id, from, keep); else ui.toast(lead + ' has moved on since. Use the tee sheet to change it.', 'bad');
+      } } };
+      ui.toast(({ booked: lead + ' is back to booked', 'checked-in': lead + ' is back to checked in', 'on-course': lead + ' is back on the course' })[b.to] + (credited ? '. ' + money(credited) + ' credited back to accounts' : ''), '', again);
     }
     function fresh0(tt) { const p = (tt.players || [])[0]; return p ? shortName(p).replace(/,.*$/, '') + ' group' : 'Group'; }
 

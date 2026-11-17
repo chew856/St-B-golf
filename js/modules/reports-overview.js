@@ -32,7 +32,7 @@
     const t = H.periodTotals(ctx.rows), p = ctx.prev ? H.periodTotals(ctx.prev.rows) : null;
     const u = H.unitWord(ctx), last = ctx.rows[ctx.rows.length - 1], first = ctx.rows[0];
     const out = [
-      { label: 'Revenue', value: H.moneyShort(t.revenue), d: H.delta(t.revenue, p && p.revenue, ctx, 'revenue', H.moneyShort(H.per(ctx, t.revenue)) + ' a ' + u + ' on average'), chg: H.prevPct(t.revenue, p && p.revenue, ctx, 'revenue'), go: 'revenue', aria: 'Revenue ' + F.money0(t.revenue) },
+      { label: 'Revenue', value: H.moneyShort(t.revenue), d: H.delta(t.revenue, p && p.revenue, ctx, 'revenue', H.moneyShort(H.avgPer(ctx, t.revenue)) + ' a ' + H.avgUnit(ctx) + ' on average'), chg: H.prevPct(t.revenue, p && p.revenue, ctx, 'revenue'), go: 'revenue', aria: 'Revenue ' + F.money0(t.revenue) },
       { label: 'Rounds played', value: H.numShort(t.rounds), d: H.delta(t.rounds, p && p.rounds, ctx, 'rounds', (t.rounds ? Math.round(sum(ctx.rows, function (r) { return r.guestRounds; }) / t.rounds * 100) : 0) + '% by guests'), chg: H.prevPct(t.rounds, p && p.rounds, ctx, 'rounds'), go: 'golf', aria: 'Rounds played ' + F.num(t.rounds) },
       { label: 'Dining room guests', value: H.numShort(t.covers), d: H.delta(t.covers, p && p.covers, ctx, 'covers', F.money(t.covers ? sum(ctx.rows, function (r) { return r.revenue.dining; }) / t.covers : 0) + ' average check'), chg: H.prevPct(t.covers, p && p.covers, ctx, 'covers'), go: 'food', aria: 'Dining room guests ' + F.num(t.covers) }
     ];
@@ -87,7 +87,7 @@
     const p1 = { id: 'ov-facts', title: 'What stands out', take: 'Picked from this period\'s figures.', desc: d1,
       body: f.length ? '<ul class="notes">' + f.map(function (x) { return '<li><p>' + esc(x.text) + '</p><button type="button" class="where" data-go="' + esc(x.sec) + '" aria-label="' + esc('Go to ' + x.where) + '">' + esc(x.where) + '</button></li>'; }).join('') + '</ul>' : '<p class="rp-empty">Nothing stands out yet for this period.</p>' };
     const p2 = { id: 'ov-attention', title: 'Needs attention', take: a.length ? 'Things someone should follow up on.' : 'Nothing is waiting for follow-up.', desc: d2,
-      body: a.length ? '<ul class="notes att">' + a.slice(0, 6).map(function (x) {
+      body: a.length ? '<ul class="notes att">' + a.map(function (x) {   /* every line, so the count in the description matches what is listed */
         const link = x.href ? '<a class="rp-link" href="' + esc(x.href) + '">' + esc(x.label) + '</a>' : '<button type="button" class="rp-link" data-drill="' + esc(x.drill) + '" data-sec="' + esc(x.sec) + '"' + (x.arg != null ? ' data-arg="' + esc(x.arg) + '"' : '') + '>' + esc(x.label) + '</button>';
         return '<li><span class="tag' + (x.ok ? ' ok' : '') + '">' + esc(F.num(x.n)) + '</span><p>' + esc(x.text) + '</p>' + link + '</li>';
       }).join('') + '</ul>' : '<p class="rp-empty">Renewals, quiet members, turned-away golfers, low ratings and overdue balances appear here when there are any.</p>' };

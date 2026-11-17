@@ -114,7 +114,7 @@
         '<div class="field"><label for="jn-first">First name *</label><input class="input" id="jn-first" name="firstName" autocomplete="given-name" maxlength="40" value="' + esc(p.firstName || '') + '"></div>' +
         '<div class="field"><label for="jn-last">Last name *</label><input class="input" id="jn-last" name="lastName" autocomplete="family-name" maxlength="40" value="' + esc(p.lastName || '') + '"></div>' +
         '<div class="field"><label for="jn-email">Email *</label><input class="input" id="jn-email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="120" value="' + esc(p.email || '') + '"></div>' +
-        '<div class="field"><label for="jn-phone">Phone *</label><input class="input" id="jn-phone" name="phone" type="tel" autocomplete="tel-national" inputmode="tel" placeholder="204-555-0123" maxlength="20" value="' + esc(p.phone || '') + '"></div>' +
+        '<div class="field"><label for="jn-phone">Phone *</label><input class="input" id="jn-phone" name="phone" type="tel" autocomplete="tel-national" inputmode="tel" placeholder="(204) 555-0123" maxlength="20" value="' + esc(p.phone || '') + '"></div>' +
         '<div class="field span-2 join-dob"><label for="jn-dob-d" id="jn-dob-l">Date of birth *</label>' +
           '<div class="join-dob-row" role="group" aria-labelledby="jn-dob-l">' +
             '<input class="input" id="jn-dob-d" name="dobDay" inputmode="numeric" autocomplete="bday-day" maxlength="2" placeholder="Day" aria-label="Day of birth">' +
@@ -226,7 +226,7 @@
       if (dup) { Pub.setErr(form, 'email', 'The club already has an application from this email address. To change it, please call the office at ' + Club.info.phone + '.'); ok = false; }
     }
     if (v.hand !== 'right' && v.hand !== 'left') { const hg = ui.$('.join-hand-field', form); hg.classList.add('invalid'); hg.insertAdjacentHTML('beforeend', '<span class="field-error">Choose right-handed or left-handed.</span>'); ok = false; }
-    if (!phoneOk(v.phone)) { Pub.setErr(form, 'phone', v.phone ? 'Enter a 10-digit phone number, for example 204-555-0123.' : 'Enter a phone number so the office can reach you.'); ok = false; }
+    if (!phoneOk(v.phone)) { Pub.setErr(form, 'phone', v.phone ? 'Enter a 10-digit phone number, for example (204) 555-0123.' : 'Enter a phone number so the office can reach you.'); ok = false; }
 
     /* Date of birth: a real date, in the past, and inside the category's age range */
     let dob = null;

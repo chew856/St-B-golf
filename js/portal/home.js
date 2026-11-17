@@ -106,7 +106,7 @@
       '<p class="hm-hero-date"><time datetime="' + esc(today()) + '">' + esc(fmt.toDate(today()).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })) + '</time></p>' +
       '<h1 id="hm-hero-h" class="hm-hello">' + greeting() + ', ' + esc(m.firstName) + '</h1>' +
       '<div class="hm-hero-row">' +
-        (t.cond ? '<div class="hm-hero-col">' + Club.icon(t.icon || 'sun') + '<div><p class="hm-hero-main">' + esc(now) + '° ' + esc(t.cond) + '</p><p class="hm-hero-sub">H ' + esc(t.hi) + '° · L ' + esc(lo) + '°</p></div></div>' : '') +
+        (t.cond ? '<div class="hm-hero-col">' + Club.icon(t.icon || 'sun') + '<div><p class="hm-hero-main">' + esc(String(now).replace('-', '−')) + '° ' + esc(t.cond) + '</p><p class="hm-hero-sub">H ' + esc(String(t.hi).replace('-', '−')) + '° · L ' + esc(lo) + '°</p></div></div>' : '') +
         '<div class="hm-hero-col">' + Club.icon(open ? 'flag' : 'alert') + '<div>' +
           (open ? '<p class="hm-hero-main">Course open</p><p class="hm-hero-sub">First tee ' + esc(fmt.time(st.first)) + ' · ' + esc(carts) + '</p>'
             : '<p class="hm-hero-main">Course closed</p>' + (cs.message ? '<p class="hm-hero-sub">' + esc(String(cs.message).split('.')[0]) + '.</p>' : '')) +

@@ -308,12 +308,12 @@
   /* ---------------- The section ---------------- */
   function kpis(ctx) {
     const list = golferData(ctx), g = guestData(ctx), a = appData(ctx);
-    const playedN = list.filter(function (x) { return x.inP; }).length, invite = list.filter(function (x) { return x.group === 'invite' && x.inP; });
+    const playedN = list.filter(function (x) { return x.inP; }).length, playedRounds = sum(list, function (x) { return x.inP; }), invite = list.filter(function (x) { return x.group === 'invite' && x.inP; });
     /* Changes on the period before, when the tee sheet covers all of it (public rounds and guests come from it). */
     const pc = H.coversPrev(ctx, ctx.ix.first.tee) ? H.prevCtx(ctx) : null;
     const prevPlayed = pc ? golferData(pc).filter(function (x) { return x.inP; }).length : null, prevVisits = pc ? guestData(pc).visits : null;
     return [
-      { label: 'Public golfers who played', value: F.num(playedN), d: esc('of ' + list.length + ' public ' + plural(list.length, 'account') + ', ' + sum(list, function (x) { return x.inP; }) + ' rounds'), chg: pc ? H.kpiChg(playedN - prevPlayed, 'num', H.prevWords(ctx)) : null, drill: 'golfers', aria: 'Public golfers who played: ' + playedN },
+      { label: 'Public golfers who played', value: F.num(playedN), d: esc('of ' + list.length + ' public ' + plural(list.length, 'account') + ', ' + playedRounds + ' ' + plural(playedRounds, 'round')), chg: pc ? H.kpiChg(playedN - prevPlayed, 'num', H.prevWords(ctx)) : null, drill: 'golfers', aria: 'Public golfers who played: ' + playedN },
       { label: 'Worth inviting', value: F.num(invite.length), d: esc(invite.length ? invite.filter(function (x) { return x.p.marketingOptIn; }).length + ' agreed to club emails' : 'Played, not applied, not a member'), drill: 'golfers' },
       { label: 'Guest visits', value: F.num(g.visits), d: esc(g.repeat.length + ' repeat ' + plural(g.repeat.length, 'guest') + ', ' + g.converted.length + ' came back alone'), chg: pc ? (prevVisits ? H.pctVs(g.visits, prevVisits, ctx) : H.kpiChg(g.visits, 'num', H.prevWords(ctx))) : null, drill: 'guests' },
       { label: 'Open applications', value: F.num(a.open.length), d: esc(a.avgWait != null ? 'waiting ' + a.avgWait + ' days on average' : 'none waiting'), drill: 'apps' }

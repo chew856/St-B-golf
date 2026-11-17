@@ -196,9 +196,26 @@
     refresh();
   });
 
+  /* Midnight: a page left open overnight moves to the new day. A light check once a minute, and when the tab comes back
+     into view, updates the top bar date, the nav counts and (once staff are not mid-task) the page, whose "today" is
+     read when it is drawn. */
+  let dayShown = null;
+  function checkDay() {
+    const d = Club.date.today();
+    if (!dayShown || d === dayShown) { dayShown = d; return; }
+    dayShown = d;
+    const el = document.querySelector('#topbar .topbar-date'); if (el) el.textContent = Club.fmt.dateLong(new Date());
+    buildSidebar();
+    refresh();
+  }
+  setInterval(checkDay, 60000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) checkDay(); });
+  window.addEventListener('focus', checkDay);
+
   document.addEventListener('DOMContentLoaded', function () {
     buildSidebar();
     buildTopbar();
     render();
+    dayShown = Club.date.today();
   });
 })();

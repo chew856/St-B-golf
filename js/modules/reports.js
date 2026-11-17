@@ -116,7 +116,11 @@
        refund without its credit receipt likewise. Same date and amount the receipt would have (js/public/site.js). */
     const pubRc = {};
     all('receipts').forEach(function (r) { if (r.source === 'public' && r.refId) pubRc[r.refId + ':' + r.kind] = 1; });
+    const pubById = {}; all('publicPayments').forEach(function (p) { pubById[p.id] = p; });
     all('publicPayments').forEach(function (p) {
+      /* An undone payment nets to nothing, except that a sale receipt already made for it, with no credit receipt to
+         offset it, is taken back on the day of the undo (the same rule as Client spending, reports-clients.js). */
+      if (p.reverses && p.date && p.date <= today) { const o = pubById[p.reverses]; if (o && num(o.amount) > 0 && pubRc[o.id + ':sale'] && !pubRc[o.id + ':credit']) put(ix.rc, p.date, { source: 'public', kind: 'credit', total: num(o.amount), date: p.date, publicPaymentId: p.id }); }
       if (!p.date || !(num(p.amount) > 0) || p.reversedBy || p.reverses || (p.status !== 'paid' && p.status !== 'refunded')) return;   /* an undone payment nets to nothing */
       if (!pubRc[p.id + ':sale'] && p.date <= today) put(ix.rc, p.date, { source: 'public', kind: 'sale', total: num(p.amount), date: p.date, publicPaymentId: p.id });
       const on = p.refundedOn || p.date;
@@ -271,6 +275,10 @@
     const f = ctx.ix.first, covers = function (k, start) { return !start || (f[k] && f[k] <= start); };
     const has = function (k) { return covers(k, liveFrom) && covers(k, curLive); };
     const ok = { revenue: has('sales') && has('ch'), rounds: has('tee'), covers: has('res') };
+    /* A month prorated from its monthly total on both sides (a single day, or a few days, inside a month without daily
+       records) would compare the month's daily average with itself: that is not on file, not "level". */
+    const pro = {}; ctx.rows.forEach(function (r) { if (r.prorated) pro[r.key] = 1; });
+    if (b.rows.some(function (r) { return r.prorated && pro[r.key]; })) ok.revenue = ok.rounds = ok.covers = false;
     ok.dining = ok.covers;
     if (!ok.revenue && !ok.rounds && !ok.covers) return null;
     return { from: pf, to: pt, rows: b.rows, ok: ok, label: wholeMonths ? rangeLine(pf, pt, 'month') : F.dateShort(pf) + ' to ' + F.date(pt) };
@@ -299,6 +307,16 @@
     return v / Math.max(1, whole ? ctx.rows.length : ctx.days / 30.4375);
   }
   function unitWord(ctx) { return ctx.gran === 'day' ? 'day' : 'month'; }
+  /** Average for a headline: per day when the period is under one month (a month's average would be the whole period
+      again, "$7,460 a month" for one day), otherwise per() by its unit. byDay carries the current period's choice over
+      to the period before. */
+  function shortPeriod(ctx) {
+    if (ctx.gran === 'day') return true;
+    const whole = ctx.rows.every(function (r) { return !isPartial(r); });
+    return (whole ? ctx.rows.length : ctx.days / 30.4375) < 1;
+  }
+  function avgUnit(ctx) { return shortPeriod(ctx) ? 'day' : unitWord(ctx); }
+  function avgPer(ctx, v, byDay) { return (byDay == null ? shortPeriod(ctx) : byDay) ? v / Math.max(1, ctx.days) : per(ctx, v); }
   /** Rows that make a fair comparison for best and worst: whole closed units when there are enough. */
   function fairRows(ctx) {
     const whole = ctx.rows.filter(function (r) { return !r.mtd && !r.partial && !r.prorated && !(ctx.gran === 'day' && r.key === D.today()); });
@@ -531,10 +549,14 @@
     const fair = fairRows(ctx);
     const best = fair.length ? fair.reduce(function (b, r) { return r.total > b.total ? r : b; }, fair[0]) : null;
     const u = unitWord(ctx);
-    const avgChg = prevOK(ctx, 'revenue') && p ? kpiChg(per(ctx, t) - per(prevCtx(ctx), p), 'money', 'a ' + u + ' against the period before (' + ctx.prev.label + ')') : null;
+    /* Less than a month on file: the average is a day's, not a month's (a month's would be the whole period again). */
+    const whole = ctx.rows.every(function (r) { return !isPartial(r); }), months = whole ? ctx.rows.length : Math.round(ctx.days / 30.4375 * 10) / 10;
+    const byDay = shortPeriod(ctx), au = avgUnit(ctx);
+    const avgOf = function (c, v) { return avgPer(c, v, byDay); };
+    const avgChg = prevOK(ctx, 'revenue') && p ? kpiChg(avgOf(ctx, t) - avgOf(prevCtx(ctx), p), 'money', 'a ' + au + ' against the period before (' + ctx.prev.label + ')') : null;
     return [
       { label: 'Revenue in this period', value: moneyShort(t), d: deltaHTML(t, p, ctx, 'revenue', ctx.line), chg: prevPct(t, p, ctx, 'revenue'), drill: 'revenue', aria: 'Revenue ' + F.money0(t) },
-      { label: 'Average ' + u, value: moneyShort(per(ctx, t)), d: esc('across ' + (ctx.gran === 'day' ? ctx.days + ' days' : (Math.round(ctx.days / 30.4375 * 10) / 10) + ' months')), chg: avgChg, drill: 'revenue' },
+      { label: 'Average ' + au, value: moneyShort(avgOf(ctx, t)), d: esc('across ' + (byDay ? ctx.days + ' ' + plural(ctx.days, 'day') : months + ' ' + plural(months, 'month'))), chg: avgChg, drill: 'revenue' },
       { label: 'Best ' + u, value: best ? (ctx.gran === 'day' ? F.dateShort(best.key) : monthLong(best.key).split(' ')[0]) : 'None', d: esc(best ? F.money0(best.total) : 'No complete ' + u + 's yet'), drill: 'revenue' }
     ];
   }
@@ -724,6 +746,11 @@
   /* ---------------- Accounts (section) ---------------- */
   function billedIn(from, to) { return sum(all('charges').filter(function (c) { return c.date && c.date >= from && c.date <= to && num(c.amount) > 0 && !c.reversedBy; }), function (c) { return c.amount; }); }
   function collectedIn(from, to) { return sum(all('payments').filter(function (p) { return p.date && p.date >= from && p.date <= to; }), function (p) { return p.amount; }); }
+  /** Whether the payments on file for an earlier period are complete enough to compare with. Members pay most of what is
+      billed, so payments under a tenth of the house charges billed in that period (a month whose payment run is missing,
+      say) are treated as not on file rather than giving a change of several thousand per cent. */
+  const MIN_COLLECTED_SHARE = 0.1;
+  function collectedOnFile(from, to) { const b = billedIn(from, to); return !(b >= 500) || collectedIn(from, to) >= b * MIN_COLLECTED_SHARE; }
   function accountsKpis(ctx) {
     const d = agingData(ctx), T = D.today(), d30 = D.addDays(T, -30), f = ctx.ix.first;
     /* Outstanding: what members owe moves by every charge (reversals included) less every payment, so the last 30 days
@@ -739,7 +766,7 @@
       { label: 'Outstanding today', value: moneyShort(d.grand), d: esc(d.accounts.length ? d.accounts.length + ' ' + plural(d.accounts.length, 'house account') + ' with a balance' : 'Every house account is settled'), chg: owe, drill: 'aging', aria: 'Outstanding ' + F.money0(d.grand) },
       { label: 'More than 60 days old', value: moneyShort(d.late), d: esc(d.grand ? Math.round(d.late / d.grand * 100) + '% of what is outstanding' : 'Nothing outstanding'), drill: 'aging' },
       { label: 'Billed in period', value: moneyShort(d.billed), d: esc('House charges posted ' + ctx.line), chg: coversPrev(ctx, f.ch) ? pctVs(d.billed, billedIn(ctx.prev.from, ctx.prev.to), ctx) : null, drill: 'aging' },
-      { label: 'Collected in period', value: moneyShort(d.collected), d: esc(d.billed ? Math.round(d.collected / d.billed * 100) + '% of what was billed' : 'Payments received'), chg: coversPrev(ctx, f.pay) ? pctVs(d.collected, collectedIn(ctx.prev.from, ctx.prev.to), ctx) : null, drill: 'aging' }
+      { label: 'Collected in period', value: moneyShort(d.collected), d: esc(d.billed ? Math.round(d.collected / d.billed * 100) + '% of what was billed' : 'Payments received'), chg: coversPrev(ctx, f.pay) && collectedOnFile(ctx.prev.from, ctx.prev.to) ? pctVs(d.collected, collectedIn(ctx.prev.from, ctx.prev.to), ctx) : null, drill: 'aging' }
     ];
   }
   function accountsDesc(ctx) {
@@ -756,7 +783,8 @@
   /** Members who charged nothing beyond dues in the period, and the house charge category fewest members use. */
   function chargeReach(ctx) {
     return memo(ctx, 'reach', function () {
-      const inR = inRange(ctx), active = all('members').filter(function (m) { return m.status === 'active'; }), s = spendData(ctx);
+      /* Active members who had joined by the end of the period (one who joined later could not have spent in it). */
+      const inR = inRange(ctx), active = all('members').filter(function (m) { return m.status === 'active' && !(String(m.memberSince || '').slice(0, 10) > ctx.to); }), s = spendData(ctx);
       const spent = {}; s.list.forEach(function (a) { spent[a.id] = 1; });
       const cats = {};
       all('charges').forEach(function (c) {
@@ -768,12 +796,16 @@
       return { active: active, none: active.filter(function (m) { return !spent[m.id]; }), cats: list, s: s };
     });
   }
+  const MIN_CHARGE_DAYS = 28;   /* the same as MIN_SPEND_DAYS in reports-clients.js */
   function accountsIdeas(ctx) {
     const d = agingData(ctx), r = chargeReach(ctx), out = [], f = ctx.ix.first.ch;
     if (d.late >= 0.5) out.push({ title: 'Collect the balances past 60 days', text: d.lateAccounts.length + ' ' + plural(d.lateAccounts.length, 'account owes', 'accounts owe') + ' ' + F.money0(d.late) + ' in charges more than 60 days old' + (d.tot[3] >= 0.5 ? ', ' + F.money0(d.tot[3]) + ' of it past 90 days' : '') + '. A friendly call and a note on the next statement is the quickest way to bring it in.',
       assume: 'Assumes every balance past 60 days is paid. This is money already earned, not new revenue.', amount: d.late, per: 'one time', year: d.late });
-    const months = spanDays(f && f > ctx.from ? f : ctx.from, ctx.to) / 30.4375;
-    if (r.none.length && r.active.length && months >= 0.2) {
+    /* The ideas below scale a short stretch of charges up to a year, so like the Client spending ideas they need
+       MIN_CHARGE_DAYS of house charges on file in the period. */
+    const chDays = f && f <= ctx.to ? spanDays(f > ctx.from ? f : ctx.from, ctx.to) : 0, months = chDays / 30.4375;
+    if (chDays < MIN_CHARGE_DAYS) return out;
+    if (r.none.length && r.active.length) {
       const spenders = r.active.length - r.none.length, avg = spenders ? r.s.total / spenders / months : 0, extra = 25 * r.none.length;
       out.push({ title: 'Bring non-spending members into the clubhouse', text: r.none.length + ' of ' + r.active.length + ' active members charged nothing beyond dues in this period' + (avg ? ', while those who did averaged ' + F.money0(avg) + ' a month' : '') + '. An invitation to a members\' night or a dining credit with renewal could start a habit; $25 a month from each would add ' + F.money0(extra) + ' a month.',
         assume: 'Assumes $25 a month from each of them for twelve months' + (f && f > ctx.from ? '; house charges on file begin ' + F.dateShort(f) : '') + '.', amount: extra, per: 'a month', year: extra * 12 });
@@ -910,7 +942,7 @@
     const members = ctx.rows.length ? ctx.rows[ctx.rows.length - 1].members : 0;
     let html = rKpis([
       { label: 'Revenue', value: F.money0(t), sub: rDelta(t, p, ctx, 'revenue') },
-      { label: 'Per ' + unitWord(ctx), value: F.money0(per(ctx, t)), sub: esc('Average across ' + ctx.days + ' ' + plural(ctx.days, 'day')) },
+      { label: 'Per ' + avgUnit(ctx), value: F.money0(avgPer(ctx, t)), sub: esc('Average across ' + ctx.days + ' ' + plural(ctx.days, 'day')) },
       { label: 'Previous period', value: prevOK(ctx, 'revenue') ? F.money0(p) : 'Not on file', sub: esc(prevOK(ctx, 'revenue') ? ctx.prev.label : 'Earlier records are not complete') },
       { label: 'Per member', value: F.money0(members ? t / members : 0), sub: esc(members + ' members on the roll') }
     ]);
@@ -934,7 +966,7 @@
     const members = ctx.rows.length ? ctx.rows[ctx.rows.length - 1].members : 0;
     let html = rKpis([
       { label: 'Rounds', value: F.num(t), sub: rDelta(t, p, ctx, 'rounds') },
-      { label: 'Per ' + unitWord(ctx), value: F.num(Math.round(per(ctx, t))), sub: esc(prevOK(ctx, 'rounds') ? F.num(Math.round(per(ctx, p))) + ' the period before' : 'Average') },
+      { label: 'Per ' + avgUnit(ctx), value: F.num(Math.round(avgPer(ctx, t))), sub: esc(prevOK(ctx, 'rounds') ? F.num(Math.round(avgPer(prevCtx(ctx), p, shortPeriod(ctx)))) + ' the period before' : 'Average') },
       { label: 'Guest share', value: (t ? Math.round(g / t * 100) : 0) + '%', sub: esc(F.num(g) + ' guest rounds') },
       { label: 'Per member', value: members ? (Math.max(0, t - g) / members).toFixed(1) : '0', sub: esc('Member rounds per member') }
     ]);
@@ -947,7 +979,7 @@
       const n = p18 + p9;
       html += rSec('How they played', esc('From ' + F.num(tees.length) + ' tee times on file'), Club.charts.ranked([{ label: '18 holes', value: p18 }, { label: '9 holes', value: p9 }, { label: 'Riding a cart', value: cart }, { label: 'Walking', value: walk }], { total: n }) + (ctx.ix.first.tee > ctx.from ? rNote('Tee sheet detail begins ' + F.dateShort(ctx.ix.first.tee) + '; earlier rounds are counted from monthly history only.') : ''));
     } else html += rSec('How they played', '', rNote('Round length and cart use come from the tee sheet, which holds no records for this period.'));
-    html += rSec('Best and worst', '', extremes(ctx, function (r) { return num(r.rounds); }, function (v) { return F.num(Math.round(v)) + ' rounds'; }));
+    html += rSec('Best and worst', '', extremes(ctx, function (r) { return num(r.rounds); }, function (v) { return F.num(Math.round(v)) + ' ' + plural(Math.round(v), 'round'); }));
     html += rSec('Per ' + unitWord(ctx), '', perUnitTable(ctx, [{ label: 'Members', num: true }, { label: 'Guests', num: true }, { label: 'Total', num: true }],
       function (r) { return [F.num(Math.max(0, num(r.rounds) - num(r.guestRounds))), F.num(r.guestRounds), '<strong>' + F.num(r.rounds) + '</strong>']; }));
     const csv = [[ctx.gran === 'day' ? 'Date' : 'Month', 'Member rounds', 'Guest rounds', 'Total']].concat(ctx.rows.map(function (r) { return [csvKey(r), Math.max(0, num(r.rounds) - num(r.guestRounds)), num(r.guestRounds), num(r.rounds)]; }));
@@ -959,7 +991,7 @@
     const dRev = sum(ctx.rows, function (r) { return r.revenue.dining; });
     let html = rKpis([
       { label: 'Guests', value: F.num(t), sub: rDelta(t, p, ctx, 'covers') },
-      { label: 'Per ' + unitWord(ctx), value: F.num(Math.round(per(ctx, t))), sub: esc('Average') },
+      { label: 'Per ' + avgUnit(ctx), value: F.num(Math.round(avgPer(ctx, t))), sub: esc('Average') },
       { label: 'Average check', value: F.money(t ? dRev / t : 0), sub: esc('Dining revenue per cover') },
       { label: 'F&B revenue', value: F.money0(dRev), sub: rDelta(dRev, ctx.prev ? sum(ctx.prev.rows, function (r) { return r.revenue.dining; }) : 0, ctx, 'dining') }
     ]);
@@ -1155,6 +1187,7 @@
     h: {
       all: all, num: num, sum: sum, pad: pad, px: px, toMin: toMin, r0: r0, DEAD: DEAD, WD: WD, DEPTS: DEPTS,
       inRange: function (ctx) { return inRange(ctx); }, per: function (ctx, v) { return per(ctx, v); }, unitWord: function (ctx) { return unitWord(ctx); },
+      avgPer: function (ctx, v, byDay) { return avgPer(ctx, v, byDay); }, avgUnit: function (ctx) { return avgUnit(ctx); },
       fairRows: function (ctx) { return fairRows(ctx); }, chartLabel: chartLabel, colLabels: colLabels, isPartial: isPartial, partialNote: partialNote,
       coverage: function (first, ctx, what) { return coverageText(first, ctx, what); }, marksText: marksText, monthLabel: monthLabel, monthLong: monthLong, plural: plural, pctChange: pctChange,
       teeCapacity: function (tees) { return teeCapacity(tees); }, inferInterval: inferInterval, spanDays: spanDays, shiftKey: shiftKey, daysSince: daysSince,
@@ -1225,6 +1258,22 @@
     function placeInk() {
       const a = U.$('.rp-tabs .tab.active', host), ink = U.$('.rp-tabs .tab-ink', host);
       if (a && ink) { ink.style.width = a.offsetWidth + 'px'; ink.style.transform = 'translateX(' + a.offsetLeft + 'px)'; }
+      tabEdges();
+    }
+    /* A tab bar wider than the page scrolls sideways: fade the edge that has more tabs behind it (css/modules/reports.css). */
+    function tabEdges() {
+      const t = U.$('.rp-tabs', host); if (!t) return;
+      const max = t.scrollWidth - t.clientWidth;
+      t.classList.toggle('more-start', max > 1 && t.scrollLeft > 1);
+      t.classList.toggle('more-end', max > 1 && t.scrollLeft < max - 1);
+      if (!t.dataset.edges) { t.dataset.edges = '1'; t.addEventListener('scroll', tabEdges, { passive: true }); }
+    }
+    /** Bring the active tab fully into the bar's view, without moving the page. */
+    function tabInView() {
+      const t = U.$('.rp-tabs', host), a = t && U.$('.tab.active', t); if (!a || t.scrollWidth <= t.clientWidth) return;
+      const pad = 48;
+      if (a.offsetLeft - pad < t.scrollLeft) t.scrollLeft = Math.max(0, a.offsetLeft - pad);
+      else if (a.offsetLeft + a.offsetWidth + pad > t.scrollLeft + t.clientWidth) t.scrollLeft = a.offsetLeft + a.offsetWidth + pad - t.clientWidth;
     }
     function showTab(id, focus) {
       tab = id; try { localStorage.setItem(TAB_KEY, id); } catch (e) { /* ignore */ }
@@ -1233,7 +1282,7 @@
         const on = p.id === 'rp-sec-' + id; p.hidden = !on;
         if (on) { Club.charts.fit(p); U.animateIn(p); }
       });
-      placeInk();
+      tabInView(); placeInk();
       try { window.history.replaceState(null, '', '#/reports' + (id === SECS[0].id ? '' : '/' + id)); } catch (e) { /* ignore */ }
     }
     function redraw(animate) {
@@ -1466,7 +1515,8 @@
     const unsubs = watch.map(function (c) { return S.subscribe(c, function () { clearTimeout(t); t = setTimeout(function () { redraw(false); }, 250); }); });
     let rt; function onResize() { placeInk(); clearTimeout(rt); rt = setTimeout(function () { U.$$('.rp-sec:not([hidden])', host).forEach(function (p) { Club.charts.fit(p); }); }, 160); }
     window.addEventListener('resize', onResize);
-    requestAnimationFrame(placeInk);
+    requestAnimationFrame(function () { tabInView(); placeInk(); });
+    try { document.fonts.ready.then(function () { if (host.isConnected) placeInk(); }); } catch (e) { /* no font loading API */ }
     U.animateIn(host);
     return function () { clearTimeout(t); clearTimeout(rt); unsubs.forEach(function (u) { u(); }); document.removeEventListener('mousedown', outside); document.removeEventListener('mousedown', outsideMenu); window.removeEventListener('beforeprint', beforePrint); window.removeEventListener('afterprint', afterPrint); window.removeEventListener('resize', onResize); };
   }

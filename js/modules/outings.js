@@ -54,8 +54,13 @@
     const warn = [], errors = [];
     const p = S.find('outingPackages', o.packageId); const m = o.date ? monthOf(o.date) : 0; const n = +o.players || 0;
     if (o.date && SEASON.indexOf(m) < 0) errors.push('Tournaments and outings run May to September. Choose a date in the golf season.');
-    if (p && m && SEASON.indexOf(m) >= 0 && (p.months || []).indexOf(m) < 0) warn.push(p.name + ': ' + p.availability.toLowerCase() + '.');
-    if (p && n && (n < p.minPlayers || n > p.maxPlayers)) warn.push(p.name + ' is for ' + p.minPlayers + ' to ' + p.maxPlayers + ' players. The ' + S.find('outingPackages', suggestPkg(n)).name.toLowerCase() + ' fits ' + n + '.');
+    /* "Only available May and July" reads "only available May and July": only the first letter drops, month names keep theirs */
+    if (p && m && SEASON.indexOf(m) >= 0 && (p.months || []).indexOf(m) < 0) warn.push(p.name + ': ' + p.availability.charAt(0).toLowerCase() + p.availability.slice(1) + '.');
+    if (p && n && (n < p.minPlayers || n > p.maxPlayers)) {
+      /* Name another package only when it really fits this many players (never the same one, never one that does not fit) */
+      const alt = S.find('outingPackages', suggestPkg(n));
+      warn.push(p.name + ' is for ' + p.minPlayers + ' to ' + p.maxPlayers + ' players.' + (alt && alt.id !== p.id && n >= alt.minPlayers && n <= alt.maxPlayers ? ' The ' + alt.name + ' fits ' + n + '.' : ''));
+    }
     if (o.format === 'Shotgun') {
       if (n && n < SHOTGUN_MIN) warn.push('All shotgun events must have a minimum of 100 players or pay the equivalent course rental.');
       if (o.date && [2, 3, 4].indexOf(dow(o.date)) < 0) warn.push('Full field events are held Tuesday to Thursday with a 12:00 PM start, unless approved by the club.');

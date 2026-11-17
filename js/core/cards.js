@@ -138,6 +138,12 @@
     cvc.addEventListener('blur', function () { card.classList.remove('flipped'); });
     paint();
 
+    /* An error under a field goes as soon as that field is changed (it used to stay until the next Pay press) */
+    root.addEventListener('input', function (e) {
+      const i = e.target; if ([num, nm, exp, cvc].indexOf(i) < 0 || !i.classList.contains('invalid')) return;
+      i.classList.remove('invalid');
+      const f = i.closest('.field'); if (f) f.querySelectorAll('.field-error').forEach(function (n) { n.remove(); });
+    });
     function err(input, msg) {
       input.classList.add('invalid');
       const f = input.closest('.field'); if (f) f.insertAdjacentHTML('beforeend', '<span class="field-error">' + esc(msg) + '</span>');

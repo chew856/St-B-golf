@@ -982,7 +982,7 @@
         const wx = (Club.weather.forecast || []).find(function (w) { return w.date === d; });
         const n = fitCount(sum);
         const parts = [];
-        if (wx) parts.push(Club.icon(wx.icon) + '<span>' + esc(wx.cond) + ', ' + wx.hi + '°</span>');
+        if (wx) parts.push(Club.icon(wx.icon) + '<span>' + esc(wx.cond) + ', ' + String(wx.hi).replace('-', '−') + '°</span>');
         parts.push('<span>' + (sum.locked ? 'Not open for booking yet' : sum.closed ? 'Course closed' : n ? plural(n, 'time') + ' available' : 'No times available') + '</span>');
         return parts.join('<span aria-hidden="true">·</span>');
       }
@@ -1186,7 +1186,7 @@
         const guests = ex.filter(function (p) { return p.type === 'guest'; }).length;
         const pubs = ex.filter(isPublic).length;
         const who = members.concat(guests ? [guests === 1 ? 'a guest' : guests + ' guests'] : []).concat(pubs ? [pubs === 1 ? 'a public golfer' : pubs + ' public golfers'] : []);
-        return '<p class="tt-join">' + Club.icon('members') + '<span>You are joining ' + esc(niceList(who)) + '.</span></p>';
+        return '<p class="tt-join">' + Club.icon('members') + '<span>You are joining ' + esc(niceList(who)) + (/\.$/.test(niceList(who)) ? '' : '.') + '</span></p>';   /* "Daniel B." already ends the sentence */
       }
       function openBooking() {
         const m = Portal.member() || me;

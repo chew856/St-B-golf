@@ -5,6 +5,8 @@
 (function () {
   if (!window.Club || !Club.i18n || !Club.i18n.add) return;
   var NB = ' ';
+  function tie(p) { return String(p).replace(/^T(\d+)$/, '$1 ex aequo'); }   /* "T2": tied for second */
+  function stop(s) { return /\.$/.test(s) ? s : s + '.'; }
   var S = {
     /* Engine: formats, status, what is missing */
     'Net Stableford points': 'Points Stableford nets',
@@ -38,8 +40,10 @@
     'Your leagues': 'Vos ligues',
     'Finished and cancelled': 'Terminées et annulées',
     'No games played yet': 'Aucune partie jouée pour l’instant',
+    'No week is complete yet': 'Aucune semaine terminée pour l’instant',
     'Undo': 'Annuler',
     'Undone': 'Annulé',
+    'There is no room for another team': 'Il n’y a pas de place pour une autre équipe',
 
     /* League page */
     'Friends league': 'Ligue entre amis',
@@ -195,12 +199,13 @@
     [/^Invite sent to (.+)$/, 'Invitation envoyée à $1'],
     [/^Invite to (.+)$/, 'Inviter dans $1'],
     [/^Invite a friend to (.+)$/, 'Inviter un ami dans $1'],
-    [/^Your place: (\S+) of (\d+)$/, 'Votre rang' + NB + ': $1 sur $2'],
-    [/^You finished (\S+) of (\d+)$/, 'Rang final' + NB + ': $1 sur $2'],
+    [/^Your place: (\S+) of (\d+)$/, function (m) { return 'Votre rang' + NB + ': ' + tie(m[1]) + ' sur ' + m[2]; }],
+    [/^You finished (\S+) of (\d+)$/, function (m) { return 'Rang final' + NB + ': ' + tie(m[1]) + ' sur ' + m[2]; }],
 
     /* League page */
-    [/^Everyone is in\. The league starts (.+)\.$/, 'Tout le monde est inscrit. La ligue commence le $1.'],
-    [/^You can invite or remove players until (.+)\. The rules lock when the league starts\.$/, 'Vous pouvez inviter ou retirer des joueurs jusqu’au $1. Le règlement est fixé au début de la ligue.'],
+    /* "16 nov." already ends with a full stop: no second one */
+    [/^Everyone is in\. The league starts (.+)\.$/, function (m) { return 'Tout le monde est inscrit. La ligue commence le ' + stop(m[1]); }],
+    [/^You can invite or remove players until (.+)\. The rules lock when the league starts\.$/, function (m) { return 'Vous pouvez inviter ou retirer des joueurs jusqu’au ' + stop(m[1]) + ' Le règlement est fixé au début de la ligue.'; }],
     [/^Remove (.+) from the league$/, 'Retirer $1 de la ligue'],
     [/^(.+) removed from the league$/, '$1 a été retiré de la ligue'],
     [/^Cancel (.+)\?$/, 'Annuler ' + '$1' + NB + '?'],
@@ -208,10 +213,10 @@
     [/^(\d+) of (\d+)$/, '$1 sur $2'],
     [/^Each week starts on a (\S+)\. Missed a week\? Play an extra round later and it counts for the week you missed\. Games still missing at the end count as the worst score of that week\. Until the end, players are ranked on their average per game\.$/,
       'Chaque semaine commence un $1. Vous avez manqué une semaine' + NB + '? Jouez une partie de plus plus tard et elle comptera pour la semaine manquée. Les parties encore manquantes à la fin comptent comme le pire score de cette semaine. Jusqu’à la fin, les joueurs sont classés selon leur moyenne par partie.'],
-    [/^-?\d+(?:,\d)? pts$/, function (m) { return m[0]; }],
+    [/^-?\d+(?:,\d)? pts?$/, function (m) { return m[0]; }],
     [/^-?\d+,\d$/, function (m) { return m[0]; }],
     [/^\d{1,2} (?:janv|févr|mars|avr|mai|juin|juil|août|sept|oct|nov|déc)\.?$/, function (m) { return m[0]; }],   /* already French (fmt.dateShort) */
-    [/^Total (-?\d+(?:,\d)?(?: pts)?)$/, 'Total $1'],
+    [/^Total (-?\d+(?:,\d)?(?: pts?)?)$/, 'Total $1'],
     [/^Week (\d+)$/, 'Semaine $1'],
     [/^Week (\d+), game (\d+)$/, 'Semaine $1, partie $2'],
     [/^Played (.+?)( \(late\))?$/, function (m) { return 'Jouée le ' + m[1] + late(m[2]); }],

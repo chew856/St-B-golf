@@ -336,7 +336,7 @@
   function unqCSV(d) { return [['Golfer', 'Member no', 'Rounds played', 'More to qualify']].concat(d.unq.map(function (g) { return [g.name, g.m ? g.m.memberNo : '', g.n, MIN - g.n]; })); }
   function unqTable(d) {
     return table([{ label: 'Golfer' }, { label: 'Rounds', num: true }, { label: 'To qualify', num: true }], d.unq.map(function (g) {
-      return { attrs: 'data-lb-open="' + esc('rounds|' + g.id) + '" aria-label="' + esc(g.name + ', ' + g.n + ' rounds, ' + (MIN - g.n) + ' more to qualify. See the rounds') + '"', cells: [whoCell(g), String(g.n), (MIN - g.n) + ' more'] };
+      return { attrs: 'data-lb-open="' + esc('rounds|' + g.id) + '" aria-label="' + esc(g.name + ', ' + g.n + ' ' + plural(g.n, 'round') + ', ' + (MIN - g.n) + ' more to qualify. See the rounds') + '"', cells: [whoCell(g), String(g.n), (MIN - g.n) + ' more'] };
     }));
   }
   /* Clicks inside a drawer: a round opens its scorecard, a golfer opens their rounds */

@@ -80,6 +80,10 @@ html[lang="fr-CA"] .gc-h-att:not(.is-none)::before { content: " · Attesté par 
 .gc-card tr:first-child th { color: var(--text-2); font-size: 0.8125rem; }
 .gc-card th:last-child, .gc-card td:last-child { font-weight: 500; width: 2.4rem; }
 .gc-card-you td { font-weight: 500; }
+/* French labels are longer ("Normale", "Retour"): wider label and total columns so they neither overlap the first hole
+   nor get cut off */
+html[lang="fr-CA"] .gc-card th[scope=row] { width: 4.4rem; padding-right: 4px; }
+html[lang="fr-CA"] .gc-card th:last-child, html[lang="fr-CA"] .gc-card td:last-child { width: 3.1rem; }
 .gc-sc { display: inline-flex; align-items: center; justify-content: center; min-width: 1.6em; height: 1.6em; border-radius: 4px; }
 .gc-sc.is-under { border-radius: 50%; box-shadow: inset 0 0 0 1px var(--forest-700); }
 .gc-sc.is-over { box-shadow: inset 0 0 0 1px var(--border-strong); }

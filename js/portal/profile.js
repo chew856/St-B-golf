@@ -85,13 +85,15 @@
       ui.field({ label: 'Dietary and service notes', name: 'notes', type: 'textarea', value: pr.notes, placeholder: 'For example: no shellfish, likes the patio' }) +
       '</form>';
   }
+  /* French decimals on the chart's axis ("2,5"): the shared chart writes them with a point */
+  function frAxis(svg) { return Club.i18n && Club.i18n.lang && Club.i18n.lang() === 'fr' ? svg.replace(/(<text[^>]*>-?\d+)\.(\d+<\/text>)/g, '$1,$2') : svg; }
   function golfBody(m) {
     const hist = hcpHistory(m.id).slice(-12);
     const vals = hist.map(function (h) { return h.index; });
     let trend = '';
     if (vals.length > 1) {
       const d = Math.round((vals[vals.length - 1] - vals[0]) * 10) / 10;
-      const since = fmt.date(hist[0].date).replace(/ \d+,/, '');
+      const since = fmt.toDate(hist[0].date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });   /* "Dec 2025"; French "déc. 2025" */
       trend = d < 0 ? 'Down ' + Math.abs(d).toFixed(1) + ' since ' + since : d > 0 ? 'Up ' + d.toFixed(1) + ' since ' + since : 'No change since ' + since;
     }
     const allPos = vals.every(function (v) { return v >= 0; });
@@ -99,7 +101,7 @@
     return '<div class="pp-golf-top"><span class="pp-golf-l">Handicap index</span><span class="pp-hcp">' + esc(fmt.handicap(m.handicap)) + '</span>' + (trend ? '<span class="pp-trend">' + esc(trend) + '</span>' : '') + '</div>' +
       '<dl class="pp-kv"><div><dt>Plays</dt><dd class="pp-hand"><span class="pp-hand-v">' + esc(Club.members.hand(m) || 'Not recorded') + '</span><button type="button" class="p-link" data-act="hand" aria-haspopup="dialog">Change</button></dd></div><div><dt>Golf Canada no.</dt><dd class="num">' + (m.ghin ? esc(m.ghin) : 'Not recorded') + '</dd></div><div><dt>Locker</dt><dd>' + (m.locker ? 'No. ' + esc(m.locker) : 'None assigned') + '</dd></div></dl>' +
       (Portal.scores ? Portal.scores.golfRowsHTML(m) : '') +
-      (demoChart || (vals.length > 1 && allPos ? '<div class="pp-chart"><h3 class="pp-chart-h">Your index over time</h3>' + Club.charts.line({ labels: hist.map(function (h) { return fmt.toDate(h.date).toLocaleDateString('en-US', { month: 'short' }); }), series: [{ name: 'Index', values: vals, color: 'var(--forest-800)' }], height: 180 }) + '</div>'
+      (demoChart || (vals.length > 1 && allPos ? '<div class="pp-chart"><h3 class="pp-chart-h">Your index over time</h3>' + frAxis(Club.charts.line({ labels: hist.map(function (h) { return fmt.toDate(h.date).toLocaleDateString('en-US', { month: 'short' }); }), series: [{ name: 'Index', values: vals, color: 'var(--forest-800)' }], height: 180 })) + '</div>'
         : vals.length > 1 ? '<div class="pp-chart pp-spark">' + Club.charts.sparkline(vals.map(function (v) { return -v; }), { width: 320, height: 60, color: 'var(--forest-800)' }) + '</div>'
           : '<p class="pp-chart-empty">Your index history will show here as scores are posted.</p>')) +
       '<p class="pp-note">' + Club.icon('info') + '<span>The golf shop updates your index from posted scores, and can help with lockers.</span></p>';

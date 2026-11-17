@@ -261,7 +261,7 @@
     function drawMonths() {
       const list = evs.filter(function (e) { return typeFilter === 'All' || e.type === typeFilter; });
       const groups = {}; list.forEach(function (e) { (groups[monthOf(e.date)] = groups[monthOf(e.date)] || []).push(e); });
-      const t0 = today(); const cur = monthOf(t0); const nd = F.toDate(t0); const nxt = monthOf(new Date(nd.getFullYear(), nd.getMonth() + 1, 1).toISOString().slice(0, 10));
+      const t0 = today(); const cur = monthOf(t0); const nd = F.toDate(t0); const nxt = monthOf(Club.store.iso(new Date(nd.getFullYear(), nd.getMonth() + 1, 1)));   /* local date: toISOString shifted it back a day east of UTC */
       const keys = Object.keys(groups).sort();
       const openKeys = keys.filter(function (k) { return k <= nxt; }); if (!openKeys.length && keys.length) openKeys.push(keys[0]);
       /* Open months show the next OPEN_SHOW events; the rest of an open month sits in a collapsed row, later months are accordions. */

@@ -18,7 +18,10 @@
                                         without a paymentId, else 'other'), methodLabel (from method and kind), source ('other').
                                         Never duplicates: returns the existing receipt when one has the same chargeId, or the same
                                         paymentId, or (within 5 seconds) the same source, refId (not null), kind, total and
-                                        customer, provided their chargeId / paymentId do not differ. A match gains any chargeId,
+                                        customer, provided their chargeId / paymentId / tender refs do not differ. When neither has
+                                        a chargeId or paymentId (a double tap, not a charge and its record), the match must also be
+                                        within 1.5 seconds and say exactly the same (title, lines, payment, note), so two separate
+                                        payments of the same amount on one record keep a receipt each. A match gains any chargeId,
                                         paymentId or note it lacked.
    Club.receipts.get(id)                the doc or null
    Club.receipts.forMember(memberId)    newest first
@@ -37,7 +40,7 @@
   window.Club = window.Club || {};
   const S = Club.store, ui = Club.ui, esc = ui.esc, fmt = Club.fmt;
   const COLL = 'receipts';
-  const WINDOW_MS = 5000;
+  const WINDOW_MS = 5000, TAP_MS = 1500;
   const METHODS = ['account', 'card', 'cash', 'other'];
 
   const r2 = function (v) { return Math.round((+v || 0) * 100) / 100; };
@@ -67,10 +70,12 @@
   }
   function sum(lines) { return r2(lines.reduce(function (a, l) { return a + l.qty * l.price; }, 0)); }
 
-  /** Highest number used so far: the stored sequence, or the receipts themselves if that was lost. */
-  function nextNo() {
-    let n = +S.getObj('receiptSeq', 0) || 0;
-    if (!n && S.all(COLL).length) S.all(COLL).forEach(function (r) { const k = parseInt(String(r.no).slice(2), 10); if (k > n) n = k; });
+  /** The next number: one past the highest used so far, in this tab or saved by another tab a moment ago (the stored
+      sequence is read fresh, and setObj writes a sequence at once), or past the receipts themselves if the sequence was
+      lost (or `scan`). */
+  function nextNo(scan) {
+    let n = Math.max(+S.getObj('receiptSeq', 0) || 0, +S.stored('$receiptSeq') || 0);
+    if ((scan || !n) && S.all(COLL).length) S.all(COLL).forEach(function (r) { const k = parseInt(String(r.no).slice(2), 10); if (k > n) n = k; });
     n++;
     S.setObj('receiptSeq', n);
     return n;
@@ -91,9 +96,22 @@
       if (r.source !== d.source || r.refId !== d.refId || r.kind !== d.kind || r.total !== d.total) continue;
       if ((r.memberId || null) !== d.memberId || (r.publicPlayerId || null) !== d.publicPlayerId) continue;
       if ((d.chargeId && r.chargeId && r.chargeId !== d.chargeId) || (d.paymentId && r.paymentId && r.paymentId !== d.paymentId)) continue;
+      const rRefs = tenderRefs(r), dRefs = tenderRefs(d);
+      if (rRefs && dRefs && rRefs !== dRefs) continue;   /* e.g. two deposits on one wedding: each tender names its own payment */
+      if (!d.chargeId && !d.paymentId && !r.chargeId && !r.paymentId) {
+        /* nothing ties them to one charge or payment: only a double tap, so a moment apart and word for word the same */
+        if (Math.abs(now - Date.parse(r.at)) > TAP_MS) continue;
+        if (r.title !== d.title || r.method !== d.method || r.methodLabel !== d.methodLabel || (r.note || null) !== d.note ||
+          JSON.stringify(r.lines || []) !== JSON.stringify(d.lines)) continue;
+      }
       return r;
     }
     return null;
+  }
+
+  function tenderRefs(r) {
+    const refs = (r.tenders || []).map(function (t) { return t && t.ref ? String(t.ref) : ''; }).filter(Boolean);
+    return refs.length ? refs.sort().join('|') : '';
   }
 
   /** The full doc from a partial one, without an id or number yet. */
@@ -142,8 +160,29 @@
       return Object.keys(patch).length ? S.update(COLL, dup.id, patch) : dup;
     }
     const n = nextNo();
-    return S.insert(COLL, Object.assign({ id: o.id || S.uid('rc'), no: label(n) }, d));
+    const doc = S.insert(COLL, Object.assign({ id: o.id || S.uid('rc'), no: label(n) }, d));
+    madeHere[doc.id] = Date.now();
+    return doc;
   }
+
+  /* Two tabs (say the staff till and the members' portal) can make a receipt in the same few milliseconds, before
+     either sees the other's number, and so give both the same one. Once both receipts are in this tab (Club.store
+     merges the two saves), the one made first keeps the number; the later one, if this tab made it, takes the next
+     free number. Both tabs reach the same verdict, and only the tab that made a receipt renumbers it. */
+  const madeHere = {};
+  function firstMade(a, b) { return String(a.createdAt || a.at).localeCompare(String(b.createdAt || b.at)) || String(a.id).localeCompare(String(b.id)); }
+  function checkNumbers() {
+    const ids = Object.keys(madeHere); if (!ids.length) return;
+    const now = Date.now(), byNo = {};
+    S.all(COLL).forEach(function (r) { (byNo[r.no] = byNo[r.no] || []).push(r); });
+    ids.forEach(function (id) {
+      if (now - madeHere[id] > 60000) { delete madeHere[id]; return; }
+      const r = S.find(COLL, id), same = r ? byNo[r.no] || [] : [];
+      if (same.length < 2 || same.slice().sort(firstMade)[0].id === r.id) return;
+      S.update(COLL, r.id, { no: label(nextNo(true)) });
+    });
+  }
+  S.subscribe('$external', checkNumbers);
 
   function newestFirst(a, b) { return String(b.at).localeCompare(String(a.at)) || String(b.no).localeCompare(String(a.no)); }
   function get(id) { return S.find(COLL, id); }
@@ -152,6 +191,11 @@
   function forRef(source, refId) { return S.where(COLL, function (r) { return r.source === source && r.refId === refId; }).sort(newestFirst); }
 
   /* ---------------- Markup ---------------- */
+  /** A payment on account settles a balance; it is not a sale, so no tax is in it. */
+  function taxFree(r) {
+    const lines = r.lines || [];
+    return r.title === 'Account payment' || (lines.length > 0 && lines.every(function (l) { return l.name === 'Payment on account'; }));
+  }
   function when(r) {
     const t = new Date(r.at);
     const sameDay = !isNaN(t) && S.iso(t) === r.date;
@@ -176,7 +220,7 @@
       '<div class="rc-total"><span>' + (credit ? 'Total credit' : 'Total') + '</span><strong>' + esc(fmt.money(r.total)) + '</strong></div>' +
       '<div class="rc-pay"><span>' + (credit ? 'Refund' : 'Payment') + '</span><span>' + esc(r.methodLabel) + '</span></div>' +
       (r.note ? '<p class="rc-note">' + esc(r.note) + '</p>' : '') +
-      '<p class="rc-foot">Taxes included.</p>' +
+      (taxFree(r) ? '' : '<p class="rc-foot">Taxes included.</p>') +
     '</article>';
   }
 
@@ -226,6 +270,7 @@
     const out = [];
     S.all('charges').forEach(function (c) {
       const amt = r2(c.amount); if (!amt || byCharge[c.id]) return;
+      byCharge[c.id] = 1;
       const kind = amt < 0 ? 'credit' : 'sale';
       const title = c.title || c.description || 'Account charge';
       out.push(build({ memberId: c.memberId, kind: kind, at: stamp(c), date: c.date, title: title, lines: c.lines || [{ name: c.description || title, qty: 1, price: Math.abs(amt) }],
@@ -233,12 +278,14 @@
     });
     S.all('payments').forEach(function (p) {
       const amt = r2(p.amount); if (amt <= 0 || byPay[p.id]) return;
+      byPay[p.id] = 1;
       out.push(build(Object.assign({ memberId: p.memberId, kind: 'sale', at: stamp(p), date: p.date, title: 'Account payment', lines: [{ name: 'Payment on account', qty: 1, price: amt }],
         total: amt, source: 'billing', refId: null, paymentId: p.id }, paymentMethod(p))));
     });
     out.sort(function (a, b) { return String(a.at).localeCompare(String(b.at)); });
-    let n = +S.getObj('receiptSeq', 0) || 0;
-    const docs = out.map(function (d) { n++; return Object.assign({ id: S.uid('rc'), no: label(n) }, d); });
+    let n = Math.max(+S.getObj('receiptSeq', 0) || 0, +S.stored('$receiptSeq') || 0);
+    /* Ids from the charge or payment: if two tabs backfill at the same moment, their copies merge into one. */
+    const docs = out.map(function (d) { n++; return Object.assign({ id: 'rc_' + (d.chargeId ? 'c_' + d.chargeId : 'p_' + d.paymentId), no: label(n) }, d); });
     if (docs.length) { S.setObj('receiptSeq', n); S.replace(COLL, docs.concat(have)); }
     S.setObj('receiptsBackfilled', true);
     return docs.length;

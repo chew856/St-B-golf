@@ -26,6 +26,7 @@
 /* ---------- Month grid ---------- */
 .ev-cal-panel { overflow: hidden; }
 .ev-cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.ev-cal-row { display: contents; }   /* a week (role=row) for assistive tech; the days still lay out in .ev-cal's grid */
 .ev-dow {
   padding: var(--s2) var(--s3); font-size: var(--fs-11); color: var(--forest-500);
   border-bottom: 1px solid var(--border-strong); background: var(--surface);

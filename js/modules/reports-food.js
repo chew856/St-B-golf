@@ -603,7 +603,7 @@
     const pt = pc ? stats(pc, 'to', takeoutStats).live.length : null, pcart = pc ? stats(pc, 'cart', cartStats).live.length : null;
     const vs = function (cur, prev) { return prev == null || (!prev && !cur) ? null : prev ? H.pctVs(cur, prev, ctx) : H.kpiChg(cur, 'num', H.prevWords(ctx)); };
     return [
-      { label: 'Dining room guests', value: H.numShort(d.total), d: H.delta(d.total, p, ctx, 'covers', F.num(Math.round(H.per(ctx, d.total))) + ' per ' + H.unitWord(ctx)), chg: H.prevPct(d.total, p, ctx, 'covers'), drill: 'covers', aria: 'Dining room guests ' + F.num(d.total) },
+      { label: 'Dining room guests', value: H.numShort(d.total), d: H.delta(d.total, p, ctx, 'covers', F.num(Math.round(H.avgPer(ctx, d.total))) + ' per ' + H.avgUnit(ctx)), chg: H.prevPct(d.total, p, ctx, 'covers'), drill: 'covers', aria: 'Dining room guests ' + F.num(d.total) },
       { label: 'Average check', value: F.money(d.avg), d: esc(F.money0(d.revenue) + ' in dining revenue'), chg: H.prevOK(ctx, 'dining') && pAvg && d.total ? H.kpiChg(d.avg - pAvg, 'cents', 'against ' + F.money(pAvg) + ' ' + H.prevWords(ctx)) : null, drill: 'covers' },
       { label: 'Takeout orders', value: F.num(t.live.length), d: esc(t.live.length ? F.money0(t.rev) + ' before tax' : 'None in this period'), chg: vs(t.live.length, pt), drill: 'takeout' },
       { label: 'Beverage cart orders', value: F.num(c.live.length), d: esc(c.live.length ? F.money0(salesOf(c.done)) + ' over ' + count(c.days, 'day') : 'The cart runs in the golf season'), chg: vs(c.live.length, pcart), drill: 'cartholes' }

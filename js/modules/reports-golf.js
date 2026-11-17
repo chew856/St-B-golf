@@ -162,7 +162,7 @@
       { label: '18 holes', value: a.avg18 != null ? dur(a.avg18) : 'None', sub: a.avg18 != null && T ? vsText(a.avg18 - T[18]) + ' against ' + dur(T[18]) : plural(a.n18, 'round') },
       { label: '9 holes', value: a.avg9 != null ? dur(a.avg9) : 'None', sub: a.avg9 != null && T ? vsText(a.avg9 - T[9]) + ' against ' + dur(T[9]) : plural(a.n9, 'round') },
       { label: 'Rounds timed', value: F.num(a.n), sub: F.num(a.n18) + ' of 18, ' + F.num(a.n9) + ' of 9' },
-      { label: 'Over target', value: T ? pctTxt(a.over, a.n) : 'n/a', sub: T ? F.num(a.over) + ' rounds' : 'No target on file' }
+      { label: 'Over target', value: T ? pctTxt(a.over, a.n) : 'n/a', sub: T ? plural(a.over, 'round') : 'No target on file' }
     ]);
     const slow = rounds.slice().sort(function (x, y) { return T ? y.over - x.over || y.len - x.len : y.len - x.len; }).slice(0, 15);
     body += X.sec('Slowest rounds', T ? 'Furthest over target' : 'Longest first', X.table(
@@ -495,11 +495,16 @@
     const gShare = H.prevOK(ctx, 'rounds') && p && r.total ? H.kpiChg(r.guests / r.total * 100 - pg / p * 100, 'pts', H.prevWords(ctx)) : null;
     const pc = H.coversPrev(ctx, ctx.ix.first.tee) ? H.prevCtx(ctx) : null, pa = pc ? paceAgg(timedRounds(pc)) : null, pcn = pc ? cancelData(pc) : null;
     const out = [
-      { label: 'Rounds played', value: H.numShort(r.total), d: H.delta(r.total, p, ctx, 'rounds', F.num(Math.round(H.per(ctx, r.total))) + ' per ' + u), chg: H.prevPct(r.total, p, ctx, 'rounds'), drill: 'rounds', aria: 'Rounds played ' + F.num(r.total) },
+      { label: 'Rounds played', value: H.numShort(r.total), d: H.delta(r.total, p, ctx, 'rounds', F.num(Math.round(H.avgPer(ctx, r.total))) + ' per ' + H.avgUnit(ctx)), chg: H.prevPct(r.total, p, ctx, 'rounds'), drill: 'rounds', aria: 'Rounds played ' + F.num(r.total) },
       { label: 'Played by guests', value: (r.total ? Math.round(r.guests / r.total * 100) : 0) + '%', d: esc(F.num(r.guests) + ' guest ' + plural(r.guests, 'round').replace(/^\S+ /, '')), chg: gShare, drill: 'rounds' },
-      { label: 'Busiest ' + u, value: r.busiest ? (ctx.gran === 'day' ? F.dateShort(r.busiest.key) : H.monthLong(r.busiest.key).split(' ')[0]) : 'None', d: esc(r.busiest ? F.num(r.busiest.rounds) + ' rounds' : 'No complete ' + u + 's yet'), drill: 'rounds' }
+      { label: 'Busiest ' + u, value: r.busiest ? (ctx.gran === 'day' ? F.dateShort(r.busiest.key) : H.monthLong(r.busiest.key).split(' ')[0]) : 'None', d: esc(r.busiest ? plural(r.busiest.rounds, 'round') : 'No complete ' + u + 's yet'), drill: 'rounds' }
     ];
     if (a.avg18 != null) out.push({ label: '18-hole round', value: dur(a.avg18), d: esc(T ? overWords(a.avg18 - T[18]) + ' of ' + dur(T[18]) : plural(a.n18, 'timed round')), chg: pa && pa.n18 >= 3 && a.n18 >= 3 ? H.kpiChg(a.avg18 - pa.avg18, 'min', H.prevWords(ctx), { upGood: false }) : null, drill: 'pace', aria: '18-hole round ' + dur(a.avg18) });
+    else if (!c.tees.length) {
+      /* No bookings to count: say so rather than "0%, 0 of 0". Monthly history has rounds but no tee sheet. */
+      const ft = ctx.ix.first.tee, none = !ft || ft > ctx.to;
+      out.push({ label: 'Cancelled', value: none ? 'Not on file' : 'None', d: esc(none ? (ft ? 'Tee sheet records begin ' + F.dateShort(ft) : 'No tee sheet records on file') : 'No tee times booked in this period'), drill: 'cancel' });
+    }
     else out.push({ label: 'Cancelled', value: pctTxt(c.cancelled.length, c.tees.length), d: esc(F.num(c.cancelled.length) + ' of ' + plural(c.tees.length, 'booking')), chg: pcn && pcn.tees.length && c.tees.length ? H.kpiChg(pct(c.cancelled.length, c.tees.length) - pct(pcn.cancelled.length, pcn.tees.length), 'pts', H.prevWords(ctx), { upGood: false }) : null, drill: 'cancel' });
     return out;
   }
@@ -562,7 +567,7 @@
     const fair = H.fairRows(ctx).filter(function (x) { return ctx.gran === 'day' || H.inSeasonKey(x.key); });
     let lo = null; fair.forEach(function (x) { if (pick(x) > 0 && (!lo || pick(x) < pick(lo))) lo = x; });
     const out = ['Each column counts the ' + what + ' each ' + u + ', ' + F.num(total) + ' in all.'];
-    if (lo && fair.length >= 2) out.push((ctx.gran === 'month' ? 'Of the golf season months, ' + H.monthLong(lo.key) : H.whenLabel(ctx, lo)) + ' was the quietest with ' + F.num(pick(lo)) + ' rounds.');
+    if (lo && fair.length >= 2) out.push((ctx.gran === 'month' ? 'Of the golf season months, ' + H.monthLong(lo.key) : H.whenLabel(ctx, lo)) + ' was the quietest with ' + plural(pick(lo), 'round') + '.');
     if (chip === 'members') { const m = ctx.rows.length ? num(ctx.rows[ctx.rows.length - 1].members) : 0; if (m) out.push('That is about ' + Math.round(total / m) + ' rounds for each of the ' + m + ' members on the roll.'); }
     else out.push('Guests played ' + H.pctOf(r.guests, r.total) + '% of rounds. Guest rounds pay a green fee while member golf is covered by dues, so the guest share is what moves golf revenue.');
     return H.sents(out.slice(0, 4));

@@ -219,7 +219,7 @@
     const me = lines.find(function (l) { return l.id === memberId; }); if (!me) return null;
     const first = lines.findIndex(function (l) { return key(l) === key(me); });
     const tied = lines.filter(function (l) { return key(l) === key(me); }).length > 1;
-    return { pos: (tied ? 'T' : '') + (first + 1), rank: first + 1, of: lines.length, thru: me.thru, score: stable ? me.pts + ' pts' : (me.toPar === 0 ? 'E' : (me.toPar < 0 ? MINUS + Math.abs(me.toPar) : '+' + me.toPar)) + ' net' };
+    return { pos: (tied ? 'T' : '') + (first + 1), rank: first + 1, of: lines.length, thru: me.thru, score: stable ? me.pts + (me.pts === 1 ? ' pt' : ' pts') : (me.toPar === 0 ? 'E' : (me.toPar < 0 ? MINUS + Math.abs(me.toPar) : '+' + me.toPar)) + ' net' };
   }
   function tournaments(id) {
     const yr = today().slice(0, 4);
@@ -304,7 +304,7 @@
       if (lr || tr.length) h += (rounds.length ? '<h4 class="fr-sub-h">League and tournaments</h4>' : '');
       h += '<ul class="p-list fr-results">';
       if (lr) h += '<li><span class="fr-tee-main"><span class="fr-tee-when">' + esc(lr.lg.name) + '</span><span class="fr-tee-sub">' + esc((lr.status === 'complete' ? 'Final standing ' : 'Standing ') + lr.row.pos + ' of ' + lr.of + ' · ' + lr.row.total + ' points') + '</span>' +
-        (lr.nights.length ? '<span class="fr-tee-sub">Last nights: ' + esc(lr.nights.map(function (n) { return fmt.dateShort(n.date) + ' ' + n.points + ' pts (' + n.place + ')'; }).join(', ')) + '</span>' : '') + '</span></li>';
+        (lr.nights.length ? '<span class="fr-tee-sub">Last nights: ' + esc(lr.nights.map(function (n) { return fmt.dateShort(n.date) + ' ' + n.points + (n.points === 1 ? ' pt' : ' pts') + ' (' + n.place + ')'; }).join(', ')) + '</span>' : '') + '</span></li>';
       tr.forEach(function (x) {
         h += '<li><span class="fr-tee-main"><span class="fr-tee-when">' + esc(x.t.name) + '</span><span class="fr-tee-sub">' + esc((x.t.status === 'live' ? 'Playing now: ' + x.r.pos + ' after ' + x.r.thru + ' holes' : 'Finished ' + x.r.pos + ' of ' + x.r.of) + ' · ' + x.r.score) + '</span></span></li>';
       });

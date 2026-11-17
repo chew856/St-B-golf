@@ -37,6 +37,7 @@ body.portal .pl-seg button.is-empty span { color: var(--text-3); }
 .pl-chip small { font-size: 0.8125rem; font-weight: 400; color: var(--text-2); }
 .pl-chip.on { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); }
 .pl-chip.on small { color: var(--on-dark-2); }
+.pl-chip:disabled { cursor: default; color: var(--text-3); border-color: var(--border); background: var(--sage-50); }
 .pl-none { font-size: 0.9375rem; color: var(--text-2); margin: 0; padding: 12px 14px; background: var(--sage-50); border-radius: var(--radius-ctl); }
 
 /* ---------- Sheets ---------- */

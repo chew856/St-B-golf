@@ -425,7 +425,7 @@
     'a guest': 'un invité',
     'a public golfer': 'un golfeur public'
   });
-  pat(/^You are joining (.+)\.$/, function (m) {
+  pat(/^You are joining (.+?)\.?$/, function (m) {
     return 'Vous vous joignez à ' + et(m[1].replace(/\ba guest\b/, 'un invité').replace(/(\d+) guests\b/, '$1 invités').replace(/\ba public golfer\b/, 'un golfeur public').replace(/(\d+) public golfers\b/, '$1 golfeurs publics')) + '.';
   });
   pat(/^(\d+) holes \(set by the group\)$/, '$1 trous (fixé par le groupe)');
@@ -443,7 +443,7 @@
   pat(/^(\d+) holes · (Cart|Walking) · (.+)$/, function (m) { return m[1] + ' trous · ' + T(m[2]) + ' · ' + (m[3] === 'Just you' ? 'Vous seul' : 'Avec ' + et(m[3].replace(/^With /, ''))); });
   pat(/^(.+) · (.+) · (\d+) holes$/, function (m) { return T(m[1]) + ' · ' + T(m[2]) + ' · ' + m[3] + ' trous'; });
   pat(/^(With [A-Z\d].*|A solo round)( · (\d+)h (\d+)m)?$/, function (m) {
-    return (m[1] === 'A solo round' ? 'Une partie en solo' : 'Avec ' + et(m[1].replace(/^With /, ''))) + (m[2] ? ' · ' + m[3] + ' h ' + m[4] : '');
+    return (m[1] === 'A solo round' ? 'Une partie en solo' : 'Avec ' + et(m[1].replace(/^With /, ''))) + (m[2] ? ' · ' + m[3] + NB + 'h' + NB + m[4] + NB + 'min' : '');   /* a length, "4 h 15 min", not a clock time */
   });
   add({
     'This tee time has changed. Please check with the golf shop': 'Cette heure de départ a changé. Veuillez vérifier auprès de la boutique du pro',
@@ -897,12 +897,15 @@
   pat(/^Show all \((\d+)\)$/, 'Tout afficher ($1)');
   pat(/^(.+) keeps scores and results private$/, '$1 garde ses scores et résultats privés');
   pat(/^(Final standing|Standing) (T?\d+) of (\d+) · (\d+) points$/, function (m) { return (m[1] === 'Standing' ? 'Rang ' : 'Rang final ') + m[2].replace(/^T/, 'ex aequo ') + ' sur ' + m[3] + ' · ' + m[4] + ' points'; });
-  pat(/^Last nights: (.+)$/, function (m) { return 'Dernières soirées' + NB + ': ' + m[1].replace(/ pts \(T?(\d+)\)/g, function (x, n) { return ' pts (' + (x.indexOf('(T') >= 0 ? 'ex aequo ' : '') + n + (n === '1' ? 're' : 'e') + ')'; }); });
+  pat(/^Last nights: (.+)$/, function (m) { return 'Dernières soirées' + NB + ': ' + m[1].replace(/ (pts?) \(T?(\d+)\)/g, function (x, u, n) { return ' ' + u + ' (' + (x.indexOf('(T') >= 0 ? 'ex aequo ' : '') + n + (n === '1' ? 're' : 'e') + ')'; }); });
   pat(/^(Playing now: (T?\d+) after (\d+) holes|Finished (T?\d+) of (\d+)) · (.+)$/, function (m) {
     var a = m[2] ? 'En jeu' + NB + ': ' + m[2].replace(/^T/, 'ex aequo ') + ' après ' + m[3] + ' trous' : 'Terminé ' + m[4].replace(/^T/, 'ex aequo ') + ' sur ' + m[5];
     return a + ' · ' + m[6].replace(/ net$/, ' net').replace(/\bE net\b/, 'N net');
   });
   pat(/^(T?\d+), (.+)$/, function (m) { return m[1].replace(/^T/, 'ex aequo ') + ', ' + m[2]; });
+  /* A tied place on its own in a standings column (league and event tables): "T2" -> "É2" (égalité, as on Canadian
+     French leaderboards; as narrow as "T2"). Sentences say "ex aequo". */
+  pat(/^T(\d+)$/, 'É$1');
   pat(/^(\d+) spots? open$/, function (m) { return m[1] + ' ' + pl(m[1], 'place libre', 'places libres'); });
   pat(/^Cancel request to join (.+)$/, 'Annuler la demande pour se joindre à $1');
   pat(/^Request to join (.+), (.+)$/, function (m) { return 'Demander à se joindre à ' + et(m[1]) + ', ' + m[2]; });
@@ -1468,7 +1471,7 @@
   });
   pat(/^(Dues|Golf|Pro Shop|Dining|Events|Lessons|Other)( · (Golf shop|Gallery Taphouse|Club events|Club office))?$/, function (m) { return CAT[m[1]] + (m[2] ? ' · ' + SRC[m[3]] : ''); });
   pat(/^(.+) will go toward your next charges$/, '$1 sera appliqué à vos prochains frais');
-  pat(/^(Past due · )?(.+) statement$/, function (m) { return (m[1] ? 'En souffrance · ' : '') + 'Relevé de ' + m[2]; });
+  pat(/^(Past due · )?(.+) statement$/, function (m) { return (m[1] ? 'En souffrance · ' : '') + 'Relevé ' + (/^[aeiouyàâéèêîôû]/i.test(m[2]) ? 'd’' : 'de ') + m[2]; });   /* d’octobre, d’avril, d’août */
   pat(/^New charges will be on your (.+) statement$/, 'Les nouveaux frais figureront sur votre relevé de $1');
   pat(/^(.+) is more than 30 days old\. If you have already paid, you can ignore this\.$/, '$1 date de plus de 30 jours. Si vous avez déjà payé, ne tenez pas compte de ce message.');
   pat(/^This month · (.+) to date$/, 'Ce mois-ci · $1 à ce jour');

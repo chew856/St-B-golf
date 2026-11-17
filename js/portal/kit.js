@@ -245,7 +245,9 @@
     if (!p) return '';
     const viewer = viewerId || (Portal.member && Portal.member() ? Portal.member().id : null);
     if (p.memberId) {
-      const m = Club.members.get(p.memberId); const full = m ? m.firstName + ' ' + m.lastName : (p.name || 'A member');
+      const m = Club.members.get(p.memberId);
+      if (!m && !p.name) return 'Former member';   /* the record is gone: never "A M." */
+      const full = m ? m.firstName + ' ' + m.lastName : p.name;
       if (p.memberId === viewer) return full;
       const friends = Portal.friends && viewer ? Portal.friends.friendsOf(viewer) : [];
       return friends.indexOf(p.memberId) >= 0 ? full : Portal.shortName(full);

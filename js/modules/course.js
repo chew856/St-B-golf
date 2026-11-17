@@ -736,6 +736,7 @@
   /* ======================================================================
      Tab: Course status
      ====================================================================== */
+  let statusOff = null;   /* removes the Status tab's document keydown and window resize listeners */
   function tabStatus(panel, initialHole) {
     const start = Math.round(+initialHole);
     let sel = start >= 1 && start <= 18 ? start : 0;   // selected hole, 0 = none
@@ -986,6 +987,9 @@
     }
     let rt = 0;
     function onResize() { if (!alive()) return; clearTimeout(rt); rt = setTimeout(function () { layout(); if (hot) setHot(hot); }, 120); }
+    /* Removed when this tab is drawn again or staff leave the page (the module's cleanup), not only on the next key press */
+    if (statusOff) statusOff();
+    statusOff = function () { document.removeEventListener('keydown', onKey); window.removeEventListener('resize', onResize); clearTimeout(rt); statusOff = null; };
     document.addEventListener('keydown', onKey);
     window.addEventListener('resize', onResize);
 
@@ -1493,7 +1497,7 @@
         if (!first) { try { history.replaceState(null, '', '#/course/' + id); } catch (e) { /* ignore */ } }
         first = false;
       });
-      return function () {};
+      return function () { if (statusOff) statusOff(); };
     }
   });
 })();

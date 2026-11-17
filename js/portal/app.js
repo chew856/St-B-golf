@@ -67,7 +67,7 @@
       const field = ui.$('[name=memberNo]', form);
       ui.$$('.field-error', form).forEach(function (n) { n.remove(); });
       if (!m) { field.classList.add('invalid'); field.insertAdjacentHTML('afterend', '<span class="field-error">We could not find that member number. Check your membership card.</span>'); field.focus(); return; }
-      if (m.status === 'resigned') { field.classList.add('invalid'); field.insertAdjacentHTML('afterend', '<span class="field-error">This membership is no longer active. Please call the club office.</span>'); return; }
+      if (m.status === 'resigned') { field.classList.add('invalid'); field.insertAdjacentHTML('afterend', '<span class="field-error">This membership is no longer active. Please call the club office.</span>'); field.focus(); return; }
       enter(m.id);
     });
     ui.on(root, 'click', '.p-demo-btn', function (e, b) { enter(b.dataset.id); });

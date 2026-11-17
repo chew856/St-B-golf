@@ -38,9 +38,23 @@
   function datesLine(lg) { return dshort(lg.start) + ' to ' + dshort(FL.endDate(lg)); }
   function canInvite(lg, me) { const st = FL.status(lg); return isCreator(lg, me) && (st === 'forming' || st === 'waiting'); }
   function invitesFor(me) { return FL.invitesFor(me).sort(function (a, b) { return String(a.start).localeCompare(String(b.start)); }); }
-  function snapshot(lg) { return { members: JSON.parse(JSON.stringify(lg.members || [])), cancelled: !!lg.cancelled, cancelledAt: lg.cancelledAt || null }; }
+  /* Undo reverses only its own action: one player's entry (mid given), or the cancelled flag. Restoring a copy of
+     the whole member list would also reverse later changes (an accept, another removal, an invite). */
+  function snapshot(lg, mid) {
+    if (!mid) return { cancelled: !!lg.cancelled, cancelledAt: lg.cancelledAt || null };
+    const list = lg.members || [], x = list.find(function (y) { return y.memberId === mid; });
+    return { mid: mid, entry: x ? JSON.parse(JSON.stringify(x)) : null, index: x ? list.indexOf(x) : -1 };
+  }
   function undoToast(msg, lgId, snap, after) {
-    ui.toast(msg, null, { action: { label: 'Undo', onClick: function () { S.update('friendLeagues', lgId, snap); ui.toast('Undone'); if (after) after(); } } });
+    ui.toast(msg, null, { action: { label: 'Undo', onClick: function () {
+      const cur = FL.get(lgId); if (!cur) return;
+      if (snap.mid) {
+        const list = (cur.members || []).filter(function (y) { return y.memberId !== snap.mid; }).map(function (y) { return Object.assign({}, y); });
+        if (snap.entry) list.splice(snap.index < 0 ? list.length : Math.min(snap.index, list.length), 0, snap.entry);
+        S.update('friendLeagues', lgId, { members: list });
+      } else S.update('friendLeagues', lgId, snap);
+      ui.toast('Undone'); if (after) after();
+    } } });
   }
   function statusPill(lg) {
     const st = FL.status(lg);
@@ -69,7 +83,7 @@
   }
   function decline(me, id, after) {
     const lg = FL.get(id); if (!lg) return;
-    const snap = snapshot(lg); FL.respond(id, me, false);
+    const snap = snapshot(lg, me); FL.respond(id, me, false);
     undoToast('Invite to ' + lg.name + ' declined', id, snap, after);
   }
   /** Accept and Decline buttons in any container (Requests tab, league list, league page). */
@@ -83,7 +97,7 @@
     const st = FL.status(lg);
     if (st !== 'active' && st !== 'complete') return '';
     const s = FL.standings(lg), row = s.rows.find(function (r) { return r.memberId === me; });
-    if (!row || row.pos === '–') return st === 'complete' ? '' : 'No games played yet';
+    if (!row || row.pos === '–') return st === 'complete' ? '' : row && row.played ? 'No week is complete yet' : 'No games played yet';
     return (st === 'complete' ? 'You finished ' : 'Your place: ') + row.pos + ' of ' + s.rows.length;
   }
   function playersText(lg) {
@@ -216,7 +230,7 @@
       r.weeks.forEach(function (wk) {
         const wp = s.weekPoints[wk.week] && s.weekPoints[wk.week][r.memberId];
         h += '<td class="fl-wk' + (wk.week === s.weekNow && FL.status(lg) === 'active' ? ' is-now' : '') + '"><div class="fl-cells">' + wk.slots.map(function (sl) { return cellHTML(lg, me, s, sl, r.memberId); }).join('') + '</div>' +
-          (wp ? '<span class="fl-wp">' + esc(wp.points + ' pts') + '</span>' : '') + '</td>';
+          (wp ? '<span class="fl-wp">' + esc(wp.points + (wp.points === 1 ? ' pt' : ' pts')) + '</span>' : '') + '</td>';
       });
       return h + '<td class="fl-num fl-strong">' + esc(valText(lg, r.total)) + '</td></tr>';
     }
@@ -289,7 +303,7 @@
       return { value: id, label: fullName(id), sub: x && x.status === 'declined' ? 'Declined before' : (member(id) && member(id).handicap != null ? 'Handicap ' + fmt.handicap(member(id).handicap) : '') };
     }), onPick: function (id) {
       const cur = FL.get(lg.id); if (!cur) return;
-      const snap = snapshot(cur);
+      const snap = snapshot(cur, id);
       FL.invite(lg.id, id, teamId || null);
       undoToast('Invite sent to ' + fullName(id), lg.id, snap, after);
       if (after) after();
@@ -314,7 +328,7 @@
     ui.on(host, 'click', 'tr.fl-prow', function (e, tr) { if (e.target.closest('button')) return; const b = ui.$('[data-fl=player]', tr); if (b) b.click(); });
     ui.on(host, 'click', '[data-fl=invite]', function (e, b) { const lg = FL.get(id); if (lg) openInvite(lg, me, b.dataset.team || null, draw); });
     ui.on(host, 'click', '[data-fl=remove]', function (e, b) {
-      const lg = FL.get(id); if (!lg) return; const snap = snapshot(lg), mid = b.dataset.mid;
+      const lg = FL.get(id); if (!lg) return; const mid = b.dataset.mid, snap = snapshot(lg, mid);
       FL.removeMember(id, mid); draw();
       undoToast(nameFor(mid, me) + ' removed from the league', id, snap, draw);
     });
@@ -523,7 +537,13 @@
     ui.on(host, 'click', '[data-act=add-team]', function () { st.teams.push({ name: '', members: [] }); st.err = []; draw(); const x = ui.$('[data-tname="' + (st.teams.length - 1) + '"]', host); if (x) x.focus(); });
     ui.on(host, 'click', '[data-delteam]', function (e, b) {
       const i = +b.dataset.delteam, gone = st.teams[i]; st.teams.splice(i, 1); st.err = []; draw();
-      ui.toast('Removed the team ' + (String(gone.name).trim() || 'Team ' + (i + 1)), null, { action: { label: 'Undo', onClick: function () { st.teams.splice(i, 0, gone); draw(); } } });
+      ui.toast('Removed the team ' + (String(gone.name).trim() || 'Team ' + (i + 1)), null, { action: { label: 'Undo', onClick: function () {
+        if (!host.isConnected) return;   /* the form was left: nothing to put back */
+        if (st.teams.length >= MAX_TEAMS) { ui.toast('There is no room for another team', 'bad'); return; }
+        /* Friends placed on another team since then stay there: one friend is never on two teams */
+        const back = { name: gone.name, members: gone.members.filter(function (id) { return placedOn(id) < 0; }).slice(0, st.teamSize) };
+        st.teams.splice(Math.min(i, st.teams.length), 0, back); st.err = []; draw();
+      } } });
     });
     draw(false);
     return function () { Portal.actionBar.hide(); };

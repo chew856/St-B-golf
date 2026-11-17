@@ -162,7 +162,7 @@
     'For your receipt.': 'Pour votre reçu.',
     'Please check the highlighted fields': 'Veuillez vérifier les champs en surbrillance',
     'That email address does not look right.': 'Cette adresse courriel ne semble pas valide.',
-    'Enter a 10-digit phone number, for example 204-555-0123.': 'Entrez un numéro de téléphone à 10 chiffres, par exemple 204-555-0123.',
+    'Enter a 10-digit phone number, for example (204) 555-0123.': 'Entrez un numéro de téléphone à 10 chiffres, par exemple (204) 555-0123.',
     'Enter your email for the receipt.': 'Entrez votre courriel pour le reçu.',
     'Processing payment': 'Paiement en cours',
 
@@ -171,6 +171,10 @@
     'Previous month': 'Mois précédent',
     'Next month': 'Mois suivant',
     'Clear': 'Effacer',
+    /* the search box at the top of long lists */
+    'Search': 'Rechercher',
+    'Search the list': 'Rechercher dans la liste',
+    'No matches': 'Aucun résultat',
 
     /* ---------- Card form (js/core/cards.js) and checkout (Club.checkout) ---------- */
     'Card': 'Carte',

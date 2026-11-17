@@ -165,7 +165,8 @@
   Club.register({
     id: 'feedback', label: 'Visit feedback', icon: 'star', section: 'Administration', order: 25,
     /* Low ratings from the last two weeks nobody has followed up yet */
-    badge: function () { const lo = Club.date.addDays(today(), -F.WINDOW_DAYS); const n = F.all().filter(function (d) { return isLow(d) && !d.followedUp && d.visitDate >= lo; }).length; return n || null; },
+    /* The same count as the page's Low ratings tile ("N to follow up"): low ratings in the page's period not yet followed up */
+    badge: function () { const n = inPeriod().filter(function (d) { return isLow(d) && !d.followedUp; }).length; return n || null; },
     search: function (q) {
       if (q.indexOf('feedback') < 0 && q.indexOf('rating') < 0) return [];
       return [{ label: 'Visit feedback', sub: 'Ratings for rounds, meals and lessons', href: 'feedback', icon: 'star' }];

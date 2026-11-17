@@ -72,10 +72,10 @@
       const its = dept === 'Dues' ? [] : amount > 0 ? items || [] : (items || []).map(function (it) { return { name: it.name, qty: -it.qty, amount: -it.amount }; });
       entries.push({ key: key, date: date, amount: amount, dept: dept, items: its, online: !!online, ref: ref || null });
     }
-    const receipts = all('receipts'), byCharge = {}, hasRef = {}, publicRef = {};
+    const receipts = all('receipts'), byCharge = {}, hasRef = {}, publicRef = {}, publicKind = {};
     receipts.forEach(function (r) {
       if (r.chargeId) byCharge[r.chargeId] = r;
-      if (r.refId) { hasRef[r.refId] = 1; if (r.source === 'public') publicRef[r.refId] = 1; }
+      if (r.refId) { hasRef[r.refId] = 1; if (r.source === 'public') { publicRef[r.refId] = 1; publicKind[r.refId + ':' + r.kind] = 1; } }
     });
     const payIds = {}; all('payments').forEach(function (p) { payIds[p.id] = 1; });
 
@@ -112,9 +112,19 @@
       add(key, r.date, r.kind === 'credit' ? -amt : amt, receiptDept(r), itemsOf(r.lines, 'name', 'price'), r.channel === 'online', { label: r.title || 'Purchase', receiptId: r.id });
     });
 
-    /* 3. Green fees paid online by public golfers, when the payment has no receipt of its own */
+    /* 3. Green fees paid online by public golfers, when the payment has no receipt of its own.
+          An undone payment (Club.undo: the original gets reversedBy, a copy with a negative amount gets reverses) nets
+          to nothing. Neither is counted, except that when the original's sale receipt is counted above with no credit
+          receipt to offset it, the reversal takes it back, once, at the card amount the receipt counted. */
+    const pubPay = {}; all('publicPayments').forEach(function (p) { pubPay[p.id] = p; });
     all('publicPayments').forEach(function (p) {
-      if (!p.publicPlayerId || p.status !== 'paid' || publicRef[p.id]) return;
+      if (!p.publicPlayerId || p.status !== 'paid') return;
+      if (p.reverses) {
+        const o = pubPay[p.reverses];
+        if (o && publicKind[o.id + ':sale'] && !publicKind[o.id + ':credit']) add('p:' + p.publicPlayerId, p.date, -(o.giftCardId ? num(o.cardAmount) : num(o.amount)), 'Golf', [], true, { label: 'Green fees paid online, undone' });
+        return;
+      }
+      if (publicRef[p.id] || p.reversedBy) return;
       add('p:' + p.publicPlayerId, p.date, p.giftCardId ? num(p.cardAmount) : num(p.amount), 'Golf', itemsOf(p.lines, 'label', 'amount'), true, { label: 'Green fees paid online', publicPaymentId: p.id });
     });
 
@@ -801,11 +811,12 @@
        came-once        public golfers with one paid round on file and nothing in the 30 days or more since */
   const ONE_DAY_VISITS = 4, NEW_MIN_DAYS = 14, NEW_MAX_DAYS = 90, ONCE_DAYS = 30, EXTRA_ITEM = /^(power )?cart\b|guest green fee/i;
   function spendWindow(ctx) { const f = ledger(ctx).first.spend; if (!f || f > ctx.to) return null; const from = spendFrom(ctx), days = H.spanDays(from, ctx.to); return { from: from, days: days, months: days / MONTH, ok: days >= MIN_SPEND_DAYS }; }
-  /** Every active member, with their figures for the period (zeros when nothing is on file). */
+  /** Every active member who had joined by the end of the period, with their figures for it (zeros when nothing is on
+      file). Someone who joined later could not have spent in the period, so for a past period they are left out. */
   function activeMembers(ctx) {
     return H.memo(ctx, 'cl-active', function () {
       const cur = current(ctx);
-      return all('members').filter(function (m) { return m.status === 'active'; }).map(function (m) { const k = 'm:' + m.id; return cur[k] || Object.assign(blank(k), { spend: 0, visits: 0, diningVisits: 0, who: who(k) }); });
+      return all('members').filter(function (m) { return m.status === 'active' && !(String(m.memberSince || '').slice(0, 10) > ctx.to); }).map(function (m) { const k = 'm:' + m.id; return cur[k] || Object.assign(blank(k), { spend: 0, visits: 0, diningVisits: 0, who: who(k) }); });
     });
   }
   function reachableClients(ctx) { const cur = current(ctx); return Object.keys(cur).map(function (k) { return cur[k]; }).filter(reachable); }

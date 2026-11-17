@@ -451,10 +451,18 @@
     for (let i = 0; i < sel.length; i++) { const b = page.querySelector(sel[i]); if (b && !(panel && panel.contains(b))) { b.click(); return; } }
     Club.app.go('accounting/' + id);
   }
-  /** Re-runs fn when any of the keys change, while the panel is on the page (unsubscribes itself once it is gone). */
+  /** Re-runs fn when any of the keys change, while the panel is on the page (unsubscribes itself once it is gone).
+      The Accounting page does not call a tab's cleanup, so every watch is also listed here and swept when a tab is drawn
+      or staff leave the page: subscriptions never pile up across visits. */
+  const watching = [];
+  function sweep() { watching.slice().forEach(function (w) { if (!w.panel.isConnected) w.stop(); }); }
+  window.addEventListener('hashchange', sweep);   /* runs after the router has drawn the next page */
   function watch(panel, keys, fn) {
+    sweep();
     let t = null, unsubs = [];
-    const stop = function () { clearTimeout(t); unsubs.forEach(function (u) { u(); }); unsubs = []; };
+    const stop = function () { clearTimeout(t); unsubs.forEach(function (u) { u(); }); unsubs = []; const i = watching.indexOf(me); if (i >= 0) watching.splice(i, 1); };
+    const me = { panel: panel, stop: stop };
+    watching.push(me);
     unsubs = keys.map(function (k) {
       return S.subscribe(k, function () {
         if (!panel.isConnected) { stop(); return; }

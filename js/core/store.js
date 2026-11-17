@@ -2,9 +2,23 @@
    Collections are arrays of objects with a string `id`. See SPEC.md for schemas.
 
    Persistence: each collection (and each setObj key, stored as '$key') lives under its own localStorage key,
-   KEY + ':' + name, so a save writes only what changed instead of the whole ~2 MB database. Writes are batched
+   KEY + ':' + name, so a save writes only what changed instead of the whole database. Writes are batched
    for 60 ms; `pending` doubles as the list of names to write. Data saved by older versions as one blob under KEY
-   is split into per-collection keys on first load (see absorbLegacy). */
+   is split into per-collection keys on first load (see absorbLegacy).
+
+   Nov 2026:
+   - Compact form. A list of plain objects is saved as a table (each key name once, repeated strings once; see pack),
+     about a third of the plain JSON, so all three sites' demo data fits well inside Safari's smaller storage. Reading
+     gives back exactly the same documents. Plain JSON saved by older versions still reads, and is rewritten compactly
+     on load.
+   - All or nothing. One save writes every collection changed since the last one, or (storage full) none of them:
+     what was written is put back, the changes stay in this tab and are tried again on the next save, and the "storage
+     is full" warning shows again each time a save fails.
+   - Two tabs. When another tab saves a collection this tab has also changed, the two are merged document by document
+     and field by field (see merge3): the other tab's version, with the fields this tab changed laid on top. A save
+     this tab made a moment ago is kept in `sent` for a few seconds, because the other tab may have written over it
+     without seeing it (both saving within the same few milliseconds); if what arrives lacks it, it is laid back on
+     top and saved again. A document deleted in one tab stays deleted even if the other tab edited it. */
 (function () {
   const KEY = 'stboniface.data.v2';
   const PREFIX = KEY + ':';
@@ -16,6 +30,91 @@
   /* The raw string this tab last read or wrote for each name. A flush compares it with what is in storage now, so a
      save another tab made a moment ago (its storage event not yet delivered) is taken in first, not overwritten. */
   const seen = {};
+  /* name -> { prev: what storage held before this tab's first save in the run (the base its changes were made on),
+     mine: the string it last wrote, changes: what it changed (as in `pending`), at: when the run started } */
+  const sent = {};
+  const SENT_MS = 3000;
+
+  /* ---------- Compact storage form ---------- */
+  const PACK = '~pack';
+  function plain(o) { return o !== null && typeof o === 'object' && !Array.isArray(o) && Object.getPrototypeOf(o) === Object.prototype; }
+  function allPlain(a) { for (let i = 0; i < a.length; i++) if (!plain(a[i])) return false; return true; }
+  /** The keys JSON.stringify would write for x, in its order. */
+  function jsonKeys(x) {
+    const own = Object.keys(x);
+    for (let i = 0; i < own.length; i++) {
+      const v = x[own[i]];
+      if (v === undefined || typeof v === 'function') return own.filter(function (k) { const w = x[k]; return w !== undefined && typeof w !== 'function'; });
+    }
+    return own;
+  }
+  /* A list of plain objects as a table: k = the distinct key lists (shapes); each row = [shape, values in that order].
+     A column of strings (or null) that repeat enough is kept as numbers into d[column]; a column of lists of plain
+     objects (or null) becomes a table of its own in n[column], whose rows are handed back to each document in turn. */
+  function packTable(list) {
+    const shapes = [], shapeAt = new Map(), cols = new Map(), keysOf = new Array(list.length), shapeOf = new Array(list.length);
+    for (let j = 0; j < list.length; j++) {
+      const ks = jsonKeys(list[j]), sig = ks.join('\u0001');
+      let si = shapeAt.get(sig);
+      if (si === undefined) { si = shapes.length; shapeAt.set(sig, si); shapes.push(ks); ks.forEach(function (k) { cols.set(k, true); }); }
+      keysOf[j] = ks; shapeOf[j] = si;
+    }
+    const t = { k: shapes }, dictAt = new Map(), nested = new Map();
+    cols.forEach(function (_, k) {
+      let kind = '', count = null;
+      for (let j = 0; j < list.length; j++) {
+        const v = list[j][k];
+        if (v === null || v === undefined) continue;
+        if (typeof v === 'string') {
+          if (kind === 'n') { kind = 'x'; break; }
+          kind = 's'; if (!count) count = new Map();
+          count.set(v, (count.get(v) || 0) + 1);
+          if (j === 300 && count.size > 280) { kind = 'x'; break; }   /* nearly all different (ids, times): no dictionary */
+        } else if (Array.isArray(v) && allPlain(v)) {
+          if (kind === 's') { kind = 'x'; break; }
+          kind = 'n';
+        } else { kind = 'x'; break; }
+      }
+      if (kind === 's') {
+        const words = Array.from(count.keys()).sort(function (a, b) { return count.get(b) - count.get(a); });
+        let asText = 0, asDict = 0;
+        words.forEach(function (w, i) { const n = count.get(w); asText += n * (w.length + 3); asDict += w.length + 3 + n * (String(i).length + 1); });
+        if (asDict < asText * 0.8) { (t.d = t.d || {})[k] = words; const at = new Map(); words.forEach(function (w, i) { at.set(w, i); }); dictAt.set(k, at); }
+      } else if (kind === 'n') {
+        const all = [];
+        list.forEach(function (x) { const v = x[k]; if (Array.isArray(v)) for (let i = 0; i < v.length; i++) all.push(v[i]); });
+        const sub = packTable(all);
+        nested.set(k, { rows: sub.r, at: 0 }); delete sub.r; (t.n = t.n || {})[k] = sub;
+      }
+    });
+    t.r = new Array(list.length);
+    for (let j = 0; j < list.length; j++) {
+      const x = list[j], ks = keysOf[j], row = new Array(ks.length + 1); row[0] = shapeOf[j];
+      for (let i = 0; i < ks.length; i++) {
+        const k = ks[i], v = x[k], dk = dictAt.get(k), nk = nested.get(k);
+        if (dk && typeof v === 'string') row[i + 1] = dk.get(v);
+        else if (nk && Array.isArray(v)) { row[i + 1] = nk.rows.slice(nk.at, nk.at + v.length); nk.at += v.length; }
+        else row[i + 1] = v;
+      }
+      t.r[j] = row;
+    }
+    return t;
+  }
+  function unpackTable(t, rows) {
+    const d = t.d || {}, n = t.n || {}, out = new Array(rows.length);
+    for (let j = 0; j < rows.length; j++) {
+      const row = rows[j], ks = t.k[row[0]], x = {};
+      for (let i = 0; i < ks.length; i++) {
+        const k = ks[i], v = row[i + 1];
+        x[k] = d[k] && typeof v === 'number' ? d[k][v] : (n[k] && Array.isArray(v) ? unpackTable(n[k], v) : v);
+      }
+      out[j] = x;
+    }
+    return out;
+  }
+  /** What is saved for a value: a list of plain objects as a table, anything else as it is. */
+  function pack(v) { if (!Array.isArray(v) || !v.length || !allPlain(v)) return v; const t = packTable(v); t[PACK] = 1; return t; }
+  function unpack(v) { return v && typeof v === 'object' && !Array.isArray(v) && v[PACK] === 1 && Array.isArray(v.k) && Array.isArray(v.r) ? unpackTable(v, v.r) : v; }
 
   function storedNames() {
     const out = [];
@@ -23,11 +122,12 @@
     catch (e) { /* storage blocked */ }
     return out.sort();
   }
-  function parse(raw) { if (raw == null) return undefined; try { return JSON.parse(raw); } catch (e) { return undefined; } }
+  function parse(raw) { if (raw == null) return undefined; try { return unpack(JSON.parse(raw)); } catch (e) { return undefined; } }
   function readName(name) { let raw = null; try { raw = localStorage.getItem(PREFIX + name); } catch (e) { /* storage blocked */ } return parse(raw); }
+  function serialize(name) { return JSON.stringify(pack(db[name])); }
   function writeName(name) {   /* throws on quota errors */
     if (db[name] === undefined) { localStorage.removeItem(PREFIX + name); seen[name] = null; }
-    else { const str = JSON.stringify(db[name]); localStorage.setItem(PREFIX + name, str); seen[name] = str; }
+    else { const str = serialize(name); localStorage.setItem(PREFIX + name, str); seen[name] = str; }
   }
 
   function load() {
@@ -37,6 +137,18 @@
       const v = parse(raw); if (v !== undefined) { db[name] = v; seen[name] = raw; }
     });
     absorbLegacy();
+    compactOld();
+  }
+  /* Collections saved as plain JSON (before the compact form) are rewritten compactly once. The new copy is smaller
+     than the one it replaces, so this always fits; if it fails anyway, the old copy stays and still reads. */
+  function compactOld() {
+    if (legacy) return;
+    Object.keys(seen).forEach(function (name) {
+      const raw = seen[name];
+      if (!raw || raw.length < 2048 || raw.charAt(0) !== '[' || db[name] === undefined) return;
+      try { const str = serialize(name); if (str.length < raw.length) { localStorage.setItem(PREFIX + name, str); seen[name] = str; } }
+      catch (e) { /* stays in the old form */ }
+    });
   }
 
   /* One-time migration from the single-key format, also run when a tab still on the old code saves the whole
@@ -89,9 +201,9 @@
 
   /* Writes are batched for 60 ms. `pending` records what this tab changed since its last write: it is the set of
      names the next flush writes, and when another tab saves one of them first, this tab's changes are laid back
-     on top of the other tab's data (see the storage listener) instead of being dropped.
+     on top of the other tab's data (see reconcile) instead of being dropped.
      name -> { all: true } or { ids: {id: true}, gone: {id: true} } */
-  let saveTimer = null, pending = {}, warned = false, resetting = false;
+  let saveTimer = null, pending = {}, warnedAt = 0, resetting = false;
   let notifyTimer = null, changed = {};   /* names another tab changed, told to listeners shortly (notifySoon) */
   function touch(coll, id, removed) {
     const p = pending[coll] = pending[coll] || { ids: {}, gone: {} };
@@ -99,14 +211,28 @@
     if (id == null) { pending[coll] = { all: true }; return; }
     if (removed) { p.gone[id] = true; delete p.ids[id]; } else { p.ids[id] = true; delete p.gone[id]; }
   }
+  function unionChanges(a, b) {
+    if (!a) return b; if (!b) return a;
+    if (a.all || b.all) return { all: true };
+    return { ids: Object.assign({}, a.ids, b.ids), gone: Object.assign({}, a.gone, b.gone) };
+  }
+  function freshSent(name) {
+    const q = sent[name];
+    if (q && Date.now() - q.at > SENT_MS) { delete sent[name]; return null; }
+    return q || null;
+  }
   function failed(e) {
     console.warn('Store save failed', e);
-    if (!warned && window.Club && Club.ui && Club.ui.toast) {   /* storage full: say so once rather than fail silently */
-      warned = true;
+    /* Storage full: say so every time a save fails (not more often than the toast stays up), never fail silently. */
+    const now = Date.now();
+    if (now - warnedAt > 3500 && window.Club && Club.ui && Club.ui.toast) {
+      warnedAt = now;
       Club.ui.toast('Changes could not be saved: this browser’s storage is full. Export your data in Settings, then reset the demo data.', 'bad');
     }
   }
-  /* A name that fails to write stays in `pending` and is tried again on the next flush (the data stays in memory). */
+  /* Every name changed since the last save is written, or none: if one write fails (storage full), the ones already
+     written are put back as they were, so storage never holds half of a change (a balance without the charge and
+     receipt behind it). The changes stay in this tab, in `pending`, and are tried again on the next save. */
   function flush() {
     clearTimeout(saveTimer); saveTimer = null;
     if (resetting) return;
@@ -114,18 +240,48 @@
       try { localStorage.setItem(KEY, JSON.stringify(db)); pending = {}; } catch (e) { failed(e); }
       return;
     }
-    let err = null;
-    Object.keys(pending).forEach(function (name) {
-      try {
-        const now = localStorage.getItem(PREFIX + name);
-        if (now !== (seen[name] === undefined ? null : seen[name])) {   /* another tab saved it since: take theirs, mine on top */
-          const theirs = parse(now);
-          if (now == null || theirs !== undefined) { adopt(name, theirs); notifySoon(); }
-        }
-        writeName(name); delete pending[name];
-      } catch (e) { err = e; }
+    const names = Object.keys(pending);
+    if (!names.length) return;
+    /* Another tab may have saved some of these a moment ago (its storage event not delivered yet): take theirs first. */
+    names.forEach(function (name) {
+      let now = null;
+      try { now = localStorage.getItem(PREFIX + name); } catch (e) { return; }
+      if (now !== (seen[name] === undefined ? null : seen[name])) { reconcile(name, now); seen[name] = now; notifySoon(); }
     });
-    if (err) failed(err);
+    const done = [], t = Date.now();
+    try {
+      Object.keys(pending).forEach(function (name) {
+        const before = seen[name] === undefined ? null : seen[name];
+        writeName(name);
+        done.push({ name: name, before: before });
+      });
+    } catch (e) {
+      done.reverse().forEach(function (w) {
+        try { if (w.before == null) localStorage.removeItem(PREFIX + w.name); else localStorage.setItem(PREFIX + w.name, w.before); seen[w.name] = w.before; }
+        catch (err) { console.error('Store: could not put back ' + w.name, err); }
+      });
+      failed(e);
+      return;
+    }
+    done.forEach(function (w) {
+      const q = freshSent(w.name);
+      sent[w.name] = { prev: q ? q.prev : w.before, mine: seen[w.name], changes: unionChanges(q && q.changes, pending[w.name]), at: q ? q.at : t };
+      delete pending[w.name];
+    });
+  }
+  /* A counter (a name ending in Seq, e.g. $receiptSeq) is written at once, so another tab taking the next number a
+     moment later reads this one. Ahead of the records it numbers is harmless (a gap); behind never happens. */
+  function writeNow(name) {
+    if (legacy || resetting) return;
+    try {
+      const now = localStorage.getItem(PREFIX + name);
+      if (now !== (seen[name] === undefined ? null : seen[name])) { reconcile(name, now); seen[name] = now; notifySoon(); }
+      const before = seen[name] === undefined ? null : seen[name];
+      writeName(name);
+      const q = freshSent(name);
+      sent[name] = { prev: q ? q.prev : before, mine: seen[name], changes: { all: true }, at: q ? q.at : Date.now() };
+      delete pending[name];
+    } catch (e) { /* stays pending: the next save writes it, or reports the failure */ }
   }
   function save() {
     clearTimeout(saveTimer);
@@ -136,8 +292,18 @@
     (listeners[coll] || []).slice().forEach(function (fn) { try { fn(db[coll]); } catch (e) { console.error(e); } });
     (listeners['*'] || []).slice().forEach(function (fn) { try { fn(coll); } catch (e) { console.error(e); } });
   }
+  /* Unique within this tab even when thousands are made in one millisecond (bulk seeding): the time, a counter for
+     ids made in the same millisecond, and five random characters against another tab doing the same. */
+  let uidT = 0, uidN = 0;
+  function rand5() {
+    let n;
+    try { const a = new Uint32Array(1); window.crypto.getRandomValues(a); n = a[0] % 60466176; } catch (e) { n = Math.floor(Math.random() * 60466176); }
+    return ('0000' + n.toString(36)).slice(-5);
+  }
   function uid(prefix) {
-    return (prefix || 'id') + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    const t = Date.now();
+    if (t === uidT) uidN++; else { uidT = t; uidN = 0; }
+    return (prefix || 'id') + '_' + t.toString(36) + (uidN ? uidN.toString(36) : '') + rand5();
   }
 
   const store = {
@@ -164,7 +330,11 @@
     replace: function (coll, arr) { db[coll] = arr; touch(coll); save(); emit(coll); },
     /** Settings-style single object stored under a key. */
     getObj: function (key, fallback) { return db['$' + key] !== undefined ? db['$' + key] : fallback; },
-    setObj: function (key, val) { db['$' + key] = val; touch('$' + key); save(); emit('$' + key); },
+    setObj: function (key, val) {
+      db['$' + key] = val; touch('$' + key);
+      if (/Seq$/.test(key)) writeNow('$' + key);
+      save(); emit('$' + key);
+    },
     /** Seed a collection once. `make` is an array or a function returning one. A collection that has been seeded
         is remembered in $seeded, so one the user has emptied (e.g. every promo code deleted) stays empty. */
     seed: function (coll, make) {
@@ -198,7 +368,6 @@
       return readName(coll);
     }
   };
-
   /* ---------- Deterministic random helpers for seed data ---------- */
   let s = 1924;
   function rand() { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; }
@@ -221,9 +390,112 @@
 
   /* Another tab (staff system, members' portal or public site) saved. Each saved collection arrives as its own
      storage event: take that collection at once, so this tab never writes back a stale copy; if this tab has
-     changes to it not yet written, lay them back on top (document by document) and write the result now, so
-     neither tab's work is lost. Listeners are told shortly after, once per burst, so one save in another tab
-     that wrote several collections re-renders this tab once. */
+     changes to it the other tab may not have (see reconcile), merge them in and write the result now, so neither
+     tab's work is lost. Listeners are told shortly after, once per burst, so one save in another tab that wrote
+     several collections re-renders this tab once. */
+
+  function same(a, b) {
+    if (a === b) return true;
+    if (a === undefined || b === undefined || a === null || b === null || typeof a !== 'object' || typeof b !== 'object') return false;
+    return JSON.stringify(a) === JSON.stringify(b);
+  }
+  /** Field by field: theirs, with the fields this tab changed (mine differs from base) laid on top. When both
+      changed a field, an unsaved change here (`mineWins`) wins; one this tab already saved gives way to theirs. */
+  function mergeFields(base, mine, theirs, mineWins, out) {
+    const res = {}; let differs = false;
+    const keys = Object.keys(theirs);
+    Object.keys(mine).forEach(function (k) { if (!Object.prototype.hasOwnProperty.call(theirs, k)) keys.push(k); });
+    keys.forEach(function (k) {
+      const m = mine[k], t = theirs[k], b = base ? base[k] : undefined;
+      let v = t;
+      if (!same(m, b) && (mineWins || same(t, b))) { v = m; if (!same(m, t)) differs = true; }
+      if (v !== undefined) res[k] = v;
+    });
+    /* Fill `out` (this tab's own object, so code holding it sees the result) or a new one */
+    const target = out || {};
+    if (out) Object.keys(out).forEach(function (k) { if (!Object.prototype.hasOwnProperty.call(res, k)) delete out[k]; });
+    Object.assign(target, res);
+    return { value: target, differs: differs };
+  }
+  function byId(arr) { const m = new Map(); (arr || []).forEach(function (d) { if (d && d.id != null) m.set(String(d.id), d); }); return m; }
+  /** Three-way merge of one saved name. base: what this tab's changes were made on; mine: this tab's copy; theirs:
+      what another tab saved; ch: what this tab changed; local: its unsaved changes (they win a clash).
+      -> { value, differs (the result has something theirs lacks, so it must be saved again) } */
+  function merge3(name, base, mine, theirs, ch, local) {
+    if (Array.isArray(mine) && (Array.isArray(theirs) || theirs === undefined)) {
+      const gone = theirs === undefined;   /* the whole collection removed elsewhere: keep only what this tab changed */
+      const T = gone ? [] : theirs;
+      const bMap = byId(Array.isArray(base) ? base : []), mMap = byId(mine), tMap = byId(T);
+      /* A collection seeded here and in another tab at the same moment: one copy only (the same one in both tabs). */
+      if (ch.all && !gone && !bMap.size && tMap.size && (!Array.isArray(base) || !base.length)) {
+        const mineStr = JSON.stringify(pack(mine)), theirStr = JSON.stringify(pack(theirs));
+        return mineStr < theirStr ? { value: mine, differs: true } : { value: theirs, differs: false };
+      }
+      let ids;
+      if (ch.all) { ids = new Set(); bMap.forEach(function (_, id) { ids.add(id); }); mMap.forEach(function (_, id) { ids.add(id); }); }
+      else ids = new Set(Object.keys(ch.ids || {}).concat(Object.keys(ch.gone || {})));
+      const out = T.slice(), at = new Map(); out.forEach(function (d, i) { if (d && d.id != null) at.set(String(d.id), i); });
+      const drop = new Set(), add = [];
+      let differs = false;
+      ids.forEach(function (id) {
+        const b = bMap.get(id), m = mMap.get(id), t = tMap.get(id);
+        const mineWins = !!local && (!!local.all || !!(local.ids && local.ids[id]) || !!(local.gone && local.gone[id]));
+        if (m === undefined) {   /* deleted here */
+          if (t !== undefined) { drop.add(id); differs = true; }
+          return;
+        }
+        if (b === undefined) {   /* added here */
+          if (t === undefined) { add.push(m); differs = true; }
+          else if (mineWins && !same(m, t)) { out[at.get(id)] = mergeFields(undefined, m, t, true, m).value; differs = true; }
+          return;
+        }
+        if (t === undefined) {   /* deleted in the other tab: it stays deleted, even if edited here */
+          if (gone) { add.push(m); differs = true; }
+          return;
+        }
+        if (same(m, b)) return;   /* not changed here after all */
+        const r = mergeFields(b, m, t, mineWins, m);
+        out[at.get(id)] = r.value;
+        if (r.differs) differs = true;
+      });
+      const value = (drop.size ? out.filter(function (d) { return !(d && d.id != null && drop.has(String(d.id))); }) : out).concat(add);
+      return { value: value, differs: differs };
+    }
+    if (theirs === undefined) return local ? { value: mine, differs: mine !== undefined } : { value: undefined, differs: false };
+    if (name === '$seeded' && plain(mine) && plain(theirs)) {
+      const v = Object.assign({}, theirs, mine);
+      return { value: v, differs: !same(v, theirs) };
+    }
+    if (/Seq$/.test(name) && typeof mine === 'number' && typeof theirs === 'number') return { value: Math.max(mine, theirs), differs: mine > theirs };
+    if (plain(mine) && plain(theirs) && (base === undefined || plain(base))) return mergeFields(base || {}, mine, theirs, !!local, null);
+    if (same(mine, base)) return { value: theirs, differs: false };
+    if (local || same(theirs, base)) return { value: mine, differs: !same(mine, theirs) };
+    return { value: theirs, differs: false };
+  }
+  /* Another tab saved `name` (raw: the string it saved). Take it in, keeping every change of this tab's that it may
+     lack: unsaved ones (pending) and, for a few seconds, ones this tab saved that it may have written over without
+     seeing (sent; dropped early when the other tab's save replaced this tab's own, oldRaw, so it had seen it).
+     Returns true when this tab must save the result again (its pending names then include `name`). */
+  function reconcile(name, raw, oldRaw) {
+    const p = pending[name];
+    let q = freshSent(name);
+    if (q && oldRaw != null && oldRaw === q.mine) { delete sent[name]; q = null; }
+    const theirs = parse(raw);
+    if (raw != null && theirs === undefined) return false;   /* unreadable: keep this tab's copy */
+    changed[name] = true;
+    if (!p && !q) { if (theirs === undefined) delete db[name]; else db[name] = theirs; return false; }
+    const base = parse(q ? q.prev : seen[name]);
+    const ch = unionChanges(p, q && q.changes);
+    let r;
+    try { r = merge3(name, base, db[name], theirs, ch, p); }
+    catch (e) { console.error('Store: could not merge ' + name + ' from another tab; keeping this tab’s copy', e); return true; }
+    if (r.value === undefined) delete db[name]; else db[name] = r.value;
+    if (!p && !r.differs) { delete sent[name]; return false; }   /* the other tab had all of it */
+    if (!p) pending[name] = ch;
+    return true;
+  }
+  /* Legacy mode only (the whole database under one key): take another tab's copy of one name, with this tab's
+     unsaved documents laid back on top. */
   function adopt(name, theirs) {
     const before = db[name], p = pending[name];
     if (theirs === undefined) delete db[name]; else db[name] = theirs;
@@ -286,18 +558,30 @@
     const name = e.key.slice(PREFIX.length);
     /* What is saved now, which can be newer than this event (a later save, maybe this tab's own, already landed). */
     let now = e.newValue; try { now = localStorage.getItem(e.key); } catch (err) { /* storage blocked */ }
-    if (now === seen[name]) return;   /* nothing this tab does not already have */
-    const theirs = parse(now);
-    if (now != null && theirs === undefined) return;   /* unreadable: keep what this tab has */
-    seen[name] = now;
-    if (adopt(name, theirs)) flush();
+    if (!pending[name] && !freshSent(name)) {   /* nothing of this tab's own to keep: take what is saved now */
+      if (now === seen[name]) return;
+      const theirs = parse(now);
+      if (now != null && theirs === undefined) return;   /* unreadable: keep what this tab has */
+      seen[name] = now;
+      if (theirs === undefined) delete db[name]; else db[name] = theirs;
+      changed[name] = true;
+      notifySoon();
+      return;
+    }
+    /* This tab changed it too. Merge the version the event carries (it may be one that wrote over this tab's own
+       save, which is what is in storage now), or, if this tab already has that one, what is saved now. */
+    const fromEvent = e.newValue !== seen[name];
+    const raw = fromEvent ? e.newValue : now;
+    if (raw === seen[name]) return;
+    const again = reconcile(name, raw, fromEvent ? e.oldValue : undefined);
+    if (now === raw) seen[name] = now;
+    if (again) flush();
     notifySoon();
   });
   /* Write anything still batched before the page goes away or is hidden (closing a tab, following a link,
      switching apps on a phone, which may discard the page without another event). */
   window.addEventListener('pagehide', function () { if (hasPending()) flush(); });
   document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden' && hasPending()) flush(); });
-
   /* ---------- Core seed: tiers, members, staff, course ---------- */
   /* St. Boniface membership categories. IDs are stable (modules reference them); dues are placeholders
      because the club does not publish prices. playWindows are the published times each category may tee off

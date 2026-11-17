@@ -188,7 +188,9 @@
       (short ? '<span class="gc-banner-k">Demo.</span> Not connected to Golf Canada. Scores stay in this demo.' : esc(BANNER)) + '</p></div>';
   }
   function demoPill(txt) { return '<span class="gc-pill">' + esc(txt || 'Demo') + '</span>'; }
-  function diffText(p) { return (p.differential < 0 ? '+' + Math.abs(p.differential).toFixed(1) : p.differential.toFixed(1)); }
+  /* One decimal, with a comma in French ("4,5"); a plus differential shows "+" */
+  function dec1(x) { const s = x < 0 ? '+' + Math.abs(x).toFixed(1) : (+x).toFixed(1); return Club.i18n && Club.i18n.lang && Club.i18n.lang() === 'fr' ? s.replace('.', ',') : s; }
+  function diffText(p) { return dec1(p.differential); }
 
   function historyRows(posts) {
     return posts.map(function (p) {
@@ -250,7 +252,7 @@
     return '<div class="gc-stats">' +
       '<div class="gc-stat"><span class="gc-stat-k">Gross</span><span class="gc-stat-v">' + gross + '</span></div>' +
       '<div class="gc-stat"><span class="gc-stat-k">Adjusted</span><span class="gc-stat-v">' + adj + '</span></div>' +
-      '<div class="gc-stat"><span class="gc-stat-k">Differential</span><span class="gc-stat-v">' + esc(diff < 0 ? '+' + Math.abs(diff).toFixed(1) : diff.toFixed(1)) + '</span>' + demoPill() + '</div></div>';
+      '<div class="gc-stat"><span class="gc-stat-k">Differential</span><span class="gc-stat-v">' + esc(dec1(diff)) + '</span>' + demoPill() + '</div></div>';
   }
 
   /* ---------------- #/scores: history, rounds to post, post a score ---------------- */

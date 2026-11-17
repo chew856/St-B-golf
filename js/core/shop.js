@@ -675,11 +675,11 @@
     function whoHTML() {
       if (ctx.customer) {
         return '<div class="sh-who"><div class="sh-who-name">' + Club.icon('user') + '<span>' + esc(ctx.customer.name) + '</span></div>' +
-          '<div class="field"><label for="sh-phone">Phone for this order *</label><input class="input" id="sh-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel-national" maxlength="20" value="' + esc(d.phone) + '" placeholder="204-555-0123"><span class="field-hint">The golf shop calls if there is a question about your order.</span></div></div>';
+          '<div class="field"><label for="sh-phone">Phone for this order *</label><input class="input" id="sh-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel-national" maxlength="20" value="' + esc(d.phone) + '" placeholder="(204) 555-0123"><span class="field-hint">The golf shop calls if there is a question about your order.</span></div></div>';
       }
       return '<div class="sh-who"><p class="sh-who-note">Ordering as a guest. ' + (P ? '' : '<a href="#/signin" data-sh-signin="1">Sign in</a> to see your orders on any device.') + '</p><div class="form-grid">' +
         '<div class="field span-2"><label for="sh-name">Name for the order *</label><input class="input" id="sh-name" name="name" autocomplete="name" maxlength="60" value="' + esc(d.name) + '"></div>' +
-        '<div class="field"><label for="sh-gphone">Phone *</label><input class="input" id="sh-gphone" name="phone" type="tel" inputmode="tel" autocomplete="tel-national" maxlength="20" value="' + esc(d.phone) + '" placeholder="204-555-0123"></div>' +
+        '<div class="field"><label for="sh-gphone">Phone *</label><input class="input" id="sh-gphone" name="phone" type="tel" inputmode="tel" autocomplete="tel-national" maxlength="20" value="' + esc(d.phone) + '" placeholder="(204) 555-0123"></div>' +
         '<div class="field"><label for="sh-email">Email *</label><input class="input" id="sh-email" name="email" type="email" inputmode="email" autocomplete="email" maxlength="120" value="' + esc(d.email) + '"><span class="field-hint">For your receipt.</span></div></div></div>';
     }
     function drawBasket() {
@@ -763,7 +763,7 @@
       ui.$$('.invalid', panel).forEach(function (x) { if (!x.closest('.cc, .pr-box, .gc-box')) { x.classList.remove('invalid'); x.removeAttribute('aria-invalid'); } });
       let ok = true;
       if (!ctx.customer && String(d.name || '').trim().length < 2) { fieldErr('name', 'Enter the name for the order.'); ok = false; }
-      if (!phoneOk(d.phone)) { fieldErr('phone', d.phone ? 'Enter a 10-digit phone number, for example 204-555-0123.' : 'Enter a phone number for the order.'); ok = false; }
+      if (!phoneOk(d.phone)) { fieldErr('phone', d.phone ? 'Enter a 10-digit phone number, for example (204) 555-0123.' : 'Enter a phone number for the order.'); ok = false; }
       if (!ctx.customer && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(d.email || '').trim())) { fieldErr('email', d.email ? 'That email address does not look right.' : 'Enter your email for the receipt.'); ok = false; }
       if (!ok) { if (flow && flow.at() !== 'details') flow.go('details', true); ui.toast('Please check the highlighted fields', 'bad'); const f = ui.$('.sh-pay .invalid', body); if (f) { f.scrollIntoView({ block: 'center', behavior: 'smooth' }); f.focus({ preventScroll: true }); } }
       return ok;

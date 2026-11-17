@@ -10,7 +10,7 @@
       '<div class="field"><label for="pf-first">First name *</label><input class="input" id="pf-first" name="firstName" autocomplete="given-name" maxlength="40" value="' + esc(p.firstName || '') + '"></div>' +
       '<div class="field"><label for="pf-last">Last name *</label><input class="input" id="pf-last" name="lastName" autocomplete="family-name" maxlength="40" value="' + esc(p.lastName || '') + '"></div>' +
       '<div class="field span-2"><label for="pf-email">Email *</label><input class="input" id="pf-email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="120" value="' + esc(p.email || '') + '"></div>' +
-      '<div class="field"><label for="pf-phone">Phone *</label><input class="input" id="pf-phone" name="phone" type="tel" autocomplete="tel-national" inputmode="tel" placeholder="204-555-0123" maxlength="20" value="' + esc(p.phone || '') + '"></div>' +
+      '<div class="field"><label for="pf-phone">Phone *</label><input class="input" id="pf-phone" name="phone" type="tel" autocomplete="tel-national" inputmode="tel" placeholder="(204) 555-0123" maxlength="20" value="' + esc(p.phone || '') + '"></div>' +
       '<div class="field"><label for="pf-postal">Postal code *</label><input class="input pub-postal" id="pf-postal" name="postalCode" autocomplete="postal-code" placeholder="R2H 0A1" maxlength="7" value="' + esc(p.postalCode || '') + '"></div>' +
     '</div>';
   }
@@ -116,7 +116,9 @@
         '<section class="panel pub-auth-panel" data-reveal><div class="panel-body"></div></section></div>';
       Pub.authForm(ui.$('.pub-auth-panel .panel-body', view), mode, function () {
         const to = Pub.afterAuth; Pub.afterAuth = null;
-        location.hash = to || '#/';
+        /* Replace the sign-in page in the history, so Back goes to the page before it (not back to sign in, which now
+           sends a signed-in golfer to My bookings). */
+        location.replace(to || '#/');
       });
     };
   }
@@ -273,7 +275,15 @@
       function draw() {
         const p = Pub.me(); if (!p) return;
         const pays = S.where('publicPayments', function (x) { return x.publicPlayerId === p.id; });
+        /* Paid: everything paid online for tee times and not refunded (green fees, carts and add-ons). Bookings: tee times
+           this golfer is still on (not cancelled or refunded, not removed by the golf shop). */
         const spent = Pub.r2(pays.filter(function (x) { return x.status === 'paid'; }).reduce(function (a, x) { return a + (+x.amount || 0); }, 0));
+        const booked = {};
+        pays.forEach(function (x) {
+          if (x.status === 'refunded') return;
+          const tt = S.find('teeTimes', x.teeTimeId);
+          if (tt && tt.status !== 'cancelled' && (tt.players || []).some(function (pl) { return pl.publicPlayerId === p.id; })) booked[tt.id] = 1;
+        });
         view.innerHTML =
           '<section class="pub-page-head" data-reveal><div class="eyebrow">Public golfer since ' + esc(fmt.date(String(p.createdAt || '').slice(0, 10) || Pub.today())) + '</div><h1>My account</h1><p class="serif">Keep your details up to date so the golf shop can reach you about your tee times.</p></section>' +
           '<div class="pub-acc">' +
@@ -291,7 +301,7 @@
                 '<form class="pub-pwform" novalidate>' + pwField('current', 'Current password', 'current-password') + pwField('password', 'New password', 'new-password', 'At least 8 characters, with a letter and a number.') + pwField('confirm', 'Confirm new password', 'new-password') +
                   '<div class="pub-form-acts"><button type="submit" class="btn">' + Club.icon('key') + '<span>Update password</span></button></div></form>' +
               '</div></section>' +
-              '<section class="panel pub-acc-sum" data-reveal><div class="panel-body"><div><span class="label-caps">Bookings</span><strong class="serif">' + pays.length + '</strong></div><div><span class="label-caps">Green fees paid</span><strong class="serif">' + esc(fmt.money(spent)) + '</strong></div>' +
+              '<section class="panel pub-acc-sum" data-reveal><div class="panel-body"><div><span class="label-caps">Bookings</span><strong class="serif">' + Object.keys(booked).length + '</strong></div><div><span class="label-caps">Paid for tee times</span><strong class="serif">' + esc(fmt.money(spent)) + '</strong></div>' +
                 '<button type="button" class="btn btn-ghost btn-sm" data-act="signout">' + Club.icon('logout') + '<span>Sign out</span></button></div></section>' +
               sectionsHTML(p, true) +   /* short settings panels (side: true) sit here so the right column is not left empty */
             '</div>' +

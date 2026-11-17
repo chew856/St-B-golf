@@ -268,7 +268,7 @@
         const ts = times.filter(function (t) { return toMin(t) >= g[1] && toMin(t) < g[2]; });
         U.$('.pl-times', panel).innerHTML = ts.length ? '<div class="pl-chiprow" role="radiogroup" aria-label="' + g[0] + ' times">' + ts.map(function (t) {
           const on = t === draft.time;
-          return '<button type="button" class="pl-chip' + (on ? ' on' : '') + '" data-time="' + t + '" role="radio" aria-checked="' + on + '"><span class="pl-chip-t">' + esc(F.time(t)) + '</span>' + (draft.pro === 'any' ? '<small>' + esc(proFirst(map[t])) + '</small>' : '') + '</button>';
+          return '<button type="button" class="pl-chip' + (on ? ' on' : '') + '" data-time="' + t + '" role="radio" aria-checked="' + on + '"' + (blocked ? ' disabled' : '') + '><span class="pl-chip-t">' + esc(F.time(t)) + '</span>' + (draft.pro === 'any' ? '<small>' + esc(proFirst(map[t])) + '</small>' : '') + '</button>';
         }).join('') + '</div>' : '<p class="pl-none">Nothing open in the ' + g[0].toLowerCase() + '. Try another time of day or date.</p>';
         const row = U.$('.pl-chiprow', panel), on = row && U.$('.pl-chip.on', row);
         if (row && on) row.scrollLeft = Math.max(0, on.offsetLeft - row.offsetLeft - (row.clientWidth - on.offsetWidth) / 2);
@@ -300,6 +300,7 @@
       });
       U.on(panel, 'click', '.segmented[data-name=period] button', function (e, b) { draft.period = b.dataset.value; U.$$('.segmented[data-name=period] button', panel).forEach(function (x) { x.classList.toggle('active', x === b); }); drawChips(); });
       U.on(panel, 'click', '.pl-chip', function (e, b) {
+        if (blocked) return;   /* suspended: the times are shown for information; the alert above says to call */
         draft.time = b.dataset.time;
         const map = slotMap(); draft.assigned = draft.pro === 'any' ? map[draft.time] : draft.pro;
         U.$$('.pl-chip', panel).forEach(function (x) { const o = x === b; x.classList.toggle('on', o); x.setAttribute('aria-checked', o); });

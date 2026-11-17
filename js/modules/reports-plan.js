@@ -122,8 +122,13 @@
       body: v === 'open' ? openHTML(p) : markedHTML(p[v], v), desc: desc(ctx, p, v), csvId: 'plan' };
   }
 
-  /* ---------------- Marking ---------------- */
-  let refocus = null;
+  /* ---------------- Marking ----------------
+     After a mark the list redraws at once and again when the store change comes through (reports.js), so the button
+     that was pressed is gone twice. refocus names the button to focus in its place for a short while, and is used only
+     when focus has been lost (it never takes focus from somewhere the user moved it). A second click within GUARD_MS of
+     a mark (a double click lands on the next idea's button) is ignored. */
+  const GUARD_MS = 600;
+  let refocus = null, lastAct = 0;
   function setMark(ctx, key, status, api) {
     const p = plan(ctx), x = p.live[key];
     if (!x || markOf(key)) return;
@@ -140,14 +145,20 @@
       { message: 'Moved back to open: ' + d.title, after: api.redraw, undone: d.status === 'done' ? 'Marked done again' : 'Dismissed again' });
     api.redraw();
   }
+  function focusLost() { const a = document.activeElement; return !a || a === document.body || !a.isConnected; }
   function wire(el, ctx, api) {
-    if (refocus) {
-      const t = el.querySelector(refocus) || el.querySelector('.rp-chip[aria-pressed="true"]'); refocus = null;
-      if (t && !el.hidden) t.focus({ preventScroll: true });
+    if (refocus && Date.now() > refocus.until) refocus = null;
+    if (refocus && !el.hidden && focusLost()) {
+      /* The same action on the row now in that place, else the row's first action, else the row above, else the filter. */
+      const r = refocus.row, rows = el.querySelectorAll('[data-plan-row]'), at = el.querySelector('[data-plan-row="' + r + '"]') || rows[rows.length - 1];
+      const t = (at && (at.querySelector('[data-plan-act="' + refocus.act + '"]') || at.querySelector('[data-plan-act]'))) || el.querySelector('.rp-chip[aria-pressed="true"]');
+      if (t) t.focus({ preventScroll: true });
     }
     U.on(el, 'click', '[data-plan-act]', function (e, b) {
+      if (e.detail > 1 || Date.now() - lastAct < GUARD_MS) return;
+      lastAct = Date.now();
       const row = b.closest('[data-plan-row]');
-      refocus = row ? '[data-plan-row="' + row.dataset.planRow + '"] [data-plan-act]' : null;
+      refocus = row ? { row: row.dataset.planRow, act: b.dataset.planAct, until: Date.now() + 2000 } : null;
       if (b.dataset.planAct === 'reopen') reopen(b.dataset.key, api); else setMark(ctx, b.dataset.key, b.dataset.planAct, api);
     });
   }

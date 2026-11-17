@@ -339,9 +339,11 @@
         const cells = Math.ceil((startOff + dim) / 7) * 7;
         const start = Club.date.addDays(S.iso(first), -startOff);
         const t0 = today();
-        let g = '<div class="ev-cal" role="grid" aria-label="' + esc(monthLabel(calMonth)) + '">' + ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(function (d) { return '<div class="ev-dow" role="columnheader">' + d + '</div>'; }).join('');
+        /* Each week sits in a role="row" wrapper (display: contents, so the 7-column CSS grid is unchanged) as a grid needs */
+        let g = '<div class="ev-cal" role="grid" aria-label="' + esc(monthLabel(calMonth)) + '"><div class="ev-cal-row" role="row">' + ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(function (d) { return '<div class="ev-dow" role="columnheader">' + d + '</div>'; }).join('') + '</div>';
         for (let i = 0; i < cells; i++) {
           const d = Club.date.addDays(start, i);
+          if (i % 7 === 0) g += '<div class="ev-cal-row" role="row">';
           const list = evs.filter(function (e) { return e.date === d; });
           const shown = list.slice(0, 3);
           g += '<div class="ev-day' + (monthOf(d) !== calMonth ? ' out' : '') + (d === t0 ? ' today' : '') + (d < t0 ? ' past' : '') + '" data-date="' + d + '" role="gridcell" tabindex="0" aria-label="' + esc(fmt.dateLong(d) + (list.length ? ', ' + list.length + ' events' : '') + '. Press Enter to create an event') + '">' +
@@ -349,6 +351,7 @@
             '<div class="ev-day-list">' + shown.map(entryHTML).join('') + (list.length > 3 ? '<button type="button" class="ev-more" data-list="' + d + '">+' + (list.length - 3) + ' more</button>' : '') + '</div>' +
             '<div class="ev-day-dots">' + list.map(function (e) { return '<i class="t-' + typeKey(e.type) + ' s-' + e.status + '"></i>'; }).join('') + '</div>' +
             '</div>';
+          if (i % 7 === 6) g += '</div>';
         }
         g += '</div>';
         body = '<div class="panel ev-cal-panel">' + g + '</div>' + legendHTML() + monthAgenda(evs);
@@ -1249,12 +1252,25 @@
       return (sa - sb) || (sa >= 3 ? String(b.start).localeCompare(String(a.start)) : String(a.start).localeCompare(String(b.start)));
     });
   }
-  /** Leader line for a card: the top team (team leagues) or player, once anyone has a score. */
+  /* A member's name, or "Former member" when the record is gone (never "Guest") */
+  function flName(id) { return Club.store.find('members', id) ? Club.members.name(id) : 'Former member'; }
+  /** Leader line for a card: the top team (team leagues) or player, once anyone has a score. tied: everyone sharing first
+      place is named (a tie for first is not one winner). played: games played so far, for a weekly league with no week
+      finished yet (nobody has points, but scores are in). */
   function flLeader(lg) {
     const sd = Club.friendLeagues.standings(lg);
-    if (lg.mode === 'teams') { const t = sd.teams[0]; return t && t.played ? { name: t.name, value: t.members.map(function (m) { return Club.members.name(m); }).join(', ') } : null; }
-    const r = sd.rows[0]; if (!r || !r.played) return null;
-    return { name: Club.members.name(r.memberId), value: lg.format === 'weekly' ? Club.friendLeagues.valueText(lg, r.total) : Club.friendLeagues.valueText(lg, r.avg) + ' a game' };
+    if (lg.mode === 'teams') {
+      const t = sd.teams[0]; if (!t || !t.played) return null;
+      const top = sd.teams.filter(function (x) { return x.pos === t.pos; });
+      return top.length > 1 ? { tied: true, name: top.map(function (x) { return x.name; }).join(', '), value: '' }
+        : { name: t.name, value: t.members.map(flName).join(', ') };
+    }
+    const r = sd.rows[0];
+    const played = sd.rows.reduce(function (a, x) { return a + (x.played || 0); }, 0);
+    if (!r || !r.played || (lg.format === 'weekly' && !Object.keys(sd.weekPoints).length)) return played ? { played: played } : null;
+    const top = sd.rows.filter(function (x) { return x.pos === r.pos; });
+    const value = lg.format === 'weekly' ? Club.friendLeagues.valueText(lg, r.total) : Club.friendLeagues.valueText(lg, r.avg) + ' a game';
+    return { tied: top.length > 1, name: top.map(function (x) { return flName(x.memberId); }).join(', '), value: value };
   }
 
   function renderFriendLeagues(panel) {
@@ -1269,7 +1285,8 @@
         const st = FLx.status(lg), acc = FLx.accepted(lg).length, inv = (lg.members || []).filter(function (x) { return x.status === 'invited'; }).length;
         const lead = st === 'active' || st === 'complete' ? flLeader(lg) : null, probs = st === 'forming' || st === 'waiting' ? FLx.problems(lg) : [];
         let foot;
-        if (lead) foot = '<span class="label-caps">' + (st === 'complete' ? 'Winner' : 'Leading') + '</span><span class="ev-trn-leader">' + esc(lead.name) + '</span><span class="fl-sub fl-ell">' + esc(lead.value) + '</span>';
+        if (lead && lead.played) foot = '<span class="label-caps">Scores</span><span class="ev-trn-leader">' + esc(lead.played + (lead.played === 1 ? ' game' : ' games') + ' played') + '</span><span class="fl-sub fl-ell">' + esc(st === 'complete' ? 'No week was completed' : 'Points come once the first week is complete') + '</span>';
+        else if (lead) foot = '<span class="label-caps">' + (st === 'complete' ? (lead.tied ? 'Joint winners' : 'Winner') : (lead.tied ? 'Tied for the lead' : 'Leading')) + '</span><span class="ev-trn-leader">' + esc(lead.name) + '</span>' + (lead.value ? '<span class="fl-sub fl-ell">' + esc(lead.value) + '</span>' : '');
         else if (probs.length) foot = '<span class="label-caps">Before it starts</span><span class="ev-trn-leader fl-wait">' + esc(probs[0]) + '</span>';
         else if (st === 'forming') foot = '<span class="label-caps">Ready</span><span class="ev-trn-leader">Starts ' + esc(fmt.dateShort(lg.start)) + '</span>';
         else foot = '<span class="label-caps">' + (st === 'cancelled' ? 'Cancelled' : 'Scores') + '</span><span class="ev-trn-leader"><span class="muted">' + (st === 'cancelled' ? 'No longer running' : 'No scores yet') + '</span></span>';
@@ -1277,7 +1294,7 @@
           '<div class="row between"><span class="eyebrow">' + esc(FLx.formatOf(lg).label) + '</span>' + flBadge(lg) + '</div>' +
           '<h3>' + esc(lg.name) + '</h3>' +
           '<div class="person-sub">' + esc(flPlay(lg) + ' · ' + flDates(lg)) + '</div>' +
-          '<div class="person-sub">Started by ' + esc(Club.members.name(lg.createdBy)) + '</div>' +
+          '<div class="person-sub">Started by ' + esc(flName(lg.createdBy)) + '</div>' +
           '<div class="ev-trn-card-foot"><div><span class="label-caps">Players</span><span class="serif ev-trn-n">' + acc + '</span>' + (inv ? '<span class="fl-inv">+' + inv + ' invited</span>' : '') + '</div>' +
           '<div style="min-width:0">' + foot + '</div></div></div>';
       }).join('') + '</div>';
@@ -1318,7 +1335,7 @@
       if (teams) {
         html += DR.sec('Team standings', sd.teams.length + ' teams', DR.table([{ label: 'Pos' }, { label: 'Team' }, { label: 'Games', num: true }, { label: 'Total', num: true }],
           sd.teams.map(function (t) {
-            return [esc(t.pos), '<span class="primary-cell">' + esc(t.name) + '</span><span class="fl-sub">' + esc(t.members.map(function (m) { return Club.members.name(m); }).join(', ')) + '</span>', t.played + ' of ' + t.of, '<strong>' + esc(FLx.valueText(lg, t.total)) + '</strong>'];
+            return [esc(t.pos), '<span class="primary-cell">' + esc(t.name) + '</span><span class="fl-sub">' + esc(t.members.map(flName).join(', ')) + '</span>', t.played + ' of ' + t.of, '<strong>' + esc(FLx.valueText(lg, t.total)) + '</strong>'];
           })));
       }
       html += DR.sec(teams ? 'Players' : 'Standings', sd.rows.length + ' players', DR.table(

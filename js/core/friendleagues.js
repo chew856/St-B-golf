@@ -241,7 +241,8 @@
     const rows = ids.map(function (id) {
       const played = slots[id].filter(function (s) { return s.post; }).length, counted = slots[id].filter(function (s) { return s.value != null; });
       const row = { memberId: id, played: played, of: slots[id].length, missed: slots[id].filter(function (s) { return s.state === 'missed'; }).length, weeks: weekly[id], teamId: (entry(lg, id) || {}).teamId || null };
-      if (lg.format === 'weekly') { row.total = sum(Object.keys(weekPoints).map(function (w) { return weekPoints[w][id].points; })); row.key = row.total; }
+      /* weekly: no place until a week is complete (everyone on 0 points read as a tie for first) */
+      if (lg.format === 'weekly') { const ws = Object.keys(weekPoints); row.total = ws.length ? sum(ws.map(function (w) { return weekPoints[w][id].points; })) : null; row.key = row.total; }
       else { row.total = counted.length ? sum(counted.map(function (s) { return s.value; })) : null; row.avg = counted.length ? row.total / counted.length : null; row.key = row.avg; }
       return row;
     });
@@ -250,7 +251,7 @@
     const teamRows = teams.map(function (t) {
       const mine = rows.filter(function (r) { return r.teamId === t.id; });
       const row = { teamId: t.id, name: t.name, members: t.members, played: sum(mine.map(function (r) { return r.played; })), of: sum(mine.map(function (r) { return r.of; })) };
-      if (lg.format === 'weekly') { row.total = sum(Object.keys(teamWeekPoints).map(function (w) { return teamWeekPoints[w][t.id].points; })); row.key = row.total; }
+      if (lg.format === 'weekly') { const ws = Object.keys(teamWeekPoints); row.total = ws.length ? sum(ws.map(function (w) { return teamWeekPoints[w][t.id].points; })) : null; row.key = row.total; }
       else {
         const vals = mine.filter(function (r) { return r.avg != null; });
         row.total = vals.length ? sum(vals.map(function (r) { return r.total; })) : null;
@@ -277,7 +278,7 @@
   /** A number in the league's format, for display: "34 pts", "+6", "86". */
   function valueText(lg, v) {
     if (v == null) return '–';
-    if (lg.format === 'stableford' || lg.format === 'weekly') return (Math.round(v * 10) / 10) + ' pts';
+    if (lg.format === 'stableford' || lg.format === 'weekly') { const r = Math.round(v * 10) / 10; return r + (Math.abs(r) === 1 ? ' pt' : ' pts'); }
     return String(Math.round(v * 10) / 10);
   }
 

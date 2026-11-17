@@ -95,7 +95,7 @@ button.rgo-pace-row { appearance: none; background: none; border: 0; margin: 0; 
   .ideas li { grid-template-columns: 1.75rem minmax(0, 1fr); }
   .idea-est { grid-column: 2; flex-direction: row; align-items: baseline; justify-content: flex-start; gap: 6px; text-align: left; min-width: 0; }
   .notes li { grid-template-columns: minmax(0, 1fr); gap: 2px; }
-  .notes .where { justify-self: start; }
+  .notes .where { justify-self: start; min-height: 40px; min-width: 40px; display: inline-flex; align-items: center; }   /* tap target */
   .notes.att li { grid-template-columns: auto minmax(0, 1fr); }
   .notes.att .rp-link { grid-column: 2; justify-self: start; }
   .rgo-pace-row { grid-template-columns: 5.25rem minmax(0, 1fr) auto; gap: var(--s2); font-size: 0.8125rem; }

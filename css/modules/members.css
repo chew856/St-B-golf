@@ -243,3 +243,8 @@ body.staff .mem-col-head h3 { margin: 0; font-size: 0.9375rem; }
 @media (max-width: 768px) { .mem-table td:first-child .avatar { display: none; } }
 
 @media (max-width: 360px) { .mem-board { margin-left: calc(-1 * var(--s3)); margin-right: calc(-1 * var(--s3)); padding: 0 var(--s3) 0.5rem; scroll-padding: 0 var(--s3); } }
+
+/* Phones: each celebration row's member link is a 44px tap target */
+@media (max-width: 768px) {
+  .mem-cel-person { min-height: 44px; }
+}

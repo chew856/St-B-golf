@@ -61,3 +61,5 @@ body.portal .gp-bal-amt { font-family: var(--serif); }
 }
 /* The header fits the Gift cards link from 1440px; below that it is in the phone tab bar's More list. */
 /* Header links that do not fit move into the More menu (fitNav in js/portal/app.js). */
+/* Checkout step buttons (gift cards, takeout): a full tap target on phones (the shared rule is 32px) */
+body.portal .ckf-pb { min-height: 44px; }

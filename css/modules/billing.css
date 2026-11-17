@@ -231,3 +231,8 @@ body.staff .bil-stats-5 .stat-value { font-size: 1.75rem; white-space: nowrap; }
 .bil-rc-row:focus-visible { outline-offset: -2px; }
 .bil-rc-more { padding: 0.25rem 1.25rem 0.5rem; border-top: 1px solid var(--border); }
 @media (max-width: 640px) { .bil-rc-row { padding: 10px var(--s4); } }
+
+/* Phones: the payment rows' member links are 44px tap targets */
+@media (max-width: 768px) {
+  a.bil-stack { min-height: 44px; justify-content: center; }
+}

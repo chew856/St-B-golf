@@ -203,7 +203,7 @@
      names the next flush writes, and when another tab saves one of them first, this tab's changes are laid back
      on top of the other tab's data (see reconcile) instead of being dropped.
      name -> { all: true } or { ids: {id: true}, gone: {id: true} } */
-  let saveTimer = null, pending = {}, warnedAt = 0, resetting = false;
+  let saveTimer = null, pending = {}, resetting = false;
   let notifyTimer = null, changed = {};   /* names another tab changed, told to listeners shortly (notifySoon) */
   function touch(coll, id, removed) {
     const p = pending[coll] = pending[coll] || { ids: {}, gone: {} };
@@ -223,12 +223,11 @@
   }
   function failed(e) {
     console.warn('Store save failed', e);
-    /* Storage full: say so every time a save fails (not more often than the toast stays up), never fail silently. */
-    const now = Date.now();
-    if (now - warnedAt > 3500 && window.Club && Club.ui && Club.ui.toast) {
-      warnedAt = now;
-      Club.ui.toast('Changes could not be saved: this browser’s storage is full. Export your data in Settings, then reset the demo data.', 'bad');
-    }
+    /* Storage full: say so every time a save fails, never fail silently (one warning on screen at a time, not a stack
+       of the same one while saves keep failing). */
+    const msg = 'Changes could not be saved: this browser’s storage is full. Export your data in Settings, then reset the demo data.';
+    const showing = Array.prototype.some.call(document.querySelectorAll('.toast.bad:not(.leaving)'), function (t) { return t.textContent.indexOf(msg) >= 0; });
+    if (!showing && window.Club && Club.ui && Club.ui.toast) Club.ui.toast(msg, 'bad');
   }
   /* Every name changed since the last save is written, or none: if one write fails (storage full), the ones already
      written are put back as they were, so storage never holds half of a change (a balance without the charge and

@@ -898,8 +898,10 @@
     const c = o.customer || {}, p = o.pay || {}, SH = Club.shop;
     const who = c.memberId ? '<a href="#/members/' + esc(c.memberId) + '">' + esc(c.name) + '</a> <span class="ps-oc-kind">Member</span>'
       : esc(c.name) + ' <span class="ps-oc-kind">' + (c.publicPlayerId ? 'Public golfer' : 'Guest') + '</span>';
-    return '<article class="ps-oc is-' + esc(o.status) + '" data-order="' + esc(o.id) + '" role="button" tabindex="0" aria-label="' + esc('Order ' + o.no + ', ' + (c.name || '') + ', ' + SH.statusLabel(o) + '. Open details') + '">' +
-      '<header class="ps-oc-head"><div class="ps-oc-no"><span class="num">' + esc(o.no) + '</span><span class="ps-oc-ago">' + esc(ago(o.at)) + '</span></div>' +
+    /* The whole card opens the order on a click; for the keyboard and screen readers the order number is the button
+       (a card that is itself a button cannot hold the action buttons and links inside it). */
+    return '<article class="ps-oc is-' + esc(o.status) + '" data-order="' + esc(o.id) + '">' +
+      '<header class="ps-oc-head"><button type="button" class="ps-oc-no" data-oc-open aria-label="' + esc('Order ' + o.no + ', ' + (c.name || '') + ', ' + SH.statusLabel(o) + '. Open details') + '"><span class="num">' + esc(o.no) + '</span><span class="ps-oc-ago">' + esc(ago(o.at)) + '</span></button>' +
         '<div class="ps-oc-who"><div class="ps-oc-name">' + who + '</div>' + U.badge(SH.statusLabel(o), SH.BADGE[o.status]) + '</div></header>' +
       '<div class="ps-oc-contact">' + (c.phone ? '<a href="tel:' + esc(String(c.phone).replace(/[^\d+]/g, '')) + '">' + Club.icon('phone') + '<span>' + esc(c.phone) + '</span></a>' : '') +
         (c.email ? '<a href="mailto:' + esc(c.email) + '">' + Club.icon('mail') + '<span>' + esc(c.email) + '</span></a>' : '') + '</div>' +
@@ -1013,8 +1015,7 @@
     U.on(panel, 'click', '[data-oc-rc]', function (e, b) { Club.receipts.open(b.dataset.ocRc); });
     U.on(panel, 'click', '[data-oc]', function (e, b) { act(b); });
     /* The whole card opens the drawer; its buttons and links keep doing their own job. */
-    U.on(panel, 'click', '.ps-oc', function (e, card) { if (e.target.closest('button, a, input, label, select')) return; openDrawer(card.dataset.order); });
-    U.on(panel, 'keydown', '.ps-oc', function (e, card) { if (e.target !== card || (e.key !== 'Enter' && e.key !== ' ')) return; e.preventDefault(); openDrawer(card.dataset.order); });
+    U.on(panel, 'click', '.ps-oc', function (e, card) { if (e.target.closest('button:not([data-oc-open]), a, input, label, select')) return; openDrawer(card.dataset.order); });
     let drawer = null;
     function openDrawer(id) {
       const o = Club.shop.get(id); if (!o) return;

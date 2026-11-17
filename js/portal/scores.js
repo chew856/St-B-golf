@@ -225,7 +225,10 @@
         const cls = capped ? 'is-capped' : v < par ? 'is-under' : v > par ? 'is-over' : '';
         return '<td><span class="gc-sc ' + cls + '"' + (capped ? ' title="Counts as ' + caps[i] + '"' : '') + '>' + v + '</span>' + (capped ? '<span class="gc-sr">, counts as ' + caps[i] + '</span>' : '') + '</td>';
       };
+      /* the column widths go on a colgroup: a fixed-layout table ignored them on the first row's cells, so the labels
+         overlapped the first hole and the total was cut off */
       return '<div class="gc-card-wrap"><table class="gc-card"><caption class="gc-sr">' + (h[2] === 'Out' ? 'Front nine' : 'Back nine') + '</caption>' +
+        '<colgroup><col class="gc-col-l">' + idx.map(function () { return '<col>'; }).join('') + '<col class="gc-col-t"></colgroup>' +
         '<tr><th scope="row">Hole</th>' + idx.map(function (i) { return '<th scope="col">' + hs[i].number + '</th>'; }).join('') + '<th scope="col">' + h[2] + '</th></tr>' +
         '<tr><th scope="row">Par</th>' + idx.map(function (i) { return '<td>' + hs[i].par + '</td>'; }).join('') + '<td>' + sum(idx.map(function (i) { return hs[i].par; })) + '</td></tr>' +
         '<tr class="gc-card-you"><th scope="row">Score</th>' + idx.map(cell).join('') + '<td>' + sum(idx.map(function (i) { return p.holeScores[i]; })) + '</td></tr>' +

@@ -58,7 +58,7 @@
 .co .co-loclost svg { color: var(--warn); }
 .co-shared { padding: 10px 12px; border-radius: var(--radius-ctl); background: var(--sage-50); border: 1px solid var(--border); display: grid; gap: 4px; }
 .co .co-shared p { margin: 0; font-size: 0.875rem; color: var(--text); line-height: 1.45; }
-.co .co-shared .p-link, .co .co-shared .pub-link { justify-self: start; min-height: 36px; }
+.co .co-shared .p-link, .co .co-shared .pub-link { justify-self: start; min-height: 44px; }
 .co .co-status.is-heading .co-shared { background: var(--forest-800); border-color: var(--forest-800); }
 .co .co-status.is-heading .co-shared p, .co .co-status.is-heading .co-shared .p-link { color: var(--on-dark); }
 .co .co-status.is-heading .co-loclost, .co .co-status.is-heading .co-loclost svg { color: var(--on-dark); }

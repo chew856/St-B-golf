@@ -84,6 +84,7 @@ body.staff .cm-letter-body em { font-style: italic; }
 @media (hover: hover) { .cm-out-row:hover { background: var(--sage-50); } }
 .cm-out-row:focus-visible { outline-offset: -2px; }
 .cm-out-title { font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+button.cm-out-title { display: block; max-width: 100%; padding: 0; border: 0; background: none; font: inherit; font-weight: 500; color: var(--text); text-align: left; cursor: pointer; }   /* opens the message (keyboard) */
 .cm-out-main .person-sub { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
 .cm-out-status { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
 .cm-out-rec { font-size: 0.9375rem; font-weight: 500; color: var(--text); font-variant-numeric: tabular-nums; }
@@ -204,4 +205,9 @@ body.staff .cm-note h4 { font-size: 1rem; font-weight: 500; margin: 4px 0 0.375r
   .cm-stat-num { font-size: 1.25rem; }
   .cm-tpl-grid { grid-template-columns: minmax(0, 1fr); }
   .cm-notes { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Phones: editor tools are 40px tap targets (compact toolbar; the row scrolls sideways) */
+@media (max-width: 768px) {
+  .cm-tool { height: 40px; min-width: 40px; }
 }

@@ -22,6 +22,7 @@
   /* Tap targets: links under an idea and the filter buttons */
   html body.staff .ideas .rp-link, html body.staff .ideas-more .rp-link, html body.staff #rp-sec-plan .rp-kpi .v { min-height: 40px; display: inline-flex; align-items: center; }
   .gp-meta { align-items: center; }
+  .gp-meta .rp-link { min-width: 40px; }
   #rp-sec-plan .rp-chip { min-height: 40px; padding: 0 14px; }
   .gp-acts .btn { min-height: 44px; }
 }

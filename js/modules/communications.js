@@ -284,8 +284,10 @@
       (list.length ? '<div class="panel cm-out" data-reveal><div class="cm-out-head"><span>Message</span><span>Status</span><span class="num">Recipients</span><span>Opened</span><span>Clicked</span><span></span></div>' + list.map(function (a) {
         const op = pct(a.opens, a.recipients), cl = pct(a.clicks, a.recipients); const sent = a.status === 'sent';
         const fresh = sent && !a.opens && (Date.now() - new Date(a.sentAt).getTime()) < 86400000;
-        return '<div class="cm-out-row s-' + a.status + '" data-id="' + esc(a.id) + '" tabindex="0" role="button" aria-label="' + esc('Open ' + a.title) + '">' +
-          '<div class="cm-out-main"><div class="cm-out-title">' + esc(a.title || 'Untitled draft') + '</div><div class="person-sub">' + esc(a.audience || '') + ' · ' + chanBadges(a.channels) + '</div></div>' +
+        /* The row opens the message on a click; for the keyboard the title is the button (a row that is itself a
+           button cannot hold the Edit, Duplicate and Delete buttons). */
+        return '<div class="cm-out-row s-' + a.status + '" data-id="' + esc(a.id) + '">' +
+          '<div class="cm-out-main"><button type="button" class="cm-out-title" aria-label="' + esc('Open ' + (a.title || 'Untitled draft')) + '">' + esc(a.title || 'Untitled draft') + '</button><div class="person-sub">' + esc(a.audience || '') + ' · ' + chanBadges(a.channels) + '</div></div>' +
           '<div class="cm-out-status">' + statusBadge(a.status) + '<div class="person-sub">' + esc(a.status === 'draft' ? 'Edited ' + fmt.relative(when(a)).toLowerCase() : dt(when(a))) + '</div></div>' +
           '<div class="cm-out-rec num"><span class="cm-out-label">Recipients</span>' + (sent ? fmt.num(a.recipients) : '<span class="muted">' + fmt.num(recipientCount(docKey(a))) + ' est.</span>') + '</div>' +
           '<div class="cm-out-rate"><span class="cm-out-label">Opened</span>' + (sent ? (fresh ? '<span class="muted cm-await">Awaiting opens</span>' : '<div class="cm-rate"><div class="bar"><span style="width:' + op + '%"></span></div><span class="num">' + op + '%</span></div>') : '<span class="muted">–</span>') + '</div>' +
@@ -301,10 +303,9 @@
     ui.on(panel, 'click', '.cm-out-bar .segmented button', function (e, b) { outFilter = b.dataset.value; outLimit = OUT_PAGE; goTab('outbox'); });
     ui.on(panel, 'click', '[data-action=out-more]', function () {
       const n = list.length; outLimit += OUT_PAGE; renderOutbox(panel); ui.animateIn(panel);
-      const r = ui.$$('.cm-out-row', panel)[n]; if (r) r.focus();
+      const r = ui.$$('.cm-out-row .cm-out-title', panel)[n]; if (r) r.focus();
     });
     ui.on(panel, 'click', '[data-action=new]', function () { draft = blankDraft(); goTab('compose'); });
-    ui.on(panel, 'keydown', '.cm-out-row', function (e, r) { if (e.key === 'Enter' && e.target === r) viewMessage(r.dataset.id, panel); });
     ui.on(panel, 'click', '.cm-out-row', async function (e, r) {
       const btn = e.target.closest('[data-action]');
       const a = S.find('announcements', r.dataset.id); if (!a) return;

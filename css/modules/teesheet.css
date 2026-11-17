@@ -478,3 +478,9 @@ body.staff .ts-pay .segmented button { min-height: 40px; padding: 6px 14px; }
   .ts-dd-table td:first-child, .ts-dd-table th:first-child { white-space: nowrap; }
   .ts-dd-table .badge { white-space: nowrap; }
 }
+
+/* Phones: tap targets. The player filter is a main field (44px); the tee time button is compact (40px). */
+@media (max-width: 768px) {
+  body.staff .ts-search .input { min-height: 44px; }
+  button.ts-time { min-height: 40px; }
+}

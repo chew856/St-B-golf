@@ -569,10 +569,13 @@
     for (let i = 0; i < 42; i++) {
       const d = addDays(gridStart, i), dt = fmt.toDate(d), inMonth = dt.getMonth() === mo, items = dayItems(d);
       if (inMonth) items.forEach(function (x) { monthItems.push({ d: d, x: x }); });
-      cells += '<div class="fw-cday' + (inMonth ? '' : ' out') + (d === t ? ' today' : '') + (d < t ? ' past' : '') + (d === calSel ? ' sel' : '') + '" data-date="' + d + '" tabindex="0" role="button" aria-pressed="' + (d === calSel) + '" aria-label="' + esc(fmt.dateLong(d) + (items.length ? ', ' + items.length + ' booked' : '')) + '">' +
+      /* A grid of weeks (role=row wrappers with display: contents): a gridcell may hold the booking links, a button may not */
+      if (i % 7 === 0) cells += '<div class="fw-cal-row" role="row">';
+      cells += '<div class="fw-cday' + (inMonth ? '' : ' out') + (d === t ? ' today' : '') + (d < t ? ' past' : '') + (d === calSel ? ' sel' : '') + '" data-date="' + d + '" tabindex="0" role="gridcell" aria-selected="' + (d === calSel) + '" aria-label="' + esc(fmt.dateLong(d) + (items.length ? ', ' + items.length + ' booked' : '')) + '">' +
         '<span class="fw-dn">' + dt.getDate() + '</span>' +
         items.slice(0, 3).map(function (x) { return x.f ? '<a class="fw-pill ' + (isBooked(x.f) ? 'held' : 'tent') + '" href="#/functions/' + esc(x.f.id) + '" title="' + esc(x.f.name + ' · ' + x.f.stage) + '"><span>' + esc(x.f.name) + '</span></a>' : '<span class="fw-pill din" title="Dining booking in the Banquet Hall"><span>' + esc(x.r.name || 'Banquet reservation') + '</span></span>'; }).join('') +
         (items.length > 3 ? '<span class="fw-pill-more">' + (items.length - 3) + ' more</span>' : '') + '</div>';
+      if (i % 7 === 6) cells += '</div>';
     }
     const si = dayItems(calSel);
     const side = '<section class="panel fw-dayp"><div class="panel-head"><h3>' + esc(fmt.dateLong(calSel)) + '</h3></div><div class="panel-body">' +
@@ -585,7 +588,7 @@
     const label = first.toLocaleDateString('en-CA', { month: 'long', year: 'numeric' });
     return '<div class="fw-cal-bar"><div class="fw-cal-nav">' + ui.btn('', { icon: 'chevronLeft', action: 'cal-prev', title: 'Previous month', sm: true }) + '<h2 class="fw-cal-title">' + esc(label) + '</h2>' + ui.btn('', { icon: 'chevronRight', action: 'cal-next', title: 'Next month', sm: true }) + ui.btn('Today', { kind: 'ghost', sm: true, action: 'cal-today' }) + '</div>' +
       '<div class="fw-legend"><span>' + dot('held') + 'Deposit paid or confirmed</span><span>' + dot('tent') + 'In discussion</span><span>' + dot('din') + 'Banquet Hall dining booking</span></div></div>' +
-      '<div class="fw-cal-wrap"><div><div class="panel fw-cal-panel"><div class="fw-cal">' + ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(function (d) { return '<div class="fw-dow">' + d + '</div>'; }).join('') + cells + '</div></div>' + agenda + '</div>' + side + '</div>';
+      '<div class="fw-cal-wrap"><div><div class="panel fw-cal-panel"><div class="fw-cal" role="grid" aria-label="' + esc(label) + '"><div class="fw-cal-row" role="row">' + ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(function (d) { return '<div class="fw-dow" role="columnheader">' + d + '</div>'; }).join('') + '</div>' + cells + '</div></div>' + agenda + '</div>' + side + '</div>';
   }
   function renderCalendar(panel) {
     function draw() { panel.innerHTML = calendarHtml(); }
@@ -605,6 +608,8 @@
     }
     ui.on(panel, 'click', '.fw-cday', function (e, cell) { if (e.target.closest('a')) return; pick(cell); });
     ui.on(panel, 'keydown', '.fw-cday', function (e, cell) { if ((e.key === 'Enter' || e.key === ' ') && e.target === cell) { e.preventDefault(); pick(cell); } });
+    /* The month list under the calendar (phones): the whole row opens the booking, as on the To do tab */
+    ui.on(panel, 'click', '.fw-agenda li[data-ev]', function (e, li) { if (e.target.closest('a, button')) return; Club.app.go('functions/' + li.dataset.ev); });
   }
 
   /* ---------------- Packages ---------------- */

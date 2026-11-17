@@ -261,7 +261,7 @@
   pat(/^(.+) members play (.+) on (weekends and holidays|weekdays)\.$/, function (m) {
     return 'Les membres ' + m[1] + ' jouent ' + WIN(m[2]) + (m[3] === 'weekdays' ? ' en semaine' : ' les fins de semaine et jours fériés') + '.';
   });
-  pat(/^(.+) members can book (\d+) days ahead\. This date opens on (.+)\.$/, 'Les membres $1 peuvent réserver $2 jours à l’avance. Cette date ouvre le $3.');
+  pat(/^(.+) members can book (\d+) days ahead\. This date opens on (.+)\.$/, function (m) { return 'Les membres ' + m[1] + ' peuvent réserver ' + m[2] + ' jours à l’avance. Cette date ouvre le ' + m[3] + (/\.$/.test(m[3]) ? '' : '.'); });   /* "21 nov." ends the sentence */
 
   add({
     'Your golf privileges are currently paused.': 'Vos privilèges de golf sont actuellement suspendus.',

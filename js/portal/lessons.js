@@ -328,7 +328,7 @@
           content: '<dl class="pl-kv"><div><dt>Lesson</dt><dd>' + esc(draft.type) + ', ' + draft.duration + ' min</dd></div>' +
             '<div><dt>With</dt><dd>' + esc(proId ? proName(proId) : 'First available') + '</dd></div>' +
             '<div><dt>When</dt><dd>' + esc(F.dateLong(draft.date)) + ', ' + esc(range(draft.time, draft.duration)) + '</dd></div>' +
-            '<div><dt>Fee</dt><dd>' + (pk0 ? esc('From ' + pk0.name + ' (' + LP.remaining(pk0) + ' of ' + pk0.lessons + ' left)') : proId ? F.money0(priceFor(draft.type, proId, draft.duration)) : '') + '</dd></div></dl>' +
+            '<div><dt>Fee</dt><dd>' + (pk0 ? esc('Covered by ' + pk0.name + ' (' + LP.remaining(pk0) + ' of ' + pk0.lessons + ' left)') : proId ? F.money0(priceFor(draft.type, proId, draft.duration)) : '') + '</dd></div></dl>' +
             (pk0 ? '<p class="pl-sheet-note pl-pk-use">' + Club.icon('check') + '<span>One lesson comes out of your package, so nothing is charged.</span></p>' : '') +
             '<p class="pl-sheet-note">' + esc(POLICY) + '</p><div class="pl-sum-err" role="alert" hidden></div>',
           footer: '<button type="button" class="btn btn-primary" data-action="confirm">Confirm</button>'

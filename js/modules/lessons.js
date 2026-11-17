@@ -822,15 +822,17 @@
       if (proFilter !== 'all' && proFilter !== to.proId) proFilter = 'all';
       refresh();
     }
-    function dragEl(t) { return t && t.closest ? t.closest('.ls-block[data-action=lesson], .ls-chip[data-action=lesson]') : null; }
     view.addEventListener('pointerdown', function (e) {
       if (drag || (e.pointerType === 'mouse' && e.button !== 0)) return;
-      const b = dragEl(e.target); if (!b || !b.classList.contains('ls-movable')) return;
-      const l = S.find('lessons', b.dataset.id); if (!l || l.status !== 'scheduled') return;
+      const b = e.target.closest && e.target.closest('.ls-block, .ls-chip'); if (!b || !view.contains(b)) return;
+      const l = b.dataset.action === 'lesson' ? S.find('lessons', b.dataset.id) : null;
       const r = b.getBoundingClientRect();
+      /* fixed: an academy session, or a completed or cancelled lesson. It does not move, but a press dragged away from
+         it is not a click either (it would otherwise land on the open time under the pointer and offer a booking). */
       drag = { el: b, l: l, pid: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, offX: e.clientX - r.left, offY: e.clientY - r.top, w: r.width, h: r.height,
-        week: b.classList.contains('ls-chip'), touch: e.pointerType !== 'mouse', on: false, timer: null, to: null, why: null, scroll: 0 };
-      if (drag.touch) drag.timer = setTimeout(function () { if (drag && !drag.on) startDrag(); }, HOLD_MS);
+        week: b.classList.contains('ls-chip'), touch: e.pointerType !== 'mouse', on: false, timer: null, to: null, why: null, scroll: 0,
+        fixed: !l || l.status !== 'scheduled' || !b.classList.contains('ls-movable'), moved: false };
+      if (drag.touch && !drag.fixed) drag.timer = setTimeout(function () { if (drag && !drag.on) startDrag(); }, HOLD_MS);
       document.addEventListener('pointermove', onMove, { passive: false });
       document.addEventListener('pointerup', onUp);
       document.addEventListener('pointercancel', onCancel);
@@ -848,6 +850,7 @@
       if (!drag || e.pointerId !== drag.pid) return;
       drag.x = e.clientX; drag.y = e.clientY;
       const dist = Math.hypot(drag.x - drag.x0, drag.y - drag.y0);
+      if (drag.fixed) { if (dist >= DRAG_PX) drag.moved = true; if (drag.touch && dist > TOUCH_SLOP) end(false); return; }
       if (!drag.on) {
         if (drag.touch) { if (dist > TOUCH_SLOP) end(false); return; }   /* a swipe: let the page scroll */
         if (dist < DRAG_PX) return;
@@ -856,7 +859,7 @@
       e.preventDefault();
       track();
     }
-    function onUp(e) { if (!drag || e.pointerId !== drag.pid) return; if (drag.on) eatClickUntil = Date.now() + 500; end(drag.on); }
+    function onUp(e) { if (!drag || e.pointerId !== drag.pid) return; if (drag.on || (drag.fixed && drag.moved && !drag.touch)) eatClickUntil = Date.now() + 500; end(drag.on); }
     function onCancel(e) { if (!drag || e.pointerId !== drag.pid) return; end(false); }
     function startDrag() {
       const b = drag.el;
@@ -1230,9 +1233,9 @@
          (or stops using one) gives the old one back. Call inside the save's Undo record. */
       function write(doc) {
         if (isEdit) {
-          const before = S.find('lessons', l.id) || l;
+          const oldPk = (S.find('lessons', l.id) || l).packageId || null;   /* read before the update changes the record */
           const saved = S.update('lessons', l.id, doc);
-          if (before.packageId && before.packageId !== doc.packageId) LP.giveBack(before.packageId, l.id);
+          if (oldPk && oldPk !== doc.packageId) LP.giveBack(oldPk, l.id);
           if (doc.packageId) LP.take(doc.packageId, l.id);
           return saved;
         }

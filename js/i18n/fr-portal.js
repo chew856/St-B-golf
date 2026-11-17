@@ -1096,7 +1096,7 @@
   pat(/^expires (.+)$/, 'expire le $1');
   pat(/^expired (.+)$/, 'expiré le $1');
   pat(/^(\d+) × (.+?)(?: with (.+?))? · (\d+ months?|End of season|No expiry)$/, function (m) { return m[1] + ' × ' + pkWhat(m[2]) + (m[3] ? ' avec ' + m[3] : '') + ' · ' + pkExp(m[4]); });
-  pat(/^From (.+) \((\d+) of (\d+) left\)$/, function (m) { return 'Tiré de ' + T(m[1]) + ' (' + m[2] + ' sur ' + m[3] + ' restants)'; });
+  pat(/^Covered by (.+) \((\d+) of (\d+) left\)$/, function (m) { return 'Couvert par ' + T(m[1]) + ' (' + m[2] + ' sur ' + m[3] + ' restants)'; });
   pat(/^Buy for (.+)$/, 'Acheter pour $1');
   pat(/^You bought (.+)\. (.+) is charged to your account\.$/, function (m) { return 'Vous avez acheté ' + T(m[1]) + '. ' + m[2] + ' est porté à votre compte.'; });
   pat(/^(.+) is not on sale\.$/, function (m) { return T(m[1]) + ' n’est pas en vente.'; });

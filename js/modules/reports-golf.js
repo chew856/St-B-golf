@@ -522,7 +522,7 @@
     return { id: 'golf-rounds', title: 'Rounds by ' + unitWord(ctx), take: take, chips: [{ id: 'all', label: 'All rounds' }, { id: 'members', label: 'Members' }, { id: 'guests', label: 'Guests' }], chip: chip,
       body: Club.charts.columns({ labels: L.labels, years: L.years, tipTitles: L.titles, partial: L.partial, values: vals, tipName: what, ariaLabel: what + ' by ' + unitWord(ctx) }),
       desc: roundsDesc(ctx, chip),
-      foot: H.partialNote(ctx) || (ctx.gran === 'month' ? 'The course is closed November to March.' : ''), csvId: 'rounds', drill: 'rounds', drillLabel: 'See the table' };
+      foot: H.partialNote(ctx) || (ctx.gran === 'month' && closedText() ? closedText(true) + '.' : ''), csvId: 'rounds', drill: 'rounds', drillLabel: 'See the table' };
   }
   function panels(ctx) {
     const u = utilData(ctx), r = roundsData(ctx), T = targets(), rounds = timedRounds(ctx), a = paceAgg(rounds), g = paceGroups(rounds), d = demandData(ctx), c = cancelData(ctx), w = weatherData(ctx);
@@ -555,7 +555,10 @@
   /* ==================================================================================================
      Descriptions under the charts, and ideas to grow revenue
      ================================================================================================== */
-  const SEASON_WEEKS = 30;   // April to October, the golf season the reports use
+  /* The golf season (Club.season, set by staff in Settings), read at call time: its length in weeks (30 for April 1
+     to October 31) and the months the course is closed. */
+  function seasonWeeks() { return Club.season.weeks(); }
+  function closedText(cap) { const w = Club.season.winterLabel(); return w ? (cap ? 'The' : 'the') + ' course is closed ' + w : ''; }
   function money0(v) { return F.money0(v); }
   function teeSettings() { return Object.assign({ interval: 9, first: '06:30', last: '19:00' }, Club.store.getObj('teeSheetSettings', {}) || {}); }
   function cartFee() { const v = +teeSettings().cartFee; return v > 0 ? v : null; }
@@ -563,7 +566,7 @@
     const r = roundsData(ctx), u = unitWord(ctx);
     const pick = function (x) { return chip === 'members' ? Math.max(0, num(x.rounds) - num(x.guestRounds)) : chip === 'guests' ? num(x.guestRounds) : num(x.rounds); };
     const total = H.sum(ctx.rows, pick), what = chip === 'members' ? 'rounds played by members' : chip === 'guests' ? 'rounds played by members\' guests' : 'rounds played by members and guests';
-    if (!total) return H.sents(['Each column counts the ' + what + ' each ' + u + '.', 'None were recorded in these dates' + (ctx.gran === 'month' ? '; the course is closed November to March.' : '.')]);
+    if (!total) return H.sents(['Each column counts the ' + what + ' each ' + u + '.', 'None were recorded in these dates' + (ctx.gran === 'month' && closedText() ? '; ' + closedText() + '.' : '.')]);
     const fair = H.fairRows(ctx).filter(function (x) { return ctx.gran === 'day' || H.inSeasonKey(x.key); });
     let lo = null; fair.forEach(function (x) { if (pick(x) > 0 && (!lo || pick(x) < pick(lo))) lo = x; });
     const out = ['Each column counts the ' + what + ' each ' + u + ', ' + F.num(total) + ' in all.'];
@@ -643,7 +646,7 @@
       busy.map(function (p) { const u = used(p); return p.code + ' was used ' + u.length + ' ' + (u.length === 1 ? 'time' : 'times') + ', ' + money0(H.sum(u, function (x) { return x.discount; })) + ' in discounts.'; }).join(' ')]) };
   }
   function ideas(ctx) {
-    const out = [], R = Club.teeRules, f = bandFill(ctx), minDays = ctx.days >= 21 ? 2 : 1;
+    const out = [], R = Club.teeRules, f = bandFill(ctx), minDays = ctx.days >= 21 ? 2 : 1, SEASON_WEEKS = seasonWeeks();
     /* A part of the day nobody played in this period is probably not offered (short autumn evenings), so it is left out. */
     const cand = f.filter(function (x) { return x.days >= minDays && x.players > 0; }).sort(function (a, b) { return a.fill - b.fill || b.cap - a.cap; })[0];
     if (cand && R) {

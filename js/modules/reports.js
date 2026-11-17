@@ -459,7 +459,20 @@
       return DEPTS.map(function (d) { return { key: d.key, label: d.label, value: sum(ctx.rows, function (r) { return r.revenue[d.key]; }) }; }).map(function (x) { x.share = t ? Math.round(x.value / t * 100) : 0; return x; }).sort(function (a, b) { return b.value - a.value; });
     });
   }
-  function inSeasonKey(k) { const mo = +k.slice(5, 7); return mo >= 4 && mo <= 10; }
+  /* Golf season: staff set the opening and closing days in Settings (Club.season); read at call time, since they may
+     change it while the page is open. A month counts as in season if any of it is. */
+  function inSeasonKey(k) { return Club.season.inSeasonMonth(k); }
+  const NUM_WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
+  function numWord(n) { return NUM_WORDS[n] || String(n); }
+  /** Months the course is open in, at least in part (7 for April to October). */
+  function seasonMonthCount() { return Club.season.months().length; }
+  /** "the seven golf season months" */
+  function seasonMonthsText() { const n = seasonMonthCount(); return 'the ' + (n === 1 ? 'one golf season month' : numWord(n) + ' golf season months'); }
+  /** "April and May": the season's first two months */
+  function seasonStartText() { const ms = Club.season.months(); return ms.length > 1 ? Club.season.monthName(ms[0]) + ' and ' + Club.season.monthName(ms[1]) : Club.season.monthName(ms[0]); }
+  /** "Golf season, April to October" and "Winter, November to March" */
+  function seasonGroupLabel() { return 'Golf season, ' + Club.season.label(); }
+  function winterGroupLabel() { const w = Club.season.winterLabel(); return w ? 'Winter, ' + w : 'Winter'; }
 
   const BUCKETS = ['Current', '31 to 60 days', '61 to 90 days', 'Over 90 days'];
   function bucketOf(days) { return days <= 30 ? 0 : days <= 60 ? 1 : days <= 90 ? 2 : 3; }
@@ -598,9 +611,9 @@
       const s = fair.filter(function (r) { return inSeasonKey(r.key); }), w = fair.filter(function (r) { return !inSeasonKey(r.key); });
       if (s.length && w.length) {
         const sa = sum(s, val) / s.length, wa = sum(w, val) / w.length;
-        out.push('April to October averaged ' + moneyShort(sa) + ' a month, against ' + moneyShort(wa) + ' over the winter.');
+        out.push(Club.season.label() + ' averaged ' + moneyShort(sa) + ' a month, against ' + moneyShort(wa) + ' over the winter.');
         out.push(wa >= sa * 0.75 ? 'It holds up through the winter, so growth here comes from more spending per visit rather than filling a gap.' :
-          !dept || chip === 'dining' || chip === 'events' ? 'The winter gap is where the most room is: dining and events do not need the course, so they are the way to fill it.' : 'Most of this money arrives in the golf season, so a strong start in April and May matters most.');
+          !dept || chip === 'dining' || chip === 'events' ? 'The winter gap is where the most room is: dining and events do not need the course, so they are the way to fill it.' : 'Most of this money arrives in the golf season, so a strong start in ' + seasonStartText() + ' matters most.');
       }
     } else {
       const we = fair.filter(function (r) { return isWeekend(r.key); }), wd = fair.filter(function (r) { return !isWeekend(r.key); });
@@ -632,17 +645,17 @@
       if (dues) d1.push(dues.share >= 40 ? 'Dues are ' + dues.share + '% of revenue, so keeping members matters more than any single sale.' : 'Dues are ' + dues.share + '% of revenue, so day-to-day sales in golf, dining and events carry most of the club.');
     }
     const p1 = { id: 'revenue-depts', title: 'Where the money comes from', take: take1, desc: sents(d1.slice(0, 4)), body: Club.charts.ranked(dt.map(function (x) { return { label: x.label, value: x.value, attrs: 'data-drill="revenue" aria-label="' + esc(x.label + ' ' + F.money0(x.value) + ', ' + x.share + '% of revenue. See the revenue table') + '"' }; }), { total: t, fmt: moneyShort }), csvId: 'revenue', drill: 'revenue', drillLabel: 'See the table' };
-    // Golf season and winter: April to October against the rest of the year, from the monthly rows.
+    // Golf season and winter: the season's months (Club.season) against the rest of the year, from the monthly rows.
     function pick(rows) { const o = { golf: 0, dining: 0, events: 0, other: 0 }; rows.forEach(function (r) { o.golf += num(r.revenue.golf); o.dining += num(r.revenue.dining); o.events += num(r.revenue.events); o.other += num(r.revenue.dues) + num(r.revenue.proShop) + num(r.revenue.lessons); }); return o; }
     const season = ctx.rows.filter(function (r) { return inSeasonKey(r.key); }), winter = ctx.rows.filter(function (r) { return !inSeasonKey(r.key); });
-    const groups = [{ label: 'Golf season, April to October', rows: season }, { label: 'Winter, November to March', rows: winter }].filter(function (g) { return g.rows.length; });
+    const groups = [{ label: seasonGroupLabel(), rows: season }, { label: winterGroupLabel(), rows: winter }].filter(function (g) { return g.rows.length; });
     const NAMES = { golf: 'Golf', dining: 'Dining', events: 'Events', other: 'Everything else' };
     function lead(o) { const ks = ['golf', 'dining', 'events', 'other'].sort(function (a, b) { return o[b] - o[a]; }); const tot = o.golf + o.dining + o.events + o.other; return { key: ks[0], share: tot ? Math.round(o[ks[0]] / tot * 100) : 0, tot: tot }; }
     let take2, body2;
     if (!groups.length || !t) { take2 = 'Nothing to split in this period.'; body2 = '<p class="rp-empty">No revenue on file for these dates.</p>'; }
     else {
       const leads = groups.map(function (g) { return Object.assign({ g: g }, lead(pick(g.rows))); });
-      take2 = leads.map(function (l) { return (l.g.rows === season ? 'From April to October ' : 'Over the winter ') + NAMES[l.key].toLowerCase() + ' leads at ' + l.share + '% of revenue'; }).join('. ') + '.';
+      take2 = leads.map(function (l) { return (l.g.rows === season ? 'From ' + Club.season.label() + ' ' : 'Over the winter ') + NAMES[l.key].toLowerCase() + ' leads at ' + l.share + '% of revenue'; }).join('. ') + '.';
       body2 = groups.map(function (g) {
         const o = pick(g.rows), tot = o.golf + o.dining + o.events + o.other;
         return '<div class="season"><div class="season-row"><span>' + esc(g.label) + '</span><b>' + esc(moneyShort(tot)) + '</b></div>' +
@@ -674,8 +687,9 @@
       const w = fair.filter(function (r) { return !inSeasonKey(r.key); });
       if (w.length) {
         const ed = sum(w, function (r) { return num(r.revenue.dining) + num(r.revenue.events); }) / w.length, lift = ed * 0.1;
+        const wn = 12 - seasonMonthCount(), wl = Club.season.winterLabel();
         if (lift >= 1) out.push({ title: 'Grow winter dining and events', text: 'In the ' + w.length + ' winter ' + plural(w.length, 'month') + ' of this period, dining and events brought in ' + F.money0(ed) + ' a month on average. Theme nights, holiday parties and winter events that lift that by 10% would add about ' + F.money0(lift) + ' a month.',
-          assume: 'Assumes a 10% lift on this period\'s average winter month, over the five winter months, November to March.', amount: lift, per: 'a month', year: lift * 5 });
+          assume: 'Assumes a 10% lift on this period\'s average winter month, over the ' + (wn === 1 ? 'one winter month' : numWord(wn) + ' winter months') + (wl ? ', ' + wl : '') + '.', amount: lift, per: 'a month', year: lift * wn });
       }
     }
     const ev = all('events').filter(function (e) { return e.date && e.date >= T && e.status !== 'cancelled' && e.status !== 'draft' && num(e.capacity) > 0 && num(e.price) > 0; }).map(function (e) {
@@ -716,7 +730,7 @@
   }
   function seasonCSV(ctx) {
     const rows = [['Period', 'Months', 'Golf', 'Dining', 'Events', 'Everything else', 'Total']];
-    [['Golf season, April to October', ctx.rows.filter(function (r) { return inSeasonKey(r.key); })], ['Winter, November to March', ctx.rows.filter(function (r) { return !inSeasonKey(r.key); })]].forEach(function (g) {
+    [[seasonGroupLabel(), ctx.rows.filter(function (r) { return inSeasonKey(r.key); })], [winterGroupLabel(), ctx.rows.filter(function (r) { return !inSeasonKey(r.key); })]].forEach(function (g) {
       if (!g[1].length) return;
       const o = { golf: 0, dining: 0, events: 0, other: 0 }; g[1].forEach(function (r) { o.golf += num(r.revenue.golf); o.dining += num(r.revenue.dining); o.events += num(r.revenue.events); o.other += num(r.revenue.dues) + num(r.revenue.proShop) + num(r.revenue.lessons); });
       rows.push([g[0], g[1].map(function (r) { return r.key; }).join('; '), o.golf, o.dining, o.events, o.other, o.golf + o.dining + o.events + o.other]);
@@ -737,7 +751,7 @@
   addSection({
     id: 'revenue', label: 'Revenue', order: 20, collections: ['charges', 'sales', 'diningOrders', 'teeTimes', 'diningReservations', 'monthlyMetrics'],
     kpis: revenueKpis, main: revenueMain, panels: revenuePanels,
-    about: function (ctx) { return [marksText(ctx), 'Dues are the monthly share of each member\'s annual dues. Golf season and winter split the months in range by calendar month: April to October count as the season.'].concat(ctx.notes); },
+    about: function (ctx) { return [marksText(ctx), 'Dues are the monthly share of each member\'s annual dues. Golf season and winter split the months in range by calendar month: ' + Club.season.label() + ' count as the season.'].concat(ctx.notes); },
     csv: function (ctx) { return [{ id: 'revenue', title: 'Revenue by department', rows: revenueCSV(ctx) }, { id: 'revenue-season', title: 'Golf season and winter', rows: seasonCSV(ctx) }]; },
     facts: revenueFacts, ideas: revenueIdeas,
     data: { deptTotals: deptTotals, periodTotals: periodTotals }
@@ -814,7 +828,7 @@
       const seasonal = c.cat === 'Golf' || c.cat === 'Lessons' || c.cat === 'Pro Shop', extra = 5 * c.avg;
       const cl = c.cat.toLowerCase(), an = /^[aeiou]/.test(cl) ? 'an ' : 'a ';
       out.push({ title: 'Reach more members with ' + cl, text: 'Only ' + c.members + ' of ' + r.active.length + ' active members had ' + an + cl + ' charge in this period, averaging ' + F.money0(c.avg) + ' a charge. Five more members with one ' + c.cat.toLowerCase() + ' charge a month would add about ' + F.money0(extra) + ' a month.',
-        assume: 'Assumes five more members, one charge a month each at the average ' + c.cat.toLowerCase() + ' charge, over ' + (seasonal ? 'the seven golf season months.' : 'twelve months.'), amount: extra, per: 'a month', year: extra * (seasonal ? 7 : 12) });
+        assume: 'Assumes five more members, one charge a month each at the average ' + c.cat.toLowerCase() + ' charge, over ' + (seasonal ? seasonMonthsText() + '.' : 'twelve months.'), amount: extra, per: 'a month', year: extra * (seasonal ? seasonMonthCount() : 12) });
     });
     return out;
   }
@@ -1199,7 +1213,9 @@
       toCSV: toCSV, download: download, csvName: csvName,
       /* Headline changes and plain-English text (see "Headline changes" above) */
       kpiChg: kpiChg, chgMag: chgMag, prevPct: prevPct, pctVs: pctVs, prevWords: prevWords, coversPrev: coversPrev, prevCtx: function (ctx) { return prevCtx(ctx); },
-      sents: sents, pctOf: pctOf, whenLabel: whenLabel, inSeasonKey: inSeasonKey, isWeekend: isWeekend
+      sents: sents, pctOf: pctOf, whenLabel: whenLabel, inSeasonKey: inSeasonKey, isWeekend: isWeekend,
+      /* Golf season wording and counts (Club.season, read at call time) */
+      numWord: numWord, seasonMonthCount: seasonMonthCount, seasonMonthsText: seasonMonthsText, seasonGroupLabel: seasonGroupLabel, winterGroupLabel: winterGroupLabel
     },
     /** A section's ideas, ranked (memoised per render). */
     ideasOf: function (ctx, id) { return ideasOf(ctx, getSection(id)); },

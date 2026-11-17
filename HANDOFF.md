@@ -201,6 +201,17 @@ Waiting on the owner: season end (Oct 31) and the package prices ($475, $200, $3
 seeds put $475 and $200 package sales on two members' accounts (keep or offset); long-press drag on Safari and iPad
 needs a real-device check.
 
+## Golf season setting (Nov 17, NOT DEPLOYED YET)
+Staff Settings has a **Golf season** tab: opening and closing day, stored as `golfSeason` { open: 'MM-DD', close:
+'MM-DD', confirmed } and read everywhere through `Club.season` (`js/core/ui.js`, after `Club.taxRate`). The same days
+apply every year. Until the club saves its own, April 1 to October 31 stands in and the tab shows "Placeholder".
+Read by: lesson packages ("End of season" expiry, at purchase; bought packages keep their date), all Reports files
+(season against winter, season-to-date, season weeks and months in the estimates), the members' league setup (default
+dates and the limits) and Group outings (date must fall in the season). Before this, the code disagreed with itself
+(outings May to September, reports April to October). Demo seed files in `js/shared/` still use their own months.
+Outings: a package whose availability text names no months now says "only available May to September" (from its
+stored months) when the date is outside them.
+
 ## Future: live location on the course
 The owner plans live location for golfers. The tee sheet's "On pace", hole and finish estimate are computed from the
 4h 15m target today (js/modules/teesheet.js starter column); switch them to real positions when live location exists.

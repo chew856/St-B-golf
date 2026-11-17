@@ -24,8 +24,8 @@
   function pct(n, d) { return d ? Math.round(n / d * 100) : 0; }
   /** A tee time that has been played: earlier days, or today once the group has checked in. */
   function played(t) { const T = today(); return !!t.date && t.date <= T && !DEAD[t.status] && t.status !== 'cancelled' && (t.date < T || t.status === 'completed' || t.status === 'on-course' || t.status === 'checked-in'); }
-  /* Golf at St. Boniface runs April to October; the course is closed November to March. */
-  function inSeason(iso) { const mo = +String(iso).slice(5, 7); return mo >= 4 && mo <= 10; }
+  /* The golf season's days (Club.season, set by staff in Settings, read at call time); the course is closed the rest of the year. */
+  function inSeason(iso) { return Club.season.inSeason(iso); }
   function seasonDays(from, to) {
     if (!from || from >= to) return 0;
     let n = 0;
@@ -399,11 +399,11 @@
     if (g.hosts.length && fee) {
       const n = Math.min(5, g.hosts.length), amt = n * fee;
       out.push({ title: 'Run a member-guest promotion', text: g.visits + ' guest ' + plural(g.visits, 'visit') + ' came through members in this period' + (g.hosts[0].m ? ', ' + g.hosts[0].visits + ' of them with ' + mName(g.hosts[0].m) : '') + '. If the ' + n + ' members who host most each brought one more guest a month, at the ' + money0(fee) + ' guest rate, that would add ' + money0(amt) + ' a month.',
-        assume: 'Assumes ' + n + ' extra guest rounds a month at the tee sheet\'s guest rate, for the seven golf season months.', amount: amt, per: 'a month', year: amt * 7 });
+        assume: 'Assumes ' + n + ' extra guest rounds a month at the tee sheet\'s guest rate, for ' + H.seasonMonthsText() + '.', amount: amt, per: 'a month', year: amt * H.seasonMonthCount() });
     }
     const leads = g.list.filter(function (x) { return !x.mem && !(x.app && x.app.stage !== 'Declined') && !x.converted && x.n >= 2 && (x.g.email || x.g.phone); });
     if (leads.length && fee) out.push({ title: 'Turn repeat guests into public golfers', text: leads.length + ' repeat ' + plural(leads.length, 'guest has', 'guests have') + ' contact details on file and no account or application. With the host member\'s permission, an invitation to book on the public site at ' + money0(fee) + ' a round would add ' + money0(leads.length * fee) + ' a month if each played once a month.',
-      assume: 'Assumes one round a month each at the tee sheet\'s guest rate, for the seven golf season months. Ask the host first.', amount: leads.length * fee, per: 'a month', year: leads.length * fee * 7 });
+      assume: 'Assumes one round a month each at the tee sheet\'s guest rate, for ' + H.seasonMonthsText() + '. Ask the host first.', amount: leads.length * fee, per: 'a month', year: leads.length * fee * H.seasonMonthCount() });
     if (hd.total < HEARD_MIN) out.push({ title: 'Ask everyone how they heard about the club', text: 'Only ' + hd.total + ' ' + plural(hd.total, 'person has', 'people have') + ' answered "How did you hear about us?" in this period, too few to show which marketing works. Asking at the front desk and when people book fills it in faster.',
       assume: 'No estimate: this is about knowing where to spend marketing time.', amount: null, year: 0 });
     return out;

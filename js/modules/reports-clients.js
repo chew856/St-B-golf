@@ -357,8 +357,10 @@
       return { from: from, to: T, label: label, prev: { from: pf, to: Dt.addDays(from, -1), label: prevLabel } };
     };
     if (kind === 'season') {
-      const sy = T < y + '-04-01' ? y - 1 : y, to = T < sy + '-10-31' ? T : sy + '-10-31';
-      return { from: sy + '-04-01', to: to, label: 'the ' + sy + ' season, April to October', prev: { from: (sy - 1) + '-04-01', to: (sy - 1) + to.slice(4), label: 'the ' + (sy - 1) + ' season' } };
+      /* The golf season staff set in Settings (Club.season): this year's once it has opened, else last year's; season
+         to date ends today, or at the closing day once the season is over. */
+      const SN = Club.season, sy = T < SN.start(y) ? y - 1 : y, end = SN.end(sy), to = T < end ? T : end;
+      return { from: SN.start(sy), to: to, label: 'the ' + sy + ' season, ' + SN.label(), prev: { from: SN.start(sy - 1), to: (sy - 1) + to.slice(4), label: 'the ' + (sy - 1) + ' season' } };
     }
     if (kind === 'all') { const f = L.first.spend && L.first.spend < T ? L.first.spend : T; return { from: f, to: T, label: 'all the records on file, from ' + F.date(f), prev: null, all: true }; }
     if (kind === 'month') { const pk = H.shiftKey(mk, -1); return { from: mk + '-01', to: T, label: 'this month so far', prev: { from: pk + '-01', to: monthEnd(pk), label: 'last month' } }; }
@@ -687,7 +689,7 @@
        quiet     Big spenders gone quiet. "Earlier" runs from the start of the period (or of client records) to 31 days
                  before the period ends; "recent" is the last 30 days of the period. A big spender is in the top quarter
                  by earlier spend; quiet means recent spend is a quarter or less of their own earlier 30-day average.
-                 When the recent days fall outside April to October, green fees and the beverage cart are left out of
+                 When the recent days fall outside the golf season (Club.season), green fees and the beverage cart are left out of
                  both sides, so the course closing does not make every golfer look quiet.
        nodine    Members who play often but never dine: rounds at or above the threshold (three, or two a month over the
                  tee sheet days in the period, whichever is more) with no dining charge and no dining visit. Needs 14
@@ -712,7 +714,7 @@
       if (eFrom > eTo) return null;
       const eDays = H.spanDays(eFrom, eTo);
       if (eDays < MIN_EARLIER_DAYS) return null;
-      const winter = !H.inSeasonKey(rFrom.slice(0, 7)) || !H.inSeasonKey(ctx.to.slice(0, 7));
+      const winter = !Club.season.inSeason(rFrom) || !Club.season.inSeason(ctx.to);
       const amt = function (c) { return c ? r2(sum(Object.keys(c.depts).filter(function (d) { return d !== 'Dues' && !(winter && COURSE_DEPTS[d]); }), function (d) { return c.depts[d]; })) : 0; };
       const early = aggregate(L, eFrom, eTo), recent = aggregate(L, rFrom, ctx.to);
       const pool = Object.keys(early).map(function (k) { return early[k]; }).filter(function (c) { return audOK(c) && reachable(c) && amt(c) > 0; })
@@ -723,7 +725,7 @@
         .filter(function (r) { return r.now <= r.rate * QUIET_SHARE; }).sort(function (a, b) { return (b.rate - b.now) - (a.rate - a.now); });
       const gap = sum(rows, function (r) { return r.rate - r.now; });
       return { rows: rows, pool: pool.length, top: top.length, cutoff: amt(top[top.length - 1]), eFrom: eFrom, eTo: eTo, rFrom: rFrom, rTo: ctx.to, winter: winter,
-        was: sum(rows, function (r) { return r.rate; }), now: sum(rows, function (r) { return r.now; }), gap: gap, amount: gap / 2, months: winter ? 12 : 7 };
+        was: sum(rows, function (r) { return r.rate; }), now: sum(rows, function (r) { return r.now; }), gap: gap, amount: gap / 2, months: winter ? 12 : H.seasonMonthCount() };
     });
   }
   function noDineData(ctx) {
@@ -774,7 +776,7 @@
       const n = q.rows.length, left = q.winter ? ' Green fees and the beverage cart are left out of both, because the last 30 days fall outside the golf season.' : '';
       out.push({ id: 'quiet-spenders', title: 'Win back big spenders who have gone quiet',
         text: n + ' of the ' + q.top + ' biggest-spending ' + audPhrase(q.top) + ' from ' + F.dateShort(q.eFrom) + ' to ' + F.dateShort(q.eTo) + ' ' + (n === 1 ? 'has' : 'have') + ' spent little or nothing in the last 30 days: ' + money0(q.now) + ' together, against ' + money0(q.was) + ' in an average 30 days before. A call or a personal invitation that brings back half of what is missing would add about ' + money0(q.amount) + ' a month.',
-        assume: 'A big spender is in the top quarter of the ' + q.pool + ' ' + audPhrase(q.pool) + ' who spent from ' + F.dateShort(q.eFrom) + ' to ' + F.dateShort(q.eTo) + ' (' + money0(q.cutoff) + ' or more, dues excluded). Quiet means ' + F.dateShort(q.rFrom) + ' to ' + F.dateShort(q.rTo) + ' came to a quarter or less of their own earlier 30-day average.' + left + ' Assumes half the gap comes back, over ' + (q.winter ? 'twelve months.' : 'the seven golf season months.'),
+        assume: 'A big spender is in the top quarter of the ' + q.pool + ' ' + audPhrase(q.pool) + ' who spent from ' + F.dateShort(q.eFrom) + ' to ' + F.dateShort(q.eTo) + ' (' + money0(q.cutoff) + ' or more, dues excluded). Quiet means ' + F.dateShort(q.rFrom) + ' to ' + F.dateShort(q.rTo) + ' came to a quarter or less of their own earlier 30-day average.' + left + ' Assumes half the gap comes back, over ' + (q.winter ? 'twelve months.' : H.seasonMonthsText() + '.'),
         amount: q.amount, per: 'a month', year: q.amount * q.months, drill: 'idea-quiet', drillLabel: n === 1 ? 'See who it is' : 'See the ' + n + ' ' + audPhrase(n) });
     }
     if (nd && nd.rows.length) {
@@ -977,8 +979,8 @@
       amount: d1.amount, per: 'a month', year: d1.amount * 12, drill: 'idea-list', drillArg: 'dine-only', drillLabel: seeLabel(n, 'members') }); }
     if (d2 && d2.rows.length) { const n = d2.rows.length; out.push({ id: 'no-extras', title: 'Offer carts and guest days to frequent golfers',
       text: n + ' of the ' + d2.golfers + ' ' + plural(d2.golfers, 'member') + ' who played ' + d2.need + ' rounds or more since ' + F.dateShort(d2.from) + ' ' + has(n) + ' no power cart and no guest green fee charge in this period. The ' + d2.users + ' frequent golfers who do spent ' + money0(d2.avg) + ' a month each on carts and guests. A guest day or a cart pass that reaches one in four would add about ' + money0(d2.amount) + ' a month.',
-      assume: 'A frequent golfer is an active member with ' + d2.need + ' rounds or more in the ' + d2.days + ' tee sheet days of this period; cart and guest charges are counted since ' + F.dateShort(d2.w.from) + '. Assumes one in four spends what frequent golfers who use carts or bring guests do, over the seven golf season months.',
-      amount: d2.amount, per: 'a month', year: d2.amount * 7, drill: 'idea-list', drillArg: 'no-extras', drillLabel: seeLabel(n, 'members') }); }
+      assume: 'A frequent golfer is an active member with ' + d2.need + ' rounds or more in the ' + d2.days + ' tee sheet days of this period; cart and guest charges are counted since ' + F.dateShort(d2.w.from) + '. Assumes one in four spends what frequent golfers who use carts or bring guests do, over ' + H.seasonMonthsText() + '.',
+      amount: d2.amount, per: 'a month', year: d2.amount * H.seasonMonthCount(), drill: 'idea-list', drillArg: 'no-extras', drillLabel: seeLabel(n, 'members') }); }
     if (d3 && d3.rows.length) { const n = d3.rows.length; out.push({ id: 'no-events', title: 'Invite members who never come to events',
       text: n + ' of ' + d3.members + ' active members ' + has(n) + ' no event charge and no event entry since ' + F.dateShort(d3.w.from) + '. The ' + d3.goers + ' who came spent ' + money0(d3.avg) + ' a month each on events. A personal invitation that brings one in four to an event would add about ' + money0(d3.amount) + ' a month.',
       assume: 'Counts active members with no charge in the events department and no entry to an event held in this period. Assumes one in four spends what members who came to events do, for twelve months.',

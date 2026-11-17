@@ -22,7 +22,8 @@
   function pct(n, d) { return d ? Math.round(n / d * 100) : 0; }
   function money0(v) { return F.money0(v); }
   function played(t) { const T = today(); return !!t.date && t.date <= T && !DEAD[t.status] && t.status !== 'cancelled' && (t.date < T || t.status === 'completed' || t.status === 'on-course' || t.status === 'checked-in'); }
-  function inSeason(iso) { const mo = +String(iso).slice(5, 7); return mo >= 4 && mo <= 10; }
+  /* The golf season's days (Club.season, set by staff in Settings, read at call time). */
+  function inSeason(iso) { return Club.season.inSeason(iso); }
   function seasonDays(from, to) { if (!from || from >= to) return 0; let n = 0; for (let d = Dt.addDays(from, 1); d <= to; d = Dt.addDays(d, 1)) if (inSeason(d)) n++; return n; }
   const DR = Club.drill;
 
@@ -184,7 +185,7 @@
       q.quiet.map(function (r) {
         return [memLink(r.m) + (r.m.status !== 'active' ? ' ' + U.badge(stLabel(r.m.status), r.m.status === 'leave' ? 'info' : 'warn') : '') + '<div class="dd-sub">' + esc(tierName(r.m)) + '</div>' + (r.ahead ? '<div class="dd-sub">Next: ' + esc(r.ahead.what + ', ' + F.dateShort(r.ahead.date)) + '</div>' : ''), esc(lastText(r)), esc(daysText(r))];
       }))) : DR.empty('No one has gone quiet', 'Every member has club activity in the last ' + QUIET_DAYS + ' days.', 'members');
-    body += DR.note('Quiet days are calendar days since the last dining, event, lesson, order or charge, or golf-season days (April to October) since the last round, whichever is fewer. Members on leave or suspended are listed after active members.');
+    body += DR.note('Quiet days are calendar days since the last dining, event, lesson, order or charge, or golf-season days (' + Club.season.dayLabel() + ') since the last round, whichever is fewer. Members on leave or suspended are listed after active members.');
     return { title: 'Members going quiet', body: body, csv: quietCSV(q), csvId: 'members-quiet-detail', go: 'members', goLabel: 'Open members', asOf: true };
   }
 
@@ -328,7 +329,7 @@
     const pend = {}; if (rn) rn.pending.forEach(function (x) { pend[x.m.id] = x; });
     const away = q.quiet.filter(function (r) { return r.m.status !== 'active'; }).length;
     const risk = q.quiet.filter(function (r) { return pend[r.m.id] && r.m.status === 'active'; });
-    return H.sents(['Each row is a member with no club activity for ' + QUIET_DAYS + ' days or more, longest first.', 'Golf counts only April to October days, so the winter break does not make anyone look quiet.',
+    return H.sents(['Each row is a member with no club activity for ' + QUIET_DAYS + ' days or more, longest first.', 'Golf counts only golf season days, ' + Club.season.dayLabel() + ', so the winter break does not make anyone look quiet.',
       away ? (away === q.quiet.length ? (away === 1 ? 'This member is' : 'All ' + away + ' are') : away + ' of them ' + (away === 1 ? 'is' : 'are')) + ' on leave or suspended, which explains the quiet.' : '',
       !rn ? '' : risk.length ? risk.length + ' active ' + plural(risk.length, 'member has', 'members have') + ' not renewed for ' + rn.rn.SEASON + ', ' + money0(sum(risk, function (r) { return pend[r.m.id].expected; })) + ' in dues; they are the ones to call first.' : away === q.quiet.length ? '' : 'The active ones have all renewed for ' + rn.rn.SEASON + '.']);
   }
@@ -368,7 +369,7 @@
     out.push((a.noDob.length ? a.noDob.length + ' ' + plural(a.noDob.length, 'member has', 'members have') + ' no birth date on file and ' + (a.noDob.length === 1 ? 'is' : 'are') + ' left out of the age mix. ' : 'Every member has a birth date on file. ') +
       (a.outside.length ? a.outside.length + ' ' + plural(a.outside.length, 'member is', 'members are') + ' already outside their category\'s ages. ' : '') +
       'Junior ends at ' + (((M().AGE_RULES || {}).tier_nonresident || {}).max + 1 || 18) + ' and Young Adult at ' + (((M().AGE_RULES || {}).tier_junior || {}).max + 1 || 24) + ', counted in the year a member reaches that age. The rules do not say which category comes next, so the dues comparison in the details assumes ' + (a.adult ? a.adult.name + ', the lowest-dues category with no age limit' : 'an adult category') + '.');
-    out.push('Quiet counts tee times, dining reservations, events, lessons and clinics, beverage cart and takeout orders, and house charges other than dues. Golf counts only April to October days, so a member who last played before the course closed is not marked quiet over the winter.' + (q.first ? ' Activity records begin ' + F.date(q.first) + '.' : ''));
+    out.push('Quiet counts tee times, dining reservations, events, lessons and clinics, beverage cart and takeout orders, and house charges other than dues. Golf counts only golf season days, ' + Club.season.dayLabel() + ', so a member who last played before the course closed is not marked quiet over the winter.' + (q.first ? ' Activity records begin ' + F.date(q.first) + '.' : ''));
     if (rn) out.push('Renewals: committed is the ' + rn.rn.SEASON + ' dues of members who have renewed, ' + money0(rn.posted) + ' posted to accounts so far and ' + money0(rn.left) + ' in instalments still to come. Not yet renewed is what the others would owe at their category\'s current dues. Dues amounts in this demo are placeholders, and some renewals were added for the demo.');
     return out;
   }

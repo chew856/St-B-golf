@@ -729,7 +729,7 @@
       if (rounds && days) {
         const wk = rounds / (days / 7), amt = wk * 0.25;
         out.push({ title: 'Sell more from the beverage cart', text: 'In the ' + u + 's the cart ran, it took ' + F.money(sales / rounds) + ' per round played' + (c.stretch && c.live.length >= 10 ? ', with most orders from holes ' + c.stretch.from + ' to ' + c.stretch.to : '') + '. Twenty-five cents more per round, from a second loop at busy hours or a drink and snack combo, would add about ' + F.money0(amt) + ' a week.',
-          assume: 'Assumes $0.25 more per round at this period\'s rounds a week, for the 30-week golf season.' + (c.all.some(function (o) { return o.sample; }) ? ' Cart orders before ' + F.dateShort(c.src.first) + ' are sample history.' : ''), amount: amt, per: 'a week', year: amt * 30 });
+          assume: 'Assumes $0.25 more per round at this period\'s rounds a week, for the ' + Club.season.weeks() + '-week golf season.' + (c.all.some(function (o) { return o.sample; }) ? ' Cart orders before ' + F.dateShort(c.src.first) + ' are sample history.' : ''), amount: amt, per: 'a week', year: amt * Club.season.weeks() });
       }
     }
     const tm = stats(ctx, 'times', timesStats);

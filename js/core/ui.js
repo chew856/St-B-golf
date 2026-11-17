@@ -97,6 +97,46 @@
   /* Manitoba: 5% GST + 7% PST */
   Club.taxRate = function () { return Club.store.getObj('taxRate', 0.12); };
 
+  /* Golf season (owner, Nov 17): opening and closing day, set by staff in Settings > Golf season and stored as
+     'golfSeason' { open: 'MM-DD', close: 'MM-DD', confirmed }. The same days apply every year. Until the club enters
+     its real dates, April 1 to October 31 stands in (confirmed: false). Lesson packages, Reports, the members'
+     league setup and Group outings all read the season from here. */
+  (function () {
+    const DEF = { open: '04-01', close: '10-31', confirmed: false };
+    const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const MD = /^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/;
+    function get() {
+      const v = Club.store.getObj('golfSeason', null);
+      return v && MD.test(v.open) && MD.test(v.close) && v.open < v.close ? { open: v.open, close: v.close, confirmed: !!v.confirmed } : Object.assign({}, DEF);
+    }
+    function mo(md) { return +md.slice(0, 2); }
+    const api = {
+      DEFAULT: DEF,
+      get: get,
+      /** Opening and closing day of a given year, as YYYY-MM-DD. */
+      start: function (year) { return year + '-' + get().open; },
+      end: function (year) { return year + '-' + get().close; },
+      /** Month numbers (1 to 12) the course is open in, at least in part. */
+      months: function () { const g = get(), out = []; for (let m = mo(g.open); m <= mo(g.close); m++) out.push(m); return out; },
+      /** Is this day (YYYY-MM-DD) inside the season? */
+      inSeason: function (iso) { const md = String(iso).slice(5, 10), g = get(); return md >= g.open && md <= g.close; },
+      /** Is any of this month (YYYY-MM) inside the season? */
+      inSeasonMonth: function (key) { const m = +String(key).slice(5, 7), g = get(); return m >= mo(g.open) && m <= mo(g.close); },
+      /** The season's closing day on or after this day. */
+      endAfter: function (iso) { const y = +String(iso).slice(0, 4), e = api.end(y); return iso <= e ? e : api.end(y + 1); },
+      /** Length of the season in whole weeks. */
+      weeks: function () { const g = get(), y = 2025; return Math.max(1, Math.round((Date.UTC(y, mo(g.close) - 1, +g.close.slice(3)) - Date.UTC(y, mo(g.open) - 1, +g.open.slice(3))) / 864e5 / 7)); },
+      monthName: function (m) { return MONTHS[(m - 1 + 12) % 12]; },
+      /** "April to October" */
+      label: function () { const g = get(); return MONTHS[mo(g.open) - 1] + ' to ' + MONTHS[mo(g.close) - 1]; },
+      /** "November to March" (the months the course is closed); '' if it never closes */
+      winterLabel: function () { const g = get(), a = mo(g.close) + 1, b = mo(g.open) - 1; if (a > 12 && b < 1) return ''; return MONTHS[(a - 1) % 12] + ' to ' + MONTHS[(b + 11) % 12]; },
+      /** "April 1 to October 31" */
+      dayLabel: function () { const g = get(); return MONTHS[mo(g.open) - 1] + ' ' + (+g.open.slice(3)) + ' to ' + MONTHS[mo(g.close) - 1] + ' ' + (+g.close.slice(3)); }
+    };
+    Club.season = api;
+  })();
+
   Club.staff = {
     get: function (id) { return Club.store.find('staff', id); },
     name: function (id) { const s = Club.store.find('staff', id); return s ? s.firstName + ' ' + s.lastName : 'Unassigned'; },

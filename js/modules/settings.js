@@ -595,6 +595,54 @@
     });
   }
 
+  /* ---------------- Golf season ----------------
+     Opening and closing day (owner, Nov 17), stored as 'golfSeason' and read through Club.season (js/core/ui.js).
+     The same days apply every year; until the club saves its own, April 1 to October 31 stands in. */
+  function seasonTab(panel) {
+    const year = +D.today().slice(0, 4);
+    function draw() {
+      const g = Club.season.get();
+      panel.innerHTML = '<div class="grid grid-main-side st-grid">' +
+        '<section class="panel" data-reveal><div class="panel-head"><div><div class="eyebrow">Golf season</div><h3>Opening and closing day</h3></div>' +
+        (g.confirmed ? U.badge('Set by the club', 'good') : U.badge('Placeholder', 'brass')) + '</div><div class="panel-body">' +
+        '<p class="ink-2 st-season-lead">' + (g.confirmed ? 'The course is open ' + esc(Club.season.dayLabel()) + ' each year.' :
+          'These dates are placeholders until the club enters its own. Change them and save to set the season.') + '</p>' +
+        '<form class="form-grid st-form" novalidate data-form="season">' +
+        U.field({ label: 'Opening day', name: 'open', type: 'date', value: year + '-' + g.open, required: true, hint: 'The first day golf is played.' }) +
+        U.field({ label: 'Closing day', name: 'close', type: 'date', value: year + '-' + g.close, required: true, hint: 'The last day golf is played.' }) +
+        '<p class="muted span-2 st-season-note">Only the day and month are kept: the same dates are used every year. Update them each spring if they change.</p>' +
+        '<div class="span-2 st-form-foot">' + U.btn('Save season', { kind: 'primary', icon: 'check', action: 'save-season' }) + '</div>' +
+        '</form></div></section>' +
+        '<section class="panel" data-reveal><div class="panel-head"><div><div class="eyebrow">Where it is used</div><h3>' + esc(Club.season.label()) + '</h3></div></div><div class="panel-body flush">' +
+        '<ul class="list st-season-uses">' +
+        [['lessons', 'lesson', 'Lesson packages', 'Packages set to "End of season" expire on the closing day.'],
+         ['reports', 'reports', 'Reports', 'Golf season against winter, season-to-date figures and season estimates.'],
+         ['events/league', 'trophy', "Members' league", 'New seasons start on these dates, and league nights must fall inside them.'],
+         ['outings', 'flag', 'Group outings', 'Tournament dates must fall inside the season.']].map(function (u) {
+          return '<li><a href="#/' + u[0] + '" class="st-mod"><span class="st-mod-icon">' + Club.icon(u[1]) + '</span><span class="st-mod-main"><span class="st-mod-name">' + esc(u[2]) + '</span><span class="muted">' + esc(u[3]) + '</span></span></a></li>';
+        }).join('') + '</ul></div></section></div>';
+      U.animateIn(panel);
+    }
+    draw();
+    U.on(panel, 'submit', 'form[data-form=season]', function (e) { e.preventDefault(); save(); });
+    U.on(panel, 'click', '[data-action=save-season]', save);
+    function save() {
+      const form = U.$('form[data-form=season]', panel);
+      clearErrors(form);
+      if (!U.validate(form)) return;
+      const d = U.formData(form), open = String(d.open || '').slice(5, 10), close = String(d.close || '').slice(5, 10);
+      if (!/^\d\d-\d\d$/.test(open)) { fieldError(form, 'open', 'Choose the opening day.'); focusFirstError(form); return; }
+      if (!/^\d\d-\d\d$/.test(close)) { fieldError(form, 'close', 'Choose the closing day.'); focusFirstError(form); return; }
+      if (close <= open) { fieldError(form, 'close', 'The closing day must come after the opening day in the same year.'); focusFirstError(form); return; }
+      const was = Club.season.get();
+      if (was.confirmed && was.open === open && was.close === close) { U.toast('No changes to save'); return; }
+      undoable(function () { S.setObj('golfSeason', { open: open, close: close, confirmed: true }); },
+        function () { return 'Golf season set: ' + Club.season.dayLabel(); },
+        'Golf season back to ' + Club.season.dayLabel() + (was.confirmed ? '' : ' (placeholder)'), draw);
+      draw();
+    }
+  }
+
   /* ---------------- About ---------------- */
   function aboutTab(panel) {
     const mods = Club.modules.slice().sort(function (a, b) {
@@ -621,6 +669,7 @@
   /* ---------------- Page ---------------- */
   const TABS = [
     { id: 'profile', label: 'Club profile', fn: profileTab },
+    { id: 'season', label: 'Golf season', fn: seasonTab },
     { id: 'billing', label: 'Billing', fn: billingTab },
     { id: 'data', label: 'Data', fn: dataTab },
     { id: 'about', label: 'About', fn: aboutTab }
@@ -631,7 +680,7 @@
   function render(view, params) {
     if (params[0] === 'promotions' || params[0] === 'addons') { setTimeout(function () { Club.app.go('proshop/' + params[0]); }, 0); return; }
     const initial = TABS.some(function (t) { return t.id === params[0]; }) ? params[0] : 'profile';
-    view.innerHTML = '<div class="st-page">' + U.pageHeader({ eyebrow: 'Administration', title: 'Settings', subtitle: 'Club profile, dues schedule, taxes and data for ' + esc(Club.info.name) + '.' }) + '<div class="st-tabs"></div></div>';
+    view.innerHTML = '<div class="st-page">' + U.pageHeader({ eyebrow: 'Administration', title: 'Settings', subtitle: 'Club profile, golf season, dues schedule, taxes and data for ' + esc(Club.info.name) + '.' }) + '<div class="st-tabs"></div></div>';
     let tabCleanup = null;
     U.tabs(U.$('.st-tabs', view), TABS.map(function (t) {
       return { id: t.id, label: t.label, render: function (panel) { if (tabCleanup) { tabCleanup(); tabCleanup = null; } tabCleanup = t.fn(panel) || null; } };

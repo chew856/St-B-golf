@@ -175,3 +175,7 @@ body.staff .st-promo-tools .segmented button { min-height: 36px; padding: 4px 12
 }
 .st-uses-c > span { display: block; white-space: nowrap; }
 .st-given { font-size: 0.8125rem; color: var(--text-2); }
+
+/* Golf season tab */
+.st-season-lead { margin: 0 0 var(--s4); }
+.st-season-note { margin: 0; font-size: 0.8125rem; }

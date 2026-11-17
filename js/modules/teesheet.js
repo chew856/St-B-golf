@@ -39,6 +39,12 @@
 
   function blocksOn(date) { return S.where('teeBlocks', function (b) { return b.date === date; }).sort(function (a, b) { return a.start < b.start ? -1 : 1; }); }
   function activeOn(date) { return S.where('teeTimes', function (t) { return t.date === date && t.status !== 'cancelled'; }); }
+  /** Groups still to go out on a day, in tee time order: booked or checked in, tee time not passed by more than 10
+      minutes (the sheet fades rows after that). The first is the group the starter sends next ("Next up"). */
+  function dueOff(date, now) {
+    return activeOn(date).filter(function (t) { return (t.status === 'booked' || t.status === 'checked-in') && toMin(t.time) >= now - 10; })
+      .sort(function (a, b) { return a.time < b.time ? -1 : 1; });
+  }
   function memberLabel(p) {
     if (p.type === 'member' && p.memberId) { const m = Club.members.get(p.memberId); if (m) return m.firstName + ' ' + m.lastName; }
     return p.name || 'Guest';
@@ -577,40 +583,63 @@
     }).join('');
   }
 
+  /* ---------------- The day list (Option C, Nov 17): a tidy grid, four player columns ----------------
+     Players are plain text (full "Last, F." name, then handicap and Walk or Cart), an empty place is a faint dash that
+     shows "+ Add" when pointed at, an empty tee time is a thin row that books when clicked, and the status column is one
+     small icon and a word plus one action button. The next group to go out is highlighted with a dark button. */
+  function walkCart(p) { return p.cart ? 'Cart' : 'Walk'; }
+  function lowerFirst(t) { t = String(t || ''); return t.charAt(0).toLowerCase() + t.slice(1); }
+  /** The second line under a player's name, and a plain-words version for screen readers and the tooltip. */
+  function playerSub(tt, p) {
+    if (isPublic(p)) return { text: 'Public · ' + lowerFirst(publicPayLabel(p)), cls: p.paid ? '' : ' is-due', say: 'public golfer, ' + publicPayLabel(p).toLowerCase() + ', ' + (p.cart ? 'cart' : 'walking') };
+    if (p.type === 'guest') {
+      const host = guestHost(tt, p), hm = host ? Club.members.get(host.memberId) : null;
+      const shop = p.pays === 'shop' ? (p.paid ? 'paid at shop' : 'pays at shop') : '';
+      return { text: 'Guest' + (hm ? ' of ' + hm.lastName : '') + (shop ? ' · ' + shop : '') + ' · ' + walkCart(p), cls: p.pays === 'shop' && !p.paid ? ' is-due' : '',
+        say: 'guest' + (hm ? ' of ' + hm.firstName + ' ' + hm.lastName : '') + (shop ? ', ' + shop : '') + ', ' + (p.cart ? 'cart' : 'walking') };
+    }
+    const m = p.memberId ? Club.members.get(p.memberId) : null;
+    const hc = m && m.handicap != null ? fmt.handicap(m.handicap) : null;
+    return { text: (hc || 'Member') + ' · ' + walkCart(p), cls: '', say: 'member' + (hc ? ', handicap ' + hc : '') + ', ' + (p.cart ? 'cart' : 'walking') };
+  }
+  const DASH = '<span class="ts-dash" aria-hidden="true"></span>';
   function slotHTML(tt, p, i, date, time, bookable) {
-    if (p && isPublic(p)) {
-      const title = memberLabel(p) + ', public golfer, ' + publicPayLabel(p).toLowerCase() + (p.cart ? ', cart' : ', walking');
-      return '<button type="button" class="ts-slot filled public' + (p.paid ? ' is-paid' : ' pay-shop') + '" data-action="open" data-id="' + esc(tt.id) + '" data-slot="' + i + '" title="' + esc(title) + '">' +
-        '<span class="ts-avw"><span class="avatar sm light ts-av ts-av-pub">' + esc(fmt.initials(p.name || 'Public')) + '</span><i class="ts-paid" title="Green fee paid"></i></span>' +
-        '<span class="ts-pl"><span class="ts-pname">' + esc(lastName(p)) + '</span><span class="ts-psub"><b class="ts-pubtag">Public</b> ' + esc(publicPayLabel(p)) + '</span></span></button>';
-    }
     if (p) {
-      const isGuest = p.type === 'guest';
-      const host = isGuest ? guestHost(tt, p) : null;
-      const m = !isGuest && p.memberId ? Club.members.get(p.memberId) : null;
-      const sub = (isGuest ? 'Guest' + (host ? ' of ' + esc(Club.members.get(host.memberId).lastName) : '') + (p.pays === 'shop' ? ' · ' + (p.paid ? 'paid at shop' : 'pays at shop') : '') : (m && m.handicap != null ? fmt.handicap(m.handicap) : 'Member')) + ' · ' + (p.cart ? 'Cart' : 'Walk');
-      return '<button type="button" class="ts-slot filled ' + (isGuest ? 'guest' : 'member') + (p.paid ? ' is-paid' : '') + '" data-action="open" data-id="' + esc(tt.id) + '" data-slot="' + i + '" title="' + esc(memberLabel(p)) + '">' +
-        '<span class="ts-avw">' + (isGuest ? '<span class="avatar sm light ts-av">' + esc(fmt.initials(p.name)) + '</span>' : ui.avatar(memberLabel(p), 'sm').replace('class="avatar sm', 'class="avatar sm ts-av')) +
-        '<i class="ts-paid" title="Fees settled"></i></span>' +
-        '<span class="ts-pl"><span class="ts-pname">' + esc(lastName(p)) + '</span><span class="ts-psub">' + sub + '</span></span></button>';
+      const kind = isPublic(p) ? 'public' : p.type === 'guest' ? 'guest' : 'member';
+      const sub = playerSub(tt, p), full = memberLabel(p);
+      const tip = full + ', ' + sub.say + (p.paid && !isPublic(p) ? ', fees settled' : '');
+      return '<button type="button" class="ts-slot filled ' + kind + (p.paid ? ' is-paid' : '') + (isPublic(p) && !p.paid ? ' pay-shop' : '') + '" data-action="open" data-id="' + esc(tt.id) + '" data-slot="' + i + '" title="' + esc(tip) + '" aria-label="' + esc(tip + '. Open the ' + fmt.time(time) + ' group') + '">' +
+        '<span class="ts-pname">' + esc(shortName(p)) + '</span><span class="ts-psub' + sub.cls + '">' + esc(sub.text) + '</span></button>';
     }
-    if (!bookable) return '<span class="ts-slot void" aria-hidden="true"></span>';
-    return '<button type="button" class="ts-slot open" data-action="book" data-time="' + time + '"' + (tt ? ' data-id="' + esc(tt.id) + '"' : '') + ' data-slot="' + i + '" aria-label="Book ' + fmt.time(time) + ' slot ' + (i + 1) + '">' + Club.icon('plus') + '<span>Open</span></button>';
+    if (!bookable) return '<span class="ts-slot void" aria-hidden="true">' + DASH + '</span>';
+    /* A whole empty tee time books from its row; its places are only the faint dashes. */
+    if (!tt) return '<span class="ts-slot open" aria-hidden="true">' + DASH + '</span>';
+    const label = 'Add a player to the ' + fmt.time(time) + ' group, place ' + (i + 1);
+    return '<button type="button" class="ts-slot open" data-action="book" data-time="' + time + '" data-id="' + esc(tt.id) + '" data-slot="' + i + '" aria-label="' + esc(label) + '">' + DASH + '<span class="ts-add" aria-hidden="true">+ Add</span></button>';
   }
 
-  function stateHTML(tt) {
+  const ST_ICON = { booked: 'check', late: 'alert', 'checked-in': 'check', completed: 'check', 'no-show': 'close' };
+  /** The status column: one small icon and a word, then one action button (or the round time once completed).
+      c: the sheet's context (now, today, the next group up) so a passed booking reads "Late" and the next group stands out. */
+  function stateHTML(tt, c) {
     const st = STATUS[tt.status] || STATUS.booked;
-    let extra = '';
-    if (tt.status === 'completed' && tt.startedAt && tt.finishedAt) extra = '<span class="ts-dur" title="Round time">' + dur(toMin(tt.finishedAt) - toMin(tt.startedAt)) + '</span>';
-    return '<span class="ts-status"><i class="ts-sdot"></i><span class="ts-slabel">' + esc(st.label) + '</span></span>' +
-      '<span class="ts-acts">' + (st.next && tt.date <= Club.date.today() ? '<button type="button" class="btn btn-sm ts-next" data-action="advance" data-id="' + esc(tt.id) + '">' + esc(st.verb) + '</button>' : extra) + '</span>';
+    const isNext = !!(c && c.nextId === tt.id);
+    const late = tt.status === 'booked' && !!c && (c.isPast || (c.isToday && toMin(tt.time) < c.now));
+    let kind = tt.status, word = st.label;
+    if (late) { kind = 'late'; word = 'Late'; }
+    else if (isNext) { kind = 'next'; word = 'Next up'; }
+    const ico = kind === 'next' ? '' : kind === 'on-course' ? '<i class="ts-sico" aria-hidden="true"><i class="ts-sdot"></i></i>' : '<i class="ts-sico" aria-hidden="true">' + Club.icon(ST_ICON[kind] || 'check') + '</i>';
+    let act = '';
+    if (st.next && tt.date <= Club.date.today()) act = '<button type="button" class="btn btn-sm ts-next' + (isNext ? ' btn-primary' : '') + '" data-action="advance" data-id="' + esc(tt.id) + '" aria-label="' + esc(st.verb + ' the ' + fmt.time(tt.time) + ' group') + '">' + esc(st.verb) + '</button>';
+    else if (tt.status === 'completed' && tt.startedAt && tt.finishedAt) act = '<span class="ts-dur" title="Round time">' + dur(toMin(tt.finishedAt) - toMin(tt.startedAt)) + '</span>';
+    return '<span class="ts-status is-' + kind + '">' + ico + '<span class="ts-slabel">' + esc(word) + '</span></span>' + (act ? '<span class="ts-acts">' + act + '</span>' : '');
   }
 
   function rowHTML(tt, time, date, idx, ctx) {
     const players = tt ? (tt.players || []) : [];
     const past = ctx.isPast || (ctx.isToday && toMin(time) < ctx.now - 10);
     const bookable = !past && (!tt || ['booked', 'checked-in'].indexOf(tt.status) >= 0);
-    const names = players.map(function (p) { return memberLabel(p); }).join(' | ').toLowerCase();
+    const names = players.map(function (p) { return memberLabel(p) + ' | ' + shortName(p); }).join(' | ').toLowerCase();
     const openCount = 4 - players.length;
     const blk = ctx.blockFor(time);
     let cells = '';
@@ -624,14 +653,30 @@
       (promos.length ? '<span class="ts-mark promo" title="' + esc(promos.map(function (x) { return 'Promo code ' + x.promo.code + ', ' + money(x.promo.discount) + ' off'; }).join('; ')) + '">Promo</span>' : '');
     const wlN = waitingAt(date, time);
     const wlMark = wlN ? '<span class="ts-mark wl" title="' + esc(wlN + ' on the waitlist for this time') + '">' + wlN + ' waiting</span>' : '';
-    const timeInner = '<span class="ts-clock serif">' + tp[0] + '</span><span class="ts-ampm">' + tp[1] + '</span>' + (tt && tt.holes === 9 ? '<span class="ts-nine">9 holes</span>' : '') + (tt && +tt.startTee === 10 ? '<span class="ts-nine">10th tee</span>' : '') + (marks || wlMark ? '<span class="ts-marks">' + marks + wlMark + '</span>' : '');
+    const tags = (tt && +tt.holes === 9 ? '<span class="ts-nine">9 holes</span>' : '') + (tt && +tt.startTee === 10 ? '<span class="ts-nine ts-tee10">10th tee</span>' : '');
+    const timeInner = '<span class="ts-clock">' + tp[0] + '</span><span class="ts-ampm">' + tp[1] + '</span>' + (tags ? '<span class="ts-tags">' + tags + '</span>' : '') + (marks || wlMark ? '<span class="ts-marks">' + marks + wlMark + '</span>' : '');
     const hasMem = players.some(function (p) { return p.type === 'member'; }), hasPub = players.some(isPublic);
-    return '<div class="ts-row' + (tt ? ' has-group' : ' empty-row') + (past ? ' past' : '') + (tt && tt.overrides && tt.overrides.length ? ' has-override' : '') + '" data-time="' + time + '"' + (tt ? ' data-id="' + esc(tt.id) + '" data-status="' + esc(tt.status) + '"' : '') +
-      ' data-names="' + esc(names) + '" data-open="' + (bookable ? openCount : 0) + '" data-mem="' + (hasMem ? 1 : 0) + '" data-pub="' + (hasPub ? 1 : 0) + '" style="--i:' + Math.min(idx, 36) + '">' +
-      (tt ? '<button type="button" class="ts-time" data-action="open" data-id="' + esc(tt.id) + '" title="Open group">' + timeInner + '</button>' : '<div class="ts-time">' + timeInner + '</div>') +
+    const isNext = !!(tt && ctx.nextId === tt.id);
+    const late = !!(tt && tt.status === 'booked' && (ctx.isPast || (ctx.isToday && toMin(time) < ctx.now)));
+    /* Passed rows fade, except a group still on the course or waiting to go out. */
+    const fade = past && !(tt && (tt.status === 'on-course' || tt.status === 'checked-in'));
+    const data = ' data-time="' + time + '"' + (tt ? ' data-id="' + esc(tt.id) + '" data-status="' + esc(tt.status) + '"' : '') +
+      ' data-names="' + esc(names) + '" data-open="' + (bookable ? openCount : 0) + '" data-mem="' + (hasMem ? 1 : 0) + '" data-pub="' + (hasPub ? 1 : 0) + '" style="--i:' + Math.min(idx, 36) + '"';
+    const cls = 'ts-row' + (tt ? ' has-group' : ' empty-row') + (fade ? ' past' : '') + (isNext ? ' is-next' : '') + (late ? ' is-late' : '') + (tt && tt.overrides && tt.overrides.length ? ' has-override' : '');
+    if (!tt) {
+      /* A fully empty tee time: a thin row; pointing at it shows "+ Book <time>", and a click anywhere on it books. */
+      const can = bookable && !blk;
+      return '<div class="' + cls + (can ? ' can-book' : '') + '"' + data + (can ? ' role="button" tabindex="0" data-action="book" aria-label="' + esc('Book ' + fmt.time(time)) + '"' : '') + '>' +
+        '<div class="ts-time">' + timeInner + '</div>' +
+        '<div class="ts-slots">' + cells + '</div>' +
+        '<div class="ts-state">' + (blk ? '<span class="ts-inblock">' + esc(blk.reason) + '</span>' : can ? '<span class="ts-bookhint" aria-hidden="true">+ Book ' + esc(fmt.time(time)) + '</span>' : '') + '</div>' +
+        '</div>';
+    }
+    return '<div class="' + cls + '"' + data + '>' +
+      '<button type="button" class="ts-time" data-action="open" data-id="' + esc(tt.id) + '" title="Open group">' + timeInner + '</button>' +
       '<div class="ts-slots">' + cells + '</div>' +
-      '<div class="ts-state">' + (tt ? stateHTML(tt) : (blk ? '<span class="ts-inblock">' + esc(blk.reason) + '</span>' : '')) + '</div>' +
-      (tt && tt.notes ? '<div class="ts-note">' + Club.icon('info') + esc(tt.notes) + '</div>' : '') +
+      '<div class="ts-state">' + stateHTML(tt, ctx) + '</div>' +
+      (tt.notes ? '<div class="ts-note">' + Club.icon('info') + esc(tt.notes) + '</div>' : '') +
       '</div>';
   }
 
@@ -822,62 +867,67 @@
       ui.pageHeader({
         eyebrow: 'Golf operations', title: 'Tee Sheet',
         subtitle: '<span class="ts-subdate">' + esc(fmt.dateLong(state.date)) + '</span> <span class="badge plain ts-rel">' + esc(rel) + '</span>' + (wx ? ' <span class="ts-wx">' + Club.icon(wx.icon) + esc(wx.cond) + ', ' + wx.hi + '° / ' + wx.lo + '°, wind ' + wx.wind + ' km/h</span>' : ''),
-        actions: ui.btn('Block times', { icon: 'maintenance', action: 'block' }) + ui.btn('Book tee time', { kind: 'primary', icon: 'plus', action: 'book-new' })
+        actions: ui.btn('Block times', { icon: 'maintenance', action: 'block' })
       }) +
       '<div class="ts-datebar panel" data-reveal>' +
-        '<div class="ts-datenav">' +
-          '<div class="ts-dp"></div>' +
-          '<button type="button" class="btn' + (state.date === today ? ' btn-primary' : '') + ' ts-today" data-action="today"' + (state.date === today ? ' aria-current="date"' : '') + '>Today</button>' +
-        '</div>' +
         '<div class="ts-strip" role="group" aria-label="Week at a glance">' + stripHTML(state.date) + '</div>' +
       '</div>' +
       '<div class="ts-stats">' + statsHTML(state.date) + '</div>' +
-      '<div class="ts-layout">' +
+      '<div class="ts-wrap"><div class="ts-layout">' +
         '<section class="panel ts-sheet-panel" data-reveal>' +
-          '<div class="panel-head ts-sheet-top"><h3 class="ts-sr">' + esc(fmt.weekday(state.date)) + ' starting sheet, tee times every ' + settings().interval + ' minutes</h3>' +
-            '<div class="segmented ts-periods" data-name="tsperiod" role="group" aria-label="Part of the day"></div>' +
+          '<h3 class="ts-sr">' + esc(fmt.weekday(state.date)) + ' starting sheet, tee times every ' + settings().interval + ' minutes</h3>' +
+          /* One bar above the list (Option C): date, Today and Now on the left; the player search, the two filters and Book on the right. */
+          '<div class="ts-bar">' +
+            '<div class="ts-datenav">' +
+              '<div class="ts-dp"></div>' +
+              '<button type="button" class="btn ts-today" data-action="today"' + (state.date === today ? ' aria-current="date"' : '') + '>Today</button>' +
+              (state.date === today ? ui.btn('Now', { icon: 'clock', action: 'jump-now', title: 'Jump to the current time' }).replace('class="btn ', 'class="btn ts-nowbtn ') : '') +
+            '</div>' +
             '<div class="ts-tools">' +
               '<div class="ts-search">' + Club.icon('search') + '<input type="search" class="input" placeholder="Find a player" aria-label="Filter by player name"></div>' +
-              ui.segmented([{ value: 'all', label: 'All' }, { value: 'open', label: 'Open' }, { value: 'booked', label: 'Booked' }], 'all', 'tsfilter') +
-              ui.segmented([{ value: 'all', label: 'All players' }, { value: 'members', label: 'Members' }, { value: 'public', label: 'Public' }], 'all', 'tskind') +
-              (state.date === today ? ui.btn('Now', { sm: true, icon: 'clock', action: 'jump-now', title: 'Jump to the current time' }) : '') +
-            '</div></div>' +
+              ui.segmented([{ value: 'all', label: 'All' }, { value: 'open', label: 'Open' }, { value: 'booked', label: 'Booked' }], 'all', 'tsfilter').replace('class="segmented"', 'class="segmented ts-seg" role="group" aria-label="Show tee times"') +
+              ui.segmented([{ value: 'all', label: 'All players' }, { value: 'members', label: 'Members' }, { value: 'public', label: 'Public' }], 'all', 'tskind').replace('class="segmented"', 'class="segmented ts-seg" role="group" aria-label="Show players"') +
+            '</div>' +
+            '<button type="button" class="btn btn-primary ts-book" data-action="book-new" title="Book a tee time">' + Club.icon('plus') + '<span>Book</span></button>' +
+          '</div>' +
+          '<div class="ts-periods" data-name="tsperiod" role="group" aria-label="Parts of the day"></div>' +
           '<div class="ts-scroll" tabindex="0" aria-label="Tee sheet, scroll for the whole day">' +
           '<div class="ts-head" aria-hidden="true"><span>Time <small>' + settings().interval + ' min</small></span><span class="ts-head-slots"><span>Player 1</span><span>Player 2</span><span>Player 3</span><span>Player 4</span></span><span>Status</span></div>' +
           '<div class="ts-sheet cascade"></div>' +
           '<div class="ts-filter-empty" hidden></div>' +
           '</div>' +
         '</section>' +
-        '<aside class="ts-side" aria-label="Starter, blocks and fees">' +
-          sideAcc('starter', 'flag', c0isToday ? 'Starter' : 'Day at a glance', c0isToday && window.innerWidth >= 1281) +
+        '<aside class="ts-side" aria-label="Starter, waitlist, blocks and fees">' +
+          '<section class="panel ts-starter" aria-label="' + (c0isToday ? 'Starter' : 'Day at a glance') + '"></section>' +
           (WL() ? sideAcc('waitlist', 'bell', 'Waitlist', WL().onDate(state.date).some(WL().isActive)) : '') +
           sideAcc('blocks', 'maintenance', 'Blocked times', false) +
           sideAcc('fees', 'billing', 'Golf fees', false) +
         '</aside>' +
-      '</div>';
+      '</div></div>';
 
     const sheet = ui.$('.ts-sheet', view);
 
     function ctx() {
-      const blocks = blocksOn(state.date);
+      const blocks = blocksOn(state.date), isToday = state.date === today, now = nowMin();
+      const nx = isToday ? dueOff(state.date, now)[0] : null;
       return {
-        isToday: state.date === today, isPast: state.date < today, now: nowMin(), blocks: blocks,
+        isToday: isToday, isPast: state.date < today, now: now, blocks: blocks, nextId: nx ? nx.id : null,
         blockFor: function (t) { return blockAt(blocks, state.date, t); }
       };
     }
 
-    function renderSheet(opts) {
-      opts = opts || {};
-      const c = ctx();
+    /** The day's rows, bands and the Now line as HTML. */
+    function sheetHTML(c) {
       const byTime = {}; activeOn(state.date).forEach(function (t) { byTime[t.time] = t; });
       const slots = slotList();
       // groups that fall off-grid (e.g. after settings change) are still shown
       Object.keys(byTime).forEach(function (t) { if (slots.indexOf(t) < 0) slots.push(t); });
       slots.sort();
       let html = '', band = null, idx = 0, nowPlaced = !c.isToday;
+      const nowLine = function (word) { return '<div class="ts-now" data-now data-min="' + c.now + '" role="separator" aria-label="' + esc(word + ' ' + fmt.time(toHM(c.now))) + '"><span>' + esc(word + ' ' + fmt.time(toHM(c.now))) + '</span></div>'; };
       const flush = function () { if (band) { html += bandHTML(band.block, band.from, band.to, idx++); band = null; } };
       slots.forEach(function (t, i) {
-        if (!nowPlaced && toMin(t) > c.now) { flush(); html += '<div class="ts-now" data-now data-min="' + c.now + '"><span>Now · ' + fmt.time(toHM(c.now)) + '</span></div>'; nowPlaced = true; }
+        if (!nowPlaced && toMin(t) > c.now) { flush(); html += nowLine('Now'); nowPlaced = true; }
         const blk = c.blockFor(t); const tt = byTime[t];
         if (blk && !tt) {
           const nextT = slots[i + 1] || closeHM();
@@ -890,11 +940,47 @@
         html += rowHTML(tt, t, state.date, idx++, c);
       });
       flush();
-      if (!nowPlaced) html += '<div class="ts-now" data-now data-min="' + c.now + '"><span>Close of play · ' + fmt.time(toHM(c.now)) + '</span></div>';
+      if (!nowPlaced) html += nowLine('Close of play');
+      return html;
+    }
+    function rowKey(el) { return el.hasAttribute('data-now') ? 'now' : el.dataset.time ? 't' + el.dataset.time : el.hasAttribute('data-band') ? 'b' + el.dataset.from : ''; }
+    /** What has keyboard focus in the sheet, so a redraw can put it back: { key: the row, sel: the control in it }. */
+    function focusMark(root) {
+      const a = document.activeElement; if (!a || !root.contains(a)) return null;
+      const row = a.closest('.ts-row, .ts-band, [data-fk]'); if (!row) return null;
+      let sel = null;
+      if (a !== row) {
+        if (a.dataset.action) sel = '[data-action="' + a.dataset.action + '"]' + (a.dataset.slot != null ? '[data-slot="' + a.dataset.slot + '"]' : '') + (a.dataset.value ? '[data-value="' + a.dataset.value + '"]' : '');
+        else if (a.classList.contains('ts-time')) sel = '.ts-time';
+      }
+      return { key: row.dataset.fk || rowKey(row), sel: sel, fk: !!row.dataset.fk };
+    }
+    function focusBack(root, m) {
+      if (!m || (document.activeElement && root.contains(document.activeElement) && document.activeElement !== document.body)) return;
+      const row = m.fk ? ui.$('[data-fk="' + m.key + '"]', root) : ui.$$('.ts-row, .ts-band', root).find(function (r) { return rowKey(r) === m.key; });
+      if (!row) return;
+      const t = (m.sel && ui.$(m.sel, row)) || (row.tabIndex >= 0 ? row : ui.$('button:not([disabled]), [tabindex="0"]', row));
+      if (t) try { t.focus({ preventScroll: true }); } catch (e) { t.focus(); }
+    }
+    /* A redraw changes only the rows whose content changed (the scroll position, focus and untouched rows stay put);
+       the first draw of the day, or a different set of rows, draws the whole list. */
+    function renderSheet(opts) {
+      opts = opts || {};
+      const c = ctx();
+      const html = sheetHTML(c);
+      const fm = focusMark(sheet);
       sheet.classList.toggle('cascade', !!opts.cascade);
-      sheet.innerHTML = html;
+      const next = ui.el('<div>' + html + '</div>');
+      const fresh = Array.prototype.slice.call(next.children), cur = Array.prototype.slice.call(sheet.children);
+      const same = !opts.cascade && fresh.length === cur.length && fresh.every(function (n, i) { return rowKey(n) === rowKey(cur[i]); });
+      if (same) {
+        fresh.forEach(function (n, i) {
+          const o = cur[i];
+          o.removeAttribute('hidden');
+          if (o.outerHTML !== n.outerHTML) { sheet.replaceChild(n, o); if (o.classList.contains('has-group') && n.classList.contains('has-group') && o.dataset.status !== n.dataset.status) n.classList.add('just-changed'); }
+        });
+      } else sheet.innerHTML = html;
       if (opts.flash) {
-        const ft = S.find('teeTimes', opts.flash.id);
         const row = ui.$('.ts-row[data-id="' + opts.flash.id + '"]', sheet);
         if (row) {
           row.classList.add('just-saved');
@@ -904,54 +990,68 @@
       }
       paintHolds();
       applyFilter();
+      focusBack(sheet, fm);
+      paintedAt = nowSig();
     }
-    /* Online holds on the rows, updated in place (one timer for the sheet): a counting pill by the time, and the open
-       places shown as held and not bookable until the hold ends or is released. */
+    /* The minute the sheet was drawn for: the live clock redraws when a tee time passes (Late, Next up, faded rows). */
+    let paintedAt = '';
+    function nowSig() { if (state.date !== today) return ''; const n = nowMin(); return slotList().filter(function (t) { return toMin(t) <= n; }).length + '|' + slotList().filter(function (t) { return toMin(t) < n - 10; }).length; }
+    /* Online holds on the rows, updated in place (one timer for the sheet): a counting pill by the time (in the status
+       column on an empty tee time), and the open places shown as held and not bookable until the hold ends or is released. */
     function paintHolds() {
       const hs = holdsOn(state.date);
       ui.$$('.ts-row', sheet).forEach(function (row) {
         const x = hs[row.dataset.time]; const held = !!(x && x.left > 0);
+        const empty = row.classList.contains('empty-row');
         let pill = ui.$('.ts-mark.held', row);
         if (!held) {
           if (!row.classList.contains('is-held')) return;
           row.classList.remove('is-held'); if (pill) pill.remove();
-          ui.$$('.ts-slot.open.is-held', row).forEach(function (s) { s.classList.remove('is-held'); s.removeAttribute('aria-disabled'); s.removeAttribute('title'); s.setAttribute('aria-label', s.dataset.label || s.getAttribute('aria-label')); });
+          if (empty && row.classList.contains('can-book')) { row.removeAttribute('aria-disabled'); row.setAttribute('aria-label', 'Book ' + fmt.time(row.dataset.time)); }
+          ui.$$('.ts-slot.open.is-held', row).forEach(function (s) { s.classList.remove('is-held'); s.removeAttribute('aria-disabled'); s.removeAttribute('title'); if (s.tagName === 'BUTTON') s.setAttribute('aria-label', s.dataset.label || s.getAttribute('aria-label')); });
           return;
         }
         row.classList.add('is-held');
         if (!pill) {
           let marks = ui.$('.ts-marks', row);
-          if (!marks) { marks = document.createElement('span'); marks.className = 'ts-marks'; ui.$('.ts-time', row).appendChild(marks); }
+          if (empty) marks = ui.$('.ts-state', row);
+          else if (!marks) { marks = document.createElement('span'); marks.className = 'ts-marks'; ui.$('.ts-time', row).appendChild(marks); }
           pill = document.createElement('span'); pill.className = 'ts-mark held'; marks.insertBefore(pill, marks.firstChild);
         }
         pill.textContent = 'Held online · ' + clock(x.left); pill.title = holdTip(x);
+        if (empty && row.classList.contains('can-book')) { row.setAttribute('aria-disabled', 'true'); row.setAttribute('aria-label', 'Book ' + fmt.time(row.dataset.time) + ', held online for ' + clock(x.left)); }
         ui.$$('.ts-slot.open', row).forEach(function (s) {
           if (!s.dataset.label) s.dataset.label = s.getAttribute('aria-label') || '';
           s.classList.add('is-held'); s.setAttribute('aria-disabled', 'true'); s.title = 'Held online for ' + clock(x.left);
-          s.setAttribute('aria-label', s.dataset.label + ', held online for ' + clock(x.left));
+          if (s.tagName === 'BUTTON') s.setAttribute('aria-label', s.dataset.label + ', held online for ' + clock(x.left));
         });
       });
     }
 
-    /* Open tee times (bookable, with at least one place) in each period, for the period control */
+    /* Each part of the day: its tee times (blocked times left out) and how many are open (bookable, a place free, not passed). */
     function periodCounts() {
       const c = ctx(); const byTime = {}; activeOn(state.date).forEach(function (t) { byTime[t.time] = t; });
-      const out = {}; PERIODS.forEach(function (p) { out[p.id] = 0; });
+      const out = {}; PERIODS.forEach(function (p) { out[p.id] = { open: 0, total: 0 }; });
       slotList().forEach(function (t) {
-        const m = toMin(t); const tt = byTime[t];
+        const m = toMin(t); const tt = byTime[t], per = periodOf(m).id;
         if (c.blockFor(t) && !tt) return;
+        out[per].total++; out.all.total++;
         if (c.isPast || (c.isToday && m < c.now - 10)) return;
         if (tt && (['booked', 'checked-in'].indexOf(tt.status) < 0 || (tt.players || []).length >= 4)) return;
-        out[periodOf(m).id]++; out.all++;
+        out[per].open++; out.all.open++;
       });
       return out;
     }
     function renderPeriods() {
       const n = periodCounts(); const seg = ui.$('.ts-periods', view);
+      const fv = document.activeElement && seg.contains(document.activeElement) ? document.activeElement.dataset.value : null;
       seg.innerHTML = PERIODS.filter(function (p) { return p.id !== 'all'; }).map(function (p) {
-        return '<button type="button" data-value="' + p.id + '" class="' + (p.id === state.period ? 'active' : '') + (n[p.id] ? '' : ' none') + '" aria-pressed="' + (p.id === state.period) + '">' +
-          esc(p.label) + ' <span class="ts-pc">' + (n[p.id] ? n[p.id] + ' open' : 'Full') + '</span></button>';
+        const x = n[p.id], on = p.id === state.period, taken = x.total ? Math.round((x.total - x.open) / x.total * 100) : 100;
+        return '<button type="button" data-value="' + p.id + '" class="ts-part' + (on ? ' active' : '') + (x.open ? '' : ' none') + '" aria-pressed="' + on + '" aria-label="' + esc(p.label + ', ' + (x.total ? x.open + ' of ' + x.total + ' tee times open' : 'blocked') + '. Scroll to the ' + p.label.toLowerCase()) + '">' +
+          '<span class="ts-part-l">' + esc(p.label) + '</span><span class="ts-pc">' + (x.total ? x.open + ' open<span class="ts-pc-of"> of ' + x.total + '</span>' : 'Blocked') + '</span>' +
+          '<span class="ts-part-bar" aria-hidden="true"><span style="width:' + taken + '%"></span></span></button>';
       }).join('');
+      if (fv) { const b = ui.$('[data-value="' + fv + '"]', seg); if (b) b.focus({ preventScroll: true }); }
     }
     /* Parts of the day (Nov 12): the whole day stays in one scroll box (.ts-scroll). A part of the day scrolls the box
        to its first tee time, and the highlighted part follows the box as staff scroll. */
@@ -1032,52 +1132,84 @@
       ui.$$('[data-count]', host).forEach(function (n) { n.setAttribute('data-counted', ''); n.textContent = (n.dataset.prefix || '') + Number(n.dataset.count).toLocaleString('en-US'); });
     }
 
+    /* The starter column (Option C): who goes off next with one button, the day in three numbers (each one a shortcut),
+       the groups on the course with their hole and finish estimate, and the pace of play. Other days: the day at a glance. */
+    let ocAll = false;   /* phones show three groups on the course until "Show all" */
     function renderStarter() {
+      const host = ui.$('.ts-starter', view); if (!host) return;
       const c = ctx();
       const tts = activeOn(state.date).sort(function (a, b) { return a.time < b.time ? -1 : 1; });
       const hist = avgPace(Club.date.addDays(today, -14), Club.date.addDays(today, -1));
       const todayPace = avgPace(state.date, state.date);
       const pace = state.date <= today && todayPace ? todayPace : hist;
-      const paceHTML = '<div class="ts-pace"><div class="row between"><span class="label-caps">Pace of play</span><span class="ts-pace-v">' + (pace ? dur(pace) : 'No data') + '</span></div>' +
-        '<div class="ts-pace-bar"><span style="width:' + (pace ? Math.min(100, pace / 300 * 100) : 0) + '%"></span><i style="left:' + (PACE_TARGET[18] / 300 * 100) + '%"></i></div>' +
-        '<div class="ts-pace-meta">' + (pace ? (pace <= PACE_TARGET[18] ? 'Within' : Math.round(pace - PACE_TARGET[18]) + ' min over') + ' the 4h 15m target · ' + (todayPace && state.date <= today ? 'today\'s finishers' : '14-day average') : 'Completed rounds will set the pace') + '</div></div>';
+      const tgt = PACE_TARGET[18];
+      const paceHTML = '<div class="ts-st-sec ts-st-pacesec"><h3 class="ts-st-h">Pace of play</h3>' +
+        '<div class="ts-pace-top"><b class="ts-pace-v">' + (pace ? dur(pace) : 'No data yet') + '</b><span class="ts-pace-t">target ' + dur(tgt) + '</span></div>' +
+        '<div class="ts-pace-bar" role="img" aria-label="' + esc(pace ? 'Average round ' + dur(pace) + ', target ' + dur(tgt) : 'No completed rounds yet') + '"><span style="width:' + (pace ? Math.min(100, pace / 300 * 100) : 0) + '%"></span><i style="left:' + (tgt / 300 * 100) + '%"></i></div>' +
+        '<div class="ts-pace-meta">' + (pace ? (pace <= tgt ? 'Within target' : Math.round(pace - tgt) + ' min over target') + ', ' + (todayPace && state.date <= today ? 'today\'s finishers' : '14-day average') : 'Completed rounds will set the pace') + '</div></div>';
+      const open = periodCounts().all.open;
+      const players = tts.reduce(function (a, t) { return a + (t.players || []).length; }, 0);
+      const tile = function (n, word, action, label, extra) {
+        const fv = /data-value="(\w+)"/.exec(extra || '');
+        const pressed = action === 'st-filter' ? ' aria-pressed="' + (!!fv && fv[1] === state.filter) + '"' : '';
+        return '<button type="button" class="ts-st-tile" data-action="' + action + '"' + (extra || '') + pressed + ' aria-label="' + esc(label) + '"><b>' + n + '</b><span>' + esc(word) + '</span></button>';
+      };
+      const lead = function (t) { const p = (t.players || [])[0]; return p ? shortName(p).replace(/,.*$/, '') + ' group' : 'Group'; };
+      const fm = focusMark(host);
       if (c.isToday) {
         const on = tts.filter(function (t) { return t.status === 'on-course'; });
-        const onPlayers = on.reduce(function (a, t) { return a + t.players.length; }, 0);
-        const next = tts.filter(function (t) { return (t.status === 'booked' || t.status === 'checked-in') && toMin(t.time) >= c.now - 15; }).slice(0, 4);
+        const onPlayers = on.reduce(function (a, t) { return a + (t.players || []).length; }, 0);
+        const due = dueOff(state.date, c.now), nx = due[0];
+        const st = nx ? STATUS[nx.status] : null;
+        const nextHTML = nx ?
+          '<div class="ts-st-big">Next off ' + esc(fmt.time(nx.time)) + '</div>' +
+          '<p class="ts-st-meta">' + esc(lead(nx) + ' · ' + plural((nx.players || []).length, 'player') + ' · ' + nx.holes + ' holes' + (nx.status === 'checked-in' ? ' · checked in' : toMin(nx.time) < c.now ? ' · late' : '')) + '</p>' +
+          '<button type="button" class="btn btn-primary ts-st-go" data-action="advance" data-id="' + esc(nx.id) + '" data-fk="go">' + esc(st.verb + ' ' + fmt.time(nx.time) + ' group') + '</button>' +
+          (due.length > 1 ? '<ul class="ts-st-then" aria-label="Then">' + due.slice(1, 4).map(function (t) {
+            return '<li><button type="button" class="ts-st-line" data-action="open" data-id="' + esc(t.id) + '" data-fk="' + esc(t.id) + '" aria-label="' + esc('Open the ' + fmt.time(t.time) + ' ' + lead(t) + ', ' + plural((t.players || []).length, 'player') + ', ' + STATUS[t.status].label.toLowerCase()) + '">' +
+              '<span class="ts-st-t">' + esc(fmt.time(t.time)) + '</span><span class="ts-st-ocm"><span class="ts-st-n">' + esc(lead(t)) + '</span><small>' + esc(plural((t.players || []).length, 'player') + ' · ' + STATUS[t.status].label.toLowerCase()) + '</small></span></button></li>';
+          }).join('') + '</ul>' : '')
+          : '<p class="ts-st-quiet">No more groups are due off today.</p>';
         const onList = on.slice().sort(function (a, b) { return a.time < b.time ? -1 : 1; }).slice(-6).reverse().map(function (t) {
           const start = toMin(t.startedAt || t.time); const el2 = Math.max(0, c.now - start);
           const len = PACE_TARGET[t.holes] || 255; const hole = Math.min(t.holes, Math.floor(el2 / (len / t.holes)) + 1);
-          return '<li><span class="ts-oc-hole" title="On hole ' + hole + '">' + hole + '</span><div class="ts-oc-main"><div class="ts-oc-name">' + esc(shortName(t.players[0] || {})) + (t.players.length > 1 ? ' <span class="muted">+' + (t.players.length - 1) + '</span>' : '') + '</div>' +
-            '<div class="muted ts-oc-sub">Off ' + fmt.time(t.startedAt || t.time).replace(/ [AP]M$/, '') + ' · finish ' + fmt.time(toHM(start + len)) + '</div></div>' +
-            '<span class="ts-oc-prog"><span style="width:' + Math.min(100, el2 / len * 100) + '%"></span></span></li>';
+          const over = el2 > len;
+          const nm = shortName((t.players || [])[0] || {}) + ((t.players || []).length > 1 ? ' +' + ((t.players || []).length - 1) : '');
+          return '<li><button type="button" class="ts-st-oc" data-action="open" data-id="' + esc(t.id) + '" data-fk="oc' + esc(t.id) + '" aria-label="' + esc('Open the ' + fmt.time(t.startedAt || t.time) + ' group, ' + nm + ', about hole ' + hole + ', finish about ' + fmt.time(toHM(start + len)) + (over ? ', over the target time' : '')) + '">' +
+            '<span class="ts-st-t">' + esc(fmt.time(t.startedAt || t.time).replace(/ [AP]M$/, '')) + '</span>' +
+            '<span class="ts-st-ocm"><span class="ts-st-ocn">' + esc(nm) + '</span><small>Hole ' + hole + ' · finish about ' + esc(fmt.time(toHM(start + len))) + '</small></span>' +
+            '<span class="ts-st-pace' + (over ? ' is-over' : '') + '"><i aria-hidden="true"></i>' + (over ? 'Over time' : 'On pace') + '</span></button></li>';
         }).join('');
-        const nextList = next.map(function (t) {
-          return '<li><span class="ts-nx-time">' + fmt.time(t.time).replace(' ', '<small>') + '</small></span><div class="ts-oc-main"><div class="ts-oc-name">' + esc(t.players.map(shortName).join(', ')) + '</div><div class="muted ts-oc-sub">' + t.players.length + ' players · ' + t.holes + ' holes</div></div>' +
-            (t.status === 'booked' ? '<button type="button" class="btn btn-sm ts-dark-btn" data-action="advance" data-id="' + esc(t.id) + '">Check in</button>' : '<button type="button" class="btn btn-sm ts-dark-btn ready" data-action="advance" data-id="' + esc(t.id) + '">Send off</button>') + '</li>';
-        }).join('');
-        const nx = next[0];
-        setSide('starter', fmt.time(toHM(c.now)) + ' · ' + on.length + ' group' + (on.length === 1 ? '' : 's') + ' on course' + (nx ? ' · next ' + fmt.time(nx.time) : ''),
-            '<div class="ts-oc-head"><span class="live-dot"></span><span class="label-caps">On course now</span></div>' +
-            '<div class="ts-oc-total"><b>' + onPlayers + '</b> players in <b>' + on.length + '</b> groups</div>' +
-            (onList ? '<ul class="ts-oc">' + onList + '</ul>' + (on.length > 6 ? '<p class="muted ts-more">Showing the six most recent starters. ' + (on.length - 6) + ' more groups further round.</p>' : '') : '<p class="muted ts-quiet">The course is clear. No groups are out right now.</p>') +
-            '<div class="ts-oc-head ts-gap"><span class="label-caps">Next groups up</span></div>' +
-            (nextList ? '<ul class="ts-oc ts-nx">' + nextList + '</ul>' : '<p class="muted ts-quiet">No more groups are due off today.</p>') +
-            paceHTML);
+        host.innerHTML =
+          '<div class="ts-st-sec ts-st-next"><h3 class="ts-st-h">Starter</h3>' + nextHTML + '</div>' +
+          '<div class="ts-st-sec"><h3 class="ts-st-h">Today</h3><div class="ts-st-kv">' +
+            tile(onPlayers, 'on course', 'st-oncourse', plural(onPlayers, 'player') + ' on course in ' + plural(on.length, 'group') + '. Show them on the sheet', ' data-fk="kv1"') +
+            tile(players, 'booked', 'st-filter', plural(players, 'player') + ' booked. Show booked tee times only', ' data-value="booked" data-fk="kv2"') +
+            tile(open, 'open', 'st-filter', plural(open, 'tee time') + ' still open. Show open tee times only', ' data-value="open" data-fk="kv3"') +
+          '</div></div>' +
+          '<div class="ts-st-sec ts-st-course"><h3 class="ts-st-h">On course</h3>' +
+            (onList ? '<ul class="ts-st-ocl' + (ocAll ? ' is-all' : '') + '">' + onList + '</ul>' + (on.length > 3 ? '<button type="button" class="ts-link ts-st-more" data-action="st-more" data-fk="more" aria-expanded="' + ocAll + '">' + (ocAll ? 'Show fewer' : 'Show all ' + Math.min(6, on.length) + ' groups') + '</button>' : '') + (on.length > 6 ? '<p class="ts-st-quiet">Showing the six most recent starters. ' + (on.length - 6) + ' more groups further round.</p>' : '') : '<p class="ts-st-quiet">The course is clear. No groups are out right now.</p>') +
+          '</div>' + paceHTML;
       } else {
         const first = tts[0], last = tts[tts.length - 1];
-        const hours = {}; tts.forEach(function (t) { const h = t.time.slice(0, 2); hours[h] = (hours[h] || 0) + t.players.length; });
+        const hours = {}; tts.forEach(function (t) { const h = t.time.slice(0, 2); hours[h] = (hours[h] || 0) + (t.players || []).length; });
         const busy = Object.keys(hours).sort(function (a, b) { return hours[b] - hours[a]; })[0];
         const wx = (Club.weather.forecast || []).find(function (w) { return w.date === state.date; });
-        setSide('starter', (c.isPast ? 'Day in review' : 'Looking ahead') + ' · ' + tts.length + ' groups' + (first ? ' · first off ' + fmt.time(first.time) : ''),
-          '<dl class="ts-glance">' +
-            '<dt>First off</dt><dd>' + (first ? fmt.time(first.time) : 'None') + '</dd>' +
-            '<dt>Last off</dt><dd>' + (last ? fmt.time(last.time) : 'None') + '</dd>' +
-            '<dt>Busiest hour</dt><dd>' + (busy ? fmt.time(busy + ':00') + ' <span class="muted">' + hours[busy] + ' players</span>' : 'None') + '</dd>' +
-            '<dt>Groups</dt><dd>' + tts.length + '</dd>' +
-            (wx ? '<dt>Forecast</dt><dd>' + esc(wx.cond) + ', ' + wx.hi + '°</dd>' : '') +
-          '</dl>' + paceHTML);
+        host.innerHTML =
+          '<div class="ts-st-sec"><h3 class="ts-st-h">' + (c.isPast ? 'Day in review' : 'Looking ahead') + '</h3>' +
+            '<dl class="ts-glance">' +
+              '<dt>First off</dt><dd>' + (first ? fmt.time(first.time) : 'None') + '</dd>' +
+              '<dt>Last off</dt><dd>' + (last ? fmt.time(last.time) : 'None') + '</dd>' +
+              '<dt>Busiest hour</dt><dd>' + (busy ? fmt.time(busy + ':00') + ' <span class="muted">' + hours[busy] + ' players</span>' : 'None') + '</dd>' +
+              (wx ? '<dt>Forecast</dt><dd>' + esc(wx.cond) + ', ' + wx.hi + '°</dd>' : '') +
+            '</dl></div>' +
+          '<div class="ts-st-sec"><h3 class="ts-st-h">' + esc(fmt.weekday(state.date)) + '</h3><div class="ts-st-kv">' +
+            tile(tts.length, tts.length === 1 ? 'group' : 'groups', 'st-filter', plural(tts.length, 'group') + ' booked. Show booked tee times only', ' data-value="booked" data-fk="kv1"') +
+            tile(players, 'booked', 'st-filter', plural(players, 'player') + ' booked. Show booked tee times only', ' data-value="booked" data-fk="kv2"') +
+            tile(open, 'open', 'st-filter', plural(open, 'tee time') + ' open. Show open tee times only', ' data-value="open" data-fk="kv3"') +
+          '</div></div>' + paceHTML;
       }
+      focusBack(host, fm);
     }
 
     function renderBlocks() {
@@ -1197,16 +1329,8 @@
       if (keep) { if (keep.s && (next === 'on-course' || next === 'completed')) patch.startedAt = keep.s; if (keep.f && next === 'completed') patch.finishedAt = keep.f; }
       patch.undo = (tt.undo || []).concat([step]).slice(-3);
       S.update('teeTimes', id, patch);
-      const row = ui.$('.ts-row[data-id="' + id + '"]', sheet);
-      if (row) {
-        const fresh = S.find('teeTimes', id);
-        row.dataset.status = next;
-        ui.$('.ts-slabel', row).textContent = STATUS[next].label;
-        ui.$('.ts-acts', row).innerHTML = ui.el('<div>' + stateHTML(fresh) + '</div>').querySelector('.ts-acts').innerHTML;
-        ui.$$('.ts-slot.filled', row).forEach(function (s, i) { if (fresh.players[i] && fresh.players[i].paid) s.classList.add('is-paid'); });
-        ui.$$('.ts-slot.public', row).forEach(function (s) { const p = fresh.players[+s.dataset.slot]; const sub = ui.$('.ts-psub', s); if (p && sub) sub.innerHTML = '<b class="ts-pubtag">Public</b> ' + esc(publicPayLabel(p)); });
-        if (next !== 'booked' && next !== 'checked-in') { row.dataset.open = 0; ui.$$('.ts-slot.open', row).forEach(function (s) { s.outerHTML = '<span class="ts-slot void" aria-hidden="true"></span>'; }); }
-      }
+      /* Redraw in place: this row's status and button, and the Next up highlight moving on to the following group. */
+      renderSheet();
       refreshAside();
       const lead = fresh0(tt);
       const undo = { action: { label: 'Undo', onClick: function () {
@@ -1292,19 +1416,40 @@
       else if (a === 'unblock') removeBlock(b.dataset.id);
       else if (a === 'fees') openFees();
       else if (a === 'wl-remove') removeWaitlist(b.dataset.id);
-      else if (a === 'clear-filter') { state.q = ''; state.filter = 'all'; state.kind = 'all'; ui.$('.ts-search input', view).value = ''; ui.$$('.segmented[data-name=tsfilter] button, .segmented[data-name=tskind] button', view).forEach(function (x) { x.classList.toggle('active', x.dataset.value === 'all'); }); applyFilter(); }
+      else if (a === 'clear-filter') { state.q = ''; state.filter = 'all'; state.kind = 'all'; ui.$('.ts-search input', view).value = ''; ui.$$('.segmented[data-name=tsfilter] button, .segmented[data-name=tskind] button', view).forEach(function (x) { x.classList.toggle('active', x.dataset.value === 'all'); }); setFilter('all'); }
       else if (a === 'jump-now') { const n = ui.$('[data-now]', sheet); if (n) { markPeriod(periodOf(+n.dataset.min).id); scrollBoxTo(n, true, true); } }
       else if (a === 'period-all') setPeriod('all');
+      else if (a === 'st-more') { ocAll = !ocAll; renderStarter(); }
+      else if (a === 'st-filter') setFilter(state.filter === b.dataset.value ? 'all' : b.dataset.value);
+      else if (a === 'st-oncourse') {
+        const r = ui.$('.ts-row[data-status="on-course"]:not([hidden])', sheet);
+        if (r) { scrollBoxTo(r, true, true); r.classList.toggle('just-saved', false); void r.offsetWidth; r.classList.add('just-saved'); }
+        else { const n = ui.$('[data-now]:not([hidden])', sheet); if (n) { markPeriod(periodOf(+n.dataset.min).id); scrollBoxTo(n, true, true); } }
+      }
+    });
+    /** The All / Open / Booked filter, also set from the starter column's numbers. */
+    function setFilter(v) {
+      state.filter = v;
+      ui.$$('.segmented[data-name=tsfilter] button', view).forEach(function (x) { x.classList.toggle('active', x.dataset.value === v); });
+      applyFilter();
+      ui.$$('.ts-st-tile[data-action=st-filter]', view).forEach(function (x) { x.setAttribute('aria-pressed', String(x.dataset.value === v)); });
+    }
+    /* Cards are clickable: a click on a booked row's free space opens the group; an empty tee time row books itself. */
+    ui.on(view, 'click', '.ts-row.has-group', function (e, row) {
+      if (e.target.closest('button, a, input, [data-action]')) return;
+      if (window.getSelection && String(window.getSelection())) return;   /* selecting a name to copy */
+      const tt = S.find('teeTimes', row.dataset.id); if (tt) openBooking({ tt: tt });
+    });
+    ui.on(view, 'keydown', '.ts-row[role=button]', function (e, row) {
+      if (e.target !== row || !(e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar')) return;
+      e.preventDefault(); row.click();
     });
     /* Stat boxes open their details drawer; rows there open the tee time. */
     ui.on(view, 'click', '.ts-stats .stat[data-drill]', function (e, st) { openStatDrill(st.dataset.drill, state.date, function (tt) { openBooking({ tt: tt }); }); });
     ui.on(view, 'keydown', '.ts-stats .stat[data-drill]', function (e, st) {
       if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') { e.preventDefault(); openStatDrill(st.dataset.drill, state.date, function (tt) { openBooking({ tt: tt }); }); }
     });
-    ui.on(view, 'click', '.segmented[data-name=tsfilter] button', function (e, b) {
-      ui.$$('.segmented[data-name=tsfilter] button', view).forEach(function (x) { x.classList.toggle('active', x === b); });
-      state.filter = b.dataset.value; applyFilter();
-    });
+    ui.on(view, 'click', '.segmented[data-name=tsfilter] button', function (e, b) { setFilter(b.dataset.value); });
     ui.on(view, 'click', '.segmented[data-name=tskind] button', function (e, b) {
       ui.$$('.segmented[data-name=tskind] button', view).forEach(function (x) { x.classList.toggle('active', x === b); });
       state.kind = b.dataset.value; applyFilter();
@@ -1861,9 +2006,11 @@
     /* ---- live clock for today's starter ---- */
     const timer = setInterval(function () {
       if (state.date !== today || !document.body.contains(view)) return;
+      /* A tee time passed since the sheet was drawn: redraw the rows (Late, Next up, faded rows) and move the Now line. */
+      if (nowSig() !== paintedAt && !document.querySelector('.overlay')) { renderSheet(); renderPeriods(); }
       renderStarter();
-      const n = ui.$('[data-now] span', sheet);
-      if (n) n.textContent = 'Now · ' + fmt.time(toHM(nowMin()));
+      const n = ui.$('[data-now]', sheet), word = n && /^Close/.test(n.textContent) ? 'Close of play ' : 'Now ';
+      if (n) { ui.$('span', n).textContent = word + fmt.time(toHM(nowMin())); n.setAttribute('aria-label', word + fmt.time(toHM(nowMin()))); }
     }, 30000);
     /* One timer for online holds on the sheet; holds.js also wakes us when another tab places, releases or ends one. */
     const holdTimer = setInterval(function () { if (document.body.contains(view)) paintHolds(); }, 1000);

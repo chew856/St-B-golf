@@ -876,11 +876,10 @@
           '<div class="ts-bar">' +
             '<div class="ts-datenav">' +
               '<div class="ts-dp"></div>' +
-              '<button type="button" class="btn ts-today" data-action="today"' + (state.date === today ? ' aria-current="date"' : '') + '>Today</button>' +
-              (state.date === today ? ui.btn('Now', { icon: 'clock', action: 'jump-now', title: 'Jump to the current time' }).replace('class="btn ', 'class="btn ts-nowbtn ') : '') +
+              '<button type="button" class="btn ts-today" data-action="today"' + (state.date === today ? ' aria-current="date" title="Jump to the current time"' : ' title="Go to today"') + '>Today</button>' +
             '</div>' +
             '<div class="ts-tools">' +
-              '<div class="ts-search">' + Club.icon('search') + '<input type="search" class="input" placeholder="Find a player" aria-label="Filter by player name"></div>' +
+              '<div class="ts-search">' + Club.icon('search') + '<input type="search" class="input" placeholder="Player" aria-label="Find a player by name" title="Find a player by name"></div>' +
               /* The two filters are dropdowns (owner, Nov 17) so the bar fits on one line */
               '<select class="select ts-fsel" name="tsfilter" aria-label="Show tee times">' + ui.options([{ value: 'all', label: 'All times' }, { value: 'open', label: 'Open times' }, { value: 'booked', label: 'Booked times' }], 'all') + '</select>' +
               '<select class="select ts-fsel" name="tskind" aria-label="Show players">' + ui.options([{ value: 'all', label: 'All players' }, { value: 'members', label: 'Members' }, { value: 'public', label: 'Public golfers' }], 'all') + '</select>' +
@@ -1292,6 +1291,7 @@
       return out.map(function (d) { const st = dayStats(d); return { date: d, meta: st.open ? st.util + '% booked' : 'Blocked', pill: d === today ? 'Today' : '' }; });
     }
     Portal.datePicker(ui.$('.ts-dp', view), { label: 'Sheet date', title: 'Go to a date', value: state.date, days: pickerDays(), onChange: function (d) { Club.app.go('teesheet/' + d); } });
+    { const sh = ui.$('.ts-dp .dp-short', view); if (sh) sh.textContent = fmt.toDate(state.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }); }   /* short date so the bar fits one line */
 
     renderPeriods();
     renderSheet({ cascade: true });
@@ -1399,7 +1399,10 @@
       const a = b.dataset.action;
       if (a === 'prev') Club.app.go('teesheet/' + Club.date.addDays(state.date, -1));
       else if (a === 'next') Club.app.go('teesheet/' + Club.date.addDays(state.date, 1));
-      else if (a === 'today') Club.app.go('teesheet/' + today);
+      else if (a === 'today') {   /* one button (owner, Nov 17): on today's sheet it jumps to the current time, otherwise it opens today */
+        if (state.date === today) { const n = ui.$('[data-now]', sheet); if (n) { markPeriod(periodOf(+n.dataset.min).id); scrollBoxTo(n, true, true); } }
+        else Club.app.go('teesheet/' + today);
+      }
       else if (a === 'day') Club.app.go('teesheet/' + b.dataset.date);
       else if (a === 'book-new') openBooking({ date: state.date });
       else if (a === 'book') {

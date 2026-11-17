@@ -422,7 +422,7 @@
       }) +
       panel('Lessons', 'lesson', lessons, 'Lessons booked with our CPGA professionals appear here.', ['Date', 'Type', 'Professional', { t: 'Price', num: true }, 'Status'], function (l) {
         /* Opens Lessons on that day; the lesson id follows, for Lessons to open the lesson itself */
-        return '<tr class="clickable" data-href="lessons/' + esc(l.date) + '/' + esc(l.id) + '" tabindex="0"><td class="nowrap">' + esc(fmt.date(l.date)) + (l.time ? ' <span class="muted">' + esc(fmt.time(l.time)) + '</span>' : '') + '</td><td>' + esc(l.type || '') + '</td><td>' + esc(Club.staff.name(l.proId)) + '</td><td class="num">' + esc(fmt.money(l.price || 0)) + '</td><td>' + ui.badge(resLabel(l.status || 'scheduled'), RES_KIND[l.status] || 'plain') + '</td></tr>';
+        return '<tr class="clickable" data-href="lessons/' + esc(l.date) + '/' + esc(l.id) + '" tabindex="0"><td class="nowrap">' + esc(fmt.date(l.date)) + (l.time ? ' <span class="muted">' + esc(fmt.time(l.time)) + '</span>' : '') + '</td><td>' + esc(l.type || '') + '</td><td>' + esc(Club.staff.name(l.proId)) + '</td><td class="num">' + (l.packageId ? '<span class="muted">Package</span>' : esc(fmt.money(l.price || 0))) + '</td><td>' + ui.badge(resLabel(l.status || 'scheduled'), RES_KIND[l.status] || 'plain') + '</td></tr>';
       }) + '</div>';
     ui.on(p, 'click', '[data-action=act-all]', function (e, b) {
       const rest = ui.$('.mem-act-rest', b.closest('.mem-act')); if (!rest) return;

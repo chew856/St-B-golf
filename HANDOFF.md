@@ -51,7 +51,7 @@ The Playwright WebKit suites are in `tests/webkit/` (about 45 suites and their h
 - Long dropdowns have a search box.
 - Members' portal: Group outings page with an enquiry form that lands in the staff Pipeline.
 
-## Done Nov 15 (hand and recent rounds deployed; sign-in question NOT DEPLOYED YET)
+## Done Nov 15 (hand and recent rounds deployed; sign-in question deployed)
 - Which hand a member plays (`members.hand`: 'right', 'left' or null; label via `Club.members.hand(m)`):
   - Required on the public membership application; carried onto the member record when staff approve it.
   - Staff member page shows "Plays"; staff can set or change it under Edit, Golf. Demo members were filled in once.
@@ -63,7 +63,7 @@ The Playwright WebKit suites are in `tests/webkit/` (about 45 suites and their h
   in Profile > Golf ("Plays", Change).
 - Tested in Chromium only (no WebKit on the cloud machine): check in Safari before deploying.
 
-## Friends leagues (built Nov 15, NOT DEPLOYED YET)
+## Friends leagues (built Nov 15, deployed Nov 17)
 Members start a league with friends: individual or teams (2 to 4 a team, same size), creator picks start date, weeks,
 games a week, 9 or 18 holes and one of four formats. Missed weeks are caught up (the next round fills the earliest open
 week; no playing ahead); games never played take the worst score of that week when the league ends.
@@ -78,7 +78,7 @@ week; no playing ahead); games never played take the worst score of that week wh
   teams rank on players' average per game mid-season while the table also shows totals.
 - Tested in Chromium only: check in Safari before deploying.
 
-## Client analytics (built and deployed Nov 15; tab renames NOT DEPLOYED YET)
+## Client analytics (built and deployed Nov 15; tab renames deployed)
 Staff Reports has a "Client spending" tab (the old Accounts tab is now "Unpaid accounts" and no longer has
 "Top members by spend") (`js/modules/reports-clients.js`, `Club.clientStats`): every member and public golfer
 ranked by spend, filters for Everyone / Members / Public golfers and Including / Excluding dues, spend by department
@@ -92,7 +92,7 @@ others). The same breakdown is the Spending tab on the staff member page.
   golfers only have green fees on record.
 - Tested in Chromium only: check in Safari before deploying.
 
-## Client ideas, Growth plan and demo history (built Nov 15, NOT DEPLOYED YET)
+## Client ideas, Growth plan and demo history (built Nov 15, deployed Nov 17)
 - Client spending has an "Ideas to grow revenue" list of 13 ideas (`js/modules/reports-clients.js`), each with the
   clients behind it. Short periods (under 28 days of records) show none.
 - Reports has a Growth plan tab, second after Overview (`js/modules/reports-plan.js`): every section's ideas in one
@@ -135,7 +135,7 @@ The combined week grid on Lessons & Academy is replaced by two views with a Day 
 - Member Spending tab (Nov 16): opens on Including dues; Period is a dropdown with Custom dates.
 - Tested in Chromium only.
 
-## Bug hunt and first fixes (Nov 16, NOT DEPLOYED YET)
+## Bug hunt and first fixes (Nov 16, deployed Nov 17)
 A six-tester bug hunt found 9 high, 26 medium and about 40 low bugs (list kept outside the repo; ask Claude for it).
 Fixed and tested in Chromium:
 - Portal statements paid in parts are marked paid (`js/portal/account.js` paidToward, owedOn, postPayment).
@@ -150,7 +150,7 @@ Still open from the hunt: browser storage (two tabs saving at once, storage near
 "Record payment" and "Mark paid" still ignore earlier part payments (`billing.js`), two same-amount payments seconds
 apart give one receipt (`receipts.js` double-click guard), and the medium and low items. These were fixed in batch 2 (next section).
 
-## Bug fix batch 2 and final pass (Nov 16 to 17, NOT DEPLOYED YET)
+## Bug fix batch 2 and final pass (Nov 16 to 17, deployed Nov 17)
 Fixed and tested in Chromium (the WebKit suites need a Mac run before deploying):
 - **Browser storage** (`js/core/store.js`). Each collection is saved in a compact table form (key names and repeated
   strings once), about a third of plain JSON, so all three sites' demo data fits inside Safari's smaller storage.
@@ -182,6 +182,25 @@ Waiting on the owner:
 - Reports Leaderboard: the 18 hole buttons are 35 by 46px on phones (9 in a row). Needs a layout decision.
 - Left as they are: card network brand colours (`css/cards.css`, `js/core/cards.js`) and mask colours.
 
+## Tee Sheet redesign and Lessons features (Nov 17, deployed Nov 17)
+- **Tee Sheet** (`js/modules/teesheet.js`, `css/modules/teesheet.css`): the owner's "Option C" list. Plain player
+  names, faint "+ Add" spots, thin empty rows with "+ Book <time>", status word plus one action, "Next up" row,
+  starter column (Today tiles, On course, Pace). The bar is one line from about 1440px wide: the two filters are
+  dropdowns (All/Open/Booked times; All players/Members/Public golfers), Today also jumps to the current time when
+  already on today, the date is short ("Tue, Nov 17"), and the search box shrinks first.
+- **Lessons Day view** fits 7 AM to 7 PM on one screen (`--hour: 2.75rem` in `css/modules/lessons.css`).
+- **Drag to move** a lesson in Day or Week view (staff), with Undo; refused onto a busy pro or off hours.
+- **Repeat weekly** (staff only): 4, 6, 8 or 10 weeks, clashes shown as chips with a "pick another time" list, all
+  lessons share a `seriesId`; cancelling one asks "Just this lesson" or "This and the rest of the series".
+- **Lesson packages**: staff set them up in the rate card section (`lessonPackages`), sell them to a member (one
+  Lessons charge and receipt), members buy them in the portal Lessons "Packages" tab. Bought packages are
+  `memberPackages` (`Club.lessonPacks` in `js/shared/lessonpacks-data.js`). A lesson using a package has price 0 and
+  `packageId`; cancelling gives the lesson back. Reports count the sale once, not the lessons.
+- **Lesson notes** (`lessonNotes`, staff only): in the lesson dialog and the member's Golf tab. Never shown in the portal.
+Waiting on the owner: season end (Oct 31) and the package prices ($475, $200, $320) are placeholders; the demo
+seeds put $475 and $200 package sales on two members' accounts (keep or offset); long-press drag on Safari and iPad
+needs a real-device check.
+
 ## Future: live location on the course
 The owner plans live location for golfers. The tee sheet's "On pace", hole and finish estimate are computed from the
 4h 15m target today (js/modules/teesheet.js starter column); switch them to real positions when live location exists.
@@ -192,7 +211,7 @@ The owner plans live location for golfers. The tee sheet's "On pace", hole and f
    The earlier failures came from running many suites at once.
 2. **Resolved Nov 16**: the Lessons grid test (`xls-grid.mjs`) was rewritten with the new Day and Week views; the
    old "at least 10 lessons with a whole day column" check is gone (every lesson now has its pro's whole column).
-3. **Dining undo bug: fixed Nov 13, NOT DEPLOYED YET.** Adding more of an item to an existing line on a dining
+3. **Dining undo bug: fixed Nov 13, deployed.** Adding more of an item to an existing line on a dining
    check, then pressing Undo, used to keep the higher quantity. `js/modules/dining.js` now updates a copy of the line.
    The test is `tests/webkit/xdn-addundo.mjs` (7 of 7 pass); xa-hosp, xdn-dining and xd-undo still pass.
    Deploy it with the next change.

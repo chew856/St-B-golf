@@ -4,6 +4,8 @@
   const S = Club.store, ui = Club.ui, esc = ui.esc, fmt = Club.fmt, R = S.R;
   /* Data helpers shared with the members' portal and public site: js/shared/lessons-data.js */
   const { DAY_START, DAY_END, SPAN, DAYS, TYPE_DUR, toMin, toHM, nowMin, dayName, alignTo, overlap, rates, priceFor, programSessions } = Club.shared.lessons;
+  /* Lesson packages (definitions, purchases and the rules for using one): js/shared/lessonpacks-data.js */
+  const LP = Club.lessonPacks;
 
   const TYPES = ['Private lesson', 'Playing lesson', 'Club fitting', 'Junior clinic', 'Group clinic'];
   const DURATIONS = [30, 45, 60, 90];
@@ -131,6 +133,89 @@
     if (!T) { ui.toast('The golf shop till could not open. Reload the page and try again.', 'bad'); return; }
     T({ eyebrow: 'Lesson payment', name: studentName(v), kind: v.memberId ? 'Member, paying at the golf shop' : 'Non-member', lines: lessonLines(v), onDone: onDone });
   }
+
+  /* ---------------- Student notes (Nov 17) ----------------
+     lessonNotes on a lesson: the pro's notes from it (staff only; the members' portal and public site never show them).
+     The lesson dialog shows the student's earlier notes (newest first, three, then "Show all"). */
+  function sameStudent(a, b) {
+    if (a.memberId || b.memberId) return !!a.memberId && a.memberId === b.memberId;
+    const n = function (x) { return String((x.guest && x.guest.name) || '').trim().toLowerCase(); };
+    return !!n(a) && n(a) === n(b);
+  }
+  function earlierNotes(l) {
+    return S.where('lessons', function (x) { return x.id !== l.id && String(x.lessonNotes || '').trim() && sameStudent(x, l); })
+      .sort(function (a, b) { return (b.date + b.time).localeCompare(a.date + a.time); });
+  }
+  function notesHTML(l) {
+    const list = earlierNotes(l);
+    return '<div class="field span-2 ls-lnotes"><label for="ls_lnotes">Notes from this lesson</label><textarea class="textarea" id="ls_lnotes" name="lessonNotes" maxlength="4000" placeholder="What you worked on and what to practise">' + esc(l.lessonNotes || '') + '</textarea>' +
+      '<span class="field-hint ls-lock">Staff only. Members never see lesson notes.</span></div>' +
+      (list.length ? '<div class="span-2 ls-earlier"><div class="ls-earlier-h">Earlier notes</div><ul class="ls-notes">' + list.map(function (x, i) {
+        return '<li' + (i >= 3 ? ' hidden' : '') + '><span class="ls-note-meta">' + esc(fmt.dateShort(x.date) + ' · ' + Club.staff.name(x.proId) + ' · ' + x.type) + '</span><span class="ls-note-text">' + esc(String(x.lessonNotes).trim()) + '</span></li>';
+      }).join('') + '</ul>' + (list.length > 3 ? '<button type="button" class="ls-notes-all" data-n="' + list.length + '" aria-expanded="false">Show all ' + list.length + ' notes</button>' : '') + '</div>' : '');
+  }
+  function wireNotes(root) {
+    ui.on(root, 'click', '.ls-notes-all', function (e, b) {
+      const open = b.getAttribute('aria-expanded') !== 'true';
+      ui.$$('.ls-notes li', b.parentNode).forEach(function (li, i) { if (i >= 3) li.hidden = !open; });
+      b.setAttribute('aria-expanded', open ? 'true' : 'false'); b.textContent = open ? 'Show fewer' : 'Show all ' + b.dataset.n + ' notes';
+    });
+  }
+
+  /* ---------------- Lesson packages (Nov 17) ----------------
+     Set up in the rate card, sold to a member (here, from the member page, or bought in the portal), used when booking. */
+  function pkgLeft(mp) { return LP.remaining(mp) + ' of ' + mp.lessons + ' left' + (mp.expiresOn ? ', expires ' + fmt.dateShort(mp.expiresOn) : ', no expiry'); }
+  function pkgBar(mp) { return '<span class="bar ls-pk-bar" aria-hidden="true"><span style="width:' + (mp.lessons ? LP.remaining(mp) / mp.lessons * 100 : 0) + '%"></span></span>'; }
+  function pkgStateBadge(mp) { return LP.expired(mp) ? ui.badge('Expired', 'warn') : !LP.remaining(mp) ? ui.badge('Used up', 'plain') : ''; }
+  /** Sell a package to a member: one account charge (Lessons) with a receipt, and Undo. o: { memberId, packageId, after } */
+  function sellPackage(o) {
+    o = o || {};
+    const list = LP.defs().filter(function (p) { return p.onSale; });
+    if (!list.length) { ui.toast('No lesson packages are on sale. Put one on sale in the rate card first.', 'bad'); return; }
+    const pick = list.some(function (p) { return p.id === o.packageId; }) ? o.packageId : list[0].id;
+    const body = '<form class="ls-form" novalidate><div class="ls-alert" role="alert" hidden></div><div class="form-grid">' +
+      '<div class="field span-2"><label for="lp_mem">Member *</label><select class="select" id="lp_mem" name="memberId" required><option value="">Select a member</option>' + Club.members.options(o.memberId) + '</select></div>' +
+      ui.field({ label: 'Package', name: 'packageId', type: 'select', options: ui.options(list.map(function (p) { return { value: p.id, label: p.name + ' · ' + fmt.money(p.price) }; }), pick), required: true, span2: true }) +
+      '<div class="span-2 ls-sell-sum" aria-live="polite"></div></div></form>';
+    const m = ui.modal({ eyebrow: 'Lesson packages', title: 'Sell to member', body: body, actions: [{ label: 'Cancel', kind: 'ghost' }, { label: 'Sell package', kind: 'primary', icon: 'check', onClick: function () {
+      const form = ui.$('form', m.body), al = ui.$('.ls-alert', form); al.hidden = true;
+      if (!ui.validate(form)) return false;
+      const f = ui.formData(form);
+      let res = null;
+      const rec = Club.undo.track(function () { res = LP.sell(f.memberId, f.packageId, 'staff'); return res; });
+      if (!res || res.error) { al.innerHTML = Club.icon('alert') + '<div>' + esc(res ? res.error : 'The package could not be sold.') + '</div>'; al.hidden = false; return false; }
+      undoOffer(res.mp.name + ' sold to ' + memberName(f.memberId) + (res.charge ? '. ' + fmt.money(res.charge.amount) + ' posted to the account' : ''), rec, { after: o.after, undone: 'Package sale undone' });
+      if (o.after) o.after();
+    } }] });
+    m.el.classList.add('ls-modal');
+    const form = ui.$('form', m.body);
+    function paint() {
+      const p = LP.def(form.packageId.value), mem = form.memberId.value ? Club.members.get(form.memberId.value) : null;
+      if (!p) { ui.$('.ls-sell-sum', form).innerHTML = ''; return; }
+      const exp = LP.expiryFor(p.expiry, Club.date.today());
+      ui.$('.ls-sell-sum', form).innerHTML = '<div class="ls-pk-sum"><strong>' + esc(p.name) + '</strong><span>' + esc(p.lessons + ' lessons · ' + LP.coversText(p.covers) + ' · ' + (exp ? 'expires ' + fmt.date(exp) : 'no expiry')) + '</span>' +
+        '<span>' + esc(fmt.money(p.price) + ' is posted to ' + (mem ? mem.firstName + ' ' + mem.lastName + '’s' : 'the member’s') + ' account (Lessons), with a receipt.') + '</span></div>';
+    }
+    form.addEventListener('change', paint); paint();
+  }
+  /** A member's package: what it covers, lessons used (each opens its lesson) and the receipt. */
+  function packageDetail(mpId) {
+    const mp = LP.get(mpId); if (!mp) { ui.toast('That package is no longer on file.', 'bad'); return; }
+    const used = (mp.used || []).map(function (id) { return S.find('lessons', id); }).filter(Boolean).sort(function (a, b) { return (b.date + b.time).localeCompare(a.date + a.time); });
+    const rc = mp.chargeId ? S.where('receipts', function (r) { return r.chargeId === mp.chargeId; })[0] : null;
+    const body = '<dl class="kv ls-detail"><dt>Member</dt><dd>' + esc(memberName(mp.memberId)) + '</dd><dt>Covers</dt><dd>' + esc(LP.coversText(mp.covers)) + '</dd>' +
+      '<dt>Lessons</dt><dd><div class="ls-pk-left">' + pkgBar(mp) + '<span>' + esc(pkgLeft(mp)) + '</span>' + pkgStateBadge(mp) + '</div></dd>' +
+      '<dt>Bought</dt><dd>' + esc(fmt.date(mp.purchasedOn || String(mp.purchasedAt).slice(0, 10)) + (mp.source === 'portal' ? ' in the members’ portal' : ' at the club')) + '</dd>' +
+      '<dt>Price</dt><dd>' + esc(fmt.money(mp.price)) + (rc ? ' · <button type="button" class="ls-link" data-rc="' + esc(rc.id) + '">Receipt ' + esc(rc.no) + '</button>' : '') + '</dd></dl>' +
+      (used.length ? '<div class="label-caps ls-fhead">Lessons used</div><ul class="ls-pk-used">' + used.map(function (l) {
+        return '<li><a href="#/lessons/' + esc(l.date) + '/' + esc(l.id) + '" class="ls-pk-urow"><span>' + esc(fmt.dateShort(l.date) + ' · ' + fmt.time(l.time)) + '</span><span>' + esc(l.type + ' with ' + Club.staff.name(l.proId)) + '</span><span class="muted">' + esc(l.status === 'completed' ? 'Completed' : 'Booked') + '</span></a></li>';
+      }).join('') + '</ul>' : '<p class="muted">No lessons used yet.</p>');
+    const d = ui.modal({ eyebrow: 'Lesson package', title: mp.name, body: body, actions: [{ label: 'Close', kind: 'ghost' }] });
+    ui.on(d.body, 'click', '[data-rc]', function (e, b) { if (Club.receipts) Club.receipts.open(b.dataset.rc); });
+    ui.on(d.body, 'click', 'a', function () { d.close(); });
+  }
+  /* For the member page (js/modules/members.js) */
+  Club.lessonsStaff = { sellPackage: sellPackage, packageDetail: packageDetail, pkgBar: pkgBar, pkgLeft: pkgLeft, pkgStateBadge: pkgStateBadge };
 
   /* ---------------- Undo (js/core/undo.js) ----------------
      Every staff action's toast offers Undo. undoOffer is Club.undo.offer plus check(), which may refuse first (a second
@@ -544,11 +629,27 @@
 
     function renderRates() {
       const r = rates();
-      setSec('rates', 'Private lesson ' + fmt.money0(r.rates['Private lesson']) + ' per hour · ' + TYPES.length + ' lesson types',
+      const npk = LP.defs().length;
+      setSec('rates', 'Private lesson ' + fmt.money0(r.rates['Private lesson']) + ' per hour · ' + TYPES.length + ' lesson types' + (npk ? ' · ' + plural(npk, 'package') : ''),
         '<div class="ls-rates-body"><table class="table ls-ratetable"><thead><tr><th>Lesson type</th><th class="num">Rate</th></tr></thead><tbody>' +
         TYPES.map(function (t) { return '<tr><td>' + esc(t) + '</td><td class="num">' + fmt.money0(r.rates[t]) + '</td></tr>'; }).join('') +
         '</tbody></table><div class="ls-prem">' + P.map(function (p) { const v = r.premium[p.id] || 1; return '<div class="row between"><span class="ink-2">' + esc(p.firstName + ' ' + p.lastName) + '</span><span class="num">' + (v === 1 ? 'Standard' : '+' + Math.round((v - 1) * 100) + '%') + '</span></div>'; }).join('') + '</div>' +
-        '<div class="ls-acc-acts">' + ui.btn('Edit rate card', { sm: true, icon: 'edit', action: 'rates' }) + '</div></div>');
+        '<div class="ls-acc-acts">' + ui.btn('Edit rate card', { sm: true, icon: 'edit', action: 'rates' }) + '</div>' + packagesHTML() + '</div>');
+    }
+    /* Lesson packages in the rate card: each row opens the package; Hide or Show takes it off sale or puts it back. */
+    function packagesHTML() {
+      const list = LP.defs();
+      return '<section class="ls-pks" aria-labelledby="ls-pks-h"><div class="ls-pks-head"><div><div class="label-caps">Rate card</div><h4 id="ls-pks-h" class="serif">Lesson packages</h4></div>' +
+        (list.some(function (p) { return p.onSale; }) ? ui.btn('Sell to member', { sm: true, icon: 'tag', action: 'pk-sell' }) : '') + '</div>' +
+        (list.length ? '<div class="ls-pktable" role="table" aria-label="Lesson packages"><div class="ls-pkrow ls-pkhead" role="row"><span role="columnheader">Package</span><span role="columnheader">Covers</span><span role="columnheader" class="num">Lessons</span><span role="columnheader" class="num">Price</span><span role="columnheader">Expires</span><span role="columnheader"><span class="sr-only">On sale</span></span></div>' +
+          list.map(function (p) {
+            return '<div class="ls-pkrow" role="row" data-action="pk-edit" data-id="' + esc(p.id) + '" tabindex="0" aria-label="' + esc(p.name + ', edit package') + '">' +
+              '<span role="cell" class="ls-pk-name">' + esc(p.name) + '</span><span role="cell" class="ls-pk-cov">' + esc(LP.coversText(p.covers)) + '</span>' +
+              '<span role="cell" class="num" data-l="Lessons">' + esc(p.lessons) + '</span><span role="cell" class="num" data-l="Price">' + esc(fmt.money(p.price)) + (p.placeholder ? '<small class="ls-pk-ph">Placeholder</small>' : '') + '</span>' +
+              '<span role="cell" data-l="Expires">' + esc(LP.expiryText(p.expiry)) + '</span>' +
+              '<span role="cell" class="ls-pk-st"><button type="button" class="ls-pk-pill' + (p.onSale ? '' : ' off') + '" data-action="pk-sale" data-id="' + esc(p.id) + '" aria-label="' + esc((p.onSale ? 'On sale. Hide ' : 'Hidden. Put on sale: ') + p.name) + '">' + (p.onSale ? 'On sale' : 'Hidden') + '</button></span></div>';
+          }).join('') + '</div>' : '<p class="muted ls-pks-empty">No packages yet. A package sells a number of lessons at one price, charged to the member’s account.</p>') +
+        '<div class="ls-pks-acts">' + ui.btn('New package', { sm: true, icon: 'plus', action: 'pk-new' }) + '</div></section>';
     }
 
     function programCard(p) {
@@ -626,6 +727,10 @@
       else if (a === 'cxl') { cxlOpen = !cxlOpen; renderSchedule(); refocus(e, '.ls-cxl-btn'); }
       else if (a === 'complete') completeLesson(id);
       else if (a === 'rates') openRates();
+      else if (a === 'pk-new') openPackage(null);
+      else if (a === 'pk-edit') openPackage(LP.def(id));
+      else if (a === 'pk-sale') { e.stopPropagation(); togglePackage(id); }
+      else if (a === 'pk-sell') sellPackage({ after: again });
       else if (a === 'new-program') openProgram(null);
       else if (a === 'edit-program') openProgram(S.find('programs', id));
       else if (a === 'enroll') openEnroll(id);
@@ -938,6 +1043,74 @@
         const rec = Club.undo.track(function () { S.setObj('lessonRates', out); });
         renderRates(); undoOffer('Rate card saved', rec, { check: objGuard('lessonRates'), after: again, undone: 'Rate card changes undone' });
       } }] });
+    }
+
+    /* ---- lesson packages (rate card) ---- */
+    view.addEventListener('keydown', function (e) {
+      const row = e.target.closest && e.target.closest('.ls-pkrow[data-action]');
+      if (row && e.target === row && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); row.click(); }
+    });
+    function togglePackage(id) {
+      const p = LP.def(id); if (!p) return;
+      undoRun(function () { return S.update('lessonPackages', id, { onSale: !p.onSale }); }, { message: p.onSale ? p.name + ' is hidden. Members can no longer buy it' : p.name + ' is on sale', after: again, undone: p.onSale ? p.name + ' is on sale again' : p.name + ' is hidden again' });
+      renderRates();
+    }
+    function openPackage(p) {
+      const isEdit = !!p;
+      const d = p || { name: '', covers: { type: 'Private lesson', duration: 60, proId: null }, lessons: 5, price: '', expiry: { kind: 'seasonEnd' }, onSale: true };
+      const c = d.covers || {}, ex = d.expiry || { kind: 'none' };
+      const body = '<form class="ls-form" novalidate><div class="ls-alert" role="alert" hidden></div><div class="form-grid">' +
+        ui.field({ label: 'Package name', name: 'name', value: d.name, required: true, span2: true, placeholder: 'e.g. Five private lessons' }) +
+        ui.field({ label: 'Lesson type', name: 'type', type: 'select', options: ui.options(TYPES, c.type), required: true }) +
+        ui.field({ label: 'Professional', name: 'proId', type: 'select', options: ui.options([{ value: '', label: 'Any professional' }].concat(P.map(function (x) { return { value: x.id, label: x.firstName + ' ' + x.lastName }; })), c.proId || '') }) +
+        '<div class="field span-2"><label>Lesson length</label>' + ui.segmented([{ value: '', label: 'Any length' }].concat(DURATIONS.map(function (x) { return { value: String(x), label: x + ' min' }; })), c.duration ? String(c.duration) : '', 'duration') + '<input type="hidden" name="duration" value="' + (c.duration || '') + '"></div>' +
+        ui.field({ label: 'Lessons in the package', name: 'lessons', type: 'number', value: d.lessons, min: 1, max: 50, step: 1, required: true }) +
+        ui.field({ label: 'Price', name: 'price', type: 'number', value: d.price, min: 0, step: 0.01, required: true, hint: isEdit && d.placeholder ? 'Placeholder price for the demo. Enter the club’s price.' : 'The whole package, in dollars and cents.' }) +
+        '<div class="field span-2"><label>Expires</label>' + ui.segmented([{ value: 'none', label: 'No expiry' }, { value: 'seasonEnd', label: 'End of season' }, { value: 'months', label: 'After some months' }], ex.kind, 'expKind') + '<input type="hidden" name="expKind" value="' + esc(ex.kind) + '"></div>' +
+        '<div class="field ls-f-months"' + (ex.kind === 'months' ? '' : ' hidden') + '><label for="lp_months">Months after purchase</label><input class="input" id="lp_months" name="months" type="number" min="1" max="24" step="1" value="' + esc(ex.months || 6) + '"></div>' +
+        '<div class="field span-2"><label class="check"><input type="checkbox" name="onSale"' + (d.onSale ? ' checked' : '') + '> On sale: members can buy it in the portal and staff can sell it</label></div>' +
+        '<p class="span-2 muted ls-hint">A package bought earlier keeps what it covered, its lessons and its expiry date. Changes apply to packages sold from now on.</p>' +
+        '</div></form>';
+      const actions = [];
+      if (isEdit) actions.push({ label: 'Delete package', kind: 'danger', icon: 'trash', onClick: function (api) {
+        const held = S.where('memberPackages', function (mp) { return mp.packageId === p.id; }).length;
+        ui.confirm({ title: 'Delete ' + p.name + '?', text: 'It comes off the rate card and off sale.' + (held ? ' The ' + plural(held, 'member') + ' who bought it keep their remaining lessons.' : ''), confirmLabel: 'Delete package', danger: true }).then(function (ok) {
+          if (!ok) return;
+          undoRun(function () { S.remove('lessonPackages', p.id); }, { message: p.name + ' deleted', after: again, undone: p.name + ' restored' });
+          api.close(); renderRates();
+        });
+        return false;
+      } });
+      actions.push({ label: 'Cancel', kind: 'ghost' });
+      if (isEdit && p.onSale) actions.push({ label: 'Sell to member', kind: 'ghost', icon: 'tag', onClick: function () { setTimeout(function () { sellPackage({ packageId: p.id, after: again }); }, 200); } });
+      actions.push({ label: isEdit ? 'Save package' : 'Create package', kind: 'primary', icon: 'check', onClick: function () {
+        const form = ui.$('form', m.body), al = ui.$('.ls-alert', form); al.hidden = true;
+        ui.$$('.invalid', form).forEach(function (x) { x.classList.remove('invalid'); });
+        if (!ui.validate(form)) return false;
+        const f = ui.formData(form), errs = [];
+        const name = String(f.name || '').replace(/\s+/g, ' ').trim();
+        if (name.length > 60) { errs.push('Keep the name to 60 characters or fewer.'); form.name.classList.add('invalid'); }
+        else if (LP.defs().some(function (x) { return x.id !== (p && p.id) && x.name.toLowerCase() === name.toLowerCase(); })) { errs.push('A package called ' + name + ' already exists.'); form.name.classList.add('invalid'); }
+        if (!(f.lessons >= 1) || !Number.isInteger(f.lessons) || f.lessons > 50) { errs.push('Lessons must be a whole number from 1 to 50.'); form.lessons.classList.add('invalid'); }
+        if (f.price == null || !(f.price >= 0)) { errs.push('Enter a price of zero or more.'); form.price.classList.add('invalid'); }
+        else if (Math.abs(f.price * 100 - Math.round(f.price * 100)) > 1e-6) { errs.push('Enter the price in dollars and cents, such as 475 or 474.50.'); form.price.classList.add('invalid'); }
+        const kind = ['none', 'seasonEnd', 'months'].indexOf(f.expKind) >= 0 ? f.expKind : 'none';
+        if (kind === 'months' && (!(f.months >= 1) || !Number.isInteger(f.months) || f.months > 24)) { errs.push('Months must be a whole number from 1 to 24.'); form.months.classList.add('invalid'); }
+        if (errs.length) { al.innerHTML = Club.icon('alert') + '<div>' + errs.map(function (x) { return '<div>' + esc(x) + '</div>'; }).join('') + '</div>'; al.hidden = false; al.scrollIntoView({ block: 'nearest' }); return false; }
+        const doc = { name: name, covers: { type: f.type, duration: f.duration ? +f.duration : null, proId: f.proId || null }, lessons: f.lessons, price: Math.round(f.price * 100) / 100,
+          expiry: kind === 'months' ? { kind: 'months', months: f.months } : { kind: kind }, onSale: !!f.onSale, placeholder: false };
+        undoRun(function () { return isEdit ? S.update('lessonPackages', p.id, doc) : S.insert('lessonPackages', Object.assign({ id: S.uid('lpk') }, doc)); },
+          { message: isEdit ? name + ' saved' : name + ' created' + (doc.onSale ? '. Members can buy it in the portal' : ''), after: again, undone: isEdit ? 'Package changes undone' : 'Package removed' });
+        accOpen.rates = true; renderRates();
+      } });
+      const m = ui.modal({ eyebrow: 'Rate card', title: isEdit ? 'Edit package' : 'New package', body: body, size: 'lg', actions: actions });
+      m.el.classList.add('ls-modal');
+      const form = ui.$('form', m.body);
+      ui.on(form, 'click', '.segmented button', function (e, b) {
+        const seg = b.closest('.segmented'); ui.$$('button', seg).forEach(function (x) { x.classList.toggle('active', x === b); });
+        form[seg.dataset.name].value = b.dataset.value;
+        if (seg.dataset.name === 'expKind') ui.$('.ls-f-months', form).hidden = b.dataset.value !== 'months';
+      });
     }
 
     /* ---- programs ---- */

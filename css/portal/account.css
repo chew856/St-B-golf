@@ -425,3 +425,7 @@ body.portal .pa-rn-acts .btn-primary { flex: 1 1 auto; }
   .pa-ys .pa-sheet-table tr { break-inside: avoid; }
   .pa-ys-title { margin-top: 0; }
 }
+/* Inline links in text (the latest statement, the office and Controller phone numbers): a 44px tall tap area that does
+   not move the line */
+body.portal .pa-facts dd > a, body.portal .pa-rn-line a, body.portal .pa-sheet-foot a { position: relative; }
+body.portal .pa-facts dd > a::after, body.portal .pa-rn-line a::after, body.portal .pa-sheet-foot a::after { content: ""; position: absolute; inset: -14px -4px; }

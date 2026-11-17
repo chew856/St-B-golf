@@ -14,7 +14,9 @@
 .pc-row-main { flex: 1 1 auto; min-width: 0; }
 .pc-row-main h3 { margin: 0; font-size: 1rem; }
 .pc-row-main p { margin: 2px 0 0; font-size: 0.875rem; color: var(--text-2); }
-body.portal .pc-more { min-height: 0; padding: 14px 6px; margin: -14px -6px; font-size: 0.875rem; vertical-align: baseline; display: inline; }
+body.portal .pc-more { min-height: 0; padding: 12px 2px; margin: -12px 0; font-size: 0.875rem; vertical-align: baseline; display: inline; }
+/* "More" was under 44px wide: wider tap area, same place (the .p-link rule in portal-theme.css wins over the line above) */
+body.portal .p-link.pc-more { padding: 0 8px; margin: 0 -8px; }
 
 /* ---------------- Section tabs: 15px, 2px underline, scroll rather than wrap ---------------- */
 .pc-subnav { display: flex; gap: 24px; border-bottom: 1px solid var(--border); margin-bottom: 20px; overflow-x: auto; scrollbar-width: none; }

@@ -368,3 +368,7 @@ body.portal .p-nav .p-navmore-pop a.active { color: var(--forest-800); font-weig
 /* Option and switch labels: a tap with a 1 to 2px drag started a text selection instead of choosing the option
    (Safari). Nothing in these labels needs selecting. */
 body.portal .pa-opt, body.portal .pp-comm-ctl, body.portal .fr-sw-ctl, body.portal .tt-lg-sw, body.portal .ck-mopt, body.portal .gc-opt, body.portal .wl-opt { -webkit-user-select: none; user-select: none; }
+/* Short tab labels ("Buy", "Book", "Infos") were under 44px wide. An invisible strip either side widens the tap area
+   without moving the underline (tabs sit 24px apart, so neighbours do not overlap). */
+body.portal .tab, body.portal .pe-tab, body.portal .pc-subnav a { position: relative; }
+body.portal .tab::before, body.portal .pe-tab::before, body.portal .pc-subnav a::before { content: ""; position: absolute; top: 0; bottom: 0; left: -12px; right: -12px; }

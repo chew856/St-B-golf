@@ -201,7 +201,7 @@ Waiting on the owner: season end (Oct 31) and the package prices ($475, $200, $3
 seeds put $475 and $200 package sales on two members' accounts (keep or offset); long-press drag on Safari and iPad
 needs a real-device check.
 
-## Golf season setting (Nov 17, NOT DEPLOYED YET)
+## Golf season setting (Nov 17, deployed Nov 17)
 Staff Settings has a **Golf season** tab: opening and closing day, stored as `golfSeason` { open: 'MM-DD', close:
 'MM-DD', confirmed } and read everywhere through `Club.season` (`js/core/ui.js`, after `Club.taxRate`). The same days
 apply every year. Until the club saves its own, April 1 to October 31 stands in and the tab shows "Placeholder".

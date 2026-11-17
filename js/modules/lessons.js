@@ -27,7 +27,7 @@
      null when the link has none, bad is the text of a date that does not exist. */
   function routeDate(params) {
     const q = /[?&]date=([^&/]*)/.exec(location.hash), p0 = String((params && params[0]) || '');
-    let raw = q ? q[1] : p0.replace(/^\?/, '').replace(/^date=/, '').split(/[?&]/)[0];
+    let raw = p0 ? p0.replace(/^\?/, '').replace(/^date=/, '').split(/[?&]/)[0] : q ? q[1] : '';
     try { raw = decodeURIComponent(raw); } catch (e) { /* keep it as it is */ }
     if (!raw) return { date: null, bad: null };
     return validDate(raw) ? { date: raw, bad: null } : { date: null, bad: raw };

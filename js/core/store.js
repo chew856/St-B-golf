@@ -572,8 +572,12 @@
     const fromEvent = e.newValue !== seen[name];
     const raw = fromEvent ? e.newValue : now;
     if (raw === seen[name]) return;
-    const again = reconcile(name, raw, fromEvent ? e.oldValue : undefined);
+    let again = reconcile(name, raw, fromEvent ? e.oldValue : undefined);
     if (now === raw) seen[name] = now;
+    else if (!again && now === seen[name] && db[name] !== undefined && serialize(name) !== now) {
+      /* storage holds this tab's own later save, which lacks what was just taken in: save what this tab has now */
+      pending[name] = { all: true }; again = true;
+    }
     if (again) flush();
     notifySoon();
   });

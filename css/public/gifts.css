@@ -89,6 +89,7 @@
 .ckf-prog li + li::before { content: ""; width: 3px; height: 3px; border-radius: 50%; background: var(--ink-3); }
 .ckf-pb { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0; border: 0; background: none; font: inherit; font-size: var(--fs-13); color: var(--ink-3); cursor: pointer; }
 .ckf-pb:disabled { cursor: default; opacity: 1; }
+@media (max-width: 768px) { .ckf-pb { min-height: 44px; } }   /* phone tap target (the portal's is in css/portal/gifts.css) */
 .ckf-pn { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; flex: none; border: 1px solid var(--rule-strong); border-radius: 50%; font-size: var(--fs-12); font-variant-numeric: tabular-nums; line-height: 1; }
 .ckf-pn svg { width: 13px; height: 13px; }
 .ckf-prog .is-current .ckf-pb { color: var(--night); font-weight: 600; }

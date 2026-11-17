@@ -677,7 +677,7 @@ body.public .check, body.public .pub-card-opt, body.public .join-opt { -webkit-u
 .pub-chip-amt { font-size: 1.125rem; line-height: 1.1; color: var(--night); }
 .pub-chip-per { font-size: var(--fs-11); color: var(--ink-3); }
 @media (hover: hover) { .pub-chip:hover .pub-chip-price { border-top-color: var(--rule-strong); } }
-.pub-chip.selected .pub-chip-price { border-top-color: rgba(243, 241, 228, 0.25); }
+.pub-chip.selected .pub-chip-price { border-top-color: var(--on-dark-line); }
 .pub-chip.selected .pub-chip-amt, .pub-chip.selected .pub-chip-per { color: var(--on-night); }
 .pub-chip.selected .tee-head { color: var(--on-night); }
 .pub-chip.selected .tee-head.is-taken { color: var(--on-night-2); }

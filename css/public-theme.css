@@ -43,6 +43,7 @@ body.public {
   --shadow-thumb: 0 1px 2px rgba(16, 30, 23, 0.08), 0 2px 6px rgba(16, 30, 23, 0.08);
   --shadow-sheet: 0 -8px 32px rgba(16, 30, 23, 0.18);
   --shadow-pop: 0 1px 2px rgba(16, 30, 23, 0.04), 0 12px 28px rgba(16, 30, 23, 0.12);
+  --scrim: rgba(16, 30, 23, 0.42);   /* behind dialogs (the portal's value) */
   --ease-ui: cubic-bezier(0.2, 0.7, 0.2, 1);
   --t-ui: 180ms;
 
@@ -151,7 +152,7 @@ body.public .empty svg { color: var(--forest-500); }
 body.public svg.icon { stroke-width: 1.5; }
 
 /* ---------- Dialogs, sheets, toasts ---------- */
-body.public .overlay { background: rgba(16, 30, 23, 0.42); }
+body.public .overlay { background: var(--scrim); }
 body.public .modal, body.public .drawer { background: var(--surface); border-top: 0; border-radius: var(--radius-card); box-shadow: var(--shadow-sheet); }
 body.public .drawer { border-left: 1px solid var(--border); border-radius: 0; }
 body.public .modal-head h3, body.public .drawer .modal-head h3 { font-family: var(--serif); font-size: 1.375rem; font-weight: 500; }
@@ -388,4 +389,15 @@ body.public .pfb .vf-icon { background: var(--sage-100); color: var(--forest-800
 }
 @media (max-width: 420px) {
   body.public .pub-hero-actions .btn svg { display: none; }
+}
+/* Phone tap targets: 44px for main controls, 40px for compact ones (quantity steppers, section chips, text links that
+   act as buttons). The checkout step buttons (.ckf-pb) are in css/public/gifts.css. */
+@media (max-width: 768px) {
+  body.public .pub-me-btn { min-width: 44px; justify-content: center; }
+  body.public .to-secbtn { min-height: 40px; }
+  body.public .to-step button, body.public .sh-step button { width: 40px; height: 40px; }
+  body.public .sh-step-lg button { width: 46px; height: 46px; }
+  body.public .sh-keep, body.public .sh-line-name, body.public .join-back, body.public .join-side-phone a,
+  body.public .pub-auth .pub-link { display: inline-flex; align-items: center; min-height: 44px; }
+  body.public .pub-auth .pub-link { min-width: 44px; justify-content: center; }
 }

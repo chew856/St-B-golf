@@ -182,6 +182,10 @@ Waiting on the owner:
 - Reports Leaderboard: the 18 hole buttons are 35 by 46px on phones (9 in a row). Needs a layout decision.
 - Left as they are: card network brand colours (`css/cards.css`, `js/core/cards.js`) and mask colours.
 
+## Future: live location on the course
+The owner plans live location for golfers. The tee sheet's "On pace", hole and finish estimate are computed from the
+4h 15m target today (js/modules/teesheet.js starter column); switch them to real positions when live location exists.
+
 ## Still to do or decide
 1. **Resolved Nov 13**: run alone, `xpo-test.mjs` (Group outings) passes all 192 checks and `xe-checkout.mjs`
    passes 418. The one failure is the outside weather service answering 503, not the site.

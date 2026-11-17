@@ -1026,13 +1026,13 @@
   function openLeagueForm(lg, from) {
     const year = +today().slice(0, 4);
     const nextYear = from && leagueStatus(from) === 'complete' ? year + 1 : (from ? +from.season.start.slice(0, 4) + 1 : year);
-    const x = lg || { name: from ? from.name : "Wednesday Members' League", night: from ? from.night : 'Wednesday', startTime: from ? from.startTime : '16:30', season: { start: nextYear + '-05-01', end: nextYear + '-09-30' }, format: from ? from.format : 'Stableford', holes: from ? from.holes : 9, allowance: from ? from.allowance : 95 };
+    const x = lg || { name: from ? from.name : "Wednesday Members' League", night: from ? from.night : 'Wednesday', startTime: from ? from.startTime : '16:30', season: { start: Club.season.start(nextYear), end: Club.season.end(nextYear) }, format: from ? from.format : 'Stableford', holes: from ? from.holes : 9, allowance: from ? from.allowance : 95 };
     const hasResults = lg ? playedIdx(lg).length > 0 : false;
     const body = '<form class="form-grid" novalidate>' +
       ui.field({ label: 'League name', name: 'name', value: x.name, required: true, span2: true, placeholder: "e.g. Wednesday Members' League" }) +
       ui.field({ label: 'League night', name: 'night', type: 'select', options: ui.options(WEEKDAYS.slice(1).concat(['Sunday']), x.night), hint: hasResults ? 'Nights with results must stay inside the new schedule' : '' }) +
       ui.field({ label: 'First tee', name: 'startTime', type: 'time', value: x.startTime, required: true }) +
-      ui.field({ label: 'Season starts', name: 'start', type: 'date', value: x.season.start, required: true, hint: 'The Winnipeg season runs May to September' }) +
+      ui.field({ label: 'Season starts', name: 'start', type: 'date', value: x.season.start, required: true, hint: 'The golf season runs ' + Club.season.dayLabel() + ' (set in Settings)' }) +
       ui.field({ label: 'Season ends', name: 'end', type: 'date', value: x.season.end, required: true }) +
       ui.field({ label: 'Format', name: 'format', type: 'select', options: ui.options(LEAGUE_FORMATS, x.format), hint: 'Stableford points by default' }) +
       ui.field({ label: 'Holes each night', name: 'holes', type: 'select', options: ui.options([{ value: '9', label: '9 holes, alternating front and back' }, { value: '18', label: '18 holes' }], String(x.holes)) }) +
@@ -1051,9 +1051,9 @@
         else if (d.name.length > 80) { fieldErr(form, 'name', 'Keep the name under 80 characters.'); ok = false; }
         if (d.end <= d.start) { fieldErr(form, 'end', 'The season must end after it starts.'); ok = false; }
         else {
-          const sm = +d.start.slice(5, 7), em = +d.end.slice(5, 7);
-          if (d.start.slice(0, 4) !== d.end.slice(0, 4)) { fieldErr(form, 'end', 'Keep the season within one calendar year.'); ok = false; }
-          else if (sm < 4 || em > 10) { fieldErr(form, sm < 4 ? 'start' : 'end', 'League nights must fall within the golf season (April to October).'); ok = false; }
+          const y = d.start.slice(0, 4), early = d.start < Club.season.start(y), late = d.end > Club.season.end(y);
+          if (y !== d.end.slice(0, 4)) { fieldErr(form, 'end', 'Keep the season within one calendar year.'); ok = false; }
+          else if (early || late) { fieldErr(form, early ? 'start' : 'end', 'League nights must fall within the golf season (' + Club.season.dayLabel() + ').'); ok = false; }
         }
         if (d.startTime < '06:00' || d.startTime > '19:30') { fieldErr(form, 'startTime', 'Choose a first tee between 6:00 AM and 7:30 PM.'); ok = false; }
         if (!ok) return false;

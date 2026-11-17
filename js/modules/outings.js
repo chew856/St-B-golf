@@ -12,7 +12,16 @@
   const STAGE_KIND = { 'Enquiry': 'brass', 'Quoted': 'info', 'Deposit paid': 'warn', 'Confirmed': 'good', 'Completed': 'outline', 'Lost': 'bad' };
   const LOST_REASONS = ['Date not available', 'Chose another course', 'Over budget', 'Field too small', 'Event cancelled', 'No response after follow-up', 'Other'];
   const METHODS = ['Card', 'E-transfer', 'Cheque', 'Debit', 'Cash'];
-  const SEASON = [5, 6, 7, 8, 9]; // May to September
+  /* The golf season is set by staff in Settings (Club.season, js/core/ui.js) and read at call time. */
+  function inSeason(iso) { return Club.season.inSeason(iso); }
+  function seasonText() { return Club.season.dayLabel(); }
+  /* "May and July", "May, July and September", "May to September" (three or more months in a row) */
+  function monthsText(ms) {
+    const a = (ms || []).slice().sort(function (x, y) { return x - y; }).map(Number);
+    if (!a.length) return '';
+    if (a.length > 2 && a[a.length - 1] - a[0] === a.length - 1) return monthName(a[0]) + ' to ' + monthName(a[a.length - 1]);
+    const n = a.map(monthName); return n.length === 1 ? n[0] : n.slice(0, -1).join(', ') + ' and ' + n[n.length - 1];
+  }
   const MIN_PLAYERS = 16, MAX_PLAYERS = 144, SHOTGUN_MIN = 100;
   function money(v) { return fmt.money(v); }
   function dow(iso) { return fmt.toDate(iso).getDay(); }
@@ -53,9 +62,13 @@
   function rulesFor(o, excludeId) {
     const warn = [], errors = [];
     const p = S.find('outingPackages', o.packageId); const m = o.date ? monthOf(o.date) : 0; const n = +o.players || 0;
-    if (o.date && SEASON.indexOf(m) < 0) errors.push('Tournaments and outings run May to September. Choose a date in the golf season.');
-    /* "Only available May and July" reads "only available May and July": only the first letter drops, month names keep theirs */
-    if (p && m && SEASON.indexOf(m) >= 0 && (p.months || []).indexOf(m) < 0) warn.push(p.name + ': ' + p.availability.charAt(0).toLowerCase() + p.availability.slice(1) + '.');
+    if (o.date && !inSeason(o.date)) errors.push('Tournaments and outings run during the golf season, ' + seasonText() + '. Choose a date in the golf season.');
+    /* "Only available May and July" reads "only available May and July": only the first letter drops, month names keep theirs.
+       A package whose availability text names no months (Platinum) gets its months spelled out instead. */
+    if (p && m && inSeason(o.date) && (p.months || []).indexOf(m) < 0) {
+      const av = /^only available/i.test(p.availability || '') ? p.availability.charAt(0).toLowerCase() + p.availability.slice(1) : 'only available ' + monthsText(p.months);
+      warn.push(p.name + ': ' + av + '.');
+    }
     if (p && n && (n < p.minPlayers || n > p.maxPlayers)) {
       /* Name another package only when it really fits this many players (never the same one, never one that does not fit) */
       const alt = S.find('outingPackages', suggestPkg(n));
@@ -270,7 +283,7 @@
       ui.field({ label: 'Contact name', name: 'contactName', value: o.contactName || '', required: true }) +
       ui.field({ label: 'Phone', name: 'phone', type: 'tel', value: o.phone || '', placeholder: '204-555-0123' }) +
       ui.field({ label: 'Email', name: 'email', type: 'email', value: o.email || '', required: true, span2: true }) +
-      ui.field({ label: 'Tournament date', name: 'date', type: 'date', value: o.date || '', required: true, hint: 'May to September' }) +
+      ui.field({ label: 'Tournament date', name: 'date', type: 'date', value: o.date || '', required: true, hint: 'Golf season: ' + seasonText() }) +
       ui.field({ label: 'Estimated players', name: 'players', type: 'number', min: MIN_PLAYERS, max: MAX_PLAYERS, value: o.players, required: true, hint: '16 to 144 players' }) +
       '<div class="field"><label>Format</label>' + ui.segmented([{ value: 'Tee times', label: 'Tee times' }, { value: 'Shotgun', label: 'Shotgun' }], o.format, 'format') + '</div>' +
       '<div class="field"><label>Holes</label>' + ui.segmented([{ value: '18', label: '18 holes' }, { value: '9', label: '9 holes' }], String(o.holes || 18), 'holes') + '</div>' +
@@ -305,7 +318,7 @@
       const d = ui.formData(form); let ok = true; const cur = current();
       if (!validEmail(d.email)) { err(form.email, 'Enter a valid email address.'); ok = false; }
       if (!(d.players >= MIN_PLAYERS && d.players <= MAX_PLAYERS)) { err(form.players, 'Packages are for 16 to 144 players.'); ok = false; }
-      if (SEASON.indexOf(monthOf(d.date)) < 0) { err(form.date, 'Choose a date from May to September.'); ok = false; }
+      if (!inSeason(d.date)) { err(form.date, 'Choose a date in the golf season, ' + seasonText() + '.'); ok = false; }
       else if (!existing && d.date < today()) { err(form.date, 'Choose an upcoming date.'); ok = false; }
       if (!ok) { const f1 = ui.$('.invalid', form); if (f1) f1.focus(); return false; }
       const doc = { organization: d.organization, contactName: d.contactName, email: d.email, phone: d.phone, date: d.date, players: d.players, format: cur.format, start: d.start, holes: cur.holes, packageId: d.packageId, addOns: readAddOns(form), notes: d.notes };
@@ -453,7 +466,7 @@
     ], mainTab, function (id) { mainTab = id; });
     ui.on(view, 'click', '[data-action=new]', function () { openForm(null, function (id) { Club.app.go('outings/' + id); }); });
   }
-  /* Season at a glance: every outing by date, May to September. */
+  /* Season at a glance: every outing by date, across the golf season (Club.season). */
   function renderSeason(panel) {
     const os = all().filter(function (o) { return o.stage !== 'Lost'; }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
     if (!os.length) { panel.innerHTML = ui.empty({ icon: 'trophy', title: 'No outings yet', text: 'Enquiries from companies, charities and sports clubs will show here by date.', action: ui.btn('New enquiry', { kind: 'primary', icon: 'plus', action: 'new' }) }); return; }

@@ -21,8 +21,10 @@
   const fe = function () { return Club.fmtEn || Club.fmt; };
   const today = function () { return Club.date.today(); };
   const r2 = function (v) { return Math.round((+v || 0) * 100) / 100; };
-  /* "End of season" packages run to October 31 (placeholder: the golf season's last day, for the club to confirm). */
-  const SEASON_END = '10-31';
+  /* "End of season" packages run to the golf season's closing day, set by staff in Settings (Club.season, js/core/ui.js;
+     October 31 until the club enters its dates). Read when a package is bought, so a Settings change applies to packages
+     bought after it; a purchase keeps the expiresOn it was given. */
+  function seasonEnd() { return Club.season ? Club.season.get().close : '10-31'; }
   const TYPES = ['Private lesson', 'Playing lesson', 'Club fitting', 'Junior clinic', 'Group clinic'];
 
   function proFirst(id) { const s = S.find('staff', id); return s ? s.firstName : 'Pro'; }
@@ -36,7 +38,10 @@
   function expiryFor(expiry, from) {
     const k = expiry && expiry.kind;
     if (k === 'months') return addMonths(from, Math.max(1, +expiry.months || 1));
-    if (k === 'seasonEnd') { const end = from.slice(0, 4) + '-' + SEASON_END; return from <= end ? end : (+from.slice(0, 4) + 1) + '-' + SEASON_END; }
+    if (k === 'seasonEnd') {
+      if (Club.season) return Club.season.endAfter(from);
+      const end = from.slice(0, 4) + '-' + seasonEnd(); return from <= end ? end : (+from.slice(0, 4) + 1) + '-' + seasonEnd();
+    }
     return null;
   }
   function expiryText(expiry) {
@@ -134,7 +139,9 @@
   }
 
   Club.lessonPacks = {
-    TYPES: TYPES, SEASON_END: SEASON_END,
+    TYPES: TYPES,
+    /** 'MM-DD' of the season's closing day, read now (a getter, so Settings changes show at once). */
+    get SEASON_END() { return seasonEnd(); },
     defs: defs, def: def, get: get, forMember: forMember, remaining: remaining, expired: expired,
     coversLesson: coversLesson, whyNot: whyNot, usable: usable, take: take, giveBack: giveBack, sell: sell,
     expiryFor: expiryFor, expiryText: expiryText, coversText: coversText, forText: forText, offerText: offerText, heldText: heldText, addMonths: addMonths

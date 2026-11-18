@@ -268,6 +268,7 @@
       return true;
     });
   }
+  const CLIP = window.CSS && CSS.supports && CSS.supports('overflow', 'clip') ? 'clip' : 'hidden';
   function makeOverlay(inner, cls, onClose) {
     const ov = el('<div class="overlay ' + (cls || '') + '" role="dialog" aria-modal="true"></div>');
     ov.appendChild(inner);
@@ -299,7 +300,10 @@
     }
     ov.addEventListener('mousedown', function (e) { if (e.target === ov) close(); });
     document.addEventListener('keydown', onKey);
-    document.body.appendChild(ov); openCount++; document.body.style.overflow = 'hidden'; document.documentElement.style.overflow = 'hidden';
+    /* The page stops scrolling behind the dialog. The body takes overflow: clip, not hidden: hidden would make the body a
+       scroll box of its own, and the staff sidebar (position: sticky) would then stick to the top of the page rather
+       than the window, so on a scrolled page it slid up out of sight behind the dialog. */
+    document.body.appendChild(ov); openCount++; document.body.style.overflow = CLIP; document.documentElement.style.overflow = 'hidden';
     /* On touch screens, focusing a field pops the keyboard the moment a dialog opens: focus the dialog itself instead
        (keyboard and screen reader users still land inside it). */
     setTimeout(function () {
@@ -307,7 +311,10 @@
       const f = $('[autofocus], input:not([type=hidden]), select, textarea, button.btn-primary', inner);
       /* Nothing to start on (a confirm that deletes something, a menu of links): focus the dialog itself, so the
          keyboard is inside it and Tab starts at its first control. */
-      if (f) f.focus(); else { if (!inner.hasAttribute('tabindex')) inner.setAttribute('tabindex', '-1'); inner.focus({ preventScroll: true }); }
+      /* preventScroll: the first field is already in view, and Safari could scroll the dialog body down a little while
+         it animates in, hiding the first labels. A field behind Club.pickers is focused on its visible button. */
+      const vis = f && f.classList.contains('cs-native') && f.previousElementSibling && f.previousElementSibling.classList.contains('cs-btn') ? f.previousElementSibling : f;
+      if (vis) vis.focus({ preventScroll: true }); else { if (!inner.hasAttribute('tabindex')) inner.setAttribute('tabindex', '-1'); inner.focus({ preventScroll: true }); }
     }, 60);
     return close;
   }

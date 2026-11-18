@@ -1483,32 +1483,48 @@
       const holes = isEdit ? tt.holes : (toMin(time) >= 900 ? 9 : 18);
       const pl = isEdit ? (tt.players || []).slice() : [];
       const acked = {}; (isEdit ? (tt.overrides || []) : []).forEach(function (x) { acked[overrideKey(x)] = x; });
-      const KINDS = [{ value: 'member', label: 'Member' }, { value: 'guest', label: 'Guest' }, { value: 'public', label: 'Public' }];
+      const KIND_LABEL = { member: 'Member', guest: 'Guest', public: 'Public golfer' };
       const shopBox = function (i, checked) { return '<label class="check ts-pub-shop"><input type="checkbox" name="pubpaid_' + i + '"' + (checked ? ' checked' : '') + '> Green fee paid at the golf shop</label>'; };
+      /* "or Guest · Public golfer": the other two kinds of player, as links that switch the spot over */
+      const altHTML = function (kind) {
+        return '<span class="ts-palt-or">or</span>' + ['member', 'guest', 'public'].filter(function (k) { return k !== kind; }).map(function (k) {
+          return '<button type="button" class="ts-kind" data-kind-to="' + k + '">' + KIND_LABEL[k] + '</button>';
+        }).join('<span class="ts-palt-dot" aria-hidden="true">·</span>');
+      };
+      /* Each player is one line: the spot number (a tick once paid), who it is, Cart and clear. An empty spot is a member
+         search with Guest and Public golfer links; a chosen member shows as a name card (click it to choose someone else).
+         The fields save() reads (type_i, member_i, guest_i, pub_i, pubphone_i, pubemail_i, pubpaid_i, gpaid_i, cart_i) are
+         all here, whichever kind the spot is. */
       const prow = function (i) {
         const p = pl[i]; const type = p ? p.type : 'member'; const pub = type === 'public' ? p : null;
-        return '<div class="ts-prow" data-i="' + i + '">' +
+        return '<div class="ts-prow" data-i="' + i + '" data-kind="' + esc(type) + '">' +
           (p && p.paid ? '<span class="ts-prow-n paid" title="Fees settled">' + Club.icon('check') + '</span>' : '<span class="ts-prow-n serif">' + (i + 1) + '</span>') +
-          '<div class="segmented ts-ptype" data-name="type_' + i + '" role="group" aria-label="Player ' + (i + 1) + ' kind">' + KINDS.map(function (k) { return '<button type="button" data-value="' + k.value + '" class="' + (type === k.value ? 'active' : '') + '">' + k.label + '</button>'; }).join('') + '</div>' +
           '<input type="hidden" name="type_' + i + '" value="' + esc(type) + '">' +
           '<div class="ts-pwho">' +
-            '<select class="select" name="member_' + i + '" aria-label="Player ' + (i + 1) + ' member"' + (type !== 'member' ? ' hidden' : '') + '><option value="">' + (i === 0 ? 'Select the host member' : 'Select a member') + '</option>' + Club.members.options(p && p.type === 'member' ? p.memberId : null) + '</select>' +
-            '<input class="input" name="guest_' + i + '" placeholder="Guest full name" maxlength="60" aria-label="Player ' + (i + 1) + ' guest name" value="' + esc(p && p.type === 'guest' ? p.name : '') + '"' + (type !== 'guest' ? ' hidden' : '') + '>' +
+            '<div class="ts-pline">' +
+              '<div class="ts-pmem">' +
+                '<button type="button" class="ts-pcard" data-action="ts-repick" aria-label="Player ' + (i + 1) + ': choose another member"></button>' +
+                '<select class="select ts-msel" name="member_' + i + '" aria-label="Player ' + (i + 1) + ' member"><option value="">Find a member</option>' + Club.members.options(p && p.type === 'member' ? p.memberId : null) + '</select>' +
+              '</div>' +
+              '<input class="input ts-pgname" name="guest_' + i + '" placeholder="Guest full name" maxlength="60" aria-label="Player ' + (i + 1) + ' guest name" value="' + esc(p && p.type === 'guest' ? p.name : '') + '">' +
+              '<input class="input ts-pub-name" name="pub_' + i + '" placeholder="Public golfer full name" maxlength="60" aria-label="Player ' + (i + 1) + ' public golfer name" value="' + esc(pub ? pub.name || '' : '') + '">' +
+              '<span class="ts-palt">' + altHTML(type) + '</span>' +
+            '</div>' +
             (p && p.type === 'guest' && (p.phone || p.email) ? '<span class="ts-gcontact muted">' + esc([p.phone, p.email, typeof p.handicap === 'number' ? 'Handicap ' + Club.fmt.handicap(p.handicap) : ''].filter(Boolean).join(' · ')) + '</span>' : '') +
             (p && p.type === 'guest' && p.pays === 'shop' ? '<div class="ts-pubpay ts-gpay"><span class="muted">Guest pays at the golf shop.</span><label class="check ts-pub-shop"><input type="checkbox" name="gpaid_' + i + '"' + (p.paid ? ' checked' : '') + '> Green fee paid at the golf shop</label></div>' : '') +
-            '<div class="ts-pubf"' + (pub ? '' : ' hidden') + '>' +
-              '<input class="input ts-pub-name" name="pub_' + i + '" placeholder="Public golfer full name" maxlength="60" aria-label="Player ' + (i + 1) + ' public golfer name" value="' + esc(pub ? pub.name || '' : '') + '">' +
+            '<div class="ts-pubf">' +
               '<div class="ts-pub-contact"><input class="input" type="tel" name="pubphone_' + i + '" placeholder="Phone (optional)" maxlength="24" aria-label="Public golfer phone" value="' + esc(pub ? pub.phone || '' : '') + '">' +
               '<input class="input" type="email" name="pubemail_' + i + '" placeholder="Email (optional)" maxlength="80" aria-label="Public golfer email" value="' + esc(pub ? pub.email || '' : '') + '"></div>' +
-              '<div class="ts-pubpay">' + (pub && paidOnline(pub) ? '<span class="ts-pub-online">' + Club.icon('check') + 'Paid online' + (pub.publicPlayerId ? ' with a public account' : '') + '</span>' : shopBox(i, pub && pub.paid)) + '</div>' +
+              '<div class="ts-publine"><div class="ts-pubpay">' + (pub && paidOnline(pub) ? '<span class="ts-pub-online">' + Club.icon('check') + 'Paid online' + (pub.publicPlayerId ? ' with a public account' : '') + '</span>' : shopBox(i, pub && pub.paid)) + '</div><span class="muted ts-pubpay-hint">Public golfers pay online or at the golf shop.</span></div>' +
             '</div>' +
             '<div class="ts-pextra" data-extra="' + i + '" hidden></div>' +
           '</div>' +
-          '<label class="check ts-pcart"><input type="checkbox" name="cart_' + i + '"' + (p && p.cart ? ' checked' : '') + '> Cart</label>' +
+          '<label class="ts-pcart"><input type="checkbox" name="cart_' + i + '"' + (p && p.cart ? ' checked' : '') + '><span>Cart</span></label>' +
           ui.btn('', { icon: 'close', kind: 'ghost', sm: true, action: 'clear-player', title: 'Clear player ' + (i + 1) }) +
           '<div class="ts-pnote" hidden></div>' +
           '</div>';
       };
+      const startsTen = isEdit && +tt.startTee === 10;
       const body =
         '<form class="ts-form" novalidate>' +
           '<div class="ts-alert" role="alert" hidden></div>' +
@@ -1519,42 +1535,51 @@
               ? 'Booked in the members’ portal with promo code ' + x.promo.code + ': ' + money(x.promo.discount) + ' off guest fees, cart and add-ons. Posts to the member’s account at check-in.'
               : 'Booked online with promo code ' + x.promo.code + ': ' + money(x.promo.discount) + ' off' + (who ? ' for ' + who.firstName + ' ' + who.lastName : '') + '. Paid ' + money(x.amount) + '.') + '</span></p>';
           }).join('') : '') +
-          '<div class="form-grid ts-fg3">' +
+          '<div class="ts-top">' +
             '<div class="field ts-mdp"></div><input type="hidden" name="date" value="' + date + '">' +
             ui.field({ label: 'Tee time', name: 'time', type: 'select', options: timeOptions(date, time, tt && tt.id), required: true }) +
-            '<div class="field"><label>Holes</label>' + ui.segmented([{ value: '18', label: '18 holes' }, { value: '9', label: '9 holes' }], String(holes), 'holes') + '<input type="hidden" name="holes" value="' + holes + '"></div>' +
+            '<div class="field ts-holes"><label>Holes</label>' + ui.segmented([{ value: '18', label: '18' }, { value: '9', label: '9' }], String(holes), 'holes') + '<input type="hidden" name="holes" value="' + holes + '"></div>' +
+            /* Almost every group starts on the 1st tee, so that is the default; staff change it only for a 10th tee start.
+               The beverage cart uses it to predict where the group is (teeTimes.startTee). */
+            ui.field({ label: 'Starts on', name: 'startTee', type: 'select', options: '<option value="1"' + (startsTen ? '' : ' selected') + '>1st tee</option><option value="10"' + (startsTen ? ' selected' : '') + '>10th tee</option>' }) +
           '</div>' +
-          /* Almost every group starts on the 1st tee, so that is the default; staff change it only for a 10th tee start.
-             The beverage cart uses it to predict where the group is (teeTimes.startTee). */
-          '<div class="field ts-start"><label>Starts on</label>' + ui.segmented([{ value: '1', label: '1st tee' }, { value: '10', label: '10th tee' }], isEdit && +tt.startTee === 10 ? '10' : '1', 'startTee') +
-            '<input type="hidden" name="startTee" value="' + (isEdit && +tt.startTee === 10 ? 10 : 1) + '"><span class="muted ts-hint">Only change this for a group going off the 10th tee.</span></div>' +
-          '<div class="ts-plist"><div class="row between ts-plist-head"><span class="label-caps">Players</span><span class="muted ts-hint">The first member listed hosts any guests. Public golfers pay online or at the golf shop.</span></div>' + [0, 1, 2, 3].map(prow).join('') + '</div>' +
-          ui.field({ label: 'Notes', name: 'notes', type: 'textarea', value: isEdit ? tt.notes : '', placeholder: 'Rental clubs, occasions, pairing preferences' }) +
+          '<div class="ts-plist"><div class="ts-plist-head"><span class="label-caps ts-pcount">Players</span><span class="muted ts-hint">The first member hosts any guests</span></div>' + [0, 1, 2, 3].map(prow).join('') + '</div>' +
+          '<div class="ts-notes"' + (isEdit && tt.notes ? '' : ' hidden') + '>' + ui.field({ label: 'Notes', name: 'notes', type: 'textarea', value: isEdit ? tt.notes : '', placeholder: 'Rental clubs, occasions, pairing preferences' }) + '</div>' +
+          '<button type="button" class="ts-addnote" data-action="ts-addnote"' + (isEdit && tt.notes ? ' hidden' : '') + '>' + Club.icon('plus') + 'Add a note</button>' +
           '<div class="ts-override" hidden></div>' +
           '<div class="ts-quote"></div>' +
         '</form>';
       const actions = [];
-      if (isEdit && tt.status !== 'completed') actions.push({ label: 'Cancel tee time', kind: 'danger', icon: 'trash', onClick: function (api) { cancelTee(tt, api); return false; } });
+      if (isEdit && tt.status !== 'completed') actions.push({ label: 'Cancel tee time', kind: 'danger', onClick: function (api) { cancelTee(tt, api); return false; } });
       if (isEdit && (tt.status === 'booked' || tt.status === 'checked-in')) actions.push({ label: 'Mark no-show', kind: 'ghost', onClick: function () { advance(tt.id, 'no-show'); } });
       const back = isEdit ? backStep(tt) : null;
       if (back) actions.push({ label: back.label, kind: 'ghost', onClick: function () { stepBack(tt.id); } });
-      actions.push({ label: isEdit ? 'Close' : 'Cancel', kind: 'ghost' });
+      const nLeft = actions.length;   /* Cancel tee time, Mark no-show and the step back sit on the left of the footer */
+      actions.push({ label: isEdit ? 'Close' : 'Cancel' });
       actions.push({ label: isEdit ? 'Save changes' : 'Book tee time', kind: 'primary', icon: 'check', onClick: function (api) { return save(api); } });
 
-      const eyebrow = isEdit ? (STATUS[tt.status] || STATUS.booked).label + ' · ' + fmt.dateShort(tt.date) + (tt.source === 'public' ? ' · Booked online' : tt.source === 'portal' ? ' · Booked in the members\' portal' : '') : 'New booking';
+      const dayText = function (d) { return Club.fmt.toDate(d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }); };
+      const eyebrow = isEdit ? (STATUS[tt.status] || STATUS.booked).label + ' · ' + dayText(tt.date) + (tt.source === 'public' ? ' · Booked online' : tt.source === 'portal' ? ' · Booked in the members\' portal' : '') : 'New booking';
       const m = ui.modal({ eyebrow: eyebrow, title: isEdit ? 'Tee time at ' + fmt.time(tt.time) : 'Book tee time', size: 'lg', body: body, actions: actions });
       m.el.classList.add('ts-modal');
       const form = ui.$('form', m.body);
-      /* Club.pickers copies hidden onto its button only when it changes later: re-assert it once the pickers are in, so a
-         member picker never shows on a guest or public row. */
-      setTimeout(function () { ui.$$('.ts-pwho select', form).forEach(function (s) { const h = s.hidden; s.hidden = !h; s.hidden = h; }); }, 0);
+      if (nLeft) { const fb = ui.$$('.modal-foot .btn', m.el); if (fb[nLeft - 1]) fb[nLeft - 1].classList.add('ts-foot-split'); }
+      /* The member search: a search icon on the picker's button (Club.pickers adds the button just after the dialog is in) */
+      setTimeout(function () {
+        ui.$$('.ts-msel', form).forEach(function (sel) { const b = memberBtn(sel); if (b && !b.querySelector('.ts-msel-ic')) b.insertAdjacentHTML('afterbegin', Club.icon('search', 'ts-msel-ic')); });
+      }, 0);
+      /* The dialog opens at the top: nothing is scrolled out of sight under the header (Safari could scroll the body a
+         little while the dialog animated in). A row asked for with o.focus is brought into view instead. */
+      let touched = false;
+      ['pointerdown', 'wheel', 'keydown', 'touchstart'].forEach(function (ev) { m.body.addEventListener(ev, function () { touched = true; }, { once: true, passive: true }); });
+      setTimeout(function () { if (!touched && o.focus == null) m.body.scrollTop = 0; }, 360);
       /* Date: the shared date picker, listing each bookable day with its open tee times */
       const bookDays = []; const lastDay = Club.date.addDays(today, 30);
       if (date < today) bookDays.push(date);
       for (let d = today; d <= lastDay; d = Club.date.addDays(d, 1)) bookDays.push(d);
       if (date > lastDay) bookDays.push(date);
       const mdp = Portal.datePicker(ui.$('.ts-mdp', form), {
-        label: 'Date', title: 'Choose a date', value: date,
+        label: 'Date', title: 'Choose a date', value: date, compact: true,
         days: bookDays.map(function (d) {
           const blocks = blocksOn(d); const taken = {}; activeOn(d).forEach(function (t) { if (!tt || t.id !== tt.id) taken[t.time] = 1; });
           const n = slotList().filter(function (t) { return !taken[t] && !blockAt(blocks, d, t) && !(d === today && toMin(t) < nowMin() - 10) && d >= today; }).length;
@@ -1582,6 +1607,49 @@
           const id = form['member_' + i].value; if (!id) return null;
           return { memberId: id, name: Club.members.name(id), type: 'member', cart: cart, i: i };
         });
+      }
+      function memberBtn(sel) { const b = sel && sel.previousElementSibling; return b && b.classList.contains('cs-btn') ? b : null; }
+      /* Paint each spot from the form: its kind, the chosen member's name card (Host on the first member), and the count */
+      function paintRows(raw) {
+        const host = raw.find(function (p) { return p && p.type === 'member'; });
+        ui.$$('.ts-prow', form).forEach(function (r) {
+          const i = +r.dataset.i, kind = form['type_' + i].value, id = kind === 'member' ? form['member_' + i].value : '';
+          r.dataset.kind = kind;
+          r.classList.toggle('is-set', !!id);
+          r.classList.toggle('is-open', !!id || kind !== 'member');
+          const card = ui.$('.ts-pcard', r);
+          if (card.dataset.for !== id + (host && host.i === i ? '|h' : '')) {
+            card.dataset.for = id + (host && host.i === i ? '|h' : '');
+            const mem = id ? Club.members.get(id) : null;
+            if (!mem) card.innerHTML = '';
+            else {
+              const tier = Club.members.tier(mem);
+              card.innerHTML = '<span class="ts-pav" aria-hidden="true">' + esc(((mem.firstName || '')[0] || '') + ((mem.lastName || '')[0] || '')) + '</span>' +
+                '<span class="ts-pname">' + esc(mem.firstName + ' ' + mem.lastName) + '</span>' +
+                '<span class="ts-pmeta">#' + esc(mem.memberNo) + (tier && tier.name ? ' · ' + esc(tier.name) : '') + '</span>' +
+                (host && host.i === i ? '<span class="ts-phost">Host</span>' : '');
+            }
+          }
+        });
+        const n = raw.filter(Boolean).length;
+        ui.$('.ts-pcount', form).textContent = 'Players · ' + n + ' of 4';
+      }
+      /* Switch a spot to a member, guest or public golfer (the links under an empty spot) */
+      function setKind(r, kind, focus) {
+        const i = r.dataset.i;
+        form['type_' + i].value = kind; r.dataset.kind = kind;
+        ui.$('.ts-palt', r).innerHTML = altHTML(kind);
+        ui.$$('.invalid', r).forEach(function (x) { x.classList.remove('invalid'); });
+        refresh();
+        if (focus) focusRow(r);
+      }
+      function focusRow(r) {
+        const i = r.dataset.i, kind = form['type_' + i].value;
+        const f = kind === 'guest' ? form['guest_' + i] : kind === 'public' ? form['pub_' + i] : r.classList.contains('is-set') ? ui.$('.ts-pcard', r) : memberBtn(form['member_' + i]) || form['member_' + i];
+        if (!f) return;
+        f.focus({ preventScroll: true });
+        const b = f.getBoundingClientRect(), v = m.body.getBoundingClientRect();
+        if (b.top < v.top || b.bottom > v.bottom) f.scrollIntoView({ block: 'nearest' });
       }
       /** Membership and public play rules for the current form: warnings only, staff can override. */
       function ruleWarnings(d, t, ps) {
@@ -1627,6 +1695,7 @@
         });
         const q = quote(priced, h, validDate(d) ? d : date, t);
         const qEl = ui.$('.ts-quote', form);
+        paintRows(raw);
         drawExtras();
         qEl.innerHTML = ps.length ? '<div class="ts-quote-main"><span class="label-caps">Due at check-in</span><span class="ts-quote-line">' + q.guests + ' guest' + (q.guests === 1 ? '' : 's') + ' at ' + money(q.gf) + ' · ' + q.carts + ' cart' + (q.carts === 1 ? '' : 's') + (q.adds ? ' · ' + money(q.adds) + ' add-ons' : '') + (h === 9 ? ' · nine-hole rate' : '') + '</span><span class="ts-quote-v serif">' + money(q.total) + '</span></div>' +
           (q.promo ? '<div class="ts-quote-pub ts-quote-promo">' + Club.icon('tag') + '<span>' + esc('Promo ' + q.promoCodes.join(', ') + ' −' + money(-q.promo)) + '</span></div>' : '') +
@@ -1639,7 +1708,7 @@
           const i = +r.dataset.i; const note = ui.$('.ts-pnote', r);
           const mine = warns.filter(function (w) { return w.i === i; });
           const p = raw[i];
-          let html = mine.map(function (w) { return '<div class="ts-pwarn' + (w.acked || w.legacy ? ' acked' : '') + '">' + Club.icon('alert') + '<span>' + esc(w.text) + (w.acked ? ' Override recorded.' : w.legacy ? ' Already booked at this time.' : '') + '</span></div>'; }).join('');
+          let html = mine.map(function (w) { return '<div class="ts-pwarn' + (w.acked || w.legacy ? ' acked' : '') + '">' + Club.icon('alert') + '<span>' + esc(w.text) + (w.acked ? ' Override recorded.' : w.legacy ? ' Already booked at this time, so it is kept.' : '') + '</span></div>'; }).join('');
           if (p && p.type === 'public' && !mine.some(function (w) { return w.rule === 'publicSlot'; })) { const hint = publicHint(d, t, hasMember); if (hint) html += '<div class="ts-phint">' + Club.icon('info') + '<span>' + esc(hint) + '</span></div>'; }
           note.innerHTML = html; note.hidden = !html;
           r.classList.toggle('has-warn', mine.some(function (w) { return !w.acked && !w.legacy; }));
@@ -1726,27 +1795,41 @@
       });
 
       refresh();
-      if (o.focus != null && !isNaN(o.focus)) setTimeout(function () { const r = ui.$('.ts-prow[data-i="' + o.focus + '"]', form); if (r) { const f = ui.$('select:not([hidden]), .ts-pwho > input.input:not([hidden]), .ts-pubf:not([hidden]) .ts-pub-name', r); if (f) f.focus(); } }, 90);
+      if (o.focus != null && !isNaN(o.focus)) setTimeout(function () { const r = ui.$('.ts-prow[data-i="' + o.focus + '"]', form); if (r) focusRow(r); }, 90);
 
       ui.on(form, 'click', '.segmented button', function (e, b) {
         const seg = b.closest('.segmented'); const name = seg.dataset.name;
         ui.$$('button', seg).forEach(function (x) { x.classList.toggle('active', x === b); });
         form[name].value = b.dataset.value;
-        if (name.indexOf('type_') === 0) {
-          const r = seg.closest('.ts-prow'); const i = r.dataset.i; const v = b.dataset.value;
-          form['member_' + i].hidden = v !== 'member'; form['guest_' + i].hidden = v !== 'guest'; ui.$('.ts-pubf', r).hidden = v !== 'public';
-          ui.$$('.invalid', r).forEach(function (x) { x.classList.remove('invalid'); });
-          (v === 'guest' ? form['guest_' + i] : v === 'public' ? form['pub_' + i] : form['member_' + i]).focus();
-        }
         refresh();
+      });
+      ui.on(form, 'click', '[data-kind-to]', function (e, b) { setKind(b.closest('.ts-prow'), b.dataset.kindTo, true); });
+      /* A chosen member's card: click it to search for someone else. The picker's button shows in its place while the
+         list is open (the list is placed under that button), and the card comes back when the list closes. */
+      ui.on(form, 'click', '[data-action=ts-repick]', function (e, b) {
+        const r = b.closest('.ts-prow'), btn = memberBtn(form['member_' + r.dataset.i]); if (!btn) return;
+        r.classList.add('is-picking');
+        const mo = new MutationObserver(function () { if (btn.getAttribute('aria-expanded') !== 'true') { mo.disconnect(); r.classList.remove('is-picking'); if (document.activeElement === btn || document.activeElement === document.body) { const c = ui.$(r.classList.contains('is-set') ? '.ts-pcard' : '.cs-btn', r); if (c) c.focus({ preventScroll: true }); } } });
+        btn.click();
+        if (btn.getAttribute('aria-expanded') === 'true') mo.observe(btn, { attributes: true, attributeFilter: ['aria-expanded'] }); else r.classList.remove('is-picking');
       });
       ui.on(form, 'click', '[data-action=clear-player]', function (e, b) {
         const r = b.closest('.ts-prow'); const i = r.dataset.i;
         ['member_', 'guest_', 'pub_', 'pubphone_', 'pubemail_'].forEach(function (k) { form[k + i].value = ''; });
         form['cart_' + i].checked = false;
-        ui.$('.ts-pubpay', r).innerHTML = shopBox(i, false); pl[i] = null; delete pend[i];
-        ui.$$('.invalid', r).forEach(function (x) { x.classList.remove('invalid'); });
-        refresh();
+        ui.$('.ts-pubf .ts-pubpay', r).innerHTML = shopBox(i, false); pl[i] = null; delete pend[i];
+        ui.$$('.ts-gcontact, .ts-gpay', r).forEach(function (x) { x.remove(); });   /* that guest's contact line and golf shop box went with them */
+        const n = ui.$('.ts-prow-n', r); if (n.classList.contains('paid')) { n.className = 'ts-prow-n serif'; n.removeAttribute('title'); n.textContent = +i + 1; }
+        setKind(r, 'member', false);
+        const f = memberBtn(form['member_' + i]); if (f) f.focus({ preventScroll: true });
+      });
+      /* Notes fold away behind "Add a note" until needed; a booking that has notes shows them open */
+      ui.on(form, 'click', '[data-action=ts-addnote]', function (e, b) {
+        const box = ui.$('.ts-notes', form); box.hidden = false; b.hidden = true; form.notes.focus();
+      });
+      form.notes.addEventListener('blur', function () {
+        if (form.notes.value.trim()) return;
+        setTimeout(function () { if (document.activeElement === form.notes || form.notes.value.trim() || !document.body.contains(form)) return; ui.$('.ts-notes', form).hidden = true; ui.$('.ts-addnote', form).hidden = false; }, 150);
       });
       form.addEventListener('change', function (e) {
         if (e.target.name === 'date' && validDate(e.target.value)) form.time.innerHTML = timeOptions(e.target.value, e.target.value === date ? time : firstOpen(e.target.value), tt && tt.id);

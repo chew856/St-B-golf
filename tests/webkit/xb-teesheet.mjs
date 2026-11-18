@@ -17,7 +17,7 @@ for (const W of [1440, 390]) {
     const r0 = await snapR();
     await human(p, '.ts-bar [data-action=book-new]');
     await setVal(p, '.ts-form [name=member_0]', mem);
-    await human(p, '.ts-form .segmented[data-name=type_1] button[data-value=public]');
+    await human(p, '.ts-form .ts-prow[data-i="1"] [data-kind-to=public]');
     await setVal(p, '.ts-form [name=pub_1]', 'Pat Publicgolfer');
     await human(p, '.ts-form [name=pubpaid_1]');
     await human(p, '.ts-pay [data-pay=disc-add]'); await setVal(p, '#ts-pay-dv', '5'); await setVal(p, '#ts-pay-dr', 'Aeration on the greens');
@@ -34,7 +34,7 @@ for (const W of [1440, 390]) {
     /* 2. book again (paid at the shop), then untick paid (refund on save), undo the refund */
     await human(p, '.ts-bar [data-action=book-new]');
     await setVal(p, '.ts-form [name=member_0]', mem);
-    await human(p, '.ts-form .segmented[data-name=type_1] button[data-value=public]'); await setVal(p, '.ts-form [name=pub_1]', 'Pat Publicgolfer');
+    await human(p, '.ts-form .ts-prow[data-i="1"] [data-kind-to=public]'); await setVal(p, '.ts-form [name=pub_1]', 'Pat Publicgolfer');
     await human(p, '.ts-form [name=pubpaid_1]'); await modalBtn(p, 'Record payment'); await p.waitForTimeout(300);
     await override(p); await modalBtn(p, 'Book tee time'); await p.waitForTimeout(600);
     const B2 = await ev(() => Club.store.all('teeTimes')[Club.store.all('teeTimes').length - 1].id);

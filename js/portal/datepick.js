@@ -11,6 +11,7 @@
      note: '<icon> Drizzle, 5° · 23 times available',   // optional HTML line under the field
      onChange: function (iso) { ... }
    });
+   compact: true shows "Wed, Nov 18" on one line and leaves out the ‹ › buttons (the staff tee time dialog).
    dp.set(iso)  dp.update({ days, note, value })  dp.value()  dp.open()  dp.close() */
 (function () {
   window.Portal = window.Portal || {};
@@ -20,6 +21,7 @@
   function d(iso) { return Club.fmt.toDate(iso); }
   function fieldText(iso) { return d(iso).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }); }
   function shortText(iso) { return d(iso).toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric' }); }
+  function compactText(iso) { return d(iso).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }); }
   function rowText(iso) {
     return iso === Club.date.today() ? 'Today, ' + d(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
       : d(iso).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
@@ -47,10 +49,11 @@
         '<span class="dp-label" id="' + id + '-l">' + esc(opts.label) + '</span>' +
         '<div class="dp-row">' +
           '<button type="button" class="dp-field" aria-haspopup="dialog" aria-expanded="false" aria-labelledby="' + id + '-l ' + id + '-v">' +
-            Club.icon('calendar') + '<span class="dp-field-text" id="' + id + '-v"><span class="dp-long">' + esc(fieldText(value)) + '</span><span class="dp-short">' + esc(shortText(value)) + '</span></span>' + Club.icon('chevronDown', 'dp-chev') +
+            Club.icon('calendar') + '<span class="dp-field-text" id="' + id + '-v">' + (opts.compact ? '<span class="dp-compact">' + esc(compactText(value)) + '</span>' : '<span class="dp-long">' + esc(fieldText(value)) + '</span><span class="dp-short">' + esc(shortText(value)) + '</span>') + '</span>' + Club.icon('chevronDown', 'dp-chev') +
           '</button>' +
+          (opts.compact ? '' :
           '<button type="button" class="dp-step" data-dp="prev" aria-label="Previous day"' + (enabledIndex(-1) < 0 ? ' disabled' : '') + '>' + Club.icon('chevronLeft') + '</button>' +
-          '<button type="button" class="dp-step" data-dp="next" aria-label="Next day"' + (enabledIndex(1) < 0 ? ' disabled' : '') + '>' + Club.icon('chevronRight') + '</button>' +
+          '<button type="button" class="dp-step" data-dp="next" aria-label="Next day"' + (enabledIndex(1) < 0 ? ' disabled' : '') + '>' + Club.icon('chevronRight') + '</button>') +
         '</div>' +
         (opts.note ? '<div class="dp-note">' + opts.note + '</div>' : '') +
       '</div>';

@@ -212,6 +212,14 @@ dates and the limits) and Group outings (date must fall in the season). Before t
 Outings: a package whose availability text names no months now says "only available May to September" (from its
 stored months) when the date is outside them.
 
+## Tee time dialog redesign (Nov 18, NOT DEPLOYED YET)
+The owner chose "Option A, compact form" for the Tee Sheet booking dialog (`openBooking` in `js/modules/teesheet.js`):
+date, time, holes and a "Starts on" select on one line; one line per player (Find a member search, or Guest / Public
+golfer links via `[data-kind-to]`); warnings wrap under their player; notes fold behind "+ Add a note". Form field
+names are unchanged. `js/core/ui.js`: dialogs lock the page with `overflow: clip` on body (the sticky sidebar used
+to slide up behind an open dialog) and focus without scrolling. `Portal.datePicker` has a `compact` option. Tested in
+Chromium only; check in Safari.
+
 ## Future: live location on the course
 The owner plans live location for golfers. The tee sheet's "On pace", hole and finish estimate are computed from the
 4h 15m target today (js/modules/teesheet.js starter column); switch them to real positions when live location exists.

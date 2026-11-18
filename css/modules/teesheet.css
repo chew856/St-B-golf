@@ -325,55 +325,123 @@ body.staff .ts-st-go { min-height: 38px; padding: 0 16px; font-weight: 600; }
 .ts-fee-note { font-size: 0.8125rem; margin: 0; }
 
 /* ---------- Booking modal (footer is pinned by the dialog; the body scrolls) ---------- */
-.ts-modal .modal-foot { flex-wrap: wrap; }
-.ts-modal .modal-foot .btn-danger { margin-right: auto; }
+/* Option A, compact form (Nov 18): date, time, holes and starting tee on one line; each player one line; warnings under
+   their player; notes folded away; Cancel tee time and Mark no-show on the left of the footer, Close and Save on the right. */
+.ts-modal .modal-head { padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.ts-modal .modal-body { padding-top: 16px; padding-bottom: 16px; }
+.ts-modal .modal-foot { flex-wrap: wrap; align-items: center; }
+.ts-modal .modal-foot .ts-foot-split { margin-right: auto; }
+body.staff .ts-modal .modal-foot .btn-danger { border-color: transparent; background: transparent; }
+@media (hover: hover) { body.staff .ts-modal .modal-foot .btn-danger:hover { background: var(--oxblood-tint); border-color: transparent; } }
 .ts-alert { display: flex; gap: 8px; align-items: flex-start; background: var(--oxblood-tint); color: var(--danger); padding: 10px 12px; border-radius: var(--radius-ctl); margin-bottom: 14px; font-size: 0.875rem; }
 .ts-alert[hidden] { display: none; }
 .ts-alert svg { width: 17px; height: 17px; flex: none; margin-top: 1px; }
-.ts-fg3 { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) auto; align-items: start; }
-.ts-mdp .dp-label { font-size: 0.8125rem; }
-.ts-fg3 .segmented { align-self: flex-start; }
-.ts-start { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
-.ts-start > label { flex: 0 0 100%; }
-body.staff .ts-start .segmented button { min-height: 42px; padding: 6px 14px; }
-body.staff .ts-fg3 .segmented button { min-height: 42px; padding: 6px 14px; }
-body.staff .ts-fg3 .select { min-height: 48px; }
-.ts-plist { margin: 6px 0 14px; border-top: 1px solid var(--border); }
-.ts-plist-head { padding: 10px 0 2px; gap: 12px; }
+
+/* The top line */
+.ts-top { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) auto minmax(0, 0.9fr); gap: 12px; align-items: end; margin-bottom: 14px; }
+.ts-top > .field { margin-bottom: 0; gap: 5px; }
+.ts-mdp .dp { gap: 5px; }
+.ts-mdp .dp-label, body.staff .ts-top .field label { font-size: 0.8125rem; font-weight: 500; color: var(--text-2); }
+.ts-mdp .dp-row { container-type: normal; }
+.ts-mdp .dp-field { min-height: 44px; padding: 0 10px 0 12px; white-space: nowrap; font-size: 0.9375rem; }
+.ts-mdp .dp-field > .icon:first-child { width: 18px; height: 18px; }
+.ts-mdp .dp-field-text { overflow: hidden; text-overflow: ellipsis; }
+body.staff .ts-top .select { min-height: 44px; }
+body.staff .ts-holes .segmented { display: inline-flex; }
+body.staff .ts-holes .segmented button { min-height: 38px; min-width: 44px; padding: 6px 12px; font-size: 0.9375rem; font-variant-numeric: tabular-nums; }
+
+/* Players */
+.ts-plist { margin: 0 0 6px; }
+.ts-plist-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; padding-bottom: 2px; }
 .ts-hint { font-size: 0.8125rem; }
-.ts-prow { display: grid; grid-template-columns: 22px auto minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); position: relative; }
-.ts-prow-n { font-size: 0.9375rem; font-weight: 500; color: var(--forest-500); text-align: center; font-variant-numeric: tabular-nums; }
-body.staff .ts-ptype button { padding: 5px 10px; }
-.ts-pwho { min-width: 0; }
-.ts-pwho [hidden] { display: none; }
-.ts-pcart { white-space: nowrap; }
-.ts-prow-n.paid { color: var(--good); display: inline-flex; justify-content: center; }
+body.staff .ts-plist-head .ts-pcount { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-3); }
+.ts-prow { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto auto; column-gap: 10px; align-items: start; padding: 6px 0; border-bottom: 1px solid var(--border); }
+/* The number, Cart and clear line up with the first line of the spot (44px), also when guest or public fields follow */
+.ts-prow > .ts-prow-n { min-height: 44px; display: flex; align-items: center; justify-content: center; }
+.ts-prow > .ts-pcart { margin-top: 6px; }
+.ts-prow > [data-action=clear-player] { margin-top: 5px; }
+.ts-prow:last-child { border-bottom: 0; }
+.ts-prow-n { font-size: 1.0625rem; font-weight: 500; color: var(--text-3); text-align: center; font-variant-numeric: tabular-nums; }
+.ts-prow-n.paid { color: var(--good); }
 .ts-prow-n.paid svg { width: 16px; height: 16px; }
-.ts-quote { display: flex; flex-direction: column; align-items: stretch; gap: 8px; padding: 10px 14px; background: var(--sage-50); border: 1px solid var(--border); border-radius: var(--radius-ctl); margin-top: 12px; }
+.ts-prow.has-warn .ts-prow-n { color: var(--warn); }
+.ts-pwho { min-width: 0; display: grid; gap: 6px; }
+.ts-pline { display: flex; align-items: center; gap: 6px 10px; flex-wrap: wrap; min-width: 0; min-height: 44px; }
+/* One kind of player shows at a time: the row's data-kind says which */
+.ts-prow:not([data-kind=member]) .ts-pmem, .ts-prow:not([data-kind=guest]) .ts-pgname, .ts-prow:not([data-kind=guest]) .ts-gcontact,
+.ts-prow:not([data-kind=guest]) .ts-gpay, .ts-prow:not([data-kind=public]) .ts-pub-name, .ts-prow:not([data-kind=public]) .ts-pubf { display: none; }
+.ts-pmem { flex: 0 1 300px; min-width: 0; display: grid; }
+.ts-pgname, .ts-pub-name { flex: 0 1 300px; min-width: 0; }
+body.staff .ts-pline .input, body.staff .ts-pline .select { min-height: 40px; }
+/* The member search (Club.pickers' button for the member list, which has a search box) */
+.ts-pmem .cs-btn { padding-left: 10px; }
+.ts-pmem .cs-btn .ts-msel-ic { width: 17px; height: 17px; flex: none; color: var(--text-3); }
+body.staff .ts-pmem .cs-btn.select { background-image: none; padding-right: 12px; }
+.ts-prow:not(.is-set) .ts-pmem .cs-val { color: var(--text-3); }
+.ts-prow.is-set:not(.is-picking) .ts-pmem .cs-btn, .ts-prow:not(.is-set) .ts-pcard, .ts-prow.is-picking .ts-pcard { display: none; }
+/* A chosen member: a name card that reopens the search */
+.ts-pcard { display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 44px; max-width: 100%; padding: 2px 8px 2px 2px; margin-left: -2px; border: 1px solid transparent; border-radius: var(--radius-ctl); background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+@media (hover: hover) { .ts-pcard:hover { background: var(--sage-50); border-color: var(--border); } }
+.ts-pcard:focus-visible { outline: 2px solid var(--forest-700); outline-offset: 1px; }
+.ts-pmem:has(.invalid) .ts-pcard { border-color: var(--danger); }
+.ts-pmem { justify-items: start; }
+.ts-pmem .cs-btn { justify-self: stretch; }
+.ts-pav { width: 34px; height: 34px; flex: none; border-radius: 50%; display: grid; place-items: center; background: var(--sage-200); color: var(--forest-800); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.02em; }
+.ts-pname { font-weight: 600; font-size: 0.9375rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.ts-pmeta { font-size: 0.8125rem; color: var(--text-3); white-space: nowrap; }
+.ts-phost { flex: none; padding: 2px 9px; border-radius: 999px; background: var(--sage-100); color: var(--text-2); font-size: 0.75rem; font-weight: 600; }
+.ts-prow.is-set .ts-pmem { flex: 1 1 auto; }
+/* "or Guest · Public golfer" */
+.ts-palt { display: inline-flex; align-items: center; gap: 2px; flex-wrap: wrap; font-size: 0.875rem; color: var(--text-3); }
+.ts-prow.is-set .ts-palt { display: none; }
+.ts-palt-or { margin-right: 4px; }
+.ts-palt-dot { padding: 0 2px; }
+.ts-kind { border: 0; background: none; padding: 4px 4px; min-height: 32px; font: inherit; font-weight: 600; color: var(--forest-500); cursor: pointer; border-radius: 6px; }
+@media (hover: hover) { .ts-kind:hover { color: var(--forest-800); text-decoration: underline; text-underline-offset: 3px; } }
+.ts-kind:focus-visible { outline: 2px solid var(--forest-700); outline-offset: 1px; }
+/* Cart: a pill that fills when on (the checkbox stays in the form) */
+.ts-pcart { position: relative; display: inline-flex; align-items: center; justify-content: center; min-height: 32px; padding: 0 13px; border: 1px solid var(--border-strong); border-radius: 999px; font-size: 0.8125rem; color: var(--text-2); cursor: pointer; white-space: nowrap; user-select: none; -webkit-user-select: none; }
+.ts-pcart input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.ts-pcart:has(input:checked) { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); }
+.ts-pcart:has(input:focus-visible) { outline: 2px solid var(--forest-700); outline-offset: 2px; }
+@media (hover: hover) { .ts-pcart:hover:not(:has(input:checked)) { border-color: var(--forest-500); background: var(--sage-50); } }
+/* An empty spot has no Cart or clear yet: its search and links take the line */
+.ts-prow:not(.is-open) .ts-pcart, .ts-prow:not(.is-open) [data-action=clear-player] { display: none; }
+.ts-prow:not(.is-open) .ts-pwho { grid-column: 2 / -1; }
+.ts-quote { display: flex; flex-direction: column; align-items: stretch; gap: 6px; padding: 8px 14px; background: var(--sage-50); border: 1px solid var(--border); border-radius: var(--radius-ctl); margin-top: 10px; font-size: 0.875rem; }
+.ts-notes[hidden], .ts-addnote[hidden] { display: none; }
+.ts-notes .field { margin-bottom: 0; }
+.ts-addnote { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; padding: 0 4px; margin-left: -4px; border: 0; border-radius: 6px; background: none; color: var(--forest-500); font: 600 0.875rem/1.2 var(--sans); cursor: pointer; }
+.ts-addnote svg { width: 16px; height: 16px; }
+@media (hover: hover) { .ts-addnote:hover { color: var(--forest-800); text-decoration: underline; text-underline-offset: 3px; } }
+.ts-addnote:focus-visible { outline: 2px solid var(--forest-700); outline-offset: 1px; }
 .ts-quote-main { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .ts-quote-line { flex: 1; font-size: 0.875rem; color: var(--text-2); }
-.ts-quote-v { font-size: 1.25rem; font-weight: 500; color: var(--text); font-variant-numeric: tabular-nums; font-family: var(--sans); }
+.ts-quote-v { font-size: 1.125rem; font-weight: 500; color: var(--text); font-variant-numeric: tabular-nums; font-family: var(--sans); }
 .ts-quote-pub { display: flex; gap: 6px; align-items: flex-start; padding-top: 8px; border-top: 1px solid var(--border); font-size: 0.8125rem; color: var(--slate); }
 .ts-quote-pub svg { width: 13px; height: 13px; flex: none; margin-top: 2px; }
 .ts-block-impact { margin: 0; }
 
 .ts-pubf { display: grid; gap: 6px; }
-.ts-pubf[hidden] { display: none; }
 .ts-gcontact { display: block; margin-top: 4px; font-size: 0.8125rem; overflow-wrap: anywhere; }
 .ts-pub-contact { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; }
 body.staff .ts-pub-contact .input { min-height: 36px; font-size: 0.875rem; }
 .ts-pubpay { font-size: 0.875rem; }
+.ts-gpay { display: flex; align-items: center; gap: 4px 12px; flex-wrap: wrap; }
+.ts-publine { display: flex; align-items: center; gap: 4px 12px; flex-wrap: wrap; }
+.ts-pubpay-hint { font-size: 0.8125rem; }
+.ts-publine:has(.ts-pub-online) .ts-pubpay-hint { display: none; }
 .ts-pub-shop { font-size: 0.875rem; color: var(--text-2); }
 .ts-pub-online { display: inline-flex; align-items: center; gap: 6px; color: var(--good); font-weight: 500; }
 .ts-pub-online svg { width: 14px; height: 14px; }
-.ts-pnote { grid-column: 2 / -1; display: grid; gap: 4px; }
+.ts-pnote { grid-column: 2 / 4; display: grid; gap: 6px; margin-top: 6px; min-width: 0; }
 .ts-pnote[hidden] { display: none; }
-.ts-pwarn, .ts-phint { display: flex; gap: 6px; align-items: flex-start; font-size: 0.8125rem; line-height: 1.4; }
-.ts-pwarn svg, .ts-phint svg { width: 13px; height: 13px; flex: none; margin-top: 2px; }
-.ts-pwarn { color: var(--warn); }
-.ts-pwarn.acked { color: var(--text-2); }
-.ts-phint { color: var(--slate); }
-.ts-prow.has-warn .ts-prow-n { color: var(--warn); }
+/* Warnings sit under their player in a tinted box and wrap */
+.ts-pwarn, .ts-phint { display: flex; gap: 7px; align-items: flex-start; font-size: 0.8125rem; line-height: 1.4; padding: 7px 11px; border-radius: var(--radius-ctl); min-width: 0; overflow-wrap: anywhere; }
+.ts-pwarn > span, .ts-phint > span { min-width: 0; }
+.ts-pwarn svg, .ts-phint svg { width: 14px; height: 14px; flex: none; margin-top: 2px; }
+.ts-pwarn { color: var(--warn); background: var(--ochre-tint); }
+.ts-phint { color: var(--slate); background: var(--sage-50); }
 .ts-override {
   display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
   padding: 10px 14px; margin-top: 12px; background: var(--ochre-tint); border: 1px solid color-mix(in srgb, var(--warn) 30%, var(--surface)); border-radius: var(--radius-ctl);
@@ -430,9 +498,31 @@ body.staff .ts-pub-contact .input { min-height: 36px; font-size: 0.875rem; }
   .ts-st-ocl:not(.is-all) li:nth-child(n+4) { display: none; }
   .ts-st-more { display: inline-flex; align-items: center; min-height: 44px; margin: 0; padding: 0; }
 }
-@media (max-width: 900px) {
-  .ts-fg3 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .ts-fg3 .ts-mdp { grid-column: 1 / -1; }
+/* The booking dialog on narrow windows: date and time, then holes and starting tee; a spot's search takes the line */
+@media (max-width: 760px) {
+  .ts-top { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); row-gap: 10px; }
+  .ts-holes .segmented { width: 100%; }
+  body.staff .ts-holes .segmented button { flex: 1; }
+  .ts-pmem, .ts-pgname, .ts-pub-name { flex: 1 1 100%; }
+  .ts-prow.is-set .ts-pline { flex-wrap: nowrap; }
+  /* the name card: name on the first line, number, tier and Host under it */
+  .ts-pcard { display: grid; grid-template-columns: 34px minmax(0, auto) auto; justify-content: start; column-gap: 10px; row-gap: 1px; padding-top: 3px; padding-bottom: 3px; }
+  .ts-pcard .ts-pav { grid-row: 1 / 3; }
+  .ts-pcard .ts-pname { grid-column: 2 / 4; }
+  .ts-pcard .ts-pmeta { grid-column: 2; overflow: hidden; text-overflow: ellipsis; }
+  .ts-pcard .ts-phost { grid-column: 3; grid-row: 2; justify-self: start; align-self: center; padding: 0 8px; }
+  .ts-pnote { grid-column: 1 / -1; }
+  .ts-pub-contact { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 768px) {
+  /* phones and tablets: 44px targets (the fields are already 16px from css/mobile.css) */
+  html body.staff .ts-pline .input, html body.staff .ts-pline .select, html body.staff .ts-pub-contact .input { min-height: 44px; font-size: 1rem; }
+  html body.staff .ts-holes .segmented button { min-height: 40px; }
+  .ts-kind, .ts-addnote { min-height: 44px; }
+  .ts-pcart { min-height: 44px; padding: 0 14px; }
+  .ts-prow > .ts-pcart, .ts-prow > [data-action=clear-player] { margin-top: 0; }
+  html body.staff .ts-prow [data-action=clear-player] { width: 44px; min-height: 44px; padding: 0; justify-content: center; }
+  .ts-prow { grid-template-columns: 22px minmax(0, 1fr) auto auto; column-gap: 8px; }
 }
 
 /* ---------- Narrow lists (phones): the four players stack as two lines inside the row ---------- */
@@ -499,14 +589,6 @@ body.staff .ts-pub-contact .input { min-height: 36px; font-size: 0.875rem; }
   .ts-part { min-height: 44px; }
   .ts-st-line, .ts-st-oc { min-height: 44px; }
   .ts-clock { font-size: 1rem; }
-  .ts-fg3 { grid-template-columns: minmax(0, 1fr); }
-  .ts-prow { grid-template-columns: 22px minmax(0, 1fr) auto; row-gap: 8px; }
-  .ts-pwho { grid-column: 2 / -1; }
-  .ts-ptype { grid-column: 2; justify-self: start; }
-  .ts-pcart { grid-column: 2; }
-  .ts-prow .btn { grid-column: 3; grid-row: 1; }
-  .ts-pnote { grid-column: 1 / -1; }
-  .ts-pub-contact { grid-template-columns: minmax(0, 1fr); }
 }
 /* Touch screens have no pointer to reveal "+ Add" and "+ Book": show them quietly */
 @media (hover: none) {

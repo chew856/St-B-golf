@@ -219,7 +219,7 @@ body.staff .ts-next { min-height: 34px; padding: 0 13px; font-size: 0.8125rem; f
 
 /* Blocked band: quiet sage panel, no hatching */
 .ts-band {
-  display: grid; grid-template-columns: var(--ts-time) minmax(0, 1fr) auto; column-gap: var(--ts-col-gap); align-items: center;
+  display: grid; grid-template-columns: minmax(var(--ts-time), max-content) minmax(0, 1fr) auto;   /* the "until 11:51 AM" line is wider than the time column: let it widen rather than run under the reason (owner, iPad, Nov 19) */ column-gap: var(--ts-col-gap); align-items: center;
   padding: 8px var(--ts-pad); min-height: 50px; border-bottom: 1px solid var(--border); background: var(--sage-50);
 }
 .ts-band.kind-shotgun { background: var(--sage-100); }
@@ -560,7 +560,7 @@ body.staff .ts-pub-contact .input { min-height: 36px; font-size: 0.875rem; }
   .ts-row.empty-row .ts-slots { display: none; }
   .ts-row.empty-row .ts-state { grid-column: 2; grid-row: 1; justify-content: flex-end; }
   .ts-row.empty-row .ts-bookhint { visibility: visible; font-weight: 500; }
-  .ts-band { grid-template-columns: 58px minmax(0, 1fr); padding: 10px 12px; }
+  .ts-band { grid-template-columns: minmax(58px, max-content) minmax(0, 1fr); padding: 10px 12px; }
   .ts-band > .btn { grid-column: 2; justify-self: start; margin-top: 4px; }
   .ts-band-time { white-space: normal; }
   .ts-note { grid-column: 1 / -1; }

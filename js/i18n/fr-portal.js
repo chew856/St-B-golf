@@ -2568,7 +2568,7 @@
     'Card': 'Carte',
     'Finish round': 'Terminer la partie',
     'Scorecard': 'Carte de score',
-    'Hole': 'Trou', 'Out': 'Aller', 'In': 'Retour', 'Total': 'Total',
+    'Hole': 'Trou', 'Out': 'Aller', 'In': 'Retour', 'Total': 'Total', 'So far': 'Jusqu’ici',
     'Place': 'Rang', 'Player': 'Joueur', 'Points': 'Points', 'Result': 'Résultat', 'Score': 'Score',
     'Posted to their accounts': 'Publié dans leurs comptes',
     'Share the scorecard': 'Partager la carte de score',

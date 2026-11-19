@@ -288,24 +288,34 @@
       const holes = P.holesOf(round.order), g = P.gridOf(round), net = round.scoring === 'net';
       const recv = {}; round.players.forEach(function (p) { recv[p.pid] = E.received(holes, p.ch); });
       const cur = holeIndex(round);
+      /* Holes nobody has reached yet stay blank (owner, Nov 19: par showing on later holes looked like real scores).
+         A reached hole with no score still shows par in grey, as it counts as par at Finish. */
+      let upto = round.status === 'playing' ? Math.max(cur, round.reached != null ? round.order.indexOf(+round.reached) : -1) : holes.length - 1;
+      g.scored.forEach(function (n) { upto = Math.max(upto, round.order.indexOf(n)); });
+      const val = function (p, h, k) { const c = g.grid[p.pid] && g.grid[p.pid][h.number]; return c != null ? c : k <= upto ? h.par : null; };
+      const idx = function (h) { return round.order.indexOf(h.number); };
+      const sumOf = function (p, list) { let n = 0, any = false; list.forEach(function (h) { const v = val(p, h, idx(h)); if (v != null) { n += v; any = true; } }); return any ? n : ''; };
       let html = '<table class="lv-card"><thead><tr><th scope="col">Hole</th><th scope="col">Par</th>' + round.players.map(function (p) { return '<th scope="col">' + esc(names[p.pid]) + '</th>'; }).join('') + '</tr></thead><tbody>';
       const sub = function (label, list) {
-        return '<tr class="lv-card-sub"><th scope="row">' + label + '</th><td>' + list.reduce(function (a, h) { return a + h.par; }, 0) + '</td>' +
-          round.players.map(function (p) { return '<td>' + list.reduce(function (a, h) { const c = g.grid[p.pid] && g.grid[p.pid][h.number]; return a + (c != null ? c : h.par); }, 0) + '</td>'; }).join('') + '</tr>';
+        const parShown = list.filter(function (h) { return idx(h) <= upto; });
+        return '<tr class="lv-card-sub"><th scope="row">' + label + '</th><td>' + (parShown.length ? parShown.reduce(function (a, h) { return a + h.par; }, 0) : '') + '</td>' +
+          round.players.map(function (p) { return '<td>' + sumOf(p, list) + '</td>'; }).join('') + '</tr>';
       };
       let run = [];
       holes.forEach(function (h, k) {
         html += '<tr' + (k === cur ? ' class="is-cur"' : '') + '><th scope="row">' + (canGo ? '<button type="button" class="lv-card-go" data-goto="' + k + '" aria-label="' + esc('Go to hole ' + h.number) + '">' + h.number + '</button>' : h.number) + '</th><td>' + h.par + '</td>' +
           round.players.map(function (p) {
-            const c = g.grid[p.pid] && g.grid[p.pid][h.number], s = net ? recv[p.pid][h.number] : 0;
-            return '<td class="' + (c == null ? 'is-default' : c < h.par ? 'is-under' : '') + '">' + (c != null ? c : h.par) + (s > 0 ? '<span class="lv-dot sm" aria-hidden="true"></span>' : '') + '</td>';
+            const c = g.grid[p.pid] && g.grid[p.pid][h.number], s = net ? recv[p.pid][h.number] : 0, v = val(p, h, k);
+            return '<td class="' + (c == null ? 'is-default' : c < h.par ? 'is-under' : '') + '">' + (v != null ? v : '') + (s > 0 ? '<span class="lv-dot sm" aria-hidden="true"></span>' : '') + '</td>';
           }).join('') + '</tr>';
         run.push(h);
         if (round.order.length === 18 && run.length === 9) { html += sub(h.number <= 9 ? 'Out' : 'In', run); run = []; }
       });
-      const tot = E.totals(holes, round.players, g.grid);
-      html += '<tr class="lv-card-tot"><th scope="row">Total</th><td>' + tot[0].par + '</td>' + tot.map(function (t) { return '<td>' + t.gross + '</td>'; }).join('') + '</tr>';
-      if (net) html += '<tr class="lv-card-sub"><th scope="row">Net</th><td></td>' + tot.map(function (t) { return '<td>' + t.net + '</td>'; }).join('') + '</tr>';
+      /* Totals count only the holes shown, so mid-round they read as "so far" */
+      const shown = holes.filter(function (h, k) { return k <= upto; });
+      const partial = upto < holes.length - 1;
+      html += '<tr class="lv-card-tot"><th scope="row">' + (partial ? 'So far' : 'Total') + '</th><td>' + shown.reduce(function (a, h) { return a + h.par; }, 0) + '</td>' + round.players.map(function (p) { return '<td>' + sumOf(p, holes) + '</td>'; }).join('') + '</tr>';
+      if (net) html += '<tr class="lv-card-sub"><th scope="row">Net</th><td></td>' + round.players.map(function (p) { const gs = sumOf(p, holes); if (gs === '') return '<td></td>'; const rs = shown.reduce(function (a, h) { return a + (recv[p.pid][h.number] || 0); }, 0); return '<td>' + (gs - rs) + '</td>'; }).join('') + '</tr>';
       return html + '</tbody></table>';
     }
     function openCard() {

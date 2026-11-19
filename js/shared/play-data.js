@@ -287,7 +287,15 @@
   /** Live standings for the round: over the holes scored so far, or over every hole (all: true, as at the finish). */
   function standingsOf(round, all) {
     const g = gridOf(round);
-    const holes = holesOf(all ? round.order : g.scored);
+    /* Mid-round: every hole the group has moved past counts (untouched scores as par, as at the finish), plus any hole
+       with a score; the hole they are on counts once someone enters a score there (owner, Nov 19: "After 2" on hole 4). */
+    let upto = -1;
+    if (!all) {
+      const at = round.reached != null ? round.order.indexOf(+round.reached) : -1;
+      upto = at - 1;
+      g.scored.forEach(function (n) { upto = Math.max(upto, round.order.indexOf(n)); });
+    }
+    const holes = holesOf(all ? round.order : round.order.filter(function (n, k) { return k <= upto; }));
     return Club.play.engine.standings(round.game, round.scoring, holes, round.players, g.grid, holesOf(round.order));
   }
   /** The hole the group is on, for the staff tee sheet: the furthest of the hole anyone moved to and the last hole with

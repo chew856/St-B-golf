@@ -1408,7 +1408,7 @@
     'Friends see tee times, handicap and results': 'Vos amis voient vos départs, votre handicap et vos résultats',
     'Nothing shared with friends': 'Rien n’est partagé avec vos amis',
     'All friends can see and join': 'Tous vos amis peuvent voir et se joindre',
-    'Choose what your friends can see. Nothing is shared with members who are not your friends.': 'Choisissez ce que vos amis peuvent voir. Rien n’est partagé avec les membres qui ne sont pas vos amis.',
+    'Choose what your friends can see. Your scores can also appear on the members’ leaderboards; you can turn that off below.': 'Choisissez ce que vos amis peuvent voir. Vos pointages peuvent aussi paraître aux classements des membres; vous pouvez désactiver cette option ci-dessous.',
     'Who can send me friend requests': 'Qui peut m’envoyer des demandes d’amitié',
     'Nobody': 'Personne',
     'Off while upcoming tee times are hidden from all friends': 'Désactivé tant que vos départs à venir sont masqués pour tous vos amis',

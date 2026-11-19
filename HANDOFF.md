@@ -220,6 +220,25 @@ names are unchanged. `js/core/ui.js`: dialogs lock the page with `overflow: clip
 to slide up behind an open dialog) and focus without scrolling. `Portal.datePicker` has a `compact` option. Tested in
 Chromium only; check in Safari.
 
+## Play (live scorecard) and members' leaderboards (Nov 19, NOT DEPLOYED YET)
+- **Play**: the members' portal (Play tab) and the public site (signed-in public accounts, `#/play`, "My rounds" in My
+  account) get a scorecard for a booked group, from 5 minutes before the tee time to the end of that day. Games: stroke,
+  Stableford, par, skins with and without carry-over, best ball, each gross or net. Anyone in the group with an account
+  can change any score; Finish posts at once with no confirming (members to Scores as hole-by-hole rounds, public
+  golfers to My rounds; guests are not posted), with Undo and a 15-minute reopen. Engine and sync in
+  `js/shared/play-data.js` (`Club.play`); screens in `js/portal/play.js`, public page in `js/public/play.js`; engine test
+  `node tests/play-engine.test.js`. Handicap maths moved unchanged to `js/core/whs.js` (`Club.whs`).
+  **Sync**: only `Club.play.sync` touches `liveRounds`/`liveScores` (one record per player per hole). Today it is
+  Club.store, so it only syncs between tabs of one browser; when the club has a server, replace only that module and
+  every phone in the group updates live. The staff tee sheet "On course" list shows "Hole N · scorecard" for live rounds.
+  Demo: once a day the demo member's first tee time today is filled to four (a friend, public demo Alex Morgan, guest
+  "Natalie Hollis").
+- **Members' leaderboards**: portal page `js/portal/leaderboards.js` (This month / This season from `Club.season`), board
+  maths shared in `js/shared/leaderboard-data.js` (`Club.leaderboard`, staff numbers unchanged). Staff control what
+  members see in Reports > Leaderboard > Members' view (store obj `memberLeaderboard`, Undo on each change). Members can
+  hide themselves in Profile (`members.leaderboardHidden`); staff still see everyone, marked "Hidden from members".
+- Tested in Chromium only; needs a Safari check.
+
 ## Future: live location on the course
 The owner plans live location for golfers. The tee sheet's "On pace", hole and finish estimate are computed from the
 4h 15m target today (js/modules/teesheet.js starter column); switch them to real positions when live location exists.

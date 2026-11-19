@@ -126,7 +126,7 @@
   }
   function privacyBody(id) {
     const p = Portal.friends.privacy(id); const blocked = Portal.friends.blockedBy(id);
-    return '<p class="pp-intro">Choose what your friends can see. Nothing is shared with members who are not your friends.</p>' +
+    return '<p class="pp-intro">Choose what your friends can see. Your scores can also appear on the members’ leaderboards; you can turn that off below.</p>' +
       '<ul class="pp-comm">' + SHARE.map(function (c) {
         const fid = 'pp_s_' + c.key;
         return '<li><label for="' + fid + '" class="pp-comm-text"><span class="pp-comm-l">' + esc(c.label) + '</span><span class="pp-comm-s">' + esc(c.text) + '</span></label>' +

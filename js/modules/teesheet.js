@@ -1171,9 +1171,12 @@
           const len = PACE_TARGET[t.holes] || 255; const hole = Math.min(t.holes, Math.floor(el2 / (len / t.holes)) + 1);
           const over = el2 > len;
           const nm = shortName((t.players || [])[0] || {}) + ((t.players || []).length > 1 ? ' +' + ((t.players || []).length - 1) : '');
-          return '<li><button type="button" class="ts-st-oc" data-action="open" data-id="' + esc(t.id) + '" data-fk="oc' + esc(t.id) + '" aria-label="' + esc('Open the ' + fmt.time(t.startedAt || t.time) + ' group, ' + nm + ', about hole ' + hole + ', finish about ' + fmt.time(toHM(start + len)) + (over ? ', over the target time' : '')) + '">' +
+          /* A group keeping a live scorecard (Play, js/shared/play-data.js) shows the hole from its card instead of the pace estimate */
+          const card = Club.play && Club.play.liveHole ? Club.play.liveHole(t) : null;
+          const where = card ? 'Hole ' + card + ' · scorecard' : 'Hole ' + hole + ' · finish about ' + fmt.time(toHM(start + len));
+          return '<li><button type="button" class="ts-st-oc" data-action="open" data-id="' + esc(t.id) + '" data-fk="oc' + esc(t.id) + '" aria-label="' + esc('Open the ' + fmt.time(t.startedAt || t.time) + ' group, ' + nm + ', ' + (card ? 'on hole ' + card + ' by their scorecard' : 'about hole ' + hole + ', finish about ' + fmt.time(toHM(start + len))) + (over ? ', over the target time' : '')) + '">' +
             '<span class="ts-st-t">' + esc(fmt.time(t.startedAt || t.time).replace(/ [AP]M$/, '')) + '</span>' +
-            '<span class="ts-st-ocm"><span class="ts-st-ocn">' + esc(nm) + '</span><small>Hole ' + hole + ' · finish about ' + esc(fmt.time(toHM(start + len))) + '</small></span>' +
+            '<span class="ts-st-ocm"><span class="ts-st-ocn">' + esc(nm) + '</span><small>' + esc(where) + '</small></span>' +
             '<span class="ts-st-pace' + (over ? ' is-over' : '') + '"><i aria-hidden="true"></i>' + (over ? 'Over time' : 'On pace') + '</span></button></li>';
         }).join('');
         host.innerHTML =

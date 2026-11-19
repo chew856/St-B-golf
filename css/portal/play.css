@@ -1,0 +1,180 @@
+/* ==========================================================================
+   Play: the live scorecard (lv-). Members' portal and public site (both load this file). Tokens only.
+   Phone first; tablet (>= 768) and desktop (>= 1024) below.
+   ========================================================================== */
+.lv-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.lv-root { display: flex; flex-direction: column; gap: 12px; max-width: 640px; margin: 0 auto; }
+.lv-eb, body .lv-root h2.lv-eb { margin: 0; font-family: var(--sans); font-size: 0.75rem; font-weight: 600; line-height: 1.4; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); }
+.lv-help { margin: 0; font-size: 0.875rem; line-height: 1.45; color: var(--text-2); }
+.lv-note { margin: 0; font-size: 0.875rem; line-height: 1.45; color: var(--text-2); }
+.lv-note:empty { display: none; }
+.lv-quiet { margin: 0; color: var(--text-2); }
+.lv-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 14px 16px; }
+.lv-pill { display: inline-flex; align-items: center; vertical-align: 2px; font-size: 0.75rem; font-weight: 600; line-height: 1.3; padding: 2px 8px; border-radius: 999px; background: var(--sage-100); color: var(--text-2); white-space: nowrap; }
+.lv-link { border: 0; background: none; padding: 0; min-height: 0; font: inherit; color: var(--forest-800); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.lv-full { width: 100%; min-height: 48px; justify-content: center; }
+.lv-root .btn { min-height: 48px; }
+
+/* ---------------- Dark band (setup, finish, Play page) ---------------- */
+.lv-band { background: var(--forest-950); color: var(--on-dark); border-radius: var(--radius-card); padding: 14px 18px 16px; }
+.lv-band-k { margin: 0 0 2px; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--on-dark-2); }
+body .lv-band .lv-band-h { margin: 0; font-family: var(--serif); font-weight: 500; font-size: 1.5rem; line-height: 1.25; color: var(--on-dark); }
+
+/* ---------------- Tee time card with the Play button (Home, Play page) ---------------- */
+.lv-home { margin-bottom: 14px; }
+.lv-tcard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+.lv-tcard.is-open { border-color: var(--forest-500); box-shadow: inset 0 0 0 1px var(--forest-500), var(--shadow-card); }
+.lv-tcard-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.lv-tcard-time { font-family: var(--serif); font-size: 1.875rem; line-height: 1.15; color: var(--text); font-variant-numeric: tabular-nums lining-nums; }
+.lv-tcard-who { margin: 0 0 6px; font-size: 0.9375rem; line-height: 1.4; color: var(--text-2); }
+.lv-cta { width: 100%; min-height: 48px; justify-content: center; gap: 8px; }
+.lv-cta-off, .lv-cta-off:disabled { opacity: 1; background: var(--sage-50); color: var(--text-3); border-color: var(--border); cursor: default; }
+.lv-card-note { margin: 2px 0 0; text-align: center; font-size: 0.875rem; color: var(--text-2); }
+.lv-list { display: flex; flex-direction: column; gap: 12px; }
+
+/* ---------------- Setup ---------------- */
+.lv-setup-grid, .lv-setup-col { display: flex; flex-direction: column; gap: 12px; }
+.lv-games { display: flex; flex-direction: column; gap: 8px; }
+.lv-g2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.lv-opt { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 10px 14px; text-align: left; font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-ctl); cursor: pointer; }
+.lv-opt.is-on { border-color: var(--forest-800); box-shadow: inset 0 0 0 1px var(--forest-800); }
+.lv-opt:disabled { cursor: default; opacity: 0.6; }
+@media (hover: hover) { .lv-opt:not(:disabled):not(.is-on):hover { background: var(--sage-50); } }
+.lv-rd { width: 20px; height: 20px; flex: none; border-radius: 50%; border: 2px solid var(--border-strong); background: var(--surface); }
+.lv-opt.is-on .lv-rd { border: 6px solid var(--forest-800); }
+.lv-opt-main { display: flex; flex-direction: column; min-width: 0; }
+.lv-opt-l { font-size: 1rem; font-weight: 500; line-height: 1.3; }
+.lv-opt-s { font-size: 0.8125rem; line-height: 1.35; color: var(--text-2); }
+.lv-seg { display: flex; padding: 3px; background: var(--sage-100); border-radius: var(--radius-ctl); gap: 2px; }
+.lv-seg button { flex: 1 1 0; min-height: 44px; border: 0; border-radius: calc(var(--radius-ctl) - 3px); background: none; font: inherit; font-size: 0.9375rem; font-weight: 500; color: var(--text-2); cursor: pointer; }
+.lv-seg button.is-on { background: var(--surface); color: var(--text); box-shadow: var(--shadow-card); }
+.lv-q { display: flex; align-items: center; gap: 12px; }
+.lv-q-l { flex: none; font-size: 0.875rem; font-weight: 500; color: var(--text-2); min-width: 3rem; }
+.lv-q .lv-seg { flex: 1 1 auto; }
+.lv-sec-h { margin-top: 4px; }
+.lv-plist { list-style: none; margin: 0; padding: 0 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); }
+.lv-prow { display: flex; align-items: center; gap: 10px; min-height: 60px; padding: 8px 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.lv-prow:last-child { border-bottom: 0; }
+.lv-prow-main { flex: 1 1 8rem; min-width: 0; display: flex; flex-direction: column; }
+.lv-prow-n { font-size: 0.9375rem; font-weight: 500; line-height: 1.35; color: var(--text); }
+.lv-prow-s { font-size: 0.8125rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.lv-hcp { display: flex; align-items: center; gap: 6px; flex: none; }
+.lv-hcp-l { font-size: 0.8125rem; color: var(--text-2); }
+.lv-root .lv-hcp-in { width: 5rem; min-height: 44px; font-size: 16px; text-align: center; padding: 6px 8px; }
+.lv-team { flex: none; min-height: 44px; min-width: 5.5rem; padding: 0 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-ctl); background: var(--surface); font: inherit; font-size: 0.875rem; font-weight: 500; color: var(--forest-800); cursor: pointer; }
+.lv-go { width: 100%; min-height: 52px; justify-content: center; font-size: 1rem; }
+.lv-acts2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+
+/* ---------------- Each hole ---------------- */
+.lv-hhead { background: var(--forest-950); color: var(--on-dark); border-radius: var(--radius-card); padding: 12px 18px 14px; }
+.lv-hn { display: flex; align-items: flex-end; gap: 14px; }
+.lv-num { font-family: var(--serif); font-size: 3.25rem; line-height: 1; font-variant-numeric: lining-nums; color: var(--on-dark); }
+.lv-meta { display: flex; flex-direction: column; padding-bottom: 3px; font-size: 0.875rem; line-height: 1.45; color: color-mix(in srgb, var(--on-dark) 82%, transparent); font-variant-numeric: tabular-nums; }
+.lv-meta span:first-of-type { color: var(--on-dark); font-weight: 500; }
+.lv-dots { display: flex; gap: 4px; margin-top: 12px; }
+.lv-dots span { flex: 1 1 0; height: 6px; border-radius: 3px; background: color-mix(in srgb, var(--on-dark) 22%, transparent); }
+.lv-dots span.is-done { background: color-mix(in srgb, var(--on-dark) 70%, transparent); }
+.lv-dots span.is-cur { background: var(--brass); }
+.lv-hole-grid, .lv-hole-main, .lv-hole-side { display: flex; flex-direction: column; gap: 10px; }
+.lv-sync { display: inline-flex; align-items: center; gap: 8px; align-self: flex-start; max-width: 100%; margin: 0; padding: 6px 12px; font-size: 0.8125rem; line-height: 1.35; color: var(--text-2); background: var(--sage-50); border: 1px solid var(--border); border-radius: 999px; }
+.lv-sync i { width: 8px; height: 8px; flex: none; border-radius: 50%; background: var(--forest-500); }
+.lv-sync.is-quiet { background: none; border-color: transparent; padding-left: 0; }
+.lv-prs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.lv-pr { display: flex; align-items: center; gap: 10px; padding: 10px 10px 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
+.lv-pr-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.lv-pr-n { font-size: 1rem; font-weight: 600; line-height: 1.3; color: var(--text); overflow-wrap: anywhere; }
+.lv-pr-s { font-size: 0.8125rem; line-height: 1.35; color: var(--text-3); }
+.lv-dot { display: inline-block; width: 7px; height: 7px; margin-left: 6px; border-radius: 50%; background: var(--brass); vertical-align: middle; }
+.lv-dot.sm { width: 5px; height: 5px; margin-left: 2px; vertical-align: super; }
+.lv-stp { display: flex; align-items: center; gap: 4px; flex: none; }
+.lv-stp-b { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 1px solid var(--border-strong); border-radius: var(--radius-ctl); background: var(--surface); color: var(--text-2); cursor: pointer; touch-action: manipulation; }
+.lv-stp-b .icon { width: 20px; height: 20px; stroke-width: 1.8; }
+.lv-stp-b:disabled { opacity: 0.4; cursor: default; }
+@media (hover: hover) { .lv-stp-b:not(:disabled):hover { background: var(--sage-50); } }
+.lv-stp-v { width: 46px; min-height: 44px; padding: 0; border: 0; background: none; font-family: var(--serif); font-size: 1.75rem; line-height: 1; text-align: center; color: var(--text); font-variant-numeric: tabular-nums lining-nums; cursor: pointer; touch-action: manipulation; }
+.lv-stp-v.is-default { color: var(--text-3); }
+.lv-stp-v.is-under { color: var(--forest-500); }
+.lv-navb { position: sticky; bottom: 0; z-index: 4; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 8px; padding: 8px 0 10px; background: var(--bg); }
+.lv-navb .btn { min-height: 52px; justify-content: center; gap: 6px; font-size: 1rem; }
+.lv-strip { display: flex; flex-direction: column; width: 100%; padding: 10px 14px; text-align: left; font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); cursor: pointer; }
+@media (hover: hover) { .lv-strip:hover { background: var(--sage-50); } }
+.lv-strip-h { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
+.lv-strip-c { flex: none; font-size: 0.8125rem; color: var(--text-2); }
+.lv-strip-r { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; font-size: 0.9375rem; font-variant-numeric: tabular-nums; }
+.lv-strip-r.is-lead { font-weight: 600; }
+.lv-strip-n { margin-top: 4px; font-size: 0.8125rem; color: var(--text-2); }
+
+/* ---------------- Full card (sheet) ---------------- */
+.lv-cardwrap { display: flex; flex-direction: column; gap: 10px; }
+.lv-card { width: 100%; border-collapse: collapse; font-size: 0.9375rem; font-variant-numeric: tabular-nums; }
+.lv-card th, .lv-card td { padding: 4px 6px; text-align: center; border-bottom: 1px solid var(--border); }
+.lv-card thead th { font-size: 0.75rem; font-weight: 600; color: var(--text-3); overflow-wrap: anywhere; }
+.lv-card tbody th { font-weight: 500; color: var(--text); }
+.lv-card td.is-default { color: var(--text-3); }
+.lv-card td.is-under { color: var(--forest-500); font-weight: 600; }
+.lv-card tr.is-cur { background: var(--brass-tint); }
+.lv-card-sub th, .lv-card-sub td { background: var(--sage-50); font-weight: 600; }
+.lv-card-tot th, .lv-card-tot td { font-weight: 600; border-bottom: 0; }
+.lv-card-go { min-width: 44px; min-height: 40px; border: 0; background: none; font: inherit; font-weight: 600; color: var(--forest-800); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.lv-card-scroll { overflow-x: auto; display: flex; flex-direction: column; gap: 10px; }
+.lv-card-h th, .lv-card-h td { padding: 4px 3px; font-size: 0.875rem; }
+
+/* ---------------- Finish ---------------- */
+.lv-fin-grid, .lv-fin-side { display: flex; flex-direction: column; gap: 10px; }
+.lv-res { width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
+.lv-res th, .lv-res td { padding: 8px 4px; border-bottom: 1px solid var(--border); text-align: left; }
+.lv-res th { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); }
+.lv-res .n { text-align: right; font-variant-numeric: tabular-nums; }
+.lv-res tr:last-child td { border-bottom: 0; }
+.lv-res tr.is-win td { font-weight: 600; }
+.lv-res td:first-child { width: 1.75rem; color: var(--text-3); }
+.lv-res-2 { margin-top: 12px; }
+.lv-res-2 td:first-child { width: auto; color: var(--text); }
+.lv-posts { list-style: none; margin: 6px 0 0; padding: 0; }
+.lv-post { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; font-size: 0.9375rem; line-height: 1.4; color: var(--text); }
+.lv-post-ck { width: 22px; height: 22px; flex: none; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--forest-800); color: var(--on-dark); }
+.lv-post-ck .icon { width: 14px; height: 14px; stroke-width: 2; }
+.lv-post.is-no { color: var(--text-3); }
+.lv-post.is-no .lv-post-ck { background: var(--sage-200); color: var(--text-3); }
+.lv-reopen { text-align: center; }
+.lv-res-card { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin-top: 4px; }
+.lv-res-card .icon { width: 18px; height: 18px; }
+
+/* ---------------- Public site: My rounds and the modal "sheet" ---------------- */
+.lv-pubsheet-foot { margin-top: 14px; }
+.lv-myr-list { list-style: none; margin: 0; padding: 0; }
+.lv-myr-list li + li { border-top: 1px solid var(--border); }
+.lv-myr-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 8px 16px; border: 0; background: none; text-align: left; font: inherit; color: var(--text); cursor: pointer; }
+@media (hover: hover) { .lv-myr-row:hover { background: var(--sage-50); } }
+.lv-myr-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.lv-myr-t { font-size: 0.9375rem; font-weight: 500; }
+.lv-myr-s { font-size: 0.8125rem; color: var(--text-2); }
+.lv-myr-v { flex: none; display: flex; flex-direction: column; align-items: flex-end; }
+.lv-myr-g { font-family: var(--serif); font-size: 1.375rem; line-height: 1.1; font-variant-numeric: tabular-nums lining-nums; }
+.lv-myr-v small { font-size: 0.75rem; color: var(--text-2); }
+.lv-myr-card { display: flex; flex-direction: column; gap: 12px; }
+.lv-kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr)); gap: 8px; margin: 0; }
+.lv-kv div { padding: 8px 10px; background: var(--sage-50); border-radius: var(--radius-ctl); }
+.lv-kv dt { font-size: 0.75rem; color: var(--text-2); }
+.lv-kv dd { margin: 0; font-family: var(--serif); font-size: 1.25rem; }
+
+/* ---------------- Portal: the hole buttons stay above the bottom tab bar on phones and tablets ---------------- */
+body.portal .lv-navb { bottom: calc(68px + env(safe-area-inset-bottom)); }
+
+/* ---------------- Tablet and desktop ---------------- */
+@media (min-width: 768px) {
+  .lv-band .lv-band-h { font-size: 1.75rem; }
+  /* Home (css/portal/home.css grid): today's Play card sits right under the greeting */
+  body.portal .hm-layout:has(> .lv-home) { grid-template-areas: "hero hero" "play play" "act act" "up up" "friends friends" "tiles notices"; }
+  body.portal .hm-layout > .lv-home { grid-area: play; margin: 0; }
+}
+@media (min-width: 1024px) {
+  .lv-root { max-width: 980px; }
+  body.portal .lv-navb { bottom: 0; }
+  .lv-setup-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+  .lv-hole-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+  .lv-hole-side { position: sticky; top: 88px; }
+  .lv-fin-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+  .lv-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  body.portal .hm-layout:has(> .lv-home) { grid-template-areas: "hero act" "play tiles" "play friends" "up notices"; grid-template-rows: auto auto auto 1fr; }
+}

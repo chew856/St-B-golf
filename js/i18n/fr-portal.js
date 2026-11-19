@@ -2425,3 +2425,281 @@
     Club.i18n.add({ strings: add });
   });
 })();
+
+/* ---------------- Members' leaderboards ----------------
+   js/portal/leaderboards.js (#/leaderboards) and the "Members' leaderboards" row in Profile (js/portal/profile.js).
+   Golf words follow the Scores pages above: brut, net, tertres, bogey; birdie and aigle. */
+(function () {
+  if (!window.Club || !Club.i18n || typeof Club.i18n.add !== 'function') return;
+  var NB = '\u00a0';
+  var PER = { 'this month': 'ce mois-ci', 'this season': 'cette saison' };
+  var LABEL = { 'Low round': 'Meilleure partie', 'Best average': 'Meilleure moyenne', 'Most improved': 'Plus grande progression', 'Birdies': 'Birdies',
+    'Eagles and holes in one': 'Aigles et trous d’un coup', 'Rounds played': 'Parties jouées' };
+  var TEES = { 'Green tees': 'Tertres verts', 'Black tees': 'Tertres noirs', 'Silver tees': 'Tertres argent', 'Front nine': 'Aller', 'Back nine': 'Retour', '18 holes': '18 trous' };
+  function s(n, one, many) { return +n === 1 || +n === 0 ? one : many; }
+  function t(x) { return Club.i18n.t(x); }
+  var S = {
+    'Leaderboards': 'Classements',
+    'Boards': 'Classements',
+    'Every posted round and tournament round counts.': 'Toutes les parties inscrites et les parties de tournoi comptent.',
+    'No leaderboards right now': 'Aucun classement pour le moment',
+    'The club has not chosen any boards to show. Please check back later.': 'Le club n’a choisi aucun classement à afficher. Revenez plus tard.',
+    'Period': 'Période',
+    'Scores': 'Scores',
+    'Gross': 'Brut',
+    'Net': 'Net',
+    'Low round, gross': 'Meilleure partie, brut',
+    'Low round, net': 'Meilleure partie, net',
+    'Best average, gross': 'Meilleure moyenne, brut',
+    'Best average, net': 'Meilleure moyenne, net',
+    'You are hidden from the members\' leaderboards, so other members do not see you here.': 'Vous êtes masqué dans les classements des membres; les autres membres ne vous y voient pas.',
+    'Change this in Profile': 'Modifier dans Profil',
+    'Your place': 'Votre rang',
+    'You': 'Vous',
+    'Nobody on this board yet': 'Personne dans ce classement pour l’instant',
+    'No golfer has qualified yet': 'Aucun golfeur ne s’est encore qualifié',
+    'A hole in one counts as an eagle.': 'Un trou d’un coup compte comme un aigle.',
+    'Your rounds': 'Vos parties',
+    'Rounds': 'Parties',
+    'Best gross': 'Meilleur brut',
+    'Best net': 'Meilleur net',
+    'Rounds of 18 holes, best first': 'Parties de 18 trous, la meilleure d’abord',
+    'Rounds in the average, best first': 'Parties de la moyenne, la meilleure d’abord',
+    'Hole-by-hole rounds, newest first': 'Parties trou par trou, la plus récente d’abord',
+    'Every round, newest first': 'Toutes les parties, la plus récente d’abord',
+    '9 holes': '9 trous',
+    'Total only': 'Total seulement',
+    'Best': 'Meilleure',
+    'Eagles': 'Aigles',
+    'No rounds to show.': 'Aucune partie à afficher.',
+    'Net is gross less the course handicap of the round.': 'Le net est le brut moins le handicap de parcours de la partie.',
+    'Scorecard': 'Carte de score',
+    'Hole': 'Trou', 'Par': 'Normale', 'Score': 'Score', 'Out': 'Aller', 'In': 'Retour',
+    'To par': 'Par rapport à la normale',
+    'Even': 'Égal',
+    'Eagle or better': 'Aigle ou mieux',
+    'Birdie': 'Birdie',
+    'Bogey': 'Bogey',
+    'Double bogey or worse': 'Double bogey ou pire',
+    'From the tournament card entered by the club.': 'D’après la carte de tournoi saisie par le club.',
+    'That golfer is no longer on this board': 'Ce golfeur ne figure plus dans ce classement',
+    'That round is no longer on file': 'Cette partie n’est plus au dossier',
+    'Posted as a total only, so there is no hole-by-hole card.': 'Inscrit en total seulement' + NB + ': il n’y a donc pas de carte trou par trou.',
+    /* Profile */
+    'Members\' leaderboards': 'Classements des membres',
+    'You are hidden from other members': 'Vous êtes masqué pour les autres membres',
+    'Other members can see you': 'Les autres membres peuvent vous voir',
+    'Show me on the members\' leaderboards': 'M’afficher dans les classements des membres',
+    'Your name, place and scores on Leaderboards, for other members to see.': 'Votre nom, votre rang et vos scores dans les Classements, visibles par les autres membres.',
+    'Changes save as you go. The club\'s staff still see every golfer\'s rounds.': 'Les changements sont enregistrés au fur et à mesure. Le personnel du club voit toujours les parties de chaque golfeur.',
+    'Open Leaderboards': 'Ouvrir les classements',
+    'You are shown on the members\' leaderboards. Saved.': 'Vous figurez dans les classements des membres. Enregistré.',
+    'You are hidden from the members\' leaderboards. Saved.': 'Vous êtes masqué dans les classements des membres. Enregistré.',
+    'Undo': 'Annuler'
+  };
+  Object.keys(LABEL).forEach(function (k) { S[k] = LABEL[k]; });
+  Object.keys(TEES).forEach(function (k) { S[k] = TEES[k]; });
+  function tee(x) { return TEES[x] || LABEL[x] || t(x); }
+  Club.i18n.add({
+    strings: S,
+    patterns: [
+      [/^(\d{4}) season$/, 'Saison $1'],
+      [/^(\d+) more rounds? to qualify$/, function (m) { return m[1] + ' ' + s(m[1], 'partie', 'parties') + ' de plus pour vous qualifier'; }],
+      [/^You have (\d+) rounds? (this month|this season)\. Post your scores in Scores to count them\.$/, function (m) {
+        return 'Vous avez ' + m[1] + ' ' + s(m[1], 'partie', 'parties') + ' ' + PER[m[2]] + '. Inscrivez vos scores dans Scores pour qu’ils comptent.'; }],
+      [/^No qualified golfer is on this board (this month|this season) yet\.$/, function (m) { return 'Aucun golfeur qualifié ne figure dans ce classement ' + PER[m[1]] + ' pour l’instant.'; }],
+      [/^Golfers need (\d+) rounds? (this month|this season) to appear here\.$/, function (m) { return 'Il faut ' + m[1] + ' ' + s(m[1], 'partie', 'parties') + ' ' + PER[m[2]] + ' pour figurer ici.'; }],
+      [/^(\d+) qualified golfers? · (\d+) rounds? to qualify$/, function (m) {
+        return m[1] + ' ' + s(m[1], 'golfeur qualifié', 'golfeurs qualifiés') + ' · ' + m[2] + ' ' + s(m[2], 'partie', 'parties') + ' pour se qualifier'; }],
+      [/^Top (\d+) of (\d+) shown$/, 'Les $1 premiers sur $2'],
+      [/^The drop in handicap index from the first revision (this month|this season) to the latest\.$/, function (m) {
+        return 'La baisse du facteur de handicap entre la première révision ' + PER[m[1]] + ' et la plus récente.'; }],
+      [/^Place (\d+), (You, )?(.+), ([\d.,\s ]+)\. See the rounds$/, function (m) { return 'Rang ' + m[1] + ', ' + (m[2] ? 'Vous, ' : '') + m[3] + ', ' + m[4] + '. Voir les parties'; }],
+      [/^Place (\d+) · (.+)$/, 'Rang $1 · $2'],
+      [/^Handicap index down ([\d.,\s ]+) (this month|this season)\.$/, function (m) { return 'Facteur de handicap en baisse de ' + m[1] + ' ' + PER[m[2]] + '.'; }],
+      [/^(.+?), (Green tees|Black tees|Silver tees|Front nine|Back nine|18 holes|.+?), gross (\d+), net (-?\d+)(, best round)?\. Open the scorecard$/, function (m) {
+        return m[1] + ', ' + tee(m[2]) + ', brut ' + m[3] + ', net ' + m[4] + (m[5] ? ', meilleure partie' : '') + '. Ouvrir la carte de score'; }],
+      [/^, (hole in one|eagle|birdie)$/, function (m) { return ', ' + ({ 'hole in one': 'trou d’un coup', eagle: 'aigle', birdie: 'birdie' })[m[1]]; }]
+    ]
+  });
+})();
+
+/* ---------------- Play (live scorecard): js/portal/play.js, js/public/play.js, js/shared/play-data.js ----------------
+   Shared by the members' portal and the public site (public.html loads this file too). Stored values stay English. */
+(function () {
+  if (!window.Club || !Club.i18n || typeof Club.i18n.add !== 'function') return;
+  var NB = ' ';
+  function t(s) { return Club.i18n.t(s); }
+  function pl(n, one, many) { return +n === 1 || +n === 0 ? one : many; }
+  var GAME = {
+    'Stroke play': 'Partie par coups', 'Stableford': 'Stableford', 'Par': 'Contre la normale', 'Skins': 'Skins',
+    'Skins with carry-over': 'Skins avec report', 'Skins, no carry-over': 'Skins sans report', 'Best ball': 'Meilleure balle'
+  };
+  var SCORING = { gross: 'brut', net: 'net' };
+  var TEE = { Black: 'Noirs', Green: 'Verts', Silver: 'Argent' };
+  var S = {
+    'Play': 'Jouer',
+    'Live scorecard': 'Carte de score en direct',
+    'Play: start the scorecard': 'Jouer' + NB + ': ouvrir la carte de score',
+    'Play: back to the scorecard': 'Jouer' + NB + ': retour à la carte de score',
+    'See the scorecard': 'Voir la carte de score',
+    'Round complete': 'Partie terminée',
+    'Choose a game': 'Choisissez un jeu',
+    'Change the game': 'Changer de jeu',
+    'Lowest total wins': 'Le plus petit total gagne',
+    'Points per hole, most points wins': 'Des points à chaque trou, le plus de points gagne',
+    'Win, halve or lose each hole against par': 'Gagnez, partagez ou perdez chaque trou contre la normale',
+    'Ties carry over': 'Les égalités sont reportées',
+    'No carry-over': 'Sans report',
+    'Teams of 2, best score on each hole': 'Équipes de 2, meilleur score à chaque trou',
+    'Needs 4 players': 'Exige 4 joueurs',
+    'Game': 'Jeu', 'Scoring': 'Calcul', 'Tees': 'Tertres',
+    'Gross': 'Brut', 'Net': 'Net',
+    'Players and strokes': 'Joueurs et coups',
+    'Public': 'Public', 'Guest': 'Invité', 'Member': 'Membre', 'Index': 'Indice', 'None': 'Aucun',
+    'No handicap': 'Aucun handicap',
+    'Tap a team to switch a player between Team A and Team B.': 'Touchez une équipe pour faire passer un joueur de l’équipe A à l’équipe B.',
+    'Team A': 'Équipe A', 'Team B': 'Équipe B', 'Team': 'Équipe',
+    'Back to the scorecard': 'Retour à la carte de score',
+    'Save game': 'Enregistrer le jeu',
+    'Strokes come from each player’s handicap and the stroke index of each hole.': 'Les coups viennent du handicap de chaque joueur et de l’indice de difficulté de chaque trou.',
+    'Anyone in your group can enter or change any score': 'Tout votre groupe peut inscrire ou modifier n’importe quel score',
+    'Tap for the card': 'Touchez pour la carte',
+    'Card': 'Carte',
+    'Finish round': 'Terminer la partie',
+    'Scorecard': 'Carte de score',
+    'Hole': 'Trou', 'Out': 'Aller', 'In': 'Retour', 'Total': 'Total',
+    'Place': 'Rang', 'Player': 'Joueur', 'Points': 'Points', 'Result': 'Résultat', 'Score': 'Score',
+    'Posted to their accounts': 'Publié dans leurs comptes',
+    'Share the scorecard': 'Partager la carte de score',
+    'See the full card': 'Voir la carte complète',
+    'Done': 'Terminé',
+    'Finished by mistake?': 'Terminée par erreur' + NB + '?',
+    'Reopen the round': 'Rouvrir la partie',
+    'No tee time today': 'Aucun départ aujourd’hui',
+    'Play opens 5 minutes before a tee time you have booked. Everyone in your group with an account can then keep score together, on their own phone.': 'Le jeu ouvre 5 minutes avant un départ réservé. Tous les membres de votre groupe qui ont un compte peuvent alors tenir le score ensemble, chacun sur son téléphone.',
+    'The Play button appears 5 minutes before your tee time. Everyone in your group with an account can then keep score together, on their own phone.': 'Le bouton Jouer apparaît 5 minutes avant votre départ. Tous les membres de votre groupe qui ont un compte peuvent alors tenir le score ensemble, chacun sur son téléphone.',
+    'Play was open on the day of this tee time only.': 'Le jeu n’était ouvert que le jour de ce départ.',
+    'We could not find that tee time': 'Nous n’avons pas trouvé ce départ',
+    'It may have been cancelled or moved.': 'Il a peut-être été annulé ou déplacé.',
+    'This scorecard is for the players in this group': 'Cette carte de score est réservée aux joueurs de ce groupe',
+    'Anyone in the group with an account can keep score.': 'Tous les joueurs du groupe qui ont un compte peuvent tenir le score.',
+    'Round reopened. The posted scores were taken back': 'Partie rouverte. Les scores publiés ont été retirés',
+    'This round can no longer be reopened': 'Cette partie ne peut plus être rouverte',
+    'Round finished': 'Partie terminée',
+    'Someone in your group already started the scorecard': 'Quelqu’un de votre groupe a déjà ouvert la carte de score',
+    'Best ball needs two players on each team': 'La meilleure balle exige deux joueurs par équipe',
+    'A handicap index is a number from -10 to 54': 'Un indice de handicap est un nombre de -10 à 54',
+    'Game changed back': 'Jeu rétabli',
+    'Scorecard copied. Paste it into a message': 'Carte de score copiée. Collez-la dans un message',
+    'Could not copy the scorecard on this device': 'Impossible de copier la carte de score sur cet appareil',
+    'The course card is missing': 'La carte du parcours est introuvable',
+    'Please refresh the page.': 'Veuillez actualiser la page.',
+    'Undo': 'Annuler',
+    'You': 'Vous',
+    'Book a tee time': 'Réserver un départ',
+    'Find a tee time': 'Trouver un départ',
+    'Gets a stroke here': 'Reçoit un coup ici',
+    'Gives a stroke back here': 'Rend un coup ici',
+    'Entered by you': 'Inscrit par vous',
+    'All square': 'À égalité',
+    /* Public site: My rounds */
+    'My rounds': 'Mes parties',
+    'No rounds yet': 'Aucune partie pour l’instant',
+    'When you keep score with Play on the course, your finished rounds are kept here with the scorecard.': 'Quand vous tenez le score avec Jouer sur le parcours, vos parties terminées sont conservées ici avec la carte de score.',
+    'No handicap index was on file for this round, so net is the same as gross.': 'Aucun indice de handicap n’était au dossier pour cette partie' + NB + ': le net est donc égal au brut.',
+    'Won': 'Gagnée',
+    'Show fewer': 'Afficher moins'
+  };
+  /* 'Par' alone stays 'Normale' (the card's Par row); the game is "Contre la normale" where its name is spelled out */
+  Object.keys(GAME).forEach(function (k) { if (!S[k] && k !== 'Par') S[k] = GAME[k]; });
+  function game(s) {
+    var m = /^(.+), (gross|net)$/.exec(s);
+    if (m && GAME[m[1]]) return GAME[m[1]] + ', ' + SCORING[m[2]];
+    m = /^(.+), (gross|net)$/.exec(s.charAt(0).toUpperCase() + s.slice(1));
+    return m && GAME[m[1]] ? (GAME[m[1]] + ', ' + SCORING[m[2]]).toLowerCase() : null;
+  }
+  ['Stroke play', 'Stableford', 'Par', 'Skins with carry-over', 'Skins, no carry-over', 'Best ball'].forEach(function (g) {
+    S[g + ', gross'] = GAME[g] + ', brut'; S[g + ', net'] = GAME[g] + ', net';
+  });
+  function when(s) { return s === 'just now' ? 'à l’instant' : /^(\d+) min ago$/.test(s) ? 'il y a ' + s.replace(' min ago', '') + NB + 'min' : s; }
+  function value(s) {
+    var m;
+    if ((m = /^(\d+) pts?$/.exec(s))) return m[1] + ' pt' + (+m[1] > 1 ? 's' : '');
+    if ((m = /^(\d+) up$/.exec(s))) return m[1] + ' en avance';
+    if ((m = /^(\d+) down$/.exec(s))) return m[1] + ' en retard';
+    if ((m = /^(\d+) skins?$/.exec(s))) return m[1] + ' skin' + (+m[1] > 1 ? 's' : '');
+    if (s === 'All square') return 'À égalité';
+    return null;
+  }
+  function part(x) {
+    var m;
+    if (S[x]) return S[x];
+    if ((m = /^Gets (\d+) strokes here$/.exec(x))) return 'Reçoit ' + m[1] + ' coups ici';
+    if ((m = /^Entered by (.+)$/.exec(x))) return 'Inscrit par ' + (m[1] === 'you' ? 'vous' : m[1]);
+    return null;
+  }
+  var P = [
+    [/^Play opens at (.+)$/, function (m) { return 'Le jeu ouvre à ' + t(m[1]); }],
+    [/^Open from (.+), 5 minutes before your tee time$/, function (m) { return 'Ouvert dès ' + t(m[1]) + ', 5 minutes avant votre départ'; }],
+    [/^Today · (1st|10th) tee$/, function (m) { return 'Aujourd’hui · départ du ' + (m[1] === '1st' ? '1er' : '10e') + ' trou'; }],
+    [/^Today, (.+) tee time$/, function (m) { return 'Aujourd’hui, départ de ' + t(m[1]); }],
+    [/^(Today · )?(.+?) · (9|18) holes( · 10th tee)?$/, function (m) {
+      if (!/\d/.test(m[2])) return null;
+      return (m[1] ? 'Aujourd’hui · ' : '') + t(m[2]) + ' · ' + m[3] + ' trous' + (m[4] ? ' · départ du 10e trou' : ''); }],
+    [/^(.+?) · (9|18) holes$/, function (m) { var g = game(m[1]); return g ? g + ' · ' + m[2] + ' trous' : null; }],
+    [/^(.+?)( · after (\d+))?$/, function (m) { if (!m[2]) return null; var g = game(m[1]); return g ? g + ' · après ' + m[3] : null; }],
+    [/^On hole (\d+) · (.+)$/, function (m) { var g = game(m[2]); return g ? 'Au trou ' + m[1] + ' · ' + g : null; }],
+    [/^Start on hole (\d+)$/, 'Commencer au trou $1'],
+    [/^Hole (\d+) of (\d+)$/, 'Trou $1 sur $2'],
+    [/^Hole (\d+)$/, 'Trou $1'],
+    [/^Go to hole (\d+)$/, 'Aller au trou $1'],
+    [/^Par (\d+) · Stroke index (\d+)$/, 'Normale $1 · Indice de difficulté $2'],
+    [/^(\d+) (Black|Green|Silver)(?: · (\d+) (Black|Green|Silver))?(?: · (\d+) (Black|Green|Silver))?$/, function (m) {
+      var out = [m[1] + ' ' + TEE[m[2]]]; if (m[3]) out.push(m[3] + ' ' + TEE[m[4]]); if (m[5]) out.push(m[5] + ' ' + TEE[m[6]]); return out.join(' · '); }],
+    [/^Gets (-?\d+)$/, 'Reçoit $1'], [/^Gives (\d+)$/, 'Rend $1'], [/^Index (.+)$/, function (m) { return 'Indice ' + m[1].replace('.', ','); }],
+    [/^(.+) · (.+)$/, function (m) {
+      var parts = m[0].split(' · '), out = parts.map(part);
+      return out.every(function (x) { return x != null; }) ? out.join(' · ') : null; }],
+    [/^Entered by (.+)$/, function (m) { return 'Inscrit par ' + (m[1] === 'you' ? 'vous' : m[1]); }],
+    [/^Gets (\d+) strokes here$/, 'Reçoit $1 coups ici'],
+    [/^(You|.+?) entered an? (\d+)(?: for (.+?))? · (.+)$/, function (m) {
+      return (m[1] === 'You' ? 'Vous avez inscrit ' : m[1] + ' a inscrit ') + m[2] + (m[3] ? ' pour ' + (m[3] === 'you' ? 'vous' : m[3]) : '') + ' · ' + when(m[4]); }],
+    [/^(\d+ pts?|\d+ up|\d+ down|\d+ skins?)$/, function (m) { return value(m[1]); }],
+    [/^(\d+) skins? carr(?:y|ies) to the next hole$/, function (m) { return m[1] + ' skin' + (+m[1] > 1 ? 's sont reportés' : ' est reporté') + ' au trou suivant'; }],
+    [/^(\d+) skins? (?:was|were) still carried after the last hole, so nobody won (?:it|them)\.$/, function (m) {
+      return +m[1] > 1 ? m[1] + ' skins étaient encore reportés après le dernier trou' + NB + ': personne ne les a gagnés.' : '1 skin était encore reporté après le dernier trou' + NB + ': personne ne l’a gagné.'; }],
+    [/^Holes? (.+?) ha(?:s|ve) no scores entered, so par counts there\.$/, function (m) {
+      var many = /,| and /.test(m[1]); return (many ? 'Aucun score inscrit aux trous ' : 'Aucun score inscrit au trou ') + m[1].replace(/ and /, ' et ') + NB + ': la normale y compte.'; }],
+    [/^(.+?) (has|have) no handicap on file, so plays? off scratch \(no strokes\)\. A handicap index can be added above\.$/, function (m) {
+      return m[1].replace(/ and /, ' et ') + (m[2] === 'has' ? ' n’a' : ' n’ont') + ' aucun handicap au dossier' + NB + ': ' + (m[2] === 'has' ? 'il ou elle joue' : 'ils jouent') + ' sans coups reçus. Un indice de handicap peut être ajouté ci-dessus.'; }],
+    [/^(.+) · Member scores, handicap updated$/, '$1 · Scores de membre, handicap mis à jour'],
+    [/^(.+) · Member scores$/, '$1 · Scores de membre'],
+    [/^(.+) · Public account, My rounds$/, '$1 · Compte public, Mes parties'],
+    [/^(.+) · Guest, no account, not posted$/, '$1 · Invité sans compte, non publié'],
+    [/^(.+) · Already posted for this round$/, '$1 · Déjà publié pour cette partie'],
+    [/^(.+) · Already in My rounds$/, '$1 · Déjà dans Mes parties'],
+    [/^(.+) · Not posted$/, '$1 · Non publié'],
+    [/^Round finished\. Scores posted for (\d+) players?$/, function (m) { return 'Partie terminée. Scores publiés pour ' + m[1] + ' ' + pl(m[1], 'joueur', 'joueurs'); }],
+    [/^Game changed to (.+)$/, function (m) { var g = game(m[1]); return g ? 'Jeu changé' + NB + ': ' + g : null; }],
+    [/^\(possible for (\d+) minutes; the posted scores are taken back\)\.$/, '(possible pendant $1 minutes' + NB + '; les scores publiés sont retirés).'],
+    [/^(.+?) · (Black|Green|Silver) tees(\. A dot marks a stroke received\.)?$/, function (m) {
+      var g = game(m[1]); return g ? g + ' · Tertres ' + TEE[m[2]].toLowerCase() + (m[3] ? '. Un point marque un coup reçu.' : '') : null; }],
+    [/^Handicap index for (.+), optional$/, 'Indice de handicap de $1, facultatif'],
+    [/^One less for (.+)$/, 'Un coup de moins pour $1'],
+    [/^One more for (.+)$/, 'Un coup de plus pour $1'],
+    [/^(.+), (\d+), par shown, not entered yet\. Tap to enter (\d+)$/, '$1, $2, normale affichée, pas encore inscrite. Touchez pour inscrire $3'],
+    [/^(.+): Team (A|B)\. Switch team$/, '$1' + NB + ': équipe $2. Changer d’équipe'],
+    /* Public site: My rounds */
+    [/^(.+?) · (.+?) · (9|18) holes · (Black|Green|Silver) tees$/, function (m) { return t(m[1]) + ' · ' + t(m[2]) + ' · ' + m[3] + ' trous · tertres ' + TEE[m[4]].toLowerCase(); }],
+    [/^(.+?), (.+?) · (9|18) holes · (Black|Green|Silver) tees$/, function (m) { return t(m[1]) + ', ' + t(m[2]) + ' · ' + m[3] + ' trous · tertres ' + TEE[m[4]].toLowerCase(); }],
+    [/^(.+?) · with (.+)$/, function (m) { var g = game(m[1]); return g ? g + ' · avec ' + m[2] : null; }],
+    [/^Net (\d+)$/, 'Net $1'],
+    [/^Place (\d+) of (\d+)$/, '$1e sur $2'],
+    [/^Played with (.+)$/, 'Joué avec $1'],
+    [/^Show all (\d+) rounds$/, 'Afficher les $1 parties'],
+    [/^Open the scorecard from (.+), gross (\d+)$/, function (m) { return 'Ouvrir la carte de score du ' + t(m[1]) + ', brut ' + m[2]; }]
+  ];
+  P.forEach(function (p) { if (typeof p[1] === 'string') { var to = p[1]; p[1] = function (m) { return m[0].replace(p[0], to); }; } });
+  Club.i18n.add({ strings: S, patterns: P });
+})();

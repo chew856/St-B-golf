@@ -210,9 +210,10 @@
       const all = upcomingFor(m);
       /* A round to post (score posting demo, js/portal/scores.js) takes one Coming up row on phones, keeping Home within 1.5 screens. */
       const post = Portal.scores ? Portal.scores.homePrompt(m) : '';
+      /* Today's tee time with its Play button (live scorecard, js/portal/play.js) sits under the greeting. */
       /* A spot opened for the member's waitlist (js/portal/waitlist.js): a notice above everything else. */
       const wl = function () { return Portal.waitlist ? Portal.waitlist.noticesHTML(Portal.member() || m) : ''; };
-      view.innerHTML = '<div class="wl-host">' + wl() + '</div><div class="hm-layout">' + heroHTML(m) + actionsHTML() + upcomingHTML(all, first(m) - (post && !WIDE && all.length > 1 ? 1 : 0), post) + friendsHTML(m) + tilesHTML(m) + noticesHTML(m) + '</div>';
+      view.innerHTML = '<div class="wl-host">' + wl() + '</div><div class="hm-layout">' + heroHTML(m) + (Portal.play ? Portal.play.homeCard(m) : '') + actionsHTML() + upcomingHTML(all, first(m) - (post && !WIDE && all.length > 1 ? 1 : 0), post) + friendsHTML(m) + tilesHTML(m) + noticesHTML(m) + '</div>';
       if (Portal.waitlist) Portal.waitlist.wire(view, m, function () { ui.$('.wl-host', view).innerHTML = wl(); });
       ui.on(view, 'click', '[data-act=all-up]', function () { openAll(all); });
       if (Portal.cartHoleCheck) Portal.cartHoleCheck(view, m);

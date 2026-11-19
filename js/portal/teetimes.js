@@ -1409,7 +1409,7 @@
           (tt.notes && mgr ? '<p class="tt-cond-note"><span class="tt-cond-k">Notes:</span> ' + esc(tt.notes) + '</p>' : '') +
           (locked && tt.status === 'booked' ? '<p class="tt-hint tt-rule">' + Club.icon('clock') + '<span>Less than 2 hours to go. To make changes, call the golf shop on <a href="tel:' + esc(Club.info.phone.replace(/[^\d+]/g, '')) + '">' + esc(Club.info.phone) + '</a>.</span></p>' : '') +
           '</div>'; };
-        const actsHTML = '<div class="tt-detail-acts">' + (Portal.scores ? Portal.scores.detailAction(tt, m) : '') +
+        const actsHTML = '<div class="tt-detail-acts">' + (Portal.play ? Portal.play.detailAction(tt, m) : '') + (Portal.scores ? Portal.scores.detailAction(tt, m) : '') +
           (!locked ? '<button type="button" class="btn" data-act="d-modify">' + (mgr ? 'Modify' : 'Change') + '</button><button type="button" class="btn btn-danger" data-act="d-cancel">' + (mgr ? 'Cancel' : 'Withdraw') + '</button>' : '') +
           '<button type="button" class="btn" data-act="d-ics">' + Club.icon('calendar') + '<span>Calendar</span></button></div>';
         const sh = Portal.openSheet({ title: 'Your tee time', content: detailHTML(), footer: actsHTML });

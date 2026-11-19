@@ -171,6 +171,7 @@
         (b.upcoming && !b.refundable && tt.status === 'booked' ? '<p class="pub-bk-lock">' + Club.icon('clock') + '<span>Within ' + Pub.REFUND_HOURS + ' hours of your tee time. To make changes, please call the golf shop at <a href="' + Pub.phoneHref() + '">' + esc(Club.info.phone) + '</a>.</span></p>' : '') +
       '</div>' +
       '<div class="pub-bk-acts">' +
+        (Pub.playButton ? Pub.playButton(tt) : '') +   /* Play, the live scorecard, on a booking today (js/public/play.js) */
         (b.refundable ? '<button type="button" class="btn btn-sm btn-danger" data-act="cancel" data-id="' + esc(tt.id) + '">' + Club.icon('close') + '<span>Cancel and refund</span></button>' : '') +
         (b.upcoming ? '<button type="button" class="btn btn-sm" data-act="ics" data-id="' + esc(tt.id) + '">' + Club.icon('calendar') + '<span>Calendar</span></button>' : '') +
         (b.pay ? '<button type="button" class="btn btn-sm btn-ghost" data-act="receipt" data-id="' + esc(b.pay.id) + '">' + Club.icon('billing') + '<span>Receipt</span></button>' : '') +

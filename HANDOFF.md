@@ -220,7 +220,7 @@ names are unchanged. `js/core/ui.js`: dialogs lock the page with `overflow: clip
 to slide up behind an open dialog) and focus without scrolling. `Portal.datePicker` has a `compact` option. Tested in
 Chromium only; check in Safari.
 
-## Play (live scorecard) and members' leaderboards (Nov 19, NOT DEPLOYED YET)
+## Play (live scorecard) and members' leaderboards (Nov 19, deployed)
 - **Play**: the members' portal (Play tab) and the public site (signed-in public accounts, `#/play`, "My rounds" in My
   account) get a scorecard for a booked group, from 5 minutes before the tee time to the end of that day. Games: stroke,
   Stableford, par, skins with and without carry-over, best ball, each gross or net. Anyone in the group with an account

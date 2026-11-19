@@ -212,7 +212,7 @@ dates and the limits) and Group outings (date must fall in the season). Before t
 Outings: a package whose availability text names no months now says "only available May to September" (from its
 stored months) when the date is outside them.
 
-## Tee time dialog redesign (Nov 18, NOT DEPLOYED YET)
+## Tee time dialog redesign (Nov 18, deployed Nov 19)
 The owner chose "Option A, compact form" for the Tee Sheet booking dialog (`openBooking` in `js/modules/teesheet.js`):
 date, time, holes and a "Starts on" select on one line; one line per player (Find a member search, or Guest / Public
 golfer links via `[data-kind-to]`); warnings wrap under their player; notes fold behind "+ Add a note". Form field

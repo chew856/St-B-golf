@@ -3,7 +3,7 @@
   const ui = Club.ui, esc = ui.esc;
   const SESSION = 'stboniface.portal.session';
   const pages = [];
-  let current = null, cleanup = null, lastRoute = null, chromeFor = null;
+  let current = null, cleanup = null, lastRoute = null, chromeFor = null, chromeMenu = null;
   /* A member is mid-flow when a sheet, dialog or the sticky action bar is showing: background refreshes wait. */
   function busy() { return document.body.classList.contains('ps-open') || document.body.classList.contains('has-bar') || !!document.querySelector('.overlay'); }
 
@@ -12,7 +12,9 @@
 
   const Portal = {
     pages: pages,
-    /** Portal.register({ id, label, short, icon, order, tab, nav, render(view, params, member) -> cleanup? }) */
+    /** Portal.register({ id, label, short, icon, order, tab, nav, hidden, render(view, params, member) -> cleanup? })
+        hidden(): optional; true leaves the page out of the menus and its address goes to Home (e.g. Leaderboards
+        while staff have them turned off). */
     register: function (p) { p.order = p.order == null ? 50 : p.order; pages.push(p); },
     member: function () { const id = getSession(); return id ? Club.store.find('members', id) : null; },
     go: function (path) { location.hash = '#/' + String(path).replace(/^#?\/?/, ''); },
@@ -31,7 +33,9 @@
     const h = location.hash.replace(/^#\/?/, ''); const parts = h.split('/').filter(Boolean).map(decodeURIComponent);
     return { id: parts[0] || 'home', params: parts.slice(1) };
   }
-  function sorted() { return pages.slice().sort(function (a, b) { return a.order - b.order; }); }
+  function shown(p) { try { return !(p.hidden && p.hidden()); } catch (e) { return true; } }
+  function sorted() { return pages.slice().sort(function (a, b) { return a.order - b.order; }).filter(shown); }
+  function menuKey() { return sorted().map(function (p) { return p.id; }).join(); }
 
   /* ---------------- Sign in ---------------- */
   function signIn() {
@@ -174,9 +178,9 @@
     const m = Portal.member();
     if (!m) { signIn(); return; }
     /* The header shows the signed-in member: rebuild it when someone else signed in (in another tab). */
-    if (!document.getElementById('p-view') || chromeFor !== m.id) { chrome(); chromeFor = m.id; }
+    if (!document.getElementById('p-view') || chromeFor !== m.id || chromeMenu !== menuKey()) { chrome(); chromeFor = m.id; chromeMenu = menuKey(); }
     const r = parse();
-    let p = pages.find(function (x) { return x.id === r.id; }) || pages.find(function (x) { return x.id === 'home'; }) || sorted()[0];
+    let p = pages.find(function (x) { return x.id === r.id && shown(x); }) || pages.find(function (x) { return x.id === 'home'; }) || sorted()[0];
     if (!p) return;
     if (typeof cleanup === 'function') { try { cleanup(); } catch (e) { console.error(e); } }
     if (Portal.resetChrome && location.hash !== lastRoute) Portal.resetChrome();   /* only when the member moves to another page */

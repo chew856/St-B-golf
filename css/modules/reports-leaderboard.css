@@ -1,5 +1,5 @@
 /* Reports, Leaderboard (js/modules/reports-leaderboard.js): the ranked lists, hole records, the "Not yet qualified"
-   list and the scorecard. Everything else reuses css/modules/reports.css and reports-extra.css. Tokens only. */
+   list, the scorecard, the "Members' view" panel and its preview. Everything else reuses css/modules/reports.css and reports-extra.css. Tokens only. */
 
 /* ---- Lists side by side inside a panel ---- */
 .rlb-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s5) var(--s6); }
@@ -76,10 +76,65 @@
 .rlb-legend .rlb-sc { font-size: 0.75rem; }
 .rlb-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
+/* ---- A member who chose not to appear on the members' boards (staff still see them) ---- */
+.rlb-hidden-note { display: inline-block; margin: 1px 0 1px 0; padding: 0 6px; border-radius: 999px; background: var(--sage-100); color: var(--text-2); font-size: 0.75rem; line-height: 1.5; white-space: nowrap; }
+.rlb-who > .rlb-hidden-note { order: 3; margin-top: 2px; }
+
+/* ---- Members' view: what members see on Leaderboards in the portal ---- */
+.rlb-mv { display: flex; flex-direction: column; gap: var(--s4); }
+.rlb-mv-top { display: flex; align-items: center; justify-content: space-between; gap: var(--s3) var(--s4); flex-wrap: wrap; padding-bottom: var(--s4); border-bottom: 1px solid var(--border); }
+.rlb-mv-top .btn .icon { width: 16px; height: 16px; }
+.rlb-mv-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s4) var(--s6); align-items: start; }
+.rlb-mv-side { display: flex; flex-direction: column; gap: var(--s4); min-width: 0; }
+.rlb-mv-group { margin: 0; padding: 0; border: 0; min-width: 0; display: flex; flex-direction: column; }
+.rlb-mv-group > .label-caps, .rlb-mv-group > legend { display: block; padding: 0; margin-bottom: 4px; }
+.rlb-mv-sw { display: flex; align-items: center; gap: var(--s3); min-height: 44px; padding: 4px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+.rlb-mv-group .rlb-mv-sw:last-child { border-bottom: 0; }
+.rlb-mv-top .rlb-mv-sw { border-bottom: 0; flex: 1 1 18rem; }
+@media (hover: hover) { .rlb-mv-sw:hover .rlb-mv-sw-l { text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 3px; } }
+.rlb-mv-sw .toggle input:focus-visible + span { outline: 2px solid var(--forest-700); outline-offset: 2px; }
+.rlb-mv-sw-t { display: flex; flex-direction: column; min-width: 0; }
+.rlb-mv-sw-l { font-size: 0.875rem; font-weight: 500; color: var(--text); }
+.rlb-mv-sw-s { font-size: 0.8125rem; color: var(--text-3); }
+.rlb-mv-seg { align-self: flex-start; margin-top: 4px; }
+.rlb-mv-seg button { min-height: 36px; min-width: 4.5rem; }
+.rlb-mv-hint { margin: 6px 0 0; font-size: 0.8125rem; color: var(--text-3); }
+.rlb-mv-nums { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s3); }
+.rlb-mv-nums .field { margin: 0; min-width: 0; }
+.rlb-mv-foot { margin: 0; padding-top: var(--s3); border-top: 1px solid var(--border); font-size: 0.8125rem; color: var(--text-2); }
+.rlb-mv.is-off .rlb-mv-cols { opacity: 0.6; }
+
+/* ---- Preview as a member (a phone-width column in a drawer) ---- */
+.rlb-pv { display: flex; flex-direction: column; gap: var(--s4); }
+.rlb-pv-off { display: flex; gap: 8px; margin: 0; padding: var(--s3); border-radius: var(--radius-ctl); background: var(--sage-50); font-size: 0.875rem; color: var(--text-2); }
+.rlb-pv-off .icon { width: 18px; height: 18px; flex: none; color: var(--forest-500); }
+.rlb-pv-phone { display: flex; flex-direction: column; gap: var(--s3); width: 100%; max-width: 390px; margin: 0 auto; padding: var(--s4); border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--sage-50); }
+.rlb-pv-seg { display: flex; width: 100%; }
+.rlb-pv-seg button { flex: 1 1 0; min-height: 40px; }
+.rlb-pv-one { margin: 0; font-weight: 600; }
+.rlb-pv-chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.rlb-pv-chips::-webkit-scrollbar { display: none; }
+.rlb-pv-chip { flex: none; min-height: 40px; padding: 0 14px; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface); color: var(--text); font: 500 0.875rem/1 var(--sans); cursor: pointer; white-space: nowrap; }
+.rlb-pv-chip[aria-pressed="true"] { background: var(--forest-800); border-color: var(--forest-800); color: var(--surface); }
+.rlb-pv-h { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); min-height: 40px; }
+.rlb-pv-gn button { min-height: 36px; }
+.rlb-pv-list { list-style: none; margin: 0; padding: 0 var(--s3); border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--surface); }
+.rlb-pv-list li { display: grid; grid-template-columns: 1.5rem auto minmax(0, 1fr) auto; align-items: center; gap: var(--s3); min-height: 52px; border-bottom: 1px solid var(--border); }
+.rlb-pv-list li:last-child { border-bottom: 0; }
+.rlb-pv-pos { text-align: center; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.rlb-pv-name { font-size: 0.9375rem; overflow-wrap: anywhere; }
+.rlb-pv-val { font-family: var(--serif); font-size: 1.125rem; font-variant-numeric: lining-nums tabular-nums; }
+.rlb-pv-foot { margin: 0; text-align: center; font-size: 0.8125rem; color: var(--text-3); }
+.rlb-pv-note { margin: 0; font-size: 0.8125rem; color: var(--text-3); }
+
 @media (max-width: 1100px) { .rlb-cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 768px) {
   .rlb-cols, .rlb-cols-3 { grid-template-columns: minmax(0, 1fr); }
   .rlb-unq { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-auto-flow: row; }
+  .rlb-mv-cols { grid-template-columns: minmax(0, 1fr); }
+  .rlb-mv-top .btn { width: 100%; min-height: 44px; }
+  html body.staff .rlb-mv-seg { display: flex; width: 100%; }
+  html body.staff .rlb-mv-seg button { flex: 1 1 0; min-height: 44px; }
   /* Tap targets: the row is the big one; the golfer's name and "See all" get 44px of their own */
   .rlb-row { min-height: 60px; padding: 10px 0; }
   .rlb-name { display: inline-block; padding: 12px 0; margin: -12px 0; }

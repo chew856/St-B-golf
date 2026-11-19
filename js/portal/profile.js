@@ -1,7 +1,9 @@
 /* Portal: Profile. Member card, a membership accordion and one row per section; each row opens a sheet
    (personal details, family, notifications, preferences, golf).
    Contact and preference edits write to the members collection with the same shape and validation as
-   the staff member form (js/modules/members.js). Communication opt-ins live in getObj('portalPrefs'). */
+   the staff member form (js/modules/members.js). Communication opt-ins live in getObj('portalPrefs').
+   "Members' leaderboards" (golfers, while staff show the boards): members.leaderboardHidden true takes the member off
+   the boards other members see in the portal (js/portal/leaderboards.js); staff boards still list them. */
 (function () {
   'use strict';
   const S = Club.store, ui = Club.ui, fmt = Club.fmt, esc = ui.esc;
@@ -142,6 +144,18 @@
       '<p class="pp-note">' + Club.icon('info') + '<span>Changes save as you go.</span></p>';
   }
 
+  /* ---------------- Members' leaderboards: show me or not (members.leaderboardHidden: true when off) ----------------
+     Staff boards always list everyone; this only takes the member off the boards other members see. */
+  function lbOn() { return !!(window.Club && Club.leaderboard && Club.leaderboard.settings().show); }
+  function lbBody(m) {
+    const on = !m.leaderboardHidden;
+    return '<ul class="pp-comm"><li><label for="pp_lb" class="pp-comm-text"><span class="pp-comm-l">Show me on the members\' leaderboards</span>' +
+        '<span class="pp-comm-s">Your name, place and scores on Leaderboards, for other members to see.</span></label>' +
+        '<label class="pp-comm-ctl" for="pp_lb"><span class="pp-state" aria-hidden="true">' + (on ? 'On' : 'Off') + '</span><span class="toggle pp-toggle"><input type="checkbox" id="pp_lb" data-lb-show' + (on ? ' checked' : '') + '><span></span></span></label></li></ul>' +
+      '<p class="pp-note">' + Club.icon('info') + '<span>Changes save as you go. The club\'s staff still see every golfer\'s rounds.</span></p>' +
+      '<a class="pp-set pp-lb-open" href="#/leaderboards">' + Club.icon('trophy', 'pp-set-ic') + '<span class="pp-set-main"><span class="pp-set-l">Open Leaderboards</span></span>' + Club.icon('chevronRight', 'pp-set-go') + '</a>';
+  }
+
   /* ---------------- Saves (same validation and store writes as before) ---------------- */
   function saveContact(m, form) {
     clearErrs(form);
@@ -185,6 +199,7 @@
         (Portal.friends ? row('privacy', 'key', 'Friends and privacy', privacySummary(m.id)) : '') +
         row('prefs', 'star', 'Preferences', [isGolfer(m) ? CART_LABEL[pr.cart || 'Cart'] : '', diningPref(pr.dining)].filter(Boolean).join(' · ')) +
         (isGolfer(m) ? row('golf', 'flag', 'Golf', 'Handicap ' + fmt.handicap(m.handicap) + (m.locker ? ' · Locker ' + m.locker : '')) : '') +
+        (isGolfer(m) && lbOn() ? row('leaderboards', 'trophy', 'Members\' leaderboards', m.leaderboardHidden ? 'You are hidden from other members' : 'Other members can see you') : '') +
         row('', 'billing', 'Statements', 'Balance, charges and payments', '#/account') +
         (Club.i18n ? '<li>' + Club.i18n.switchRow('pp-lang', Club.icon('globe', 'pp-set-ic')) + '</li>' : '') +
         row('signout', 'logout', 'Sign out');
@@ -246,6 +261,18 @@
           Portal.friends.unblock(id, btn.dataset.unblock); ui.toast(Portal.friends.nameOf(btn.dataset.unblock) + ' unblocked');
           const box = btn.closest('.pp-blocked'); btn.closest('li').remove();
           if (box && !ui.$('li', box)) box.remove();   /* no heading left over once the last member is unblocked */
+        });
+      } else if (go === 'leaderboards') {
+        const sh = Portal.openSheet({ title: 'Members\' leaderboards', content: lbBody(m), onClose: refresh });
+        ui.on(sh.body, 'change', 'input[data-lb-show]', function (ev, f) {
+          const show = f.checked;
+          S.update('members', id, { leaderboardHidden: !show });
+          const w = ui.$('.pp-state', f.closest('.pp-comm-ctl')); if (w) w.textContent = show ? 'On' : 'Off';
+          ui.toast(show ? 'You are shown on the members\' leaderboards. Saved.' : 'You are hidden from the members\' leaderboards. Saved.', null, { action: { label: 'Undo', onClick: function () {
+            S.update('members', id, { leaderboardHidden: show });
+            if (f.isConnected) { f.checked = !show; if (w) w.textContent = !show ? 'On' : 'Off'; }
+            refresh();
+          } } });
         });
       } else if (go === 'golf') {
         const sh = Portal.openSheet({ title: 'Golf', size: 'full', content: golfBody(m) });

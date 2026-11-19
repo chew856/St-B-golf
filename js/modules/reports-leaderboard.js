@@ -9,26 +9,27 @@
    Net = gross less the course handicap: the one saved with a post, or for a tournament card the one the tournament
    leaderboard works out (Club.shared.events.courseHcp). Both rest on placeholder course ratings until the club's
    official ratings are entered. Par and stroke index come from the 'holes' collection (the club's scorecard).
-   Everyone appears: the friends privacy settings of the portal do not apply to this staff page. */
+   Everyone appears: the friends privacy settings of the portal do not apply to this staff page.
+   The rounds and the ranking rules live in js/shared/leaderboard-data.js (Club.leaderboard), shared with the members'
+   Leaderboards page in the portal (js/portal/leaderboards.js). The "Members' view" panel at the end of this section
+   chooses what members see there (getObj('memberLeaderboard')); staff boards always show every board and golfer. */
 (function () {
   'use strict';
   if (!window.Club || !Club.reports || !Club.reports.addSection) return;
   const S = Club.store, U = Club.ui, F = Club.fmt, esc = U.esc, H = Club.reports.h, plural = H.plural;
-  const MIN = 10;                           /* rounds in the period to qualify */
+  const LB = Club.leaderboard;              /* the board maths, shared with the members' portal (js/shared/leaderboard-data.js) */
+  if (!LB) return;
+  const MIN = LB.MIN;                       /* rounds in the period to qualify */
   const TOP = 5, TOP9 = 3, NAMES = 2, UNQ = 8;   /* rows shown on the page before "See all" */
   const TEES = { black: 'Black tees', green: 'Green tees', silver: 'Silver tees' };
   const MINUS = '−';
 
   /* ---------------- Helpers ---------------- */
-  function EV() { return (Club.shared && Club.shared.events) || {}; }
   function sum(a) { return a.reduce(function (t, v) { return t + (+v || 0); }, 0); }
-  function r1(x) { return Math.round(x * 10 + 1e-9) / 10; }
-  function holes18() {
-    const hs = S.all('holes').slice().sort(function (a, b) { return a.number - b.number; });
-    return hs.length === 18 ? hs : (EV().holeList ? EV().holeList() : []);
-  }
   function mName(id) { const m = Club.members.get(id); return m ? Club.members.name(m) : 'Former member'; }
   function nameLink(g) { return g.m ? '<a class="rlb-name" href="#/members/' + esc(g.id) + '">' + esc(g.name) + '</a>' : '<span class="rlb-name muted">Former member</span>'; }
+  /** A member who chose not to appear on the members' boards in the portal: still listed here, with a small note. */
+  function hiddenNote(g) { return g.m && g.m.leaderboardHidden ? ' <span class="rlb-hidden-note">Hidden from members</span>' : ''; }
   function hcp(v) { return v < 0 ? '+' + Math.abs(v) : String(v); }
   function toPar(v) { return v === 0 ? 'Even' : v > 0 ? '+' + v : MINUS + Math.abs(v); }
   function roundLabel(r) { return r.kind === 'trn' ? r.name : (r.n === 9 ? (r.nine === 'back' ? 'Back nine, ' : 'Front nine, ') : '') + (TEES[r.tees] || 'Tees not recorded'); }
@@ -36,93 +37,9 @@
   function when(r) { return F.dateShort(r.date) + ', ' + roundLabel(r); }
   function scoreName(v, par) { return v === 1 ? 'Hole in one' : v === par - 3 ? 'Albatross' : v === par - 2 ? 'Eagle' : v === par - 1 ? 'Birdie' : v === par ? 'Par' : v === par + 1 ? 'Bogey' : 'Over par'; }
 
-  /* ---------------- The rounds, golfers and hole records of the period ---------------- */
+  /* ---------------- The rounds, golfers and hole records of the period (Club.leaderboard.compute) ---------------- */
   function data(ctx) {
-    return H.memo(ctx, 'leaderboard', function () {
-      const inR = H.inRange(ctx), hs18 = holes18(), rounds = [], byKey = {};
-      const part = function (n, nine) { return n === 9 ? (nine === 'back' ? hs18.slice(9) : hs18.slice(0, 9)) : hs18; };
-      S.all('scorePosts').forEach(function (p) {
-        if (!p || !p.memberId || !inR(p.date) || typeof p.gross !== 'number') return;
-        const n = +p.holes === 9 ? 9 : 18, hs = part(n, p.nine), ch = +p.courseHandicap || 0;
-        const sc = p.entry === 'hole' && Array.isArray(p.holeScores) && hs.length && p.holeScores.length === hs.length ? p.holeScores : null;
-        rounds.push({ key: 'p:' + p.id, kind: 'post', mid: p.memberId, date: p.date, n: n, nine: n === 9 ? (p.nine === 'back' ? 'back' : 'front') : null, tees: p.tees,
-          gross: p.gross, ch: ch, net: p.gross - ch, scores: sc, hs: hs, attestedBy: p.attestedBy || null, index: typeof p.indexUsed === 'number' ? p.indexUsed : null });
-      });
-      let once = 0;
-      S.all('tournaments').forEach(function (t) {
-        if (!t || (t.status !== 'final' && t.status !== 'live') || !inR(t.date) || hs18.length !== 18) return;
-        (t.field || []).forEach(function (p) {
-          if (!p || !p.memberId || !Array.isArray(p.scores) || p.scores.length < 18) return;
-          const card = p.scores.slice(0, 18);
-          if (card.some(function (v) { return v == null; })) return;             /* a round counts when all 18 holes are in */
-          const gross = sum(card), ch = EV().courseHcp ? EV().courseHcp(p.handicap, hs18) : 0;
-          /* The member's own post of the same day: counted once, from the tournament card */
-          const same = rounds.filter(function (r) { return r.kind === 'post' && r.mid === p.memberId && r.date === t.date && r.n === 18; });
-          const dup = same.filter(function (r) { return r.gross === gross; })[0] || same[0];
-          if (dup) { rounds.splice(rounds.indexOf(dup), 1); once++; }
-          rounds.push({ key: 't:' + t.id + ':' + p.memberId, kind: 'trn', mid: p.memberId, date: t.date, n: 18, nine: null, tees: (EV().COURSE || {}).tee || 'green', name: t.name || 'Tournament',
-            gross: gross, ch: ch, net: gross - ch, scores: card, hs: hs18, attestedBy: null, index: typeof p.handicap === 'number' ? p.handicap : null });
-        });
-      });
-      rounds.forEach(function (r) {
-        r.birdies = 0; r.eagles = 0; r.aces = 0; byKey[r.key] = r;
-        if (!r.scores) return;
-        r.scores.forEach(function (v, i) {
-          const par = r.hs[i].par;
-          if (v === 1) r.aces++;                                   /* a hole in one counts as a hole in one and as an eagle */
-          if (v <= par - 2) r.eagles++; else if (v === par - 1) r.birdies++;
-        });
-      });
-
-      const hist = S.all('handicapHistory'), map = {};
-      rounds.forEach(function (r) { (map[r.mid] = map[r.mid] || { id: r.mid, rounds: [] }).rounds.push(r); });
-      const best = function (list, f) { return list.slice().sort(function (a, b) { return f(a) - f(b) || a.date.localeCompare(b.date); })[0] || null; };
-      const gross = function (r) { return r.gross; }, net = function (r) { return r.net; };
-      const golfers = Object.keys(map).map(function (id) {
-        const g = map[id];
-        g.m = Club.members.get(id); g.name = g.m ? Club.members.name(g.m) : 'Former member';
-        g.rounds.sort(function (a, b) { return b.date.localeCompare(a.date); });
-        g.n = g.rounds.length; g.q = g.n >= MIN;
-        g.r18 = g.rounds.filter(function (r) { return r.n === 18; }); g.r9 = g.rounds.filter(function (r) { return r.n === 9; });
-        g.cards = g.rounds.filter(function (r) { return r.scores; });
-        g.trn = g.rounds.filter(function (r) { return r.kind === 'trn'; }).length;
-        g.bestGross = best(g.r18, gross); g.bestNet = best(g.r18, net); g.best9 = best(g.r9, gross); g.best9Net = best(g.r9, net);
-        g.avgGross = g.r18.length ? sum(g.r18.map(gross)) / g.r18.length : null;
-        g.avgNet = g.r18.length ? sum(g.r18.map(net)) / g.r18.length : null;
-        g.birdies = sum(g.cards.map(function (r) { return r.birdies; })); g.eagles = sum(g.cards.map(function (r) { return r.eagles; })); g.aces = sum(g.cards.map(function (r) { return r.aces; }));
-        /* Most improved: the first handicap revision in the period against the latest */
-        const hh = hist.filter(function (x) { return x && x.memberId === id && typeof x.index === 'number' && inR(x.date); }).sort(function (a, b) { return String(a.date).localeCompare(String(b.date)); });
-        g.imp = hh.length >= 2 ? { from: hh[0], to: hh[hh.length - 1], n: hh.length, list: hh, drop: r1(hh[0].index - hh[hh.length - 1].index) } : null;
-        return g;
-      }).sort(function (a, b) { return b.n - a.n || a.name.localeCompare(b.name); });
-      const byId = {}; golfers.forEach(function (g) { byId[g.id] = g; });
-
-      /* Hole records: every golfer, from hole-by-hole rounds */
-      const records = hs18.map(function (h) { return { hole: h, best: null, made: [], holders: [] }; });
-      rounds.forEach(function (r) {
-        if (!r.scores) return;
-        r.scores.forEach(function (v, i) {
-          const rec = records[r.hs[i].number - 1]; if (!rec) return;
-          if (rec.best == null || v < rec.best) { rec.best = v; rec.made = []; }
-          if (v === rec.best) rec.made.push(r);
-        });
-      });
-      records.forEach(function (rec) {
-        rec.made.sort(function (a, b) { return a.date.localeCompare(b.date) || byId[a.mid].name.localeCompare(byId[b.mid].name); });
-        const seen = {};
-        rec.made.forEach(function (r) { if (seen[r.mid]) { seen[r.mid].times++; return; } seen[r.mid] = { g: byId[r.mid], first: r, times: 1 }; rec.holders.push(seen[r.mid]); });
-      });
-
-      const cards = rounds.filter(function (r) { return r.scores; });
-      return {
-        rounds: rounds, byKey: byKey, golfers: golfers, byId: byId, records: records, once: once,
-        qual: golfers.filter(function (g) { return g.q; }), unq: golfers.filter(function (g) { return !g.q; }),
-        tot: { rounds: rounds.length, posts: rounds.filter(function (r) { return r.kind === 'post'; }).length, trn: rounds.filter(function (r) { return r.kind === 'trn'; }).length,
-          cards: cards.length, totalOnly: rounds.length - cards.length, nine: rounds.filter(function (r) { return r.n === 9; }).length,
-          attested: rounds.filter(function (r) { return r.kind === 'post' && r.attestedBy; }).length,
-          birdies: sum(cards.map(function (r) { return r.birdies; })), eagles: sum(cards.map(function (r) { return r.eagles; })), aces: sum(cards.map(function (r) { return r.aces; })) }
-      };
-    });
+    return H.memo(ctx, 'leaderboard', function () { return LB.compute(ctx.from, ctx.to, MIN); });
   }
 
   /* ---------------- The boards ----------------
@@ -130,54 +47,48 @@
      sub(g): the line under the name; set: which of the golfer's rounds sit behind the number. */
   function one(v) { return v.toFixed(1); }
   const BOARDS = {
-    gross: { title: 'Best round, gross', col: 'Gross', unit: 'gross', set: 'r18', by: 'gross', has: function (g) { return !!g.bestGross; }, val: function (g) { return g.bestGross.gross; }, text: String,
-      date: function (g) { return g.bestGross.date; }, sub: function (g) { return when(g.bestGross); }, none: 'No 18-hole round by a qualified golfer in this period.',
+    gross: { title: 'Best round, gross', col: 'Gross', unit: 'gross', text: String,
+      sub: function (g) { return when(g.bestGross); }, none: 'No 18-hole round by a qualified golfer in this period.',
       head: ['Net', 'Course handicap', 'Date', 'Round'], cells: function (g) { const r = g.bestGross; return [r.net, r.ch, r.date, roundLabel(r)]; } },
-    net: { title: 'Best round, net', col: 'Net', unit: 'net', set: 'r18', by: 'net', has: function (g) { return !!g.bestNet; }, val: function (g) { return g.bestNet.net; }, text: String,
-      date: function (g) { return g.bestNet.date; }, sub: function (g) { return when(g.bestNet) + ', gross ' + g.bestNet.gross; }, none: 'No 18-hole round by a qualified golfer in this period.',
+    net: { title: 'Best round, net', col: 'Net', unit: 'net', text: String,
+      sub: function (g) { return when(g.bestNet) + ', gross ' + g.bestNet.gross; }, none: 'No 18-hole round by a qualified golfer in this period.',
       head: ['Gross', 'Course handicap', 'Date', 'Round'], cells: function (g) { const r = g.bestNet; return [r.gross, r.ch, r.date, roundLabel(r)]; } },
-    avgGross: { title: 'Best average, gross', col: 'Average gross', unit: 'average gross', set: 'r18', by: 'gross', has: function (g) { return g.avgGross != null; }, val: function (g) { return r1(g.avgGross); }, text: one,
+    avgGross: { title: 'Best average, gross', col: 'Average gross', unit: 'average gross', text: one,
       sub: function (g) { return 'Over ' + g.r18.length + ' ' + plural(g.r18.length, 'round'); }, none: 'No 18-hole round by a qualified golfer in this period.',
       head: ['18-hole rounds'], cells: function (g) { return [g.r18.length]; } },
-    avgNet: { title: 'Best average, net', col: 'Average net', unit: 'average net', set: 'r18', by: 'net', has: function (g) { return g.avgNet != null; }, val: function (g) { return r1(g.avgNet); }, text: one,
+    avgNet: { title: 'Best average, net', col: 'Average net', unit: 'average net', text: one,
       sub: function (g) { return 'Over ' + g.r18.length + ' ' + plural(g.r18.length, 'round'); }, none: 'No 18-hole round by a qualified golfer in this period.',
       head: ['18-hole rounds'], cells: function (g) { return [g.r18.length]; } },
-    nine: { title: 'Best 9 holes, gross', col: 'Gross', unit: 'gross over 9 holes', set: 'r9', by: 'gross', has: function (g) { return !!g.best9; }, val: function (g) { return g.best9.gross; }, text: String,
-      date: function (g) { return g.best9.date; }, sub: function (g) { return when(g.best9); }, none: 'No 9-hole round by a qualified golfer in this period.',
+    nine: { title: 'Best 9 holes, gross', col: 'Gross', unit: 'gross over 9 holes', text: String,
+      sub: function (g) { return when(g.best9); }, none: 'No 9-hole round by a qualified golfer in this period.',
       head: ['Net', 'Course handicap', 'Date', 'Round'], cells: function (g) { const r = g.best9; return [r.net, r.ch, r.date, roundLabel(r)]; } },
-    nineNet: { title: 'Best 9 holes, net', col: 'Net', unit: 'net over 9 holes', set: 'r9', by: 'net', has: function (g) { return !!g.best9Net; }, val: function (g) { return g.best9Net.net; }, text: String,
-      date: function (g) { return g.best9Net.date; }, sub: function (g) { return when(g.best9Net) + ', gross ' + g.best9Net.gross; }, none: 'No 9-hole round by a qualified golfer in this period.',
+    nineNet: { title: 'Best 9 holes, net', col: 'Net', unit: 'net over 9 holes', text: String,
+      sub: function (g) { return when(g.best9Net) + ', gross ' + g.best9Net.gross; }, none: 'No 9-hole round by a qualified golfer in this period.',
       head: ['Gross', 'Course handicap', 'Date', 'Round'], cells: function (g) { const r = g.best9Net; return [r.gross, r.ch, r.date, roundLabel(r)]; } },
-    birdies: { title: 'Birdies', col: 'Birdies', unit: 'birdies', set: 'cards', desc: true, has: function (g) { return g.birdies > 0; }, val: function (g) { return g.birdies; }, text: String,
+    birdies: { title: 'Birdies', col: 'Birdies', unit: 'birdies', text: String,
       sub: function (g) { return 'In ' + g.cards.length + ' hole-by-hole ' + plural(g.cards.length, 'round'); }, none: 'No birdie by a qualified golfer in this period.',
       head: ['Hole-by-hole rounds'], cells: function (g) { return [g.cards.length]; } },
-    eagles: { title: 'Eagles or better', col: 'Eagles or better', unit: 'eagles or better', set: 'cards', desc: true, has: function (g) { return g.eagles > 0; }, val: function (g) { return g.eagles; }, text: String,
+    eagles: { title: 'Eagles or better', col: 'Eagles or better', unit: 'eagles or better', text: String,
       sub: function (g) { return 'In ' + g.cards.length + ' hole-by-hole ' + plural(g.cards.length, 'round'); }, none: 'No eagle by a qualified golfer in this period.',
       head: ['Hole-by-hole rounds'], cells: function (g) { return [g.cards.length]; } },
-    aces: { title: 'Holes in one', col: 'Holes in one', unit: 'holes in one', set: 'cards', desc: true, has: function (g) { return g.aces > 0; }, val: function (g) { return g.aces; }, text: String,
+    aces: { title: 'Holes in one', col: 'Holes in one', unit: 'holes in one', text: String,
       sub: function (g) { return g.cards.filter(function (r) { return r.aces; }).map(function (r) { return 'Hole ' + r.hs[r.scores.indexOf(1)].number + ', ' + F.dateShort(r.date); }).join('; '); }, none: 'No hole in one by a qualified golfer in this period.',
       head: ['Hole-by-hole rounds'], cells: function (g) { return [g.cards.length]; } },
-    rounds: { title: 'Most rounds played', col: 'Rounds', unit: 'rounds', set: 'rounds', desc: true, has: function () { return true; }, val: function (g) { return g.n; }, text: String,
+    rounds: { title: 'Most rounds played', col: 'Rounds', unit: 'rounds', text: String,
       sub: function (g) { return (g.n - g.trn) + ' posted' + (g.trn ? ', ' + g.trn + ' ' + plural(g.trn, 'tournament') : ''); }, none: 'No golfer has ' + MIN + ' rounds in this period yet.',
       head: ['Posted', 'Tournament cards', '18 holes', '9 holes'], cells: function (g) { return [g.n - g.trn, g.trn, g.r18.length, g.r9.length]; } },
-    improved: { title: 'Most improved', col: 'Handicap index drop', unit: 'off the handicap index', set: 'rounds', desc: true, has: function (g) { return !!g.imp && g.imp.drop > 0; }, val: function (g) { return g.imp.drop; }, text: one,
+    improved: { title: 'Most improved', col: 'Handicap index drop', unit: 'off the handicap index', text: one,
       sub: function (g) { return 'Index ' + F.handicap(g.imp.from.index) + ' to ' + F.handicap(g.imp.to.index); }, none: 'No qualified golfer lowered their handicap index in this period.',
       head: ['From', 'To', 'First revision', 'Latest revision', 'Revisions'], cells: function (g) { return [g.imp.from.index, g.imp.to.index, g.imp.from.date, g.imp.to.date, g.imp.n]; } }
   };
+  /* How each board ranks (set, by, desc, has, val, date) is shared with the portal */
+  Object.keys(BOARDS).forEach(function (k) { Object.assign(BOARDS[k], LB.BOARDS[k]); });
   /** Qualified golfers on a board, best first; equal values share a place. */
-  function ranked(d, key) {
-    const b = BOARDS[key];
-    const list = d.qual.filter(b.has).map(function (g) { return { g: g, v: b.val(g) }; });
-    list.sort(function (x, y) {
-      return (b.desc ? y.v - x.v : x.v - y.v) || (b.date ? b.date(x.g).localeCompare(b.date(y.g)) : 0) || x.g.name.localeCompare(y.g.name);
-    });
-    list.forEach(function (x) { x.pos = 1 + list.filter(function (o) { return b.desc ? o.v > x.v : o.v < x.v; }).length; });
-    return list;
-  }
+  function ranked(d, key) { return LB.ranked(d, key); }
   function rowHTML(key, x) {
     const b = BOARDS[key], g = x.g, txt = b.text(x.v);
     return '<li class="rlb-row" data-lb-open="' + esc(key + '|' + g.id) + '" tabindex="0" aria-haspopup="dialog" aria-label="' + esc('Place ' + x.pos + ', ' + g.name + ', ' + txt + ' ' + b.unit + '. See the rounds behind it') + '">' +
-      '<span class="rlb-pos">' + x.pos + '</span><span class="rlb-who">' + nameLink(g) + '<span class="rlb-sub">' + esc(b.sub(g)) + '</span></span>' +
+      '<span class="rlb-pos">' + x.pos + '</span><span class="rlb-who">' + nameLink(g) + hiddenNote(g) + '<span class="rlb-sub">' + esc(b.sub(g)) + '</span></span>' +
       '<span class="rlb-val">' + esc(txt) + '</span>' + Club.icon('chevronRight', 'rlb-go') + '</li>';
   }
   function listHTML(d, key, top) {
@@ -241,7 +152,7 @@
       body: unq.length ? '<ul class="rlb-rows rlb-unq" style="--lb-n:' + rows + '">' + unq.slice(0, UNQ).map(unqRow).join('') + '</ul>' : '<p class="rp-empty">Nobody is waiting to qualify.</p>',
       drill: unq.length > UNQ ? 'unqualified' : null, drillLabel: 'See all ' + unq.length,
       foot: unq.length > UNQ ? esc('Showing the ' + UNQ + ' closest to qualifying') : '' };
-    return [under, played, holes, not];
+    return [under, played, holes, not, membersPanel()];
   }
   function recordRow(rec) {
     const h = rec.hole, hs = rec.holders;
@@ -297,7 +208,7 @@
       '</tbody></table></div>';
   }
   function meta(ctx) { return [['Period', ctx.from + ' to ' + ctx.to], ['To qualify', MIN + ' rounds or more in the period'], []]; }
-  function whoCell(g, sub) { return nameLink(g) + (sub ? '<div class="dd-sub">' + esc(sub) + '</div>' : ''); }
+  function whoCell(g, sub) { return nameLink(g) + hiddenNote(g) + (sub ? '<div class="dd-sub">' + esc(sub) + '</div>' : ''); }
   function qualText(g) { return g.q ? 'Qualified' : (MIN - g.n) + ' more to qualify'; }
   /** Rounds as rows that open their scorecard. cols: extra columns as [label, fn(r)]. */
   function roundsTable(list, mark, extra) {
@@ -477,6 +388,141 @@
       csv: meta(ctx).concat([['Golfer', 'Member no', 'Hole', 'Par', 'Date', 'Round']]).concat(made.map(function (x) { const g = d.byId[x.r.mid]; return [g.name, g.m ? g.m.memberNo : '', x.h.number, x.h.par, x.r.date, roundLabel(x.r)]; })) };
   }
 
+  /* ---------------- Members' view: what members see on Leaderboards in the portal ----------------
+     One settings object, getObj('memberLeaderboard') through Club.leaderboard.settings() and save(). Every change is
+     saved straight away with an Undo toast; the panel redraws from the store, so Undo and other tabs show here too. */
+  const MV_MIN = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 20], MV_TOP = [5, 10, 15, 20, 25, 30, 40, 50, 100];
+  const MV_SCORES = [['gross', 'Gross'], ['net', 'Net'], ['both', 'Both']];
+  const MV_PERIODS = [['month', 'This month'], ['season', 'This season']];
+  function mvSwitch(attr, label, on, sub) {
+    const id = 'rlb-mv-' + attr.replace(/[^a-z0-9]+/gi, '-');
+    return '<label class="rlb-mv-sw" for="' + id + '"><span class="toggle"><input type="checkbox" id="' + id + '" ' + attr + (on ? ' checked' : '') + '><span></span></span>' +
+      '<span class="rlb-mv-sw-t"><span class="rlb-mv-sw-l">' + esc(label) + '</span>' + (sub ? '<span class="rlb-mv-sw-s">' + esc(sub) + '</span>' : '') + '</span></label>';
+  }
+  function mvOptions(list, v, unit) {
+    const all = list.indexOf(v) >= 0 ? list : list.concat([v]).sort(function (a, b) { return a - b; });
+    return all.map(function (n) { return '<option value="' + n + '"' + (n === v ? ' selected' : '') + '>' + n + (unit ? ' ' + plural(n, unit[0], unit[1]) : '') + '</option>'; }).join('');
+  }
+  function hiddenMembers() { return S.all('members').filter(function (m) { return m.leaderboardHidden; }); }
+  function membersBody() {
+    const s = LB.settings(), hid = hiddenMembers().length;
+    return '<div class="rlb-mv' + (s.show ? '' : ' is-off') + '">' +
+      '<div class="rlb-mv-top">' + mvSwitch('data-mv-show', 'Show members\' leaderboards in the portal', s.show, s.show ? 'Members find Leaderboards in the portal menu' : 'Off: the page and its menu entry are hidden from members') +
+        '<button type="button" class="btn btn-sm" data-mv-preview aria-haspopup="dialog">' + Club.icon('eye') + 'Preview as a member</button></div>' +
+      '<div class="rlb-mv-cols">' +
+        '<fieldset class="rlb-mv-group"><legend class="label-caps">Boards shown to members</legend>' +
+          LB.MEMBER_BOARDS.map(function (b) { return mvSwitch('data-mv-board="' + b.id + '"', b.label, s.boards[b.id], b.key ? '' : 'Gross and net'); }).join('') + '</fieldset>' +
+        '<div class="rlb-mv-side">' +
+          '<fieldset class="rlb-mv-group"><legend class="label-caps">Periods</legend>' +
+            MV_PERIODS.map(function (p) { return mvSwitch('data-mv-period="' + p[0] + '"', p[1], s.periods[p[0]], p[0] === 'season' ? Club.season.dayLabel() + ', from Settings' : ''); }).join('') + '</fieldset>' +
+          '<div class="rlb-mv-group"><span class="label-caps" id="rlb-mv-sc-l">Scores</span>' +
+            '<div class="segmented rlb-mv-seg" role="radiogroup" aria-labelledby="rlb-mv-sc-l">' + MV_SCORES.map(function (x) {
+              const on = s.scores === x[0];
+              return '<button type="button" role="radio" data-mv-scores="' + x[0] + '" aria-checked="' + on + '"' + (on ? ' class="active"' : '') + ' tabindex="' + (on ? 0 : -1) + '">' + x[1] + '</button>';
+            }).join('') + '</div><p class="rlb-mv-hint">For Low round and Best average. Both lets members switch.</p></div>' +
+          '<div class="rlb-mv-nums">' +
+            '<div class="field"><label for="rlb-mv-min">Rounds to qualify</label><select class="select" id="rlb-mv-min" data-mv-num="min">' + mvOptions(MV_MIN, s.min, ['round', 'rounds']) + '</select></div>' +
+            '<div class="field"><label for="rlb-mv-top">Show top</label><select class="select" id="rlb-mv-top" data-mv-num="top">' + mvOptions(MV_TOP, s.top, ['golfer', 'golfers']) + '</select></div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<p class="rlb-mv-foot">' + esc('Staff still see every board, every golfer and every number on this staff Leaderboard, with ' + MIN + ' rounds to qualify.' +
+        (hid ? ' ' + hid + ' ' + plural(hid, 'member has', 'members have') + ' chosen in the portal not to appear on the members\' boards; they are marked "Hidden from members" here.' : ' Members can choose in their portal Profile not to appear on the members\' boards.')) + '</p>' +
+    '</div>';
+  }
+  function membersPanel() {
+    return { id: 'rlb-members', cls: 'wide', title: 'Members\' view', take: 'What members see on Leaderboards in the portal. Changes apply straight away and can be undone.', body: membersBody() };
+  }
+  /** Save one change with Undo. what: the toast text. */
+  function mvChange(what, patch) {
+    const cur = LB.settings(), next = patch(JSON.parse(JSON.stringify(cur)));
+    if (JSON.stringify(next) === JSON.stringify(cur)) return;
+    if (Club.undo) Club.undo.run(function () { LB.save(next); }, { message: what, undone: 'Members\' view change undone' });
+    else { LB.save(next); U.toast(what); }
+  }
+  function wireMembers(el) {
+    const panel = el.querySelector('[data-panel="rlb-members"]'), host = panel && U.$('.rp-pb', panel);
+    if (!host) return;
+    const redraw = function () {
+      if (!host.isConnected) { unsub(); return; }
+      const a = document.activeElement, key = a && host.contains(a) ? ['data-mv-show', 'data-mv-board', 'data-mv-period', 'data-mv-scores', 'data-mv-num', 'data-mv-preview'].map(function (k) { return a.hasAttribute(k) ? '[' + k + (a.getAttribute(k) ? '="' + a.getAttribute(k) + '"' : '') + ']' : ''; }).join('') : '';
+      const wasBtn = a && a.classList && a.classList.contains('cs-btn') ? a.nextElementSibling : null;
+      host.innerHTML = membersBody();
+      const back = wasBtn && wasBtn.dataset && wasBtn.dataset.mvNum ? host.querySelector('[data-mv-num="' + wasBtn.dataset.mvNum + '"]') : key ? host.querySelector(key) : null;
+      if (back) setTimeout(function () { (back.previousElementSibling && back.previousElementSibling.classList.contains('cs-btn') ? back.previousElementSibling : back).focus({ preventScroll: true }); }, 0);
+    };
+    const unsub = S.subscribe('$' + LB.KEY, redraw);
+    const unsubM = S.subscribe('members', function () { if (host.isConnected) { const f = U.$('.rlb-mv-foot', host), tmp = document.createElement('div'); tmp.innerHTML = membersBody(); if (f) f.innerHTML = U.$('.rlb-mv-foot', tmp).innerHTML; } else unsubM(); });
+    U.on(host, 'change', 'input[data-mv-show]', function (e, f) {
+      const on = f.checked;
+      mvChange(on ? 'Members\' leaderboards shown in the portal' : 'Members\' leaderboards hidden from the portal', function (s) { s.show = on; return s; });
+    });
+    U.on(host, 'change', 'input[data-mv-board]', function (e, f) {
+      const id = f.dataset.mvBoard, b = LB.MEMBER_BOARDS.filter(function (x) { return x.id === id; })[0], s0 = LB.settings();
+      if (!f.checked && LB.MEMBER_BOARDS.filter(function (x) { return s0.boards[x.id]; }).length <= 1) {
+        f.checked = true; U.toast('Keep at least one board. To hide them all, turn off the members\' leaderboards.', 'bad'); return;
+      }
+      mvChange(b.label + (f.checked ? ' shown to members' : ' hidden from members'), function (s) { s.boards[id] = f.checked; return s; });
+    });
+    U.on(host, 'change', 'input[data-mv-period]', function (e, f) {
+      const id = f.dataset.mvPeriod, p = MV_PERIODS.filter(function (x) { return x[0] === id; })[0], s0 = LB.settings();
+      if (!f.checked && !s0.periods[id === 'month' ? 'season' : 'month']) { f.checked = true; U.toast('Keep at least one period for members.', 'bad'); return; }
+      mvChange(p[1] + (f.checked ? ' shown to members' : ' hidden from members'), function (s) { s.periods[id] = f.checked; return s; });
+    });
+    U.on(host, 'click', '[data-mv-scores]', function (e, b) {
+      const v = b.dataset.mvScores;
+      mvChange(v === 'both' ? 'Members see gross and net' : 'Members see ' + v + ' scores only', function (s) { s.scores = v; return s; });
+    });
+    U.on(host, 'keydown', '[data-mv-scores]', function (e, b) {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      e.preventDefault();
+      const all = U.$$('[data-mv-scores]', host), n = all[(all.indexOf(b) + (e.key === 'ArrowRight' ? 1 : all.length - 1)) % all.length];
+      n.focus(); n.click();
+    });
+    U.on(host, 'change', 'select[data-mv-num]', function (e, f) {
+      const k = f.dataset.mvNum, v = +f.value;
+      mvChange(k === 'min' ? 'Members need ' + v + ' ' + plural(v, 'round') + ' to qualify' : 'Members see the top ' + v + ' ' + plural(v, 'golfer'), function (s) { s[k] = v; return s; });
+    });
+    U.on(host, 'click', '[data-mv-preview]', function () { openPreview(); });
+  }
+
+  /* "Preview as a member": the members' page as a member sees it, from the same Club.leaderboard.memberBoard. */
+  function openPreview() {
+    const st = { period: null, board: null, score: 'net' };
+    const api = U.drawer({ eyebrow: 'Preview as a member', title: 'Leaderboards', body: '<div class="rlb-pv"></div>', actions: [{ label: 'Close', kind: 'ghost' }] });
+    if (api.duplicate) return;
+    api.el.classList.add('rlb-pv-drawer');
+    const host = U.$('.rlb-pv', api.body);
+    function draw() {
+      const s = LB.settings();
+      const periods = MV_PERIODS.filter(function (p) { return s.periods[p[0]]; }), boards = LB.MEMBER_BOARDS.filter(function (b) { return s.boards[b.id]; });
+      if (!periods.some(function (p) { return p[0] === st.period; })) st.period = LB.defaultPeriod(s);
+      if (!boards.some(function (b) { return b.id === st.board; })) st.board = boards.length ? boards[0].id : null;
+      const mb = boards.length ? LB.memberBoard({ period: st.period, board: st.board, score: st.score, settings: s }) : null;
+      const per = function (k) { return LB.period(k); };
+      let h = s.show ? '' : '<p class="rlb-pv-off">' + Club.icon('info') + '<span>The members\' leaderboards are turned off, so members do not see this page or its menu entry. This is what they would see.</span></p>';
+      h += '<div class="rlb-pv-phone">';
+      if (periods.length > 1) h += '<div class="segmented rlb-pv-seg" role="radiogroup" aria-label="Period">' + periods.map(function (p) { const on = p[0] === st.period; return '<button type="button" role="radio" data-pv-period="' + p[0] + '" aria-checked="' + on + '"' + (on ? ' class="active"' : '') + '>' + esc(per(p[0]).label) + '</button>'; }).join('') + '</div>';
+      else h += '<p class="rlb-pv-one">' + esc(per(st.period).label) + '</p>';
+      if (boards.length > 1) h += '<div class="rlb-pv-chips" role="group" aria-label="Board">' + boards.map(function (b) { return '<button type="button" class="rlb-pv-chip" data-pv-board="' + b.id + '" aria-pressed="' + (b.id === st.board) + '">' + esc(b.label) + '</button>'; }).join('') + '</div>';
+      if (mb) {
+        const b = mb.board, title = b.label + (mb.score ? ', ' + mb.score : '');
+        h += '<div class="rlb-pv-h"><span class="label-caps">' + esc(title) + '</span>' + (!b.key && s.scores === 'both' ? '<div class="segmented rlb-pv-gn" role="radiogroup" aria-label="Scores">' + ['gross', 'net'].map(function (k) { const on = mb.score === k; return '<button type="button" role="radio" data-pv-score="' + k + '" aria-checked="' + on + '"' + (on ? ' class="active"' : '') + '>' + (k === 'gross' ? 'Gross' : 'Net') + '</button>'; }).join('') + '</div>' : '') + '</div>';
+        h += mb.rows.length ? '<ol class="rlb-pv-list">' + mb.rows.map(function (x) {
+          return '<li><span class="rlb-pv-pos">' + x.pos + '</span>' + U.avatar(x.g.name, 'sm', true) + '<span class="rlb-pv-name">' + esc(x.g.name) + '</span><span class="rlb-pv-val">' + esc(mb.key === 'avgGross' || mb.key === 'avgNet' || mb.key === 'improved' ? one(x.v) : String(x.v)) + '</span></li>';
+        }).join('') + '</ol>' : '<p class="rp-empty">' + esc(mb.qualified ? 'Nobody on this board yet.' : 'No golfer has ' + s.min + ' ' + plural(s.min, 'round') + ' ' + (st.period === 'month' ? 'this month' : 'this season') + ' yet.') + '</p>';
+        h += '<p class="rlb-pv-foot">' + esc(mb.qualified + ' qualified ' + plural(mb.qualified, 'golfer') + ' · ' + s.min + ' ' + plural(s.min, 'round') + ' to qualify') + (mb.list.length > mb.rows.length ? esc(' · top ' + mb.rows.length + ' of ' + mb.list.length + ' shown') : '') + '</p>';
+      }
+      h += '</div><p class="rlb-pv-note">Members also see their own row highlighted, and how many more rounds they need when they are short. Members who chose to be hidden are left out, and the places close up.</p>';
+      host.innerHTML = h;
+    }
+    draw();
+    U.on(host, 'click', '[data-pv-period]', function (e, b) { st.period = b.dataset.pvPeriod; draw(); });
+    U.on(host, 'click', '[data-pv-board]', function (e, b) { st.board = b.dataset.pvBoard; draw(); });
+    U.on(host, 'click', '[data-pv-score]', function (e, b) { st.score = b.dataset.pvScore; draw(); });
+    const unsub = S.subscribe('$' + LB.KEY, function () { if (host.isConnected) draw(); else unsub(); });
+  }
+
   /* ---------------- About, CSV, clicks on the page ---------------- */
   function about(ctx) {
     const d = data(ctx);
@@ -503,6 +549,7 @@
     ];
   }
   function wire(el, ctx, api) {
+    wireMembers(el);
     const act = function (row, e) {
       if (e.target.closest('a, button')) return;
       if (row.dataset.lbHole) api.drill('hole', row.dataset.lbHole); else api.drill('golfer', row.dataset.lbOpen);

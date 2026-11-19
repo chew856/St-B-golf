@@ -1,0 +1,123 @@
+/* ==========================================================================
+   Portal: Leaderboards (plb-), js/portal/leaderboards.js. Portal tokens only.
+   Phone first: one column, the period switch full width, the board chips scroll sideways.
+   ========================================================================== */
+.plb-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.plb-title { margin-bottom: 16px; }
+.plb-title h1 { margin: 0; }
+.plb-title p { margin: 4px 0 0; font-size: 0.9375rem; color: var(--text-2); }
+.plb-body { display: flex; flex-direction: column; gap: 14px; max-width: 760px; }
+
+/* Period: two halves of one switch */
+body.portal .plb-period { display: flex; width: 100%; }
+body.portal .plb-period button { flex: 1 1 0; min-width: 0; }
+.plb-period-one { margin: 0; font-size: 1.0625rem; font-weight: 500; }
+
+/* Board chips: one row that scrolls sideways (the page itself never does) */
+.plb-chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; margin: 0 -16px; padding: 2px 16px 4px; }
+.plb-chips::-webkit-scrollbar { display: none; }
+.plb-chip {
+  flex: none; min-height: 44px; padding: 0 16px; border: 1px solid var(--border-strong); border-radius: 999px;
+  background: var(--surface); color: var(--text); font: 500 0.9375rem/1 var(--sans); white-space: nowrap; cursor: pointer;
+}
+@media (hover: hover) { .plb-chip:hover { border-color: var(--forest-500); } }
+.plb-chip[aria-pressed="true"] { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); }
+.plb-chip:focus-visible { outline: none; box-shadow: var(--focus); }
+
+/* The board's name and Gross | Net */
+.plb-head { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; min-height: 44px; }
+.plb-head h2.label-caps { margin: 0; }
+body.portal .plb-gn button { min-width: 4.25rem; }
+
+/* The member's own standing */
+.plb-need { display: flex; flex-direction: column; gap: 2px; padding: 12px 16px; border-radius: var(--radius-card); background: var(--sage-100); }
+.plb-need-n { font-size: 1rem; font-weight: 600; color: var(--text); }
+.plb-need-s { font-size: 0.875rem; color: var(--text-2); }
+.plb-note { display: flex; gap: 8px; margin: 0; padding: 12px 14px; border-radius: var(--radius-card); background: var(--sage-50); border: 1px solid var(--border); font-size: 0.875rem; color: var(--text-2); }
+.plb-note .icon { width: 18px; height: 18px; flex: none; margin-top: 1px; color: var(--forest-500); }
+.plb-note a { color: var(--forest-800); font-weight: 500; }
+
+/* The ranked list: each row opens the golfer's rounds */
+body.portal .p-list.plb-list > li { padding: 0; min-height: 0; display: block; }
+.plb-row {
+  display: grid; grid-template-columns: 1.75rem auto minmax(0, 1fr) auto 16px; align-items: center; gap: 12px;
+  width: 100%; min-height: 60px; padding: 8px 14px 8px 12px; border: 0; background: none; font: inherit; color: var(--text); text-align: left; cursor: pointer;
+}
+@media (hover: hover) { .plb-row:hover { background: var(--sage-50); } }
+.plb-row:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--forest-700); }
+.plb-pos { font-family: var(--serif); font-size: 1.0625rem; color: var(--text-3); text-align: center; font-variant-numeric: lining-nums tabular-nums; }
+.plb-li:first-child .plb-pos { color: var(--forest-500); font-weight: 600; }
+.plb-mine .plb-li .plb-pos { color: var(--text-3); font-weight: 400; }
+.plb-name { min-width: 0; font-size: 1rem; line-height: 1.35; overflow-wrap: anywhere; }
+.plb-name b { font-weight: 600; }
+.plb-val { font-family: var(--serif); font-size: 1.25rem; color: var(--text); font-variant-numeric: lining-nums tabular-nums; white-space: nowrap; }
+.plb-go { width: 16px; height: 16px; color: var(--text-3); }
+.plb-li.is-you .plb-row { background: var(--sage-100); box-shadow: inset 3px 0 0 var(--forest-800); }
+.plb-gap { margin: -6px 0; text-align: center; color: var(--text-3); letter-spacing: 0.2em; line-height: 1; }
+.plb-empty { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
+.plb-foot { margin: 0; text-align: center; font-size: 0.875rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.plb-foot-s { margin: -8px 0 0; text-align: center; font-size: 0.8125rem; color: var(--text-3); }
+
+/* ---- Sheets: one golfer's rounds, a scorecard ---- */
+.plb-sheet { display: flex; flex-direction: column; gap: 14px; }
+.plb-who { display: flex; align-items: center; gap: 12px; }
+.plb-who-n { margin: 0; font-size: 1.0625rem; font-weight: 500; }
+.plb-who-s { margin: 0; font-size: 0.875rem; color: var(--text-2); }
+.plb-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: var(--sage-50); border-radius: var(--radius-card); }
+.plb-tile { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: 10px 12px; border-left: 1px solid var(--border); }
+.plb-tile:first-child { border-left: 0; }
+.plb-tile-k { font-size: 0.8125rem; color: var(--text-2); }
+.plb-tile-v { font-family: var(--serif); font-size: 1.375rem; color: var(--text); line-height: 1.2; font-variant-numeric: lining-nums tabular-nums; }
+.plb-lead { margin: 0; font-size: 0.9375rem; color: var(--text-2); }
+.plb-sh { margin: 4px 0 0; font: 600 0.9375rem/1.3 var(--sans); color: var(--text); }
+body.portal .p-list.plb-rounds > li { padding: 0; min-height: 0; display: block; }
+.plb-round {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; min-height: 60px; padding: 8px 14px; border: 0; background: none; font: inherit; color: var(--text); text-align: left; cursor: pointer;
+}
+@media (hover: hover) { .plb-round:hover { background: var(--sage-50); } }
+.plb-round:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--forest-700); }
+.plb-r-main { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }
+.plb-round > .plb-best, .plb-round > .plb-r-k, .plb-round > .plb-go { flex: none; }
+.plb-r-d { font-size: 0.9375rem; font-weight: 500; }
+.plb-r-s { font-size: 0.8125rem; color: var(--text-2); overflow-wrap: anywhere; }
+.plb-r-k { display: flex; flex-direction: column; align-items: flex-end; min-width: 2.5rem; }
+.plb-r-kn { font-family: var(--serif); font-size: 1.125rem; line-height: 1.2; font-variant-numeric: lining-nums tabular-nums; }
+.plb-r-kl { font-size: 0.75rem; color: var(--text-3); }
+.plb-best { padding: 2px 8px; border-radius: 999px; background: var(--forest-800); color: var(--on-dark); font-size: 0.75rem; font-weight: 500; }
+.plb-quiet { margin: 0; font-size: 0.875rem; color: var(--text-3); }
+.plb-card-sub { margin: 0; font-size: 0.9375rem; color: var(--text-2); }
+.plb-card-sub + .plb-card-sub { margin-top: -10px; }
+.plb-card-wrap { overflow-x: auto; }
+.plb-card { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 0.875rem; font-variant-numeric: tabular-nums; }
+.plb-card col.plb-col-l { width: 3.1rem; }
+.plb-card col.plb-col-t { width: 2.4rem; }
+.plb-card th, .plb-card td { padding: 6px 0; text-align: center; border-bottom: 1px solid var(--border); font-weight: 400; color: var(--text); }
+.plb-card th[scope=row] { text-align: left; color: var(--text-2); font-size: 0.8125rem; }
+.plb-card tr:first-child th { color: var(--text-2); font-size: 0.8125rem; }
+.plb-card th:last-child, .plb-card td:last-child { font-weight: 600; }
+.plb-card-you td { font-weight: 500; }
+.plb-sc { display: inline-flex; align-items: center; justify-content: center; min-width: 1.6em; height: 1.6em; border-radius: 4px; }
+.plb-sc.is-birdie { border-radius: 50%; box-shadow: inset 0 0 0 1px var(--forest-700); }
+.plb-sc.is-eagle { border-radius: 50%; background: var(--forest-700); color: var(--surface); }
+.plb-sc.is-bogey { box-shadow: inset 0 0 0 1px var(--border-strong); }
+.plb-sc.is-double { background: var(--sage-200); box-shadow: inset 0 0 0 1px var(--forest-500); }
+.plb-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0; font-size: 0.8125rem; color: var(--text-2); }
+.plb-legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.plb-legend .plb-sc { font-size: 0.75rem; }
+
+@media (max-width: 420px) {
+  .plb-row { gap: 10px; padding-left: 8px; padding-right: 10px; }
+  .plb-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .plb-tile:nth-child(3) { border-left: 0; }
+  .plb-tile:nth-child(n+3) { border-top: 1px solid var(--border); }
+  .plb-round { gap: 8px; padding: 8px 10px; }
+  .plb-r-k { min-width: 2rem; }
+  .plb-card col.plb-col-l { width: 2.8rem; }
+  .plb-card col.plb-col-t { width: 2.1rem; }
+}
+@media (min-width: 768px) {
+  .plb-chips { flex-wrap: wrap; overflow: visible; margin: 0; padding: 0; }
+  body.portal .plb-period { width: auto; max-width: 420px; }
+}
+body.portal .plb-li.is-you .avatar.light { background: var(--surface); }

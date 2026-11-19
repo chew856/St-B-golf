@@ -137,3 +137,228 @@
   else if (portal) setTimeout(run, 0);
   else run();
 })();
+
+/* Club.leaderboard: the board maths shared by the staff Leaderboard (js/modules/reports-leaderboard.js) and the
+   members' Leaderboards page (js/portal/leaderboards.js), so both rank on the same rounds with the same rules.
+
+   A round is (a) a score post (collection scorePosts), attested or not, or (b) a tournament card entered by staff
+   (tournaments[].field[], status final or live) with all 18 holes in. A member who also posted a score on the day of a
+   tournament round is counted once, from the tournament card. A golfer qualifies with `min` rounds in the period
+   (MIN, 10, unless the members' view sets its own). Net = gross less the course handicap (the one saved with a post,
+   or for a tournament card the one Club.shared.events.courseHcp works out). Par and stroke index come from 'holes'.
+
+   Club.leaderboard.compute(from, to, min)   -> { rounds, byKey, golfers, byId, records, once, qual, unq, tot }
+   Club.leaderboard.BOARDS[key]              -> { set, by, desc, has(g), val(g), date(g)? } (how a board ranks)
+   Club.leaderboard.ranked(d, key, keep)     -> qualified golfers on a board, best first, { g, v, pos }; equal values
+                                                share a place. keep(g): leave golfers out first (the places close up).
+
+   Members' view (staff choose it on the staff Leaderboard; stored as getObj('memberLeaderboard')):
+   settings(), DEFAULTS, save(next), MEMBER_BOARDS, period(kind), defaultPeriod(settings), visible(g), memberBoard(o). */
+(function () {
+  'use strict';
+  const S = window.Club && Club.store;
+  if (!S) return;
+  const MIN = 10;
+
+  function EV() { return (Club.shared && Club.shared.events) || {}; }
+  function sum(a) { return a.reduce(function (t, v) { return t + (+v || 0); }, 0); }
+  function r1(x) { return Math.round(x * 10 + 1e-9) / 10; }
+  function holes18() {
+    const hs = S.all('holes').slice().sort(function (a, b) { return a.number - b.number; });
+    return hs.length === 18 ? hs : (EV().holeList ? EV().holeList() : []);
+  }
+
+  /* ---------------- The rounds, golfers and hole records of a period ---------------- */
+  function compute(from, to, min) {
+    min = min > 0 ? +min : MIN;
+    const inR = function (d) { return d && d >= from && d <= to; };
+    const hs18 = holes18(), rounds = [], byKey = {};
+    const part = function (n, nine) { return n === 9 ? (nine === 'back' ? hs18.slice(9) : hs18.slice(0, 9)) : hs18; };
+    S.all('scorePosts').forEach(function (p) {
+      if (!p || !p.memberId || !inR(p.date) || typeof p.gross !== 'number') return;
+      const n = +p.holes === 9 ? 9 : 18, hs = part(n, p.nine), ch = +p.courseHandicap || 0;
+      const sc = p.entry === 'hole' && Array.isArray(p.holeScores) && hs.length && p.holeScores.length === hs.length ? p.holeScores : null;
+      rounds.push({ key: 'p:' + p.id, kind: 'post', mid: p.memberId, date: p.date, n: n, nine: n === 9 ? (p.nine === 'back' ? 'back' : 'front') : null, tees: p.tees,
+        gross: p.gross, ch: ch, net: p.gross - ch, scores: sc, hs: hs, attestedBy: p.attestedBy || null, index: typeof p.indexUsed === 'number' ? p.indexUsed : null });
+    });
+    let once = 0;
+    S.all('tournaments').forEach(function (t) {
+      if (!t || (t.status !== 'final' && t.status !== 'live') || !inR(t.date) || hs18.length !== 18) return;
+      (t.field || []).forEach(function (p) {
+        if (!p || !p.memberId || !Array.isArray(p.scores) || p.scores.length < 18) return;
+        const card = p.scores.slice(0, 18);
+        if (card.some(function (v) { return v == null; })) return;             /* a round counts when all 18 holes are in */
+        const gross = sum(card), ch = EV().courseHcp ? EV().courseHcp(p.handicap, hs18) : 0;
+        /* The member's own post of the same day: counted once, from the tournament card */
+        const same = rounds.filter(function (r) { return r.kind === 'post' && r.mid === p.memberId && r.date === t.date && r.n === 18; });
+        const dup = same.filter(function (r) { return r.gross === gross; })[0] || same[0];
+        if (dup) { rounds.splice(rounds.indexOf(dup), 1); once++; }
+        rounds.push({ key: 't:' + t.id + ':' + p.memberId, kind: 'trn', mid: p.memberId, date: t.date, n: 18, nine: null, tees: (EV().COURSE || {}).tee || 'green', name: t.name || 'Tournament',
+          gross: gross, ch: ch, net: gross - ch, scores: card, hs: hs18, attestedBy: null, index: typeof p.handicap === 'number' ? p.handicap : null });
+      });
+    });
+    rounds.forEach(function (r) {
+      r.birdies = 0; r.eagles = 0; r.aces = 0; byKey[r.key] = r;
+      if (!r.scores) return;
+      r.scores.forEach(function (v, i) {
+        const par = r.hs[i].par;
+        if (v === 1) r.aces++;                                   /* a hole in one counts as a hole in one and as an eagle */
+        if (v <= par - 2) r.eagles++; else if (v === par - 1) r.birdies++;
+      });
+    });
+
+    const hist = S.all('handicapHistory'), map = {};
+    rounds.forEach(function (r) { (map[r.mid] = map[r.mid] || { id: r.mid, rounds: [] }).rounds.push(r); });
+    const best = function (list, f) { return list.slice().sort(function (a, b) { return f(a) - f(b) || a.date.localeCompare(b.date); })[0] || null; };
+    const gross = function (r) { return r.gross; }, net = function (r) { return r.net; };
+    const golfers = Object.keys(map).map(function (id) {
+      const g = map[id];
+      g.m = Club.members.get(id); g.name = g.m ? Club.members.name(g.m) : 'Former member';
+      g.rounds.sort(function (a, b) { return b.date.localeCompare(a.date); });
+      g.n = g.rounds.length; g.q = g.n >= min;
+      g.r18 = g.rounds.filter(function (r) { return r.n === 18; }); g.r9 = g.rounds.filter(function (r) { return r.n === 9; });
+      g.cards = g.rounds.filter(function (r) { return r.scores; });
+      g.trn = g.rounds.filter(function (r) { return r.kind === 'trn'; }).length;
+      g.bestGross = best(g.r18, gross); g.bestNet = best(g.r18, net); g.best9 = best(g.r9, gross); g.best9Net = best(g.r9, net);
+      g.avgGross = g.r18.length ? sum(g.r18.map(gross)) / g.r18.length : null;
+      g.avgNet = g.r18.length ? sum(g.r18.map(net)) / g.r18.length : null;
+      g.birdies = sum(g.cards.map(function (r) { return r.birdies; })); g.eagles = sum(g.cards.map(function (r) { return r.eagles; })); g.aces = sum(g.cards.map(function (r) { return r.aces; }));
+      /* Most improved: the first handicap revision in the period against the latest */
+      const hh = hist.filter(function (x) { return x && x.memberId === id && typeof x.index === 'number' && inR(x.date); }).sort(function (a, b) { return String(a.date).localeCompare(String(b.date)); });
+      g.imp = hh.length >= 2 ? { from: hh[0], to: hh[hh.length - 1], n: hh.length, list: hh, drop: r1(hh[0].index - hh[hh.length - 1].index) } : null;
+      return g;
+    }).sort(function (a, b) { return b.n - a.n || a.name.localeCompare(b.name); });
+    const byId = {}; golfers.forEach(function (g) { byId[g.id] = g; });
+
+    /* Hole records: every golfer, from hole-by-hole rounds */
+    const records = hs18.map(function (h) { return { hole: h, best: null, made: [], holders: [] }; });
+    rounds.forEach(function (r) {
+      if (!r.scores) return;
+      r.scores.forEach(function (v, i) {
+        const rec = records[r.hs[i].number - 1]; if (!rec) return;
+        if (rec.best == null || v < rec.best) { rec.best = v; rec.made = []; }
+        if (v === rec.best) rec.made.push(r);
+      });
+    });
+    records.forEach(function (rec) {
+      rec.made.sort(function (a, b) { return a.date.localeCompare(b.date) || byId[a.mid].name.localeCompare(byId[b.mid].name); });
+      const seen = {};
+      rec.made.forEach(function (r) { if (seen[r.mid]) { seen[r.mid].times++; return; } seen[r.mid] = { g: byId[r.mid], first: r, times: 1 }; rec.holders.push(seen[r.mid]); });
+    });
+
+    const cards = rounds.filter(function (r) { return r.scores; });
+    return {
+      from: from, to: to, min: min,
+      rounds: rounds, byKey: byKey, golfers: golfers, byId: byId, records: records, once: once,
+      qual: golfers.filter(function (g) { return g.q; }), unq: golfers.filter(function (g) { return !g.q; }),
+      tot: { rounds: rounds.length, posts: rounds.filter(function (r) { return r.kind === 'post'; }).length, trn: rounds.filter(function (r) { return r.kind === 'trn'; }).length,
+        cards: cards.length, totalOnly: rounds.length - cards.length, nine: rounds.filter(function (r) { return r.n === 9; }).length,
+        attested: rounds.filter(function (r) { return r.kind === 'post' && r.attestedBy; }).length,
+        birdies: sum(cards.map(function (r) { return r.birdies; })), eagles: sum(cards.map(function (r) { return r.eagles; })), aces: sum(cards.map(function (r) { return r.aces; })) }
+    };
+  }
+
+  /* ---------------- How each board ranks ----------------
+     set: which of the golfer's rounds sit behind the number; by: gross or net; desc: higher is better;
+     has(g): the golfer belongs on the board; val(g): the number; date(g): earlier first among equal values. */
+  const BOARDS = {
+    gross: { set: 'r18', by: 'gross', has: function (g) { return !!g.bestGross; }, val: function (g) { return g.bestGross.gross; }, date: function (g) { return g.bestGross.date; } },
+    net: { set: 'r18', by: 'net', has: function (g) { return !!g.bestNet; }, val: function (g) { return g.bestNet.net; }, date: function (g) { return g.bestNet.date; } },
+    avgGross: { set: 'r18', by: 'gross', has: function (g) { return g.avgGross != null; }, val: function (g) { return r1(g.avgGross); } },
+    avgNet: { set: 'r18', by: 'net', has: function (g) { return g.avgNet != null; }, val: function (g) { return r1(g.avgNet); } },
+    nine: { set: 'r9', by: 'gross', has: function (g) { return !!g.best9; }, val: function (g) { return g.best9.gross; }, date: function (g) { return g.best9.date; } },
+    nineNet: { set: 'r9', by: 'net', has: function (g) { return !!g.best9Net; }, val: function (g) { return g.best9Net.net; }, date: function (g) { return g.best9Net.date; } },
+    birdies: { set: 'cards', desc: true, has: function (g) { return g.birdies > 0; }, val: function (g) { return g.birdies; } },
+    eagles: { set: 'cards', desc: true, has: function (g) { return g.eagles > 0; }, val: function (g) { return g.eagles; } },
+    aces: { set: 'cards', desc: true, has: function (g) { return g.aces > 0; }, val: function (g) { return g.aces; } },
+    rounds: { set: 'rounds', desc: true, has: function () { return true; }, val: function (g) { return g.n; } },
+    improved: { set: 'rounds', desc: true, has: function (g) { return !!g.imp && g.imp.drop > 0; }, val: function (g) { return g.imp.drop; } }
+  };
+  /** Qualified golfers on a board, best first; equal values share a place. keep(g) leaves golfers out before ranking. */
+  function ranked(d, key, keep) {
+    const b = BOARDS[key];
+    if (!b) return [];
+    const list = d.qual.filter(function (g) { return b.has(g) && (!keep || keep(g)); }).map(function (g) { return { g: g, v: b.val(g) }; });
+    list.sort(function (x, y) {
+      return (b.desc ? y.v - x.v : x.v - y.v) || (b.date ? b.date(x.g).localeCompare(b.date(y.g)) : 0) || x.g.name.localeCompare(y.g.name);
+    });
+    list.forEach(function (x) { x.pos = 1 + list.filter(function (o) { return b.desc ? o.v > x.v : o.v < x.v; }).length; });
+    return list;
+  }
+
+  /* ---------------- Members' view ----------------
+     The boards members can be shown. gross/net: a board with both (the Gross | Net switch); key: a board with one. */
+  const MEMBER_BOARDS = [
+    { id: 'low', label: 'Low round', gross: 'gross', net: 'net' },
+    { id: 'average', label: 'Best average', gross: 'avgGross', net: 'avgNet' },
+    { id: 'improved', label: 'Most improved', key: 'improved' },
+    { id: 'birdies', label: 'Birdies', key: 'birdies' },
+    { id: 'eagles', label: 'Eagles and holes in one', key: 'eagles' },
+    { id: 'rounds', label: 'Rounds played', key: 'rounds' }
+  ];
+  const KEY = 'memberLeaderboard';
+  const DEFAULTS = { show: true, boards: { low: true, average: true, improved: true, birdies: true, eagles: false, rounds: false },
+    periods: { month: true, season: true }, scores: 'both', min: MIN, top: 25 };
+  /** The saved members' view, filled out with the defaults (a copy: change it through save). */
+  function settings() {
+    const v = S.getObj(KEY, null) || {};
+    const out = {
+      show: v.show !== false,
+      boards: Object.assign({}, DEFAULTS.boards, v.boards || {}),
+      periods: Object.assign({}, DEFAULTS.periods, v.periods || {}),
+      scores: v.scores === 'gross' || v.scores === 'net' ? v.scores : 'both',
+      min: Math.max(1, Math.min(50, Math.round(+v.min) || DEFAULTS.min)),
+      top: Math.max(1, Math.min(500, Math.round(+v.top) || DEFAULTS.top))
+    };
+    if (!out.periods.month && !out.periods.season) out.periods.season = true;
+    return out;
+  }
+  function save(next) { S.setObj(KEY, JSON.parse(JSON.stringify(next))); }
+  /** A member who turned off "Show me on the members' leaderboards" in the portal Profile. Staff boards still show them. */
+  function visible(g) { return !(g && g.m && g.m.leaderboardHidden); }
+  const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  /** 'month': this calendar month. 'season': this golf season (Club.season), or the last one while the course is closed. */
+  function period(kind, today) {
+    today = today || Club.date.today();
+    const y = +today.slice(0, 4);
+    if (kind === 'month') {
+      const mo = +today.slice(5, 7), last = new Date(Date.UTC(y, mo, 0)).getUTCDate();
+      return { kind: 'month', from: today.slice(0, 8) + '01', to: today.slice(0, 8) + String(last).padStart(2, '0'), label: MONTHS[mo - 1], year: y };
+    }
+    const sy = Club.season && today < Club.season.start(y) ? y - 1 : y;
+    const from = Club.season ? Club.season.start(sy) : sy + '-04-01', to = Club.season ? Club.season.end(sy) : sy + '-10-31';
+    return { kind: 'season', from: from, to: to, label: sy + ' season', year: sy, closed: today > to };
+  }
+  /** The period a member sees first: this month while the course is open and someone has qualified in it; otherwise
+      the season (in the off-season, the one just finished). */
+  function defaultPeriod(s) {
+    s = s || settings();
+    const per = ['month', 'season'].filter(function (k) { return s.periods[k]; });
+    if (per.length < 2) return per[0] || 'season';
+    const today = Club.date.today(), board = MEMBER_BOARDS.filter(function (b) { return s.boards[b.id]; })[0];
+    const open = Club.season ? Club.season.inSeason(today) : true;
+    return open && board && memberBoard({ period: 'month', board: board.id, settings: s }).qualified ? 'month' : 'season';
+  }
+  /** The board a member sees. o: { period: 'month'|'season', board: MEMBER_BOARDS id, score: 'gross'|'net', viewerId,
+      settings (optional) }. Golfers hidden from members are left out and the places close up; the first `top` rows show.
+      -> { s, p, board, key, d, list (every visible golfer on the board), rows (the top), qualified, me } */
+  function memberBoard(o) {
+    const s = o.settings || settings();
+    const p = period(o.period === 'month' ? 'month' : 'season', o.today);
+    const board = MEMBER_BOARDS.filter(function (b) { return b.id === o.board; })[0] || MEMBER_BOARDS[0];
+    const score = s.scores === 'both' ? (o.score === 'gross' ? 'gross' : 'net') : s.scores;
+    const key = board.key || board[score];
+    const d = compute(p.from, p.to, s.min);
+    const list = ranked(d, key, visible);
+    const meG = o.viewerId ? d.byId[o.viewerId] : null, meM = o.viewerId ? Club.members.get(o.viewerId) : null;
+    const meRow = list.filter(function (x) { return x.g.id === o.viewerId; })[0] || null;
+    return {
+      s: s, p: p, board: board, score: board.key ? null : score, key: key, d: d, list: list, rows: list.slice(0, s.top),
+      qualified: d.qual.filter(visible).length,
+      me: o.viewerId ? { row: meRow, n: meG ? meG.n : 0, need: Math.max(0, s.min - (meG ? meG.n : 0)), hidden: !!(meM && meM.leaderboardHidden), g: meG } : null
+    };
+  }
+
+  Club.leaderboard = { MIN: MIN, compute: compute, BOARDS: BOARDS, ranked: ranked,
+    MEMBER_BOARDS: MEMBER_BOARDS, KEY: KEY, DEFAULTS: DEFAULTS, settings: settings, save: save, visible: visible, period: period, defaultPeriod: defaultPeriod, memberBoard: memberBoard };
+})();

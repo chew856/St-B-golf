@@ -61,6 +61,7 @@
     const hasShop = all('sales').length > 0, hasDining = all('diningOrders').length > 0;
     const charges = all('charges').filter(function (c) {
       if (c.date !== date || (c.refId && refs[c.refId])) return false;
+      if (c.category === 'F&B assessment') return false;   /* the $375 assessment and its credit lines are pre-payment, not takings: the food counts when bought */
       const src = String(c.source || '').toLowerCase();
       if (hasShop && (src === 'proshop' || src === 'pro shop' || src === 'pos')) return false;
       if (hasDining && src === 'dining') return false;

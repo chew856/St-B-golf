@@ -49,6 +49,14 @@ body.portal {
   --serif: "Lora", "Newsreader", Georgia, serif;
   --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
+  /* ---------- Membership Handbook page (js/portal/handbook.js): the printed handbook's look ---------- */
+  --font-handbook: "Khand", "Arial Narrow", sans-serif;   /* the handbook's tall condensed headings */
+  --hb-ink: #2C3E2F;        /* the handbook's dark green headings */
+  --hb-olive: #879268;      /* St.B olive (the oak in the logo): the cover bands and heading rules */
+  --hb-olive-ink: #5C6743;  /* olive for small text on light */
+  --hb-cream: #F3F1E4;      /* cream wash: the section being read */
+  --hb-paper: #FFFFFF;      /* the page itself, and text on the olive band */
+
   /* ---------- Aliases kept for page stylesheets from the previous pass ---------- */
   --green-900: var(--forest-900); --green-800: var(--forest-800); --green-700: var(--forest-700);
   --green-100: var(--sage-100); --green-50: var(--sage-50);

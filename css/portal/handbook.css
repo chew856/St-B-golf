@@ -1,46 +1,128 @@
 /* ==========================================================================
-   Portal: Handbook (ph-). Tokens only; the section text itself is styled in css/handbook.css (.hb-text).
+   Portal: Handbook (hb-), all on one page like the printed book (approved "Option C", Nov 20).
+   One white sheet: the St.B cover with its olive bands, a contents column on the left that follows the page, and every
+   section open in the handbook's own type (Khand headings, Lora text). Tokens only (--hb-*, --font-handbook in
+   css/portal-theme.css). The shared text rules are in css/handbook.css (.hb-text); the rules here only apply on this page.
    ========================================================================== */
-.ph-title { margin-bottom: 12px; }
-.ph-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; }
-.ph-search { flex: 1 1 18rem; max-width: 36rem; }
-body.portal .ph-pdf { flex: 0 0 auto; min-height: 44px; }
-.ph-meta { display: flex; flex-wrap: wrap; gap: 2px 8px; margin: 10px 0 0; font-size: 0.875rem; color: var(--text-2); }
-.ph-dot { color: var(--text-3); }
-.ph-count { margin: 6px 0 0; min-height: 1.25rem; font-size: 0.875rem; font-weight: 500; color: var(--forest-800); }
-.ph-count:empty { min-height: 0; margin: 0; }
-.ph-layout { margin-top: 16px; }
-.ph-side { margin-bottom: 16px; }
-.ph-toc-g + .ph-toc-g { margin-top: 12px; }
-.ph-toc-g[hidden], .ph-toc li[hidden], .ph-group[hidden], .ph-sec[hidden] { display: none; }
-body.portal .ph-toc h3 { margin: 0 0 2px; font-family: var(--sans); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.02em; color: var(--text-3); text-transform: uppercase; }
-.ph-toc ul { list-style: none; margin: 0; padding: 0; }
-.ph-toc a { display: flex; align-items: center; min-height: 40px; padding: 6px 8px; margin: 0 -8px; border-radius: 8px; font-size: 0.9375rem; color: var(--text); text-decoration: none; }
-@media (hover: hover) { .ph-toc a:hover { background: var(--sage-50); color: var(--forest-800); text-decoration: none; } }
-.ph-tools { display: flex; justify-content: flex-end; margin: -6px 0 4px; }
-.ph-group + .ph-group { margin-top: 24px; }
-.ph-group-h { margin: 0 0 10px; font-size: 1.25rem; }
-.ph-sec .pk-acc-text { gap: 2px; }
-.ph-sum { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.ph-sec.is-open .ph-sum { display: none; }
-.ph-sec .pk-acc-body { padding: 14px 16px 18px; }
-.ph-text { max-width: 68ch; }
-.ph-hit { background: var(--sage-200); color: var(--text); border-radius: 3px; padding: 0 1px; box-shadow: 0 0 0 1px var(--sage-200); }
-.ph-untr { display: flex; gap: 8px; align-items: flex-start; margin: 0 0 12px; padding: 8px 10px; border-radius: 8px; background: var(--sage-50); font-size: 0.875rem; color: var(--text-2); }
-.ph-untr .icon { width: 18px; height: 18px; flex: none; color: var(--forest-500); margin-top: 1px; }
-.ph-none { margin-top: 8px; }
-.ph-foot { margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 0.875rem; color: var(--text-2); }
-.ph-foot p { margin: 0 0 6px; }
-.ph-fr-note { font-style: italic; }
+.hb-page { --hb-gut: 16px; }
+.hb-sheet { background: var(--hb-paper); border-top: 10px solid var(--hb-olive); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
+.hb-sheet [hidden] { display: none !important; }
 
-@media (min-width: 1024px) {
-  .ph-layout { display: grid; grid-template-columns: minmax(15rem, 18rem) minmax(0, 1fr); gap: 2rem; align-items: start; }
-  .ph-side { position: sticky; top: 5.5rem; margin: 0; max-height: calc(100vh - 7rem); max-height: calc(100dvh - 7rem); overflow-y: auto; border-radius: var(--radius-card); }
-  .ph-toc a { min-height: 36px; font-size: 0.875rem; }
-  .ph-main { max-width: 52rem; }
+/* ---------------- Cover ---------------- */
+.hb-cover { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 16px; }
+body.portal .hb-cover-t { margin: 0; padding: 22px 0 16px var(--hb-gut); max-width: 5.6em; overflow-wrap: normal; word-break: keep-all; hyphens: none; font-family: var(--font-handbook); font-weight: 700; font-size: 2.125rem; line-height: 0.86; letter-spacing: 0.01em; text-transform: uppercase; color: var(--hb-ink); }
+.hb-cover-logo { display: block; width: auto; height: 64px; margin: 12px var(--hb-gut) 0 0; }
+.hb-band { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 16px; padding: 12px var(--hb-gut); background: var(--hb-olive); color: var(--hb-paper); }
+body.portal .hb-band-t { margin: 0; font-family: var(--font-display); font-size: 1.0625rem; line-height: 1.35; color: var(--hb-paper); }
+body.portal .hb-band-m { margin: 0; font-size: 0.8125rem; font-weight: 500; color: var(--hb-paper); }
+.hb-dot { margin: 0 0.35em; }
+
+/* ---------------- Body: contents column and the text ---------------- */
+.hb-side { background: var(--surface); border-bottom: 1px solid var(--border); }
+.hb-side-in { padding: 14px var(--hb-gut); }
+.hb-search { position: relative; display: block; }
+.hb-search > .icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; color: var(--text-3); pointer-events: none; }
+body.portal .hb-search .input { width: 100%; padding-left: 44px; padding-right: 44px; font-size: 1rem; background-color: var(--hb-paper); }
+.hb-search .input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+body.portal .hb-clear { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: var(--radius-ctl); background: none; color: var(--text-2); cursor: pointer; }
+.hb-clear .icon { width: 18px; height: 18px; }
+@media (hover: hover) { body.portal .hb-clear:hover { color: var(--text); background: var(--sage-50); } }
+.hb-count { margin: 6px 0 0; font-size: 0.875rem; font-weight: 500; color: var(--hb-olive-ink); }
+.hb-count:empty { display: none; }
+.hb-toc, .hb-side .hb-pdf { display: none; }
+
+/* Phones and small tablets: the contents is a button that stays at the top of the page */
+.hb-jump { position: sticky; top: var(--hb-top, 56px); z-index: 5; padding: 8px var(--hb-gut); background: var(--hb-paper); border-bottom: 1px solid var(--border); }
+body.portal .hb-jump-b { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 0 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-ctl); background: var(--surface); font: inherit; font-size: 0.9375rem; color: var(--text); text-align: left; cursor: pointer; }
+.hb-jump-b > .icon { width: 18px; height: 18px; flex: none; color: var(--hb-olive-ink); }
+.hb-jump-l { flex: none; font-family: var(--font-handbook); font-weight: 600; font-size: 1.0625rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--hb-olive-ink); line-height: 1; padding-top: 2px; }
+.hb-jump-b .hb-dot { margin: 0; color: var(--text-3); }
+.hb-jump-cur { flex: 1 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 600; color: var(--hb-ink); }
+.hb-jump-cur:empty + .hb-jump-chev { margin-left: auto; }
+.hb-jump-b > .hb-jump-chev { margin-left: auto; color: var(--text-2); }
+.hb-jump-b:has(.hb-jump-cur:empty) .hb-dot { display: none; }
+.ps-foot .hb-pdf { width: 100%; }
+
+/* ---------------- The text ---------------- */
+.hb-flow { padding: 26px var(--hb-gut) 32px; min-width: 0; }
+.hb-chapter + .hb-chapter, .hb-group + .hb-group, .hb-group > .hb-chapter + .hb-chapter { margin-top: 40px; }
+body.portal .hb-chap { margin: 0 0 18px; font-family: var(--font-handbook); font-weight: 700; font-size: 2.25rem; line-height: 0.92; letter-spacing: 0.005em; text-transform: uppercase; color: var(--hb-ink); }
+.hb-chap::after { content: ""; display: block; width: 64px; height: 4px; margin-top: 10px; border-radius: 2px; background: var(--hb-olive); }
+body.portal .hb-sub { margin: 24px 0 6px; font-family: var(--font-handbook); font-weight: 600; font-size: 1.625rem; line-height: 1.05; color: var(--hb-ink); }
+.hb-chap + .hb-sec > .hb-sub { margin-top: 0; }
+.hb-sec { scroll-margin-top: calc(var(--hb-top, 56px) + 72px); }
+.hb-sec-h:focus { outline: none; }
+.hb-sec-h:focus-visible { outline: 2px solid var(--forest-700); outline-offset: 4px; border-radius: 2px; }
+
+.hb-flow .hb-text { max-width: 46rem; font-family: var(--font-display); font-size: 1rem; line-height: 1.65; color: var(--text); overflow-wrap: break-word; }
+.hb-flow .hb-text p { margin: 0 0 0.75rem; }
+.hb-flow .hb-text h4 { margin: 1.125rem 0 0.25rem; font-family: var(--font-display); font-size: 1rem; font-weight: 600; color: var(--hb-ink); text-decoration: underline; text-decoration-color: var(--hb-olive); text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.hb-flow .hb-text ul, .hb-flow .hb-text ol { margin: 0.375rem 0 0.875rem; padding-left: 1.375rem; }
+.hb-flow .hb-text li { margin: 0.25rem 0; }
+.hb-flow .hb-text li::marker { color: var(--hb-olive-ink); }
+.hb-flow .hb-text strong { font-weight: 600; color: var(--hb-ink); }
+.hb-flow .hb-text a { color: var(--forest-800); }
+
+/* Two columns: board, management team, hours */
+.hb-kv { display: grid; gap: 4px; margin: 0.25rem 0 0.875rem; max-width: 40rem; }
+.hb-kv > div { display: grid; grid-template-columns: minmax(0, 11fr) minmax(0, 13fr); gap: 16px; }
+.hb-kv dt { font-weight: 500; color: var(--hb-ink); }
+.hb-kv dd { margin: 0; font-variant-numeric: tabular-nums; }
+
+.hb-hit { background: var(--hb-cream); color: var(--text); border-radius: 3px; padding: 0 1px; box-shadow: 0 0 0 1px var(--hb-olive), inset 0 -2px 0 var(--hb-olive); }
+.hb-untr { display: flex; gap: 8px; align-items: flex-start; max-width: 46rem; margin: 0 0 12px; padding: 8px 10px; border-radius: 8px; background: var(--hb-cream); font-size: 0.875rem; color: var(--text-2); }
+.hb-untr .icon { width: 18px; height: 18px; flex: none; color: var(--hb-olive-ink); margin-top: 1px; }
+.hb-none-act { margin: 4px 0 0; text-align: center; }
+.hb-foot { max-width: 46rem; margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 0.875rem; color: var(--text-2); }
+.hb-foot p { margin: 0 0 6px; }
+.hb-fr-note { font-style: italic; }
+
+/* ---------------- Tablets ---------------- */
+@media (min-width: 600px) {
+  .hb-page { --hb-gut: 28px; }
+  body.portal .hb-cover-t { font-size: 3.25rem; padding: 28px 0 20px var(--hb-gut); }
+  .hb-cover-logo { height: 112px; margin-top: 14px; }
+  body.portal .hb-band-t { font-size: 1.125rem; }
+  body.portal .hb-chap { font-size: 2.75rem; }
+  body.portal .hb-sub { font-size: 1.75rem; }
+  .hb-flow .hb-text { font-size: 1.03125rem; }
 }
 
-/* The Club page's Hours (js/portal/club.js) now come from the handbook: the time is the value, the days its label */
+/* ---------------- iPad landscape and desktop: the contents column ---------------- */
+@media (min-width: 1024px) {
+  .hb-page { --hb-gut: 36px; }
+  body.portal .hb-cover-t { font-size: 4rem; padding: 32px 0 24px var(--hb-gut); }
+  .hb-cover-logo { height: 140px; margin: 16px 40px 0 0; }
+  .hb-band { padding: 13px var(--hb-gut); }
+  body.portal .hb-band-t { font-size: 1.1875rem; }
+  .hb-body { display: grid; grid-template-columns: 260px minmax(0, 1fr); }
+  .hb-jump { display: none; }
+  .hb-side { border-bottom: 0; border-right: 1px solid var(--border); border-bottom-left-radius: var(--radius-card); }
+  .hb-side-in { position: sticky; top: calc(var(--hb-top, 64px) + 12px); max-height: calc(100vh - var(--hb-top, 64px) - 12px); max-height: calc(100dvh - var(--hb-top, 64px) - 12px); overflow-y: auto; overscroll-behavior: contain; padding: 22px 0 24px; scrollbar-width: thin; }
+  .hb-find { padding: 0 18px 6px; }
+  body.portal .hb-search .input { min-height: 44px; font-size: 0.9375rem; }
+  .hb-toc { display: block; }
+  body.portal .hb-toc h3 { margin: 0; padding: 12px 22px 3px; font-family: var(--font-handbook); font-weight: 600; font-size: 0.9375rem; line-height: 1.2; letter-spacing: 0.06em; text-transform: uppercase; color: var(--hb-olive-ink); }
+  .hb-toc ul { list-style: none; margin: 0; padding: 0; }
+  body.portal .hb-toc a { display: flex; align-items: center; min-height: 32px; padding: 5px 18px 5px 21px; border-left: 3px solid transparent; font-size: 0.875rem; line-height: 1.3; color: var(--text); text-decoration: none; }
+  body.portal .hb-toc a.is-on { border-left-color: var(--hb-olive); background: var(--hb-cream); font-weight: 700; color: var(--hb-ink); }
+  .hb-side .hb-pdf { display: flex; margin: 16px 18px 0; min-height: 44px; }
+  .hb-flow { padding: 40px 48px 56px; }
+  body.portal .hb-chap { font-size: 3.125rem; margin-bottom: 18px; }
+  body.portal .hb-sub { font-size: 1.875rem; margin-top: 22px; }
+  .hb-kv > div { grid-template-columns: 15rem minmax(0, 1fr); gap: 18px; }
+}
+@media (min-width: 1024px) and (hover: hover) { body.portal .hb-toc a:hover { background: var(--sage-50); color: var(--hb-ink); text-decoration: none; } body.portal .hb-toc a.is-on:hover { background: var(--hb-cream); } }
+@media (min-width: 1024px) and (pointer: coarse) { body.portal .hb-toc a { min-height: 40px; } }
+@media (min-width: 1280px) {
+  .hb-page { --hb-gut: 44px; }
+  .hb-cover-logo { height: 150px; margin-right: 48px; }
+  body.portal .hb-cover-t { font-size: 4.25rem; padding: 34px 0 26px var(--hb-gut); }
+  .hb-body { grid-template-columns: 280px minmax(0, 1fr); }
+  .hb-flow { padding: 40px 72px 60px; }
+}
+
+/* The Club page's Hours (js/portal/club.js) come from the handbook: the time is the value, the days its label */
 .pc-hour-line > span ~ span { color: var(--text); font-variant-numeric: tabular-nums; }
 .pc-hour-src { margin: 12px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; font-size: 0.8125rem; color: var(--text-2); }
 body.portal .pc-hour-src .p-link { font-size: 0.875rem; }

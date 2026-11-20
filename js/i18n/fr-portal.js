@@ -2956,8 +2956,6 @@
       'Download the PDF': 'Télécharger le PDF (en anglais)',
       '2025 Membership Handbook': 'Guide des membres 2025',
       'Contents': 'Table des matières',
-      'Open all sections': 'Ouvrir toutes les sections',
-      'Close all sections': 'Fermer toutes les sections',
       '1 section matches': '1 section correspond',
       'Nothing found': 'Aucun résultat',
       'The handbook is not available': 'Le guide n’est pas disponible',
@@ -3224,5 +3222,24 @@
       }); }
       Club.i18n.add({ strings: o });
     } catch (e) { /* the sentence stays as the shared dictionaries leave it */ }
+  });
+})();
+
+/* ---------------- Handbook one page (js/portal/handbook.js, Nov 20) ----------------
+   The handbook page drawn like the printed book: the cover's olive band, its edition line, the search's clear button
+   and the phones' "Contents" button. Section text and group names stay in Club.handbookFr (block "Handbook"). */
+(function () {
+  if (!window.Club || !Club.i18n || typeof Club.i18n.add !== 'function') return;
+  if (!(document.body ? document.body.classList.contains('portal') : /member\.html/.test(location.pathname))) return;
+  var NB = '\u00A0';
+  Club.i18n.add({
+    strings: {
+      /* the same words as the French handbook's welcome (Club.handbookFr.sections.welcome) */
+      'Welcome to “The Friendly Club”, we are glad you are here!': 'Bienvenue au «' + NB + 'Friendly Club' + NB + '», nous sommes heureux de vous accueillir!',
+      'Clear the search': 'Effacer la recherche'
+    },
+    patterns: [
+      [/^(\d{4}) edition$/, 'Édition $1']
+    ]
   });
 })();

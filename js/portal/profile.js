@@ -111,22 +111,16 @@
 
   /* ---------------- Friends and privacy (memberPrivacy collection, owned by friends.js) ---------------- */
   const SHARE = [
-    { key: 'teeTimes', label: 'Upcoming tee times', text: 'Friends see when you are playing and can ask to join.' },
     { key: 'handicap', label: 'Handicap', text: 'Your handicap index and how it has changed this season.' },
     { key: 'scores', label: 'Scores and results', text: 'League standings and tournament finishes.' }
   ];
   function privacySummary(id) {
     const p = Portal.friends.privacy(id); const on = SHARE.filter(function (x) { return p[x.key]; });
-    return (on.length === SHARE.length ? 'Friends see tee times, handicap and results' : on.length ? 'Friends see ' + on.map(function (x) { return x.label.toLowerCase(); }).join(', ') : 'Nothing shared with friends') + (p.requests === 'none' ? ' · Requests off' : '');
-  }
-  function perFriendSummary(id) {
-    const F = Portal.friends; const fs = F.friendsOf(id);
-    const hid = fs.filter(function (f) { return !F.sharing(id, f).see; }).length, ask = fs.filter(function (f) { const s = F.sharing(id, f); return s.see && !s.join; }).length;
-    return !hid && !ask ? 'All friends can see and join' : [hid ? hid + ' hidden' : '', ask ? ask + ' must ask' : ''].filter(Boolean).join(' · ');
+    return (on.length === SHARE.length ? 'Friends see tee times, handicap and results' : 'Friends see tee times' + (on.length ? ', ' + on.map(function (x) { return x.label.toLowerCase(); }).join(', ') : '')) + (p.requests === 'none' ? ' · Requests off' : '');
   }
   function privacyBody(id) {
     const p = Portal.friends.privacy(id); const blocked = Portal.friends.blockedBy(id);
-    return '<p class="pp-intro">Choose what your friends can see. Your scores can also appear on the members’ leaderboards; you can turn that off below.</p>' +
+    return '<p class="pp-intro">Your friends always see your upcoming tee times and can join them. Choose what else they can see. Your scores can also appear on the members’ leaderboards; you can turn that off below.</p>' +
       '<ul class="pp-comm">' + SHARE.map(function (c) {
         const fid = 'pp_s_' + c.key;
         return '<li><label for="' + fid + '" class="pp-comm-text"><span class="pp-comm-l">' + esc(c.label) + '</span><span class="pp-comm-s">' + esc(c.text) + '</span></label>' +
@@ -136,8 +130,6 @@
         '<div class="segmented pp-seg" role="radiogroup" aria-labelledby="pp-req-l">' + [['all', 'All members'], ['none', 'Nobody']].map(function (o) {
           return '<button type="button" role="radio" data-req="' + o[0] + '" aria-checked="' + (p.requests === o[0]) + '"' + (p.requests === o[0] ? ' class="active"' : '') + '>' + o[1] + '</button>';
         }).join('') + '</div></div>' +
-      '<button type="button" class="pp-set pp-perfriend" data-perfriend>' + Club.icon('members', 'pp-set-ic') + '<span class="pp-set-main"><span class="pp-set-l">Per-friend settings</span><span class="pp-set-s">' +
-        esc(p.teeTimes ? perFriendSummary(id) : 'Off while upcoming tee times are hidden from all friends') + '</span></span>' + Club.icon('chevronRight', 'pp-set-go') + '</button>' +
       (blocked.length ? '<div class="pp-blocked"><span class="pp-label">Blocked members</span><ul class="pp-comm">' + blocked.map(function (b) {
         return '<li><span class="pp-comm-text"><span class="pp-comm-l">' + esc(Portal.friends.nameOf(b)) + '</span></span><button type="button" class="btn btn-sm" data-unblock="' + esc(b) + '">Unblock</button></li>';
       }).join('') + '</ul></div>' : '') +
@@ -245,10 +237,8 @@
         ui.on(sh.body, 'submit', 'form', function (ev, f) { ev.preventDefault(); if (savePrefs(fresh(id), f)) sh.close(); });
       } else if (go === 'privacy') {
         const sh = Portal.openSheet({ title: 'Friends and privacy', content: privacyBody(id), onClose: refresh });
-        ui.on(sh.body, 'click', '[data-perfriend]', function () { Portal.friends.openSharingList(id); });
         ui.on(sh.body, 'change', 'input[data-share]', function (ev, f) {
           const patch = {}; patch[f.dataset.share] = f.checked; Portal.friends.setPrivacy(id, patch);
-          const pf = ui.$('.pp-perfriend .pp-set-s', sh.body); if (pf) pf.textContent = Portal.friends.privacy(id).teeTimes ? perFriendSummary(id) : 'Off while upcoming tee times are hidden from all friends';
           const w = ui.$('.pp-state', f.closest('.pp-comm-ctl')); if (w) w.textContent = f.checked ? 'On' : 'Off';
           ui.toast((SHARE.find(function (x) { return x.key === f.dataset.share; }) || {}).label + (f.checked ? ' shared with friends' : ' hidden from friends') + '. Saved.');
         });

@@ -1408,7 +1408,7 @@
     'Friends see tee times, handicap and results': 'Vos amis voient vos départs, votre handicap et vos résultats',
     'Nothing shared with friends': 'Rien n’est partagé avec vos amis',
     'All friends can see and join': 'Tous vos amis peuvent voir et se joindre',
-    'Choose what your friends can see. Your scores can also appear on the members’ leaderboards; you can turn that off below.': 'Choisissez ce que vos amis peuvent voir. Vos pointages peuvent aussi paraître aux classements des membres; vous pouvez désactiver cette option ci-dessous.',
+    'Your friends always see your upcoming tee times and can join them. Choose what else they can see. Your scores can also appear on the members’ leaderboards; you can turn that off below.': 'Vos amis voient toujours vos départs à venir et peuvent s’y joindre. Choisissez ce qu’ils peuvent voir d’autre. Vos pointages peuvent aussi paraître aux classements des membres; vous pouvez désactiver cette option ci-dessous.',
     'Who can send me friend requests': 'Qui peut m’envoyer des demandes d’amitié',
     'Nobody': 'Personne',
     'Off while upcoming tee times are hidden from all friends': 'Désactivé tant que vos départs à venir sont masqués pour tous vos amis',
@@ -1450,7 +1450,7 @@
   pat(/^(Down|Up) ([\d.]+) since (.+)$/, function (m) { return (m[1] === 'Down' ? 'En baisse de ' : 'En hausse de ') + dec(m[2]) + ' depuis ' + m[3]; });
   pat(/^No change since (.+)$/, 'Aucun changement depuis $1');
   pat(/^(Friends see .+|Friends see tee times, handicap and results|Nothing shared with friends) · Requests off$/, function (m) { return tr(m[1]) + ' · Demandes désactivées'; });
-  pat(/^Friends see (.+)$/, function (m) { return 'Vos amis voient ' + m[1].replace('upcoming tee times', 'vos départs à venir').replace('handicap', 'votre handicap').replace('scores and results', 'vos scores et résultats'); });
+  pat(/^Friends see (.+)$/, function (m) { return 'Vos amis voient ' + m[1].replace('upcoming tee times', 'vos départs à venir').replace(/^tee times/, 'vos départs').replace('handicap', 'votre handicap').replace('scores and results', 'vos scores et résultats'); });
   pat(/^(\d+) hidden( · (\d+) must ask)?$/, function (m) { return m[1] + ' ' + pl(m[1], 'masqué', 'masqués') + (m[2] ? ' · ' + m[3] + ' ' + pl(m[3], 'doit', 'doivent') + ' demander' : ''); });
   pat(/^(\d+) must ask$/, function (m) { return m[1] + ' ' + pl(m[1], 'doit', 'doivent') + ' demander'; });
   pat(/^(.+?) · (\d+) (child|children)$/, function (m) { return m[1] + ' · ' + m[2] + ' ' + pl(m[2], 'enfant', 'enfants'); });
@@ -2721,4 +2721,256 @@
   ];
   P.forEach(function (p) { if (typeof p[1] === 'string') { var to = p[1]; p[1] = function (m) { return m[0].replace(p[0], to); }; } });
   Club.i18n.add({ strings: S, patterns: P });
+})();
+
+/* ==========================================================================
+   Handbook (members' portal and public site)
+   Club.handbookFr: a French translation of the club's 2025 Membership Handbook, keyed by section id
+   (js/shared/handbook-data.js). This is a TRANSLATION for French readers: the club's English handbook is the official
+   text and prevails in case of any difference ("En cas de divergence, la version anglaise prévaut."). A section is
+   shown in French only while its English is still the 2025 text; sections the club edits or adds show in English
+   until they are translated here. Same markup as the English (blank line, "- ", "1. ", "### ", **bold**).
+   Also: the hours of operation lines (both sites) and the portal Handbook page's own words.
+   ========================================================================== */
+(function () {
+  'use strict';
+  var NB = ' ';
+  /* French spacing: a non-breaking space before ":" "%" "$" and inside « » */
+  function nb(s) { return String(s).replace(/ ([:%$»])/g, NB + '$1').replace(/« /g, '«' + NB).replace(/(\d) h (\d\d)/g, '$1' + NB + 'h' + NB + '$2').replace(/(\d) h\b/g, '$1' + NB + 'h'); }
+  var SAME_NOTE = '*Selon l’achalandage et les heures d’ensoleillement. Le mauvais temps ou un faible achalandage en dehors des périodes de pointe peuvent entraîner des écarts par rapport aux heures d’ouverture publiées.';
+  var GALLERY_NOTE = '*Le dernier service dépend de l’achalandage et des heures d’ensoleillement. Le mauvais temps ou un faible achalandage en dehors des périodes de pointe peuvent entraîner des écarts par rapport aux heures d’ouverture publiées.';
+  var T = {
+    'welcome': ['Bienvenue à St. B',
+      '**Bienvenue au « Friendly Club », nous sommes heureux de vous accueillir!**\n\n' +
+      'Ces renseignements visent à vous aider, vous, votre famille et vos invités, à profiter pleinement du Club de golf St. Boniface et à vous y sentir chez vous dès le départ. Ce guide présente les politiques, les règlements et les procédures du Club qui s’appliquent au terrain de golf et au pavillon. Veuillez communiquer avec notre directeur des opérations de golf, notre directeur des opérations du club ou l’administration si vous avez une question, une préoccupation ou un problème qui n’est pas traité ici. Votre avis compte.\n\n' +
+      'Surveillez vos courriels : des mises à jour hebdomadaires présentent les événements à venir et tiennent tout le monde au courant des activités et des nouvelles du club. Nous vous encourageons à prendre le temps de lire ces renseignements, qui vous aideront à rester informé.\n\n' +
+      'Remarque : les renseignements contenus dans ce guide sont de nature générale et demeurent en tout temps sujets à interprétation selon les règlements administratifs du St. Boniface Golf Club et ceux du St. Boniface Golf Club Limited.'],
+    'mission': ['Énoncé de mission du club',
+      'La mission du Club de golf St. Boniface, en tant qu’installation récréative, est d’offrir une ambiance de plaisir et de convivialité pour tous les âges. Cela comprend un terrain de golf compétitif mais abordable, ainsi que des commodités confortables au pavillon et à la boutique du pro. Pour y parvenir, le club mise sur :\n\n' +
+      '- l’examen et l’amélioration continus d’un service à valeur ajoutée sur le terrain de golf, au pavillon et à la boutique du pro;\n' +
+      '- un sentiment d’appartenance, de la détente et une attention aux besoins des membres et de leurs invités;\n' +
+      '- un plan financier responsable qui assure une valeur à ses actionnaires, à ses membres et à ses invités;\n' +
+      '- un comportement de bon citoyen corporatif, dans le respect des enjeux environnementaux et des exigences législatives;\n' +
+      '- la possibilité pour les employés de grandir, de perfectionner leurs compétences et de partager le succès du club.'],
+    'board': ['Conseil d’administration',
+      '- **Présidence :** Michelle Miyai\n' +
+      '- **Vice-présidence :** Duane Budnick\n' +
+      '- **Trésorerie :** Kevin Collins\n' +
+      '- **Présidence sortante :** Ryan Potter\n' +
+      '- **Secrétariat :** Dom Allard\n' +
+      '- **Représentation des dames :** Julie Bihun'],
+    'directors-at-large': ['Administrateurs',
+      '- Greg Yakubovich\n- Dominic Courcelles\n- Maria Sabourin\n- Brian Nazar\n- Thanh Nguyen\n- Julien Lavergne'],
+    'management': ['Équipe de direction',
+      '- **Direction du golf et pro en chef :** Steve Wood\n' +
+      '- **Direction du pavillon :** Carly Dalmyn\n' +
+      '- **Comptabilité :** Leslie Filopoulos\n' +
+      '- **Chef exécutif :** Ian Wong\n' +
+      '- **Coordination des événements :** Morgan Verwymeren\n' +
+      '- **Surintendant du terrain de golf :** Craig Campbell\n' +
+      '- **Surintendant adjoint :** Richard Wright'],
+    'dress-code': ['Code vestimentaire',
+      'Le code vestimentaire du pavillon doit être respecté en tout temps :\n\n' +
+      '**Une tenue de golf appropriée est exigée de tous les joueurs. Les membres sont tenus d’informer leurs invités de nos exigences vestimentaires.**\n\n' +
+      '1. Seuls les crampons de golf souples sont permis sur le terrain et au pavillon. Les crampons doivent être nettoyés avant d’entrer au pavillon.\n' +
+      '2. Shorts : pas plus courts que six (6) pouces au-dessus du genou.\n' +
+      '3. Le port d’une chemise est obligatoire en tout temps.\n' +
+      '4. Les chemises pour hommes doivent avoir des manches et un col.\n' +
+      '5. Les chemises pour femmes doivent avoir des manches ou un col.\n' +
+      '6. Interdits : shorts de sport, pantalons d’entraînement, shorts en jean coupés, camisoles de musculation, hauts bain-de-soleil, camisoles, et chandails de hockey ou de football.\n' +
+      '7. Les femmes peuvent porter des camisoles et des hauts bain-de-soleil de bon goût à l’intérieur du pavillon (sans ventre dénudé).\n\n' +
+      'Le pro en chef, le personnel de la boutique du pro et le préposé au parcours sont autorisés à faire respecter le code vestimentaire. Les joueurs qui ne s’y conforment pas devront se changer, sinon ils ne pourront pas prendre le départ.'],
+    'intoxication': ['État d’ébriété',
+      'En vertu de la Liquor Control Act, il est interdit au Club de vendre ou de servir de l’alcool à toute personne qui est ou semble être en état d’ébriété.'],
+    'alcohol': ['Le service responsable de l’alcool',
+      '**La loi stipule que les employés, la direction et le Club sont légalement tenus de :**\n\n' +
+      '- empêcher les membres et les invités d’atteindre l’état d’ébriété;\n' +
+      '- refuser de servir des boissons alcoolisées à tout membre ou invité qui semble en état d’ébriété ou qui en montre le moindre signe;\n' +
+      '- refuser de servir de l’alcool aux mineurs (moins de 18 ans).\n\n' +
+      'Les boissons alcoolisées ne sont servies que conformément aux règlements de la LGA. Il est interdit d’apporter des boissons alcoolisées sur le terrain de golf, dans le stationnement ou au pavillon. Les fêtes dans le stationnement (tailgating) ne sont pas permises. Seules les boissons alcoolisées achetées au Club peuvent être consommées sur le terrain de golf, au pavillon, sur la terrasse supérieure, sur le patio inférieur ou au site des cérémonies. Les glacières personnelles ne sont pas permises sur le terrain de golf.\n\n' +
+      '**Le non-respect de ces conditions peut entraîner la perte ou la suspension du permis d’alcool du Club.**'],
+    'smoking': ['Usage du tabac',
+      'Conformément au règlement municipal, il est interdit de fumer partout à l’intérieur du pavillon, sur la terrasse supérieure, sur le patio inférieur et dans toute installation extérieure titulaire d’un permis d’alcool. Une zone fumeurs est aménagée sous la terrasse supérieure, du côté sud du pavillon.'],
+    'profanity': ['Langage grossier',
+      'Les grossièretés et les comportements excessivement bruyants ou inappropriés ne seront pas tolérés et feront l’objet de mesures disciplinaires.\n\n' +
+      'Le St. Boniface est fier d’être reconnu comme le « Friendly Club » et s’engage à ce que tous les membres et invités, y compris les juniors, se sentent bienvenus et à l’aise en tout temps au pavillon et sur le terrain de golf.\n\n' +
+      'Les membres sont responsables de leur conduite ainsi que de celle de leur famille et de leurs invités, et doivent veiller à ce qu’elle soit appropriée. Tout comportement inapproprié fera l’objet de mesures disciplinaires.'],
+    'hours': ['Heures d’ouverture',
+      '### Bureau\nDu lundi au vendredi : 8 h 30 à 17 h\n\n' +
+      '### Boutique du pro\nDu lundi au dimanche : 6 h à 22 h*\n\n' + SAME_NOTE + '\n\n' +
+      '### Gallery Taphouse & Grill\nDu lundi au vendredi : 9 h jusqu’au dernier service*\nSamedi et dimanche : 7 h jusqu’au dernier service*\n\n' + GALLERY_NOTE + '\n\n' +
+      '### Voiturette-bar\nDu lundi au vendredi : 10 h jusqu’au crépuscule\nFins de semaine et jours fériés : 9 h jusqu’au crépuscule\n\n' + SAME_NOTE],
+    'adult-categories': ['Catégories de membres adultes et privilèges de jeu',
+      '### Eagle; Eagle 60+; Eagle INT\n' +
+      '- Aucune restriction sur les heures de départ.\n' +
+      '- Réservation jusqu’à 15 jours à l’avance.\n\n' +
+      'INTERMÉDIAIRE ~ 19 à 39 ans (pièce d’identité exigée); 60 ans et plus (pièce d’identité exigée)\n\n' +
+      '### Birdie; Birdie INT\n' +
+      '- En semaine : avant 7 h 30, entre 10 h 30 et 16 h, après 17 h 30.\n' +
+      '- Fins de semaine : jeu le samedi, le dimanche et les jours fériés après 10 h 30 (selon la disponibilité).\n' +
+      '- Lorsqu’un jour férié tombe en semaine, cette journée est traitée comme un jour de fin de semaine.\n' +
+      '- Réservation jusqu’à 13 jours à l’avance.\n\n' +
+      'INTERMÉDIAIRE ~ 19 à 39 ans au 1er août 2025 (pièce d’identité exigée).\n\n' +
+      '### Adhésion sociale\n' +
+      '- 5 bons de golf inclus\n' +
+      '- Participation, à titre de membre, au cocktail d’ouverture en avril et à la soirée de clôture en octobre.\n' +
+      '- Rabais de membre de 10 % au Gallery et à la boutique du pro\n' +
+      '- Maintien du statut de membre\n\n' +
+      '### Adhésion au pavillon (Club House)\n' +
+      '- Participation, à titre de membre, au cocktail d’ouverture en avril et à la soirée de clôture en octobre.\n' +
+      '- Rabais de membre de 10 % au Gallery et à la boutique du pro\n' +
+      '- Maintien du statut de membre'],
+    'youth-categories': ['Catégories de membres jeunesse et privilèges de jeu',
+      '### Jeune adulte\n' +
+      '- En semaine : entre 10 h 30 et 16 h, après 17 h 30.\n' +
+      '- Fins de semaine : jeu le samedi, le dimanche et les jours fériés après 10 h 30 (selon la disponibilité).\n' +
+      '- Lorsqu’un jour férié tombe en semaine, cette journée est traitée comme un jour de fin de semaine.\n' +
+      '- Réservation jusqu’à 8 jours à l’avance.\n\n' +
+      '### Junior (JR)\n' +
+      '- Doit satisfaire aux exigences de la MGA : 18 ans ou moins au 31 août 2025.\n' +
+      '- En semaine : entre 10 h 30 et 16 h, après 17 h 30.\n' +
+      '- Fins de semaine : jeu le samedi, le dimanche et les jours fériés après 11 h (selon la disponibilité).\n' +
+      '- Lorsqu’un jour férié tombe en semaine, cette journée est traitée comme un jour de fin de semaine.\n' +
+      '- Réservation jusqu’à 8 jours à l’avance.'],
+    'booking': ['Procédures de réservation des heures de départ',
+      '**Toutes les heures de départ peuvent être réservées au moyen du système de réservation en ligne https://stbonifacegolfclub.clubhouseonline-e3.net/login.aspx ou par la boutique du pro, du lundi au dimanche, 7:00-9:00 pm.**\n\n' +
+      'Semaine (du lundi au vendredi) : réservations en ligne et au jour le jour (libre-service)\n\n' +
+      'Fins de semaine (samedi, dimanche et jours fériés) : système de tirage\nInscription au tirage de 13 à 15 jours à l’avance\nExemple : le vendredi, vous pouvez vous inscrire au tirage pour jouer le samedi deux semaines plus tard.\n\n' +
+      'Le tirage se fait comme suit :\nLe tirage du samedi (12 h) a lieu le dimanche qui suit la date limite (13 jours avant)\nLe tirage du dimanche (12 h) a lieu le lundi qui suit la date limite (13 jours avant)'],
+    'ballot-rules': ['Règles du tirage',
+      '- Inscrivez-vous au tirage sur www.stbonifacegolfclub.com, puis réservez une heure de départ.\n' +
+      '- Un numéro de compte de membre et un mot de passe doivent d’abord être configurés\n' +
+      '- Les heures de départ réservées par téléphone et en ligne sont toujours acceptées après le tirage.\n' +
+      '- Toutes les catégories de membres peuvent utiliser le système de tirage.\n\n' +
+      '*Pour toute question sur le système de tirage ou sur la configuration de votre compte et de votre mot de passe, adressez-vous au pro en chef ou au personnel de la boutique du pro.'],
+    'member-guest': ['Politique sur les invités des membres',
+      'Un seul invité par membre est permis pendant les périodes de pointe (PRIME) suivantes :\n\n' +
+      '### Vendredi : toute la journée\n' +
+      '- Les vendredis sont réservés exclusivement aux membres.\n' +
+      '- Aucun joueur payant des droits de jeu ne sera admis le vendredi, sauf à titre d’invité d’un membre.\n' +
+      '- Aucun tournoi ni événement de golf extérieur ne sera réservé un vendredi.\n\n' +
+      '### Samedi, dimanche et jours fériés : de 6 h à 11 h\n\n' +
+      'Maximum de 3 invités par membre pendant toutes les autres heures de départ.'],
+    'fivesome': ['Politique sur les groupes de cinq',
+      'Les groupes de cinq sont permis à la discrétion de la boutique du pro, à raison d’un maximum de 2 groupes de cinq par heure, afin d’accueillir le golfeur seul qui cherche une partie. Le jeu en groupes de plus de cinq joueurs (six ou plus) ne sera permis sous aucun prétexte. Toute infraction à cette politique entraînera une suspension de sept (7) jours de tous les privilèges du club, sur le terrain comme au pavillon.'],
+    'pace-of-play': ['Politique sur le rythme de jeu',
+      'Pour maintenir le rythme de jeu, le personnel de la boutique du pro et les préposés au parcours ont pour consigne de faire respecter les règles suivantes :\n\n' +
+      '- Soyez prêt à frapper quand c’est votre tour.\n' +
+      '- Évitez les élans d’exercice excessifs avant de frapper.\n' +
+      '- Suivez le rythme du groupe qui vous précède.\n' +
+      '- Le rythme de jeu ne devrait pas dépasser 13 minutes par trou.'],
+    'handicaps': ['Politique sur les handicaps',
+      'Un handicap Golf Canada est offert à tous les membres et compris dans l’adhésion. Pour obtenir votre handicap et le maintenir, adressez-vous au personnel de la boutique du pro, qui vous aidera à l’établir. Tous les scores doivent être inscrits. Le système détermine le potentiel des joueurs en utilisant seulement les huit (8) meilleurs des vingt (20) derniers scores inscrits.'],
+    'practice': ['Installations d’exercice',
+      'Les membres peuvent s’exercer uniquement aux endroits suivants : le vert d’exercice à l’est de l’entrée de la boutique du pro, l’aire d’exercice au sud de l’allée du 18e trou, ainsi que l’aire d’approche, la fosse de sable et le vert d’exercice situés entre l’allée du 1er trou et le vert du 17e.'],
+    'shotgun': ['Départs simultanés',
+      'Des départs simultanés pour les membres peuvent être prévus au début et à la fin de la saison, et à l’occasion pour accueillir des tournois, qui représentent des revenus essentiels pour le Club. Les procédures habituelles de réservation des heures de départ sont suspendues pendant ces événements. Les départs simultanés sont généralement prévus à 7 h 30 pour les membres et à midi pour les tournois. Pour participer, inscrivez-vous à la boutique du pro ou réservez en ligne. Prévoyez arriver environ une demi-heure avant le départ pour avoir le temps de vous rendre à votre trou désigné. La boutique du pro affichera la liste des groupes et le trou où chacun commencera.'],
+    'club-storage': ['Entreposage des bâtons',
+      'L’entreposage et le nettoyage des bâtons sont offerts à tous les membres et compris dans leur cotisation. L’entreposage est offert moyennant des frais aux membres corporatifs. Nous rappelons aux membres qu’ils NE sont PAS admis dans l’arrière-boutique et que l’entreposage est à leurs propres risques. Le Club décline toute responsabilité en cas de perte, de vol ou de dommages.\n' +
+      '*Les bâtons doivent être retirés de l’entreposage au plus tard le 31 octobre de la saison en cours.'],
+    'power-carts': ['Voiturettes motorisées',
+      'Des voiturettes motorisées sont offertes en location à la boutique du pro. L’utilisation de voiturettes motorisées personnelles n’est pas permise. *Les voiturettes motorisées ne sont pas permises sur les tertres de départ ni sur les verts.\n\n' +
+      'Des chariots manuels sont fournis à la boutique du pro pour tous les membres. Les chariots manuels personnels sont permis sur le terrain. *Les chariots manuels ne sont pas permis sur les tertres de départ ni sur les verts.'],
+    'cart-paths': ['Sentiers pour voiturettes',
+      'Les golfeurs qui utilisent une voiturette motorisée sont priés de rester sur les sentiers ou dans l’herbe longue autant que possible. Sur les trous de normale trois (3), veuillez utiliser uniquement le sentier. La boutique du pro ou le préposé au parcours informera les golfeurs de la règle du jour pour les voiturettes.'],
+    'tournaments': ['Renseignements sur les tournois',
+      'Un tournoi est tout événement qui nécessite six (6) heures de départ consécutives ou plus, ou tous les tertres de départ à une heure donnée (départ simultané).\n\n' +
+      'Il y aura un maximum de trois (3) tournois par semaine en mai, juin, septembre et octobre.\n\n' +
+      'Il y aura un maximum de deux (2) tournois par semaine en juillet et en août.'],
+    'refund': ['Politique de remboursement',
+      'Des frais administratifs de 50,00 $ s’appliquent à tout remboursement de cotisation de golf. Les demandes de remboursement d’adhésion doivent être reçues par écrit avant le 31 mai, même si aucune partie n’a été jouée; des frais administratifs de 50,00 $ s’appliquent à tout remboursement. Aucun remboursement après le 31 mai. Le conseil d’administration examinera les demandes reçues après le 31 mai au cas par cas (un billet médical ou une preuve de déménagement hors de la province peut être exigé). Un crédit de deux (2) mois applicable à la saison suivante peut être accordé.'],
+    'fb-assessment': ['Cotisation alimentation et boissons',
+      'Tous les membres adultes doivent payer à l’avance une cotisation alimentation et boissons de 375,00 $ par saison (du 1er avril au 31 octobre). Cette cotisation est portée en crédit à votre compte; tous les achats d’aliments et de boissons faits au pavillon ou auprès des voiturettes-bars sur le terrain sont déduits de ce crédit. Cette cotisation n’est pas transférable. Les pourboires ne sont PAS imputés à la cotisation.'],
+    'credit': ['Politique de crédit',
+      'Le privilège de porter des achats au compte n’est accordé qu’aux membres en règle auprès du pavillon et de la boutique du pro. Chaque membre reçoit une carte de membre indiquant un numéro de compte du Club aux fins de facturation. Cette carte doit être présentée sur demande avant de porter un achat au compte. Les membres qui ne peuvent présenter leur carte de membre en vigueur peuvent se voir refuser ce privilège.'],
+    'accounts-receivable': ['Politique sur les comptes clients',
+      '**Paiement du compte :**\n' +
+      '- une carte de crédit valide est exigée de tous les membres ayant des privilèges de compte; elle ne sera utilisée que si le compte est en souffrance depuis 60 jours ou plus.\n' +
+      '- Les relevés de compte sont envoyés par courriel la première semaine de chaque mois\n' +
+      '- Le solde du compte est exigible sur réception du relevé mensuel et doit être payé en entier au plus tard le dernier jour du mois.\n\n' +
+      '**Tout membre qui ne paie pas une dette envers le Club s’expose aux mesures suivantes :**\n' +
+      '- **60 jours** après la date du relevé : suspension des privilèges de compte.\n' +
+      '- **90 jours** après la date du relevé : suspension des privilèges de réservation des heures de départ et de jeu.\n' +
+      '- **120 jours** après la date du relevé : suspension de TOUS les privilèges, y compris le pavillon, le vestiaire et les commodités.\n' +
+      '- **En souffrance à la fin de l’année** : le compte peut être confié à une agence de recouvrement et la part, confisquée. La valeur de la part est alors appliquée au solde impayé du compte. Le membre demeure responsable de tout solde impayé supérieur à la valeur de la part.\n' +
+      '- **Défaut de paiement chronique** : aucun privilège de porter des achats au compte, pour une durée indéterminée, une fois la cotisation alimentation et boissons épuisée.'],
+    'time-payment': ['Politique de paiement échelonné',
+      'Le privilège de paiement échelonné de l’adhésion est offert aux membres en règle. Des frais administratifs de 50 $ s’appliquent à toute demande de paiement échelonné.\n\n' +
+      '- Une carte de crédit valide est exigée pour être accepté au paiement échelonné; cette carte sera débitée si un paiement mensuel est manqué.\n' +
+      '- Les paiements sont dus le 15 de chaque mois.\n' +
+      '- Modes de paiement acceptés : TEF, comptant, chèque, carte de débit ou carte de crédit.\n' +
+      '- Les paiements par carte de crédit sont assujettis à des frais de traitement de 1,5 %\n' +
+      '- Toutes les cotisations doivent être payées en entier au plus tard le 15 août de l’année d’adhésion.\n\n' +
+      'Si un membre ne fait pas ses paiements échelonnés à temps et que la carte de crédit fournie ne permet pas de régler le solde dû, les mesures suivantes s’appliquent :\n\n' +
+      '- **En souffrance depuis 30 jours** : suspension de tous les privilèges de réservation des heures de départ et de golf.\n' +
+      '- **Défaut de paiement chronique** : aucun privilège de paiement échelonné ne sera accordé à l’avenir.'],
+    'handicap-parking': ['Stationnement pour personnes handicapées',
+      'Plusieurs places pour personnes handicapées sont réservées le long de la clôture face au vert du 18e trou. Les véhicules doivent afficher l’identification appropriée. Si votre véhicule porte une vignette pour personnes handicapées, mais que vous ne transportez pas une personne ayant un handicap physique, veuillez ne pas vous garer dans ces places réservées uniquement aux personnes ayant un handicap physique.'],
+    'lockers': ['Casiers',
+      'Les casiers sont attribués aux membres pour la saison de golf. Ils doivent être vidés et les cadenas retirés au plus tard le 31 octobre pour permettre l’entretien et le nettoyage d’hiver. *Un casier par membre.\n\n' +
+      'Des casiers pour invités sont offerts pour la journée, en nombre limité. Renseignez-vous au bureau pour connaître la disponibilité.'],
+    'showers-towels': ['Douches et serviettes',
+      'Des douches et des serviettes sont offertes dans chaque vestiaire pour les membres et les invités. Les serviettes de bain vertes doivent rester dans les vestiaires.'],
+    'pets': ['Animaux',
+      'Les animaux ne sont pas permis sur le terrain de golf ni au pavillon, sauf autorisation de la direction des opérations.']
+  };
+  var sections = {};
+  Object.keys(T).forEach(function (k) { sections[k] = { title: nb(T[k][0]), body: nb(T[k][1]) }; });
+  window.Club = window.Club || {};
+  Club.handbookFr = {
+    sections: sections,
+    groups: { 'Welcome': 'Bienvenue', 'Administration': 'Administration', 'Codes of conduct': 'Codes de conduite', 'General information': 'Renseignements généraux',
+      'Tee time booking': 'Réservation des heures de départ', 'Golf course policies': 'Politiques du terrain de golf', 'Clubhouse policies': 'Politiques du pavillon' }
+  };
+
+  if (!Club.i18n || typeof Club.i18n.add !== 'function') return;
+  /* Hours of operation lines (Club.handbook.hours): the portal's Club page and the public site's Good to know */
+  function hm(h, m, ap) { h = +h % 12 + (ap === 'PM' ? 12 : 0); return h + NB + 'h' + (m === '00' ? '' : NB + m); }
+  var shared = {
+    strings: {
+      'Office': 'Bureau', 'Pro Shop': 'Boutique du pro', 'Beer Cart': 'Voiturette-bar', 'Gallery Taphouse & Grill': 'Gallery Taphouse & Grill',
+      'Monday to Friday': 'Du lundi au vendredi', 'Monday to Sunday': 'Du lundi au dimanche', 'Saturday & Sunday': 'Samedi et dimanche', 'Weekends & holidays': 'Fins de semaine et jours fériés',
+      '*as dictated by business and hours of daylight. Inclement weather or lack of business during non-peak times may cause a deviation from the hours of operation as published.': SAME_NOTE,
+      '*Last Call as dictated by business & hours of daylight. Inclement weather or lack of business during non-peak times may cause a deviation from the hours of operation as published.': GALLERY_NOTE,
+      'From the club’s 2025 Membership Handbook.': 'Selon le guide des membres 2025 du club.',
+      'Read the handbook': 'Lire le guide',
+      'Office · Pro Shop · Gallery · Beer Cart': 'Bureau · Boutique du pro · Gallery · Voiturette-bar'
+    },
+    patterns: [
+      [/^(\d{1,2}):(\d\d) (AM|PM) to (\d{1,2}):(\d\d) (AM|PM)(\*?)$/, function (m) { return hm(m[1], m[2], m[3]) + ' à ' + hm(m[4], m[5], m[6]) + m[7]; }],
+      [/^(\d{1,2}):(\d\d) (AM|PM) to last call(\*?)$/, function (m) { return hm(m[1], m[2], m[3]) + ' jusqu’au dernier service' + m[4]; }],
+      [/^(\d{1,2}):(\d\d) (AM|PM) to dusk(\*?)$/, function (m) { return hm(m[1], m[2], m[3]) + ' jusqu’au crépuscule' + m[4]; }]
+    ]
+  };
+  Club.i18n.add(shared);
+
+  /* Portal only (member.html): the Handbook page (js/portal/handbook.js) and the Club page's links to it */
+  var portal = document.body ? document.body.classList.contains('portal') : /member\.html/.test(location.pathname);
+  if (!portal) return;
+  Club.i18n.add({
+    strings: {
+      'Handbook': 'Guide',
+      'Membership handbook': 'Guide des membres',
+      'Club policies, rules and procedures for the golf course and clubhouse.': 'Politiques, règlements et procédures du club pour le terrain de golf et le pavillon.',
+      'Search the handbook': 'Chercher dans le guide',
+      'Download the PDF': 'Télécharger le PDF (en anglais)',
+      '2025 Membership Handbook': 'Guide des membres 2025',
+      'Contents': 'Table des matières',
+      'Open all sections': 'Ouvrir toutes les sections',
+      'Close all sections': 'Fermer toutes les sections',
+      '1 section matches': '1 section correspond',
+      'Nothing found': 'Aucun résultat',
+      'The handbook is not available': 'Le guide n’est pas disponible',
+      '2025 Membership Handbook. The information in this handbook is general in nature and subject to the by-laws of the club.': nb('Guide des membres 2025. Les renseignements de ce guide sont de nature générale et sujets aux règlements administratifs du club.'),
+      'Read the full dress code': 'Lire le code vestimentaire complet',
+      'Appropriate golf attire is required for all players. It is expected that members will advise their guests of our dress requirements.': 'Une tenue de golf appropriée est exigée de tous les joueurs. Les membres sont tenus d’informer leurs invités de nos exigences vestimentaires.'
+    },
+    patterns: [
+      [/^Last updated (.+)$/, function (m) { return 'Dernière mise à jour' + NB + ': ' + m[1]; }],
+      [/^(\d+) sections$/, '$1 sections'],
+      [/^(\d+) sections match$/, '$1 sections correspondent'],
+      [/^No section matches "(.+)"\. Try another word\.$/, function (m) { return 'Aucune section ne correspond à «' + NB + m[1] + NB + '». Essayez un autre mot.'; }],
+      [/^Please call the club office at (.+)\.$/, 'Veuillez appeler le bureau du club au $1.']
+    ]
+  });
 })();

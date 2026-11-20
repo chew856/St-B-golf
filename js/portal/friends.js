@@ -130,7 +130,9 @@
 
   function privacy(id) {
     const d = S.all('memberPrivacy').find(function (p) { return p.memberId === id; });
-    return Object.assign({}, DEFAULT_PRIVACY, d || {});
+    /* Owner, Nov 19: friends always see each other's upcoming tee times (no hiding, globally or per friend), so an
+       older saved teeTimes: false is ignored. */
+    return Object.assign({}, DEFAULT_PRIVACY, d || {}, { teeTimes: true });
   }
   function setPrivacy(id, patch) {
     const d = S.all('memberPrivacy').find(function (p) { return p.memberId === id; });
@@ -144,7 +146,7 @@
      "Can join without asking: off" is ignored, and the switch is gone). */
   function sharing(owner, friend) {
     const d = S.all('friendSharing').find(function (x) { return x.owner === owner && x.friend === friend; });
-    return { see: d ? d.see !== false : true, join: true };
+    return { see: true, join: true };
   }
   function setSharing(owner, friend, patch) {
     const id = 'fs_' + owner + '_' + friend; const d = S.find('friendSharing', id);
@@ -154,8 +156,7 @@
   function joinsFree(viewer, owner) { return seesTees(viewer, owner) && sharing(owner, viewer).join; }
   /** How `owner` shares tee times with `friend`, in words. */
   function shareLabel(owner, friend) {
-    if (!privacy(owner).teeTimes) return 'Hidden from all friends';
-    const s = sharing(owner, friend); return !s.see ? 'Hidden' : s.join ? 'Can see and join' : 'Can see, must ask';
+    return 'Can see and join';
   }
 
   function now() { return new Date().toISOString(); }
@@ -257,13 +258,13 @@
   function quiet(text) { return '<p class="fr-quiet">' + Club.icon('eye') + '<span>' + esc(text) + '</span></p>'; }
   function profileHTML(me, fid) {
     const m = member(fid); if (!m) return '<p class="fr-quiet">This member is no longer listed.</p>';
-    const t = tierOf(m); const pv = privacy(fid); const first = m.firstName; const mineShare = shareLabel(me, fid);
+    const t = tierOf(m); const pv = privacy(fid); const first = m.firstName; 
     let h = '<div class="fr-p-head">' + ui.avatar(m.firstName + ' ' + m.lastName, 'lg') +
       '<div class="fr-p-id"><h2 class="fr-p-name">' + esc(m.firstName + ' ' + m.lastName) + '</h2><p class="fr-p-sub">' + esc((t ? t.name : 'Member') + (m.memberSince ? ' · Member since ' + String(m.memberSince).slice(0, 4) : '')) + '</p>' +
       '<p class="fr-p-hand">' + Club.icon('flag') + '<span>' + esc(handText(m)) + '</span></p></div></div>' +
       '<div class="fr-p-acts"><button type="button" class="btn btn-primary btn-sm" data-fr="message" data-id="' + esc(fid) + '">' + Club.icon('mail') + '<span>Message</span></button>' +
       '<button type="button" class="btn btn-sm" data-fr="menu" data-id="' + esc(fid) + '" aria-haspopup="dialog">' + Club.icon('more') + '<span>More</span></button></div>' +
-      '<button type="button" class="fr-share-row" data-fr="sharing" data-id="' + esc(fid) + '" aria-haspopup="dialog">' + Club.icon('key', 'fr-share-ic') + '<span class="fr-share-main"><span class="fr-share-l">Your tee times</span><span class="fr-share-v">' + esc(mineShare) + '</span></span>' + Club.icon('chevronRight', 'fr-go') + '</button>';
+      '';   /* the "Your tee times" sharing row is gone: friends always see and can join (owner, Nov 19) */
 
     /* Handicap */
     h += '<section class="fr-sec"><h3 class="eyebrow">Handicap</h3>';

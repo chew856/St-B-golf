@@ -282,6 +282,8 @@
     if (payment === 'account') {
       const m = Club.members.get(g.id);
       if (!m || m.status === 'suspended' || m.status === 'resigned') return { ok: false, error: 'This account cannot take charges right now. Please choose Pay at the cart.' };
+      /* Credit policy (Club.billing.chargeCheck): no charging 60 days after a statement date, unless staff allowed it today. */
+      if (Club.billing && Club.billing.chargeCheck && !Club.billing.chargeCheck(m.id).ok) return { ok: false, error: 'Charging to your account is suspended because of an unpaid balance. Please choose Pay at the cart, or call the club office at ' + Club.info.phone + '.' };
     }
     const id = S.uid('co');
     const dispatchOrder = { id: id, hole: hole, placedAt: now, startHole: startTeeOf(tt), phone: 'group:' + tt.id };  /* `phone` is the dispatch merge key: one entry per tee-time group */
@@ -359,6 +361,8 @@
     if (payment === 'account') {
       const m = Club.members.get(g.id);
       if (!m || m.status === 'suspended' || m.status === 'resigned') return { ok: false, error: 'This account cannot take charges right now. Please choose Pay at the cart.' };
+      /* Credit policy (Club.billing.chargeCheck): no charging 60 days after a statement date, unless staff allowed it today. */
+      if (Club.billing && Club.billing.chargeCheck && !Club.billing.chargeCheck(m.id).ok) return { ok: false, error: 'Charging to your account is suspended because of an unpaid balance. Please choose Pay at the cart, or call the club office at ' + Club.info.phone + '.' };
     }
     const id = S.uid('co');
     const dispatchOrder = { id: id, hole: hole, placedAt: now, startHole: startTeeOf(tt), phone: 'group:' + tt.id };

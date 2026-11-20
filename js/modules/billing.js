@@ -1,4 +1,5 @@
-/* Billing & Statements: receivables, ledger, dues runs, F&B minimums, statements, member accounts.
+/* Billing & Statements: receivables, ledger, dues runs, the F&B assessment, statements, member accounts, and the club's
+   billing policies on the staff side (account standing, charge override, time payment follow-up, Refund dues).
    Owns collections: charges, payments, statements. Also exposes Club.billing helpers for other modules. */
 (function () {
   'use strict';
@@ -287,12 +288,291 @@
   /* The staff dialogs; the shared helpers above come from js/shared/billing-data.js */
   Object.assign(Club.billing, { postCharge: openPostCharge, recordPayment: openRecordPayment });
 
+  /* ---------------- Billing policies on the staff site (the club's Membership Handbook) ----------------
+     The rules live in js/shared/billing-data.js (Club.billing.standing, fnb, renewal, refunds). Here: badges, the staff
+     charge override, the Refund dues dialog, card on file and the collections flags, the F&B assessment tab. */
+  function staffName() { return Club.user ? (Club.user.firstName + ' ' + Club.user.lastName).trim() : null; }
+  /** "Charging suspended, 75 days" badge (nothing for a member in good standing). */
+  function standingBadge(st, withDays) {
+    if (!st) return '';
+    if (st.level) return ui.badge(st.label + (withDays ? ', ' + st.days + ' days' : ''), st.level >= 90 ? 'bad' : 'warn');
+    if (st.tpArrears) return ui.badge('Golf suspended' + (withDays ? ', payment ' + st.tpArrears.days + ' days late' : ''), 'bad');
+    return '';
+  }
+  /** Tills and dialogs call this before charging a member's account. True: go ahead. False: a dialog explains why and,
+      for an unpaid account (not a suspended or resigned membership), lets staff allow charging for today with a reason
+      (with Undo); proceed() runs once it is allowed. */
+  function staffChargeGuard(memberId, proceed) {
+    const chk = Club.billing.chargeCheck(memberId);
+    if (chk.ok) return true;
+    if (chk.hard) { ui.toast(chk.reason || 'This member cannot charge to their account. Take card or cash.', 'bad'); return false; }
+    const st = chk.standing;
+    const body = '<p class="ink-2 bil-guard-why">' + esc(st.reason) + '</p>' +
+      '<p class="bil-fine">Club credit policy: charging is for members in good standing. You can take card or cash instead, or allow charging for the rest of today. The reason is kept on the member’s account.</p>' +
+      '<form class="form-grid" novalidate>' + ui.field({ label: 'Reason for allowing it', name: 'reason', type: 'textarea', required: true, span2: true, placeholder: 'For example, the member paid by phone this morning' }) + '</form>';
+    ui.modal({ title: 'Charging is suspended for ' + mname(memberId), eyebrow: st.label + ' · ' + st.days + ' days past the statement date', body: body, actions: [
+      { label: 'Take card or cash', kind: 'ghost' },
+      { label: 'Allow charging today', kind: 'primary', icon: 'check', onClick: function (a) {
+        const form = ui.$('form', a.el); clearErrs(form);
+        if (!ui.validate(form)) return false;
+        const reason = ui.formData(form).reason;
+        undoRun(function () { return Club.billing.allowCharging(memberId, reason, staffName()); },
+          { message: 'Charging allowed for ' + mname(memberId) + ' for today', undone: 'Override withdrawn. Charging is suspended again', after: rerenderAfterUndo });
+        if (proceed) setTimeout(proceed, 60);
+      } }
+    ] });
+    return false;
+  }
+
+  /* ---------------- Refund dues ----------------
+     Refund Policy: $50.00 administrative fee on all refunds of golf dues; written requests before May 31; after May 31
+     only by Board review (a medical note or proof of moving out of province may be required), and the Board may grant a
+     two-month credit toward the next season. Each part posts with its own receipt; one Undo takes it all back. */
+  function openRefund(memberId, done) {
+    const m = S.find('members', memberId); if (!m) { ui.toast('That member could not be found', 'bad'); return; }
+    const RF = Club.billing.refunds, t = S.find('membershipTiers', m.tierId);
+    const thisYear = +today().slice(0, 4);
+    const seasons = [RENEW_SEASON, thisYear].filter(function (y, i, a) { return a.indexOf(y) === i; });
+    const info = {}; seasons.forEach(function (y) { info[y] = RF.duesFor(memberId, y); });
+    const pick = seasons.find(function (y) { return info[y].charged - info[y].refunded > 0.005; }) || seasons[0];
+    const twoMonths = t ? r2(t.annualDues * 2 / 12) : 0;
+    const body = '<form class="form-grid bil-refund" novalidate>' +
+      ui.field({ label: 'Membership year', name: 'season', type: 'select', options: ui.options(seasons.map(function (y) { return { value: String(y), label: y + ' dues · ' + fmt.money(r2(info[y].charged - info[y].refunded)) + ' to refund' }; }), String(pick)) }) +
+      ui.field({ label: 'Amount of dues to refund', name: 'amount', type: 'number', step: 0.01, min: 0, required: true, value: r2(Math.max(0, info[pick].charged - info[pick].refunded)) }) +
+      '<div class="field span-2"><label class="check bil-check"><input type="checkbox" name="writing"><span>Request received in writing on</span></label></div>' +
+      ui.field({ label: 'Date the written request was received', name: 'receivedOn', type: 'date', value: today(), required: true }) +
+      ui.field({ label: 'How it goes back to the member', name: 'payback', type: 'select', options: ui.options([{ value: 'account', label: 'Leave as a credit on the account' }, { value: 'Check', label: 'Paid back by cheque' }, { value: 'EFT', label: 'Paid back by EFT' }, { value: 'Card', label: 'Refunded to a credit card' }], 'account') }) +
+      '<div class="span-2 bil-refund-when"></div>' +
+      '<div class="span-2 bil-refund-board" hidden>' +
+        '<label class="check bil-check"><input type="checkbox" name="board"><span>Approved by the Board of Directors</span></label>' +
+        ui.field({ label: 'Board decision and reason', name: 'boardReason', type: 'textarea', placeholder: 'For example, medical note received; moving out of province' }) +
+        '<label class="check bil-check"><input type="checkbox" name="credit2m"><span>The Board also granted a two-month credit toward the ' + (pick + 1) + ' season</span></label>' +
+        ui.field({ label: 'Two-month credit', name: 'credit2mAmount', type: 'number', step: 0.01, min: 0, value: twoMonths, hint: 'Two twelfths of this year’s ' + (t ? t.name : '') + ' dues. Change it if the Board set another amount.' }) +
+      '</div>' +
+      '<div class="span-2 bil-refund-sum" aria-live="polite"></div></form>';
+    const api = ui.modal({ title: 'Refund dues', eyebrow: mname(memberId) + ' · No. ' + m.memberNo, body: body, size: 'lg', actions: [
+      { label: 'Cancel', kind: 'ghost' },
+      { label: 'Record refund', kind: 'primary', icon: 'check', onClick: function (a) { return submit(a); } }
+    ] });
+    const form = ui.$('form', api.el);
+    function q(n) { return form.querySelector('[name="' + n + '"]'); }
+    function state() {
+      const v = ui.formData(form), season = +v.season, dl = RF.deadline(season);
+      const max = r2(info[season].charged - info[season].refunded);
+      const late = !!v.receivedOn && v.receivedOn > dl;
+      const amt = r2(+v.amount || 0), fee = amt > 0 ? RF.FEE : 0, credit = late && v.credit2m ? r2(+v.credit2mAmount || 0) : 0;
+      return { v: v, season: season, dl: dl, max: max, late: late, amt: amt, fee: fee, credit: credit, net: r2(amt - fee) };
+    }
+    function paint() {
+      const x = state();
+      ui.$('.bil-refund-when', form).innerHTML = x.v.receivedOn ? (x.late
+        ? '<p class="bil-warn-box">' + Club.icon('info') + '<span>Received after May 31, ' + x.season + '. The policy allows no refunds after May 31; the Board of Directors reviews later requests one by one (a medical note or proof of moving out of province may be required). Record it only once the Board has approved it.</span></p>'
+        : '<p class="bil-ok-box">' + Club.icon('check') + '<span>Received before the May 31, ' + x.season + ' deadline. The $50.00 administrative fee applies to all refunds of golf dues, even if no golf has been played.</span></p>') : '';
+      ui.$('.bil-refund-board', form).hidden = !x.late;
+      ui.$('.bil-refund-sum', form).innerHTML = '<dl class="bil-refund-dl"><div><dt>Dues refunded</dt><dd>' + money(x.amt) + '</dd></div><div><dt>Administrative fee</dt><dd>' + (x.fee ? '-' + money(x.fee) : money(0)) + '</dd></div>' +
+        (x.credit ? '<div><dt>Two-month credit toward ' + (x.season + 1) + '</dt><dd>' + money(x.credit) + '</dd></div>' : '') +
+        '<div class="bil-refund-total"><dt>' + (x.v.payback === 'account' ? 'Credited to the account' : 'Paid back to the member') + '</dt><dd>' + money(x.net + (x.v.payback === 'account' ? x.credit : 0)) + '</dd></div></dl>' +
+        '<p class="field-hint">Dues charged for ' + x.season + ': ' + esc(fmt.money(info[x.season].charged)) + (info[x.season].refunded ? ', already refunded ' + esc(fmt.money(info[x.season].refunded)) : '') + '.</p>';
+    }
+    form.addEventListener('input', paint); form.addEventListener('change', function (e) {
+      if (e.target.name === 'season') { const y = +e.target.value; q('amount').value = r2(Math.max(0, info[y].charged - info[y].refunded)); }
+      paint();
+    });
+    paint();
+    function submit(a) {
+      clearErrs(form);
+      const x = state(); let ok = ui.validate(form);
+      if (!x.v.writing) { setErr(form, 'writing', 'Refund requests must be received in writing. Tick this once you have it.'); ok = false; }
+      if (x.v.receivedOn && x.v.receivedOn > today()) { setErr(form, 'receivedOn', 'The request cannot be dated in the future.'); ok = false; }
+      if (!(x.amt >= 0) || x.amt > x.max + 0.005) { setErr(form, 'amount', 'Enter an amount up to the ' + fmt.money(x.max) + ' of dues not yet refunded.'); ok = false; }
+      else if (x.amt > 0 && x.amt <= RF.FEE) { setErr(form, 'amount', 'The refund must be more than the $50.00 administrative fee.'); ok = false; }
+      else if (!x.amt && !x.credit) { setErr(form, 'amount', 'Enter the dues to refund.'); ok = false; }
+      if (x.late) {
+        if (!x.v.board) { setErr(form, 'board', 'After May 31 a refund needs the Board’s approval.'); ok = false; }
+        if (!String(x.v.boardReason || '').trim()) { setErr(form, 'boardReason', 'Record the Board’s decision and reason.'); ok = false; }
+      }
+      if (x.v.payback !== 'account' && dayClosed(today())) { setErr(form, 'payback', closedMsg(today())); ok = false; }
+      if (!ok) { const f = ui.$('.invalid', form); if (f) f.focus(); return false; }
+      const season = x.season, tierName = t ? t.name : 'Membership';
+      const board = x.late ? ' (Board approved)' : '';
+      undoRun(function () {
+        const ids = [];
+        let pay = null;
+        if (x.amt > 0) {
+          const cr = Club.chargeMember(memberId, { description: 'Refund of ' + season + ' dues, ' + tierName + ' membership' + board, category: 'Dues', amount: -x.amt, source: 'billing', refId: 'refund-' + season, title: 'Dues refund',
+            lines: [{ name: 'Refund of ' + season + ' dues, ' + tierName + ' membership' + board + '. Request received in writing ' + fmtEn.date(x.v.receivedOn), qty: 1, price: x.amt }] });
+          const fe = Club.chargeMember(memberId, { description: 'Administrative fee, refund of ' + season + ' dues', category: 'Dues', amount: RF.FEE, source: 'billing', refId: 'refund-' + season, title: 'Refund administrative fee',
+            lines: [{ name: 'Administrative fee on all refunds of golf dues', qty: 1, price: RF.FEE }] });
+          if (cr) ids.push(cr.id); if (fe) ids.push(fe.id);
+        }
+        if (x.credit > 0) {
+          const c2 = Club.chargeMember(memberId, { description: 'Two-month credit toward the ' + (season + 1) + ' season (Board approved)', category: 'Dues', amount: -x.credit, source: 'billing', refId: 'refund-' + season, title: 'Board credit',
+            lines: [{ name: 'Two-month credit toward the ' + (season + 1) + ' season, granted by the Board of Directors', qty: 1, price: x.credit }] });
+          if (c2) ids.push(c2.id);
+        }
+        if (x.v.payback !== 'account' && x.net > 0) {
+          const mem = S.find('members', memberId);
+          pay = S.insert('payments', { memberId: memberId, date: today(), amount: -x.net, method: x.v.payback, reference: 'Dues refund paid back' });
+          S.update('members', memberId, { balance: r2((mem.balance || 0) + x.net) });
+          if (Club.receipts) Club.receipts.create({ memberId: memberId, kind: 'credit', title: 'Dues refund paid', lines: [{ name: 'Refund of ' + season + ' dues, less the administrative fee', qty: 1, price: x.net }], total: x.net,
+            method: RECEIPT_METHOD[x.v.payback] || 'other', methodLabel: x.v.payback === 'Card' ? 'Refunded to a credit card' : methodLabel(x.v.payback), source: 'billing', refId: pay.id, paymentId: pay.id, channel: 'counter' });
+        }
+        return S.insert('dueRefunds', { memberId: memberId, season: season, refund: x.amt, fee: x.fee, receivedOn: x.v.receivedOn, inTime: !x.late,
+          board: x.late ? { reason: String(x.v.boardReason).trim() } : null, credit2m: x.credit || 0, payback: x.v.payback === 'account' ? null : { method: x.v.payback, paymentId: pay ? pay.id : null },
+          chargeIds: ids, by: staffName() });
+      }, { message: function () { return 'Refund recorded for ' + mname(memberId) + ': ' + fmt.money(x.amt) + ' less the ' + fmt.money(x.fee) + ' fee' + (x.credit ? ', plus a ' + fmt.money(x.credit) + ' credit' : ''); },
+        undone: 'Refund taken back. The dues are on the account again', after: rerenderAfterUndo });
+      if (done) done();
+    }
+    return api;
+  }
+
+  /* ---------------- Card on file and the collections flags (staff notes, not automated) ---------------- */
+  function toggleCardOnFile(memberId) {
+    const m = S.find('members', memberId); if (!m) return;
+    const on = !m.cardOnFile;
+    undoRun(function () { S.update('members', memberId, { cardOnFile: on, cardOnFileOn: on ? today() : null }); },
+      { message: on ? 'Card on file with the club: yes' : 'Card on file with the club: no', undone: 'Card on file put back as it was', after: rerenderAfterUndo });
+  }
+  function toggleFlag(memberId, key) {
+    const m = S.find('members', memberId); if (!m) return;
+    const f = Object.assign({ perpetual: null, yearEnd: null, note: '' }, m.arFlags || {});
+    const on = !f[key]; f[key] = on ? today() : null;
+    const label = key === 'perpetual' ? 'Perpetual delinquency' : 'In arrears at year end';
+    undoRun(function () { S.update('members', memberId, { arFlags: f }); }, { message: label + (on ? ' flagged' : ' cleared') + ' for ' + mname(memberId), undone: label + ' put back as it was', after: rerenderAfterUndo });
+  }
+  function flagBadges(m) {
+    const f = Club.billing.arFlags(m);
+    return (f.perpetual ? ui.badge('Perpetual delinquency', 'bad') : '') + (f.yearEnd ? ui.badge('In arrears at year end', 'bad') : '');
+  }
+
+  /* ---------------- F&B credit (one member) ---------------- */
+  function fnbLine(fs) {
+    if (!fs.applies && !fs.assessed) return 'Not charged for this category';
+    if (!fs.assessed) return fs.status === 'ended' ? 'No ' + fs.year + ' assessment on file' : fs.year + ' assessment not charged yet';
+    if (fs.status === 'ended') return money(fs.used) + ' used of ' + money(fs.assessed) + (fs.expired > 0.005 ? ', ' + money(fs.expired) + ' expired ' + esc(fmt.dateShort(fs.end)) : '');
+    return money(fs.left) + ' left of ' + money(fs.assessed) + ', until ' + esc(fmt.dateShort(fs.end));
+  }
+  function fnbPanel(m) {
+    const F = Club.billing.fnb, fs = F.state(m.id);
+    if (!fs.applies && !fs.assessed) return '';
+    const pct = fs.assessed ? Math.min(100, fs.used / fs.assessed * 100) : 0;
+    return '<section class="panel bil-fnb-card" data-reveal><div class="panel-head"><div><div class="eyebrow">' + fs.year + ' season, ' + esc(Club.season.dayLabel()) + '</div><h3>F&amp;B credit</h3></div>' + (fs.status === 'ended' ? ui.badge('Season ended', 'outline') : fs.status === 'open' ? ui.badge('In season', 'good') : '') + '</div><div class="panel-body">' +
+      '<div class="bil-fnb-figs"><div><span class="bil-sum-label">Used</span><strong>' + money(fs.used) + '</strong></div><div><span class="bil-sum-label">' + (fs.status === 'ended' ? 'Expired' : 'Left') + '</span><strong>' + money(fs.status === 'ended' ? fs.expired : fs.left) + '</strong></div><div><span class="bil-sum-label">Assessment</span><strong>' + money(fs.assessed) + '</strong></div></div>' +
+      '<div class="bar" role="progressbar" aria-label="F&amp;B credit used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(pct) + '"><span style="width:' + Math.max(fs.used ? 2 : 0, pct) + '%"></span></div>' +
+      '<p class="bil-fine">' + esc(fnbLine(fs).replace(/<[^>]+>/g, '')) + '. Dining, takeout and beverage cart charges in the season are paid from it first; service charges and gratuities are not. It cannot be transferred and does not carry over.</p>' +
+      (fs.next ? '<p class="bil-fine">The ' + (fs.year + 1) + ' assessment of ' + money(fs.amount) + ' is charged on ' + esc(fmt.date(fs.next)) + '.</p>' : '') +
+      (fs.applies && !fs.assessed && fs.status !== 'ended' ? ui.btn('Charge ' + fs.year + ' assessment', { sm: true, action: 'fnb-post', icon: 'plus' }) : '') +
+      '</div></section>';
+  }
+  /* ---------------- Account standing (one member) ---------------- */
+  function standingPanel(m) {
+    const st = Club.billing.standing(m.id), ov = Club.billing.overrideFor(m.id), f = Club.billing.arFlags(m);
+    const ok = !st.level && !st.tpArrears && m.status === 'active';
+    const lines = [['Charging', st.canCharge], ['Tee times and golf', st.canBook], ['Clubhouse, locker room and amenities', st.canClubhouse]];
+    return '<section class="panel bil-standing" data-reveal><div class="panel-head"><div><div class="eyebrow">Credit policy</div><h3>Account standing</h3></div>' + (ok ? ui.badge('Good standing', 'good') : standingBadge(st, true) || ui.badge(st.label, 'bad')) + '</div><div class="panel-body">' +
+      (st.reason ? '<p class="bil-standing-why">' + esc(st.reason) + '</p>' : '<p class="bil-fine">Nothing is unpaid 60 days or more after a statement date.</p>') +
+      '<ul class="bil-priv">' + lines.map(function (l) { return '<li><span>' + esc(l[0]) + '</span>' + (l[1] ? ui.badge('Allowed', 'good') : ui.badge('Suspended', 'bad')) + '</li>'; }).join('') + '</ul>' +
+      (ov ? '<p class="bil-fine">Charging allowed today by ' + esc(ov.by || 'staff') + ': ' + esc(ov.reason) + '</p>' : (!st.canCharge && m.status === 'active' ? ui.btn('Allow charging today', { sm: true, action: 'allow-charge', icon: 'check' }) : '')) +
+      '<div class="divider"></div>' +
+      '<label class="check bil-check"><input type="checkbox" data-action="card-on-file"' + (m.cardOnFile ? ' checked' : '') + '><span>Card on file with the club' + (m.cardOnFile && m.cardOnFileOn ? ' <span class="muted">(since ' + esc(fmt.dateShort(m.cardOnFileOn)) + ')</span>' : '') + '</span></label>' +
+      '<p class="bil-fine">The club keeps the card itself; this site never stores card details.</p>' +
+      '<label class="check bil-check"><input type="checkbox" data-action="flag" data-flag="perpetual"' + (f.perpetual ? ' checked' : '') + '><span>Perpetual delinquency</span></label>' +
+      '<p class="bil-fine">No charging once the F&amp;B assessment is used up, and no time payment plan in future.</p>' +
+      '<label class="check bil-check"><input type="checkbox" data-action="flag" data-flag="yearEnd"' + (f.yearEnd ? ' checked' : '') + '><span>In arrears at year end</span></label>' +
+      '<p class="bil-fine">The account may go to collections and the share be forfeited, its value applied to the balance; the member stays liable for any balance above the share.</p>' +
+      '</div></section>';
+  }
+  /* ---------------- Time payment plan (one member) ---------------- */
+  const TP_STATE = { paid: ['Paid', 'good'], scheduled: ['Scheduled', 'outline'], due: ['Due today', 'info'], missed: ['Missed', 'warn'], arrears: ['30 days in arrears', 'bad'], legacy: ['On account', 'plain'] };
+  function tpPanel(m) {
+    const tp = tpFor(m.id); if (!tp) return '';
+    const missed = tp.ps.missed;
+    return '<section class="panel bil-tp" data-reveal><div class="panel-head"><div><div class="eyebrow">' + RENEW_SEASON + ' dues</div><h3>Time payment plan</h3></div>' + (missed.length ? ui.badge(missed.length + ' missed', 'bad') : ui.badge('Up to date', 'good')) + '</div>' +
+      (missed.length ? '<p class="bil-note">' + (m.cardOnFile ? 'Charge the card on file for the missed payment, then record it here.' : 'No card on file: call the member about the missed payment.') + '</p>' : '') +
+      '<div class="panel-body flush"><ul class="list bil-tp-list">' + tp.ps.rows.map(function (x) {
+        const s = TP_STATE[x.state] || ['', 'plain'];
+        return '<li class="row between"><span class="bil-stack"><span class="person-name">' + (x.state === 'legacy' ? 'Instalment ' : 'Payment ') + x.n + ' · ' + esc(fmt.dateShort(x.date)) + '</span><span class="person-sub">' + money(x.amount) + (x.owed > 0.005 && x.owed < x.amount ? ', ' + money(x.owed) + ' still owed' : '') + (x.late ? ', ' + x.late + ' days late' : '') + '</span></span>' + ui.badge(s[0], s[1]) + '</li>';
+      }).join('') + '</ul>' +
+      (tp.r.adminFee ? '<p class="bil-fine bil-tp-foot">Administration fee ' + money(tp.r.adminFee.amount) + ' charged when the plan was taken. All dues paid in full by August 15, ' + RENEW_SEASON + '.</p>' : '<p class="bil-fine bil-tp-foot">All dues paid in full by August 15, ' + RENEW_SEASON + '.</p>') +
+      '</div></section>';
+  }
+
+  /* ---------------- F&B assessment tab ---------------- */
+  let fnbTabYear = null;
+  function tabFnb(p) {
+    p = fresh(p); panels.fnb = p;
+    const F = Club.billing.fnb, cur = F.year(), years = [cur + 1, cur];
+    if (!fnbTabYear || years.indexOf(fnbTabYear) < 0) fnbTabYear = cur;
+    const y = fnbTabYear;
+    const rows = S.all('members').filter(function (m) { return m.status !== 'resigned' && (F.applies(m) || F.has(m.id, y)); }).map(function (m) { return { m: m, t: S.find('membershipTiers', m.tierId), fs: F.state(m.id, y) }; })
+      .sort(function (a, b) { return a.m.lastName.localeCompare(b.m.lastName) || a.m.firstName.localeCompare(b.m.firstName); });
+    const assessed = rows.filter(function (x) { return x.fs.assessed > 0; });
+    const tot = function (k) { return r2(sum(assessed, function (x) { return x.fs[k]; })); };
+    const toPost = F.toPost(y), sample = F.state('', y);
+    const ended = sample.status === 'ended';
+    const excluded = S.all('membershipTiers').filter(function (t) { return !F.tierApplies(t); }).map(function (t) { return t.name; });
+    p.innerHTML = statStrip([
+      { label: 'Assessed for ' + y, html: '<span data-count="' + assessed.length + '">0</span>', meta: moneyCount(tot('assessed')) + ' pre-paid' },
+      { label: 'Credit used', html: moneyCount(tot('used')), meta: 'Dining, takeout and the beverage cart' },
+      { label: ended ? 'Expired ' + fmt.dateShort(sample.end) : 'Credit left', html: moneyCount(ended ? tot('expired') : tot('left')), meta: ended ? 'Not transferable, no carry-over' : 'Until ' + fmt.date(sample.end) },
+      { label: 'Not charged yet', html: '<span data-count="' + toPost.length + '">0</span>', meta: 'Active adult members' }
+    ]) +
+      '<section class="panel bil-gap" data-reveal><div class="panel-head bil-wrap-head"><div><div class="eyebrow">Food and Beverage Assessment</div><h3>' + y + ' season, ' + esc(Club.season.dayLabel()) + '</h3></div><div class="row wrap">' +
+      '<select class="select bil-inline-select" name="fnbYear" aria-label="Season">' + ui.options(years.map(function (k) { return { value: String(k), label: k + ' season' }; }), String(y)) + '</select>' +
+      (toPost.length && !ended ? ui.btn('Charge ' + y + ' assessments (' + toPost.length + ')', { kind: 'primary', icon: 'check', action: 'fnb-post-all' }) : '') + '</div></div>' +
+      '<p class="bil-note">Every adult member pre-pays ' + esc(fmt.money(F.amount())) + ' each season, set up as a credit on the account. Food and drink charged in the clubhouse or from the beverage cart is paid from it first; gratuities and service charges are not. It cannot be transferred, and what is left on ' + esc(fmt.dateShort(sample.end)) + ' expires. ' +
+      (excluded.length ? esc(excluded.join(', ')) + ' members are not charged. ' : '') + 'It is charged automatically on opening day. Reports count the food and drink when bought, not the assessment.</p>' +
+      '<div class="panel-body flush">' + (rows.length ? '<div class="table-wrap"><table class="table"><thead><tr><th>Member</th><th>Category</th><th class="num">Assessment</th><th class="num">Used</th><th class="bil-prog-th">Credit</th><th class="num">' + (ended ? 'Expired' : 'Left') + '</th></tr></thead><tbody>' + rows.map(function (x) {
+        const pct = x.fs.assessed ? Math.min(100, x.fs.used / x.fs.assessed * 100) : 0;
+        return '<tr class="clickable" data-href="billing/' + esc(x.m.id) + '"><td class="primary-cell">' + esc(x.m.lastName + ', ' + x.m.firstName) + '</td><td>' + esc(x.t ? x.t.name : '') + '</td>' +
+          '<td class="num">' + (x.fs.assessed ? money(x.fs.assessed) : '<span class="muted">Not charged</span>') + '</td><td class="num">' + money(x.fs.used) + '</td>' +
+          '<td><div class="bar' + (pct >= 100 ? '' : ' brass') + '"><span style="width:' + pct + '%"></span></div></td><td class="num">' + money(ended ? x.fs.expired : x.fs.left) + '</td></tr>';
+      }).join('') + '</tbody></table></div>' : ui.empty({ icon: 'dining', title: 'No adult members', text: 'The assessment applies to adult categories.' })) + '</div></section>';
+    runMoney(p);
+    ui.on(p, 'change', 'select[name=fnbYear]', function (e, f) { fnbTabYear = +f.value; tabFnb(p); p = panels.fnb; ui.animateIn(p); });
+    ui.on(p, 'click', '[data-action=fnb-post-all]', function (e, b) {
+      ui.confirm({ title: 'Charge the ' + y + ' F&B assessment?', text: toPost.length + ' active adult members will each be charged ' + fmt.money(F.amount()) + ', ' + fmt.money(F.amount() * toPost.length) + ' in total, set up as their ' + y + ' F&B credit. Each gets a receipt.', confirmLabel: 'Charge ' + toPost.length + ' members' }).then(function (yes) {
+        if (!yes) return;
+        b.disabled = true; let n = 0;
+        undoRun(function () { toPost.forEach(function (m) { if (F.post(m.id, y).charge) n++; }); }, { message: function () { return y + ' F&B assessment charged to ' + n + ' members'; }, undone: y + ' F&B assessments reversed', after: rerenderAfterUndo });
+        tabFnb(p); p = panels.fnb; ui.animateIn(p);
+      });
+    });
+  }
+
+  /* ---------------- Overview: standing and time payment follow-up ---------------- */
+  function policyPanels() {
+    const all = Club.billing.standingAll();
+    const hit = Object.keys(all).filter(function (id) { const s = all[id]; return s.level || s.tpArrears; }).sort(function (a, b) { return all[b].level - all[a].level || all[b].days - all[a].days; });
+    const n = function (lv) { return hit.filter(function (id) { return all[id].level === lv; }).length; };
+    const tasks = Club.billing.renewal.tasks();
+    const flagged = S.all('members').filter(function (m) { const f = Club.billing.arFlags(m); return f.perpetual || f.yearEnd; });
+    const row = function (id) {
+      const s = all[id], m = S.find('members', id);
+      return '<tr class="clickable" data-href="billing/' + esc(id) + '"><td>' + ui.person(mname(id), m ? 'No. ' + esc(m.memberNo) + (m.status !== 'active' ? ' · ' + esc(m.status) : '') : '', 'sm') + '</td><td>' + standingBadge(s) + '</td><td class="num">' + (s.level ? s.days : s.tpArrears.days) + '</td><td class="num">' + money(s.level ? s.amount : s.tpArrears.amount) + '</td></tr>';
+    };
+    return '<section class="panel" data-reveal><div class="panel-head"><div><div class="eyebrow">Credit policy</div><h3>Account standing</h3></div><span class="muted">' + hit.length + ' accounts</span></div>' +
+      '<p class="bil-note">From the statement date: 60 days, charging suspended; 90 days, tee times and golf too; 120 days, all privileges. A time payment 30 days late suspends tee times and golf.</p>' +
+      '<div class="bil-lv">' + [[60, 'Charging suspended'], [90, 'Golf suspended'], [120, 'All privileges suspended']].map(function (x) { return '<div class="bil-lv-box' + (n(x[0]) ? ' warn' : '') + '"><span class="bil-lv-n">' + n(x[0]) + '</span><span class="bil-lv-l">' + esc(x[1]) + '</span><span class="bil-lv-s">' + x[0] + '+ days</span></div>'; }).join('') + '</div>' +
+      '<div class="panel-body flush">' + (hit.length ? '<div class="table-wrap"><table class="table"><thead><tr><th>Member</th><th>Standing</th><th class="num">Days</th><th class="num">Unpaid</th></tr></thead><tbody>' + hit.map(row).join('') + '</tbody></table></div>' : ui.empty({ icon: 'check', title: 'Everyone is in good standing', text: 'No account is 60 days past a statement date.' })) +
+      (flagged.length ? '<div class="bil-flagged"><div class="eyebrow">Staff flags</div><ul class="list">' + flagged.map(function (m) { return '<li class="row between"><a href="#/billing/' + esc(m.id) + '">' + esc(mname(m.id)) + '</a><span class="row wrap">' + flagBadges(m) + '</span></li>'; }).join('') + '</ul></div>' : '') +
+      '</div></section>' +
+      '<section class="panel" data-reveal><div class="panel-head"><div><div class="eyebrow">' + RENEW_SEASON + ' dues</div><h3>Time payment follow-up</h3></div><span class="muted">' + tasks.length + ' to do</span></div><div class="panel-body flush">' +
+      (tasks.length ? '<ul class="list bil-tasks">' + tasks.map(function (k) {
+        if (k.kind === 'nocard') return '<li class="bil-task"><a class="bil-stack" href="#/billing/' + esc(k.m.id) + '"><span class="person-name">Get a card on file: ' + esc(mname(k.m.id)) + '</span><span class="person-sub">Time payment plan with no card on file with the club</span></a>' + ui.badge('No card', 'warn') + '</li>';
+        return '<li class="bil-task"><a class="bil-stack" href="#/billing/' + esc(k.m.id) + '"><span class="person-name">' + (k.card ? 'Charge the card on file: ' : 'Call about a missed payment: ') + esc(mname(k.m.id)) + '</span><span class="person-sub">Payment ' + k.row.n + ', ' + esc(fmt.money(k.row.owed)) + ' due ' + esc(fmt.dateShort(k.row.date)) + ', ' + k.row.late + ' days late</span></a>' +
+          '<button type="button" class="btn btn-sm" data-action="tp-pay" data-id="' + esc(k.m.id) + '" data-amount="' + k.row.owed + '">' + Club.icon('card') + '<span>' + (k.card ? 'Record card payment' : 'Record payment') + '</span></button></li>';
+      }).join('') + '</ul>' : ui.empty({ icon: 'check', title: 'Nothing to follow up', text: 'Every time payment is on time and has a card on file.' })) + '</div></section>';
+  }
+
+  Object.assign(Club.billing, { staffChargeGuard: staffChargeGuard, refundDues: openRefund, standingBadge: standingBadge, fnbLine: fnbLine });
+
   /* ---------------- Main page with tabs ---------------- */
-  const TABS = ['overview', 'ledger', 'dues', 'minimums', 'statements', 'renewals'];
+  const TABS = ['overview', 'ledger', 'dues', 'fnb', 'statements', 'renewals'];
   const LEDGER_PAGE = 25, ST_PAGE = 20, ACCT_PAGE = 20;
   const lf = { member: '', category: '', source: '', type: 'all', from: '', to: '', q: '', page: 0 };
   const sf = { period: '', status: '', page: 0 };
-  let fbShowAll = false;
 
   function renderMain(view, tab) {
     view.innerHTML = ui.pageHeader({
@@ -304,7 +584,7 @@
       { id: 'overview', label: 'Overview', render: tabOverview },
       { id: 'ledger', label: 'Ledger', render: tabLedger },
       { id: 'dues', label: 'Dues run', render: tabDues },
-      { id: 'minimums', label: 'F&B minimums', render: tabMinimums },
+      { id: 'fnb', label: 'F&B assessment', render: tabFnb },
       { id: 'statements', label: 'Statements', render: tabStatements },
       { id: 'renewals', label: RENEW_SEASON + ' renewals', render: tabRenewals }
     ], tab, function (id) { if (history.replaceState) history.replaceState(null, '', '#/billing' + (id === 'overview' ? '' : '/' + id)); });
@@ -353,6 +633,7 @@
       (pastIds.length ? '<div class="table-wrap"><table class="table"><thead><tr><th>Member</th><th class="num">31-60</th><th class="num">61-90</th><th class="num">90+</th><th class="num">Balance</th></tr></thead><tbody>' + pastIds.slice(0, 5).map(pastRow).join('') + '</tbody>' +
         (pastIds.length > 5 ? '<tbody class="bil-rest" hidden>' + pastIds.slice(5).map(pastRow).join('') + '</tbody>' : '') + '</table></div>' +
         (pastIds.length > 5 ? '<div class="bil-viewall"><button type="button" class="s-link" data-action="past-all" data-n="' + pastIds.length + '">View all (' + pastIds.length + ')</button></div>' : '') : ui.empty({ icon: 'check', title: 'No past due accounts', text: 'Every member is within terms.' })) + '</div></section>' +
+      policyPanels() +
       '</div><aside class="stack">' +
       '<section class="panel" data-reveal><div class="panel-head"><div><div class="eyebrow">' + esc(monthLabel(cm)) + '</div><h3>Revenue by category</h3></div></div><div class="panel-body">' +
       (byCat.length ? Club.charts.donut({ items: byCat, size: 200, money: true, center: { value: fmt.money0(billed), label: 'Month to date' } }) : ui.empty({ icon: 'reports', title: 'No charges this month', text: 'Revenue appears as charges are posted.' })) +
@@ -366,6 +647,7 @@
       const rest = ui.$('.bil-rest', b.closest('.panel')); if (!rest) return;
       rest.hidden = !rest.hidden; b.textContent = rest.hidden ? 'View all (' + b.dataset.n + ')' : 'Show fewer';
     });
+    ui.on(p, 'click', '[data-action=tp-pay]', function (e, b) { openRecordPayment(b.dataset.id, rerender, { amount: +b.dataset.amount, method: 'Card', toward: 'plan' }); });
     ui.on(p, 'click', '[data-action=pays-all]', function () { Object.assign(lf, { member: '', category: '', source: '', type: 'payment', from: curMonth() + '-01', to: '', q: '', page: 0 }); });
   }
 
@@ -383,7 +665,7 @@
       '<label class="bil-search">' + Club.icon('search') + '<input class="input" type="search" name="q" placeholder="Search descriptions" aria-label="Search descriptions" value="' + esc(lf.q) + '"></label>' +
       '<select class="select" name="member" aria-label="Member">' + memberOptions(lf.member, 'All members') + '</select>' +
       '<select class="select" name="type" aria-label="Type">' + ui.options([{ value: 'all', label: 'Charges and payments' }, { value: 'charge', label: 'Charges only' }, { value: 'payment', label: 'Payments only' }], lf.type) + '</select>' +
-      '<select class="select" name="category" aria-label="Category"><option value="">All categories</option>' + ui.options(CATS, lf.category) + '</select>' +
+      '<select class="select" name="category" aria-label="Category"><option value="">All categories</option>' + ui.options(CATS.concat([FNB_CAT]), lf.category) + '</select>' +
       '<select class="select" name="source" aria-label="Source"><option value="">All sources</option>' + ui.options(sources, lf.source) + '</select>' +
       '<label class="bil-date"><span>From</span><input class="input" type="date" name="from" value="' + esc(lf.from) + '"></label>' +
       '<label class="bil-date"><span>To</span><input class="input" type="date" name="to" value="' + esc(lf.to) + '"></label>' +
@@ -495,74 +777,8 @@
     });
   }
 
-  /* ---------------- F&B minimums ---------------- */
-  let fbKey = null;
-  function fbRows(key) {
-    const start = key + '-01', end = monthEnd(key);
-    const dining = {}; const posted = {};
-    S.all('charges').forEach(function (c) {
-      if (c.date < start || c.date > end) return;
-      if (c.refId && String(c.refId).indexOf('fbmin-') === 0) { if (live(c)) posted[c.memberId] = c; return; }
-      if (c.category === 'Dining') dining[c.memberId] = (dining[c.memberId] || 0) + (+c.amount || 0);
-    });
-    return S.all('members').filter(function (m) { const t = S.find('membershipTiers', m.tierId); return m.status === 'active' && t && t.monthlyMinimum > 0; }).map(function (m) {
-      const t = S.find('membershipTiers', m.tierId); const spend = r2(dining[m.id] || 0);
-      return { m: m, t: t, min: t.monthlyMinimum, spend: spend, short: r2(Math.max(0, t.monthlyMinimum - spend)), posted: posted[m.id] || null };
-    }).sort(function (a, b) { return b.short - a.short || a.m.lastName.localeCompare(b.m.lastName); });
-  }
-  function tabMinimums(p) {
-    p = fresh(p); panels.minimums = p;
-    if (!S.all('membershipTiers').some(function (t) { return (+t.monthlyMinimum || 0) > 0; })) {
-      p.innerHTML = '<section class="panel bil-gap" data-reveal><div class="panel-head"><div><div class="eyebrow">Food and beverage minimum</div><h3>No minimums set</h3></div></div><div class="panel-body">' +
-        ui.empty({ icon: 'dining', title: 'No monthly minimums', text: 'St. Boniface has no monthly food and beverage minimums set. Set one per category in Settings if needed.', action: '<a class="btn btn-ghost" href="#/settings">' + Club.icon('settings') + '<span>Open Settings</span></a>' }) +
-        '</div></section>';
-      return;
-    }
-    const cm = curMonth(); const choices = [cm, addMonths(cm, -1), addMonths(cm, -2)];
-    if (!fbKey || choices.indexOf(fbKey) < 0) fbKey = cm;
-    const rows = fbRows(fbKey);
-    const below = rows.filter(function (r) { return r.short > 0 && !r.posted; });
-    const postedRows = rows.filter(function (r) { return r.posted; });
-    const totalShort = r2(sum(below, function (r) { return r.short; }));
-    const isCur = fbKey === cm;
-    const shown = fbShowAll ? rows : rows.filter(function (r) { return r.short > 0 || r.posted; });
-    p.innerHTML = statStrip([
-      { label: 'Members with a minimum', html: '<span data-count="' + rows.length + '">0</span>', meta: 'Active, by tier' },
-      { label: 'Below minimum', html: '<span data-count="' + below.length + '">0</span>', meta: isCur ? 'Month to date' : monthLabel(fbKey) },
-      { label: 'Shortfall to post', html: moneyCount(totalShort, true), meta: postedRows.length ? postedRows.length + ' already posted' : 'Nothing posted yet' },
-      { label: 'Average dining spend', html: moneyCount(rows.length ? sum(rows, function (r) { return r.spend; }) / rows.length : 0), meta: 'Per member with a minimum' }
-    ]) +
-      '<section class="panel bil-gap" data-reveal><div class="panel-head bil-wrap-head"><div><div class="eyebrow">Food and beverage minimum</div><h3>' + esc(monthLabel(fbKey)) + '</h3></div><div class="row wrap">' +
-      '<select class="select bil-inline-select" name="fbKey" aria-label="Month">' + ui.options(choices.map(function (k) { return { value: k, label: monthLabel(k) }; }), fbKey) + '</select>' +
-      ui.segmented([{ value: 'short', label: 'Shortfalls' }, { value: 'all', label: 'All members' }], fbShowAll ? 'all' : 'short', 'fbview') +
-      ui.btn('Post shortfall charges', { kind: 'primary', icon: 'check', action: 'post-fb' }) + '</div></div>' +
-      (isCur ? '<p class="bil-note">Month to date through ' + esc(fmt.dateShort(today())) + '. Shortfall charges are usually posted once the month has closed.</p>' : '') +
-      '<div class="panel-body flush">' +
-      (shown.length ? '<div class="table-wrap"><table class="table"><thead><tr><th>Member</th><th>Tier</th><th class="num">Minimum</th><th class="num">Dining spend</th><th class="bil-prog-th">Progress</th><th class="num">Shortfall</th></tr></thead><tbody>' + shown.map(function (r) {
-        const pct = Math.min(100, r.spend / r.min * 100);
-        return '<tr class="clickable" data-href="billing/' + esc(r.m.id) + '"><td class="primary-cell">' + esc(r.m.lastName + ', ' + r.m.firstName) + '</td><td>' + esc(r.t.name) + '</td><td class="num muted">' + money(r.min) + '</td><td class="num">' + money(r.spend) + '</td><td><div class="bar' + (pct >= 100 ? '' : ' brass') + '"><span style="width:' + Math.max(2, pct) + '%"></span></div></td>' +
-          '<td class="num">' + (r.posted ? ui.badge('Posted ' + fmt.money(r.posted.amount), 'good') : r.short > 0 ? '<strong class="bil-bad">' + money(r.short) + '</strong>' : '<span class="muted">Met</span>') + '</td></tr>';
-      }).join('') + '</tbody></table></div>'
-        : ui.empty({ icon: 'dining', title: 'Every member has met the minimum', text: 'Switch to All members to see each account.' })) + '</div></section>';
-
-    ui.on(p, 'change', 'select[name=fbKey]', function (e, f) { fbKey = f.value; tabMinimums(p); p = panels.minimums; ui.animateIn(p); runMoney(p); });
-    ui.on(p, 'click', '.segmented button', function (e, b) { fbShowAll = b.dataset.value === 'all'; tabMinimums(p); p = panels.minimums; ui.animateIn(p); runMoney(p); });
-    ui.on(p, 'click', '[data-action=post-fb]', function () {
-      if (!below.length) { ui.toast('No unposted shortfalls for ' + monthLabel(fbKey)); return; }
-      ui.confirm({ title: 'Post shortfall charges?', text: below.length + ' members fell short of their ' + monthLabel(fbKey) + ' minimum. ' + fmt.money(totalShort) + ' will be charged to their accounts.' + (isCur ? ' The month has not yet closed.' : ''), confirmLabel: 'Post ' + below.length + ' charges' }).then(function (yes) {
-        if (!yes) return;
-        const key = fbKey; let n = 0;
-        undoRun(function () {
-          below.forEach(function (r) {
-            if (S.all('charges').some(function (c) { return c.memberId === r.m.id && c.refId === 'fbmin-' + key && live(c); })) return;
-            if (Club.chargeMember(r.m.id, { description: 'F&B minimum shortfall, ' + monthLabel(key), category: 'Dining', amount: r.short, source: 'billing', refId: 'fbmin-' + key, date: key === curMonth() ? today() : monthEnd(key), title: 'F&B minimum' })) n++;
-          });
-        }, { message: function () { return n + ' shortfall ' + (n === 1 ? 'charge' : 'charges') + ' posted'; }, undone: 'Shortfall charges reversed', after: rerenderAfterUndo });
-        tabMinimums(p); p = panels.minimums; ui.animateIn(p); runMoney(p);
-      });
-    });
-    runMoney(p);
-  }
+  /* The per-category monthly F&B minimum (Settings) is replaced by the handbook's Food & Beverage Assessment: see the
+     F&B assessment tab above. Old 'fbmin-' shortfall charges stay on file and are not F&B purchases. */
 
   /* ---------------- Statements ---------------- */
   function buildStatement(memberId, key, existing) {
@@ -702,7 +918,7 @@
   }
   function planText(x) {
     if (!x.r) return '';
-    return x.r.plan === 'monthly' ? 'Monthly, ' + x.paidN + ' of ' + x.r.schedule.length + ' posted' : 'Paid in full';
+    return x.r.plan === 'monthly' ? 'Time payment, ' + x.paidN + ' of ' + x.r.schedule.length + ' posted' : 'Paid in full';
   }
   function renewBadge(x) { return x.r ? ui.badge('Renewed', 'good') : ui.badge('Not yet renewed', 'outline'); }
   function tabRenewals(p) {
@@ -731,7 +947,7 @@
           return [esc(t.name), String(of.length), String(rn.length), String(rn.filter(function (x) { return x.r.plan === 'full'; }).length), String(rn.filter(function (x) { return x.r.plan === 'monthly'; }).length)];
         });
         return { title: 'Plans by category', body: D.sec('By membership category', null, D.table([{ label: 'Category' }, { label: 'Members', num: true }, { label: 'Renewed', num: true }, { label: 'In full', num: true }, { label: 'Monthly', num: true }], tiers)) +
-          D.note('Monthly plans spread the year’s dues in equal instalments from the renewal month until August ' + RENEW_SEASON + '.') };
+          D.note('The time payment plan spreads the year’s dues in equal payments due on the 15th of each month until August 15, ' + RENEW_SEASON + ', after a $50 administration fee.') };
       },
       posted: function () {
         const by = {};
@@ -753,12 +969,12 @@
       host.innerHTML = D.tiles(ui.stats([
         { label: 'Renewed for ' + RENEW_SEASON, value: done.length, meta: (rows.length ? Math.round(done.length / rows.length * 100) : 0) + '% of ' + rows.length + ' members' },
         { label: 'Not yet renewed', value: pending.length, meta: pending.filter(function (x) { return x.m.status === 'active'; }).length + ' active members' },
-        { label: 'Paying monthly', value: monthly, meta: (done.length - monthly) + ' paid in full' },
+        { label: 'On time payment', value: monthly, meta: (done.length - monthly) + ' paid in full' },
         { label: RENEW_SEASON + ' dues posted', value: posted, prefix: '$', decimals: 2, meta: fmt.money(left) + ' still scheduled' }
       ]), ['renewed', 'pending', 'plans', 'posted']) +
         '<section class="panel bil-gap" data-reveal><div class="panel-head bil-wrap-head"><div><div class="eyebrow">' + RENEW_SEASON + ' season</div><h3>Renewal status</h3></div>' +
           ui.segmented([{ value: 'all', label: 'All (' + rows.length + ')' }, { value: 'renewed', label: 'Renewed (' + done.length + ')' }, { value: 'pending', label: 'Not yet (' + pending.length + ')' }], rnf.show, 'rnshow') + '</div>' +
-        '<p class="bil-note">Members renew from My account in the members’ portal: in full, or in monthly instalments until August ' + RENEW_SEASON + '. Dues amounts in this demo are placeholders.</p>' +
+        '<p class="bil-note">Members renew from My account in the members’ portal: in full, or on the time payment plan (members in good standing; $50 administration fee; payments due the 15th of each month; all dues paid by August 15, ' + RENEW_SEASON + '). Dues amounts in this demo are placeholders.</p>' +
         '<div class="panel-body flush">' + (shown.length ? '<div class="table-wrap"><table class="table bil-rn-table"><thead><tr><th>Member</th><th>Tier</th><th>' + RENEW_SEASON + '</th><th>Plan</th><th>Next instalment</th><th class="num">Posted</th></tr></thead><tbody>' + shown.map(function (x) {
           return '<tr class="clickable" data-href="billing/' + esc(x.m.id) + '"><td class="primary-cell nowrap">' + esc(x.m.lastName + ', ' + x.m.firstName) + '<span class="bil-src">No. ' + esc(x.m.memberNo) + (x.m.status !== 'active' ? ' · ' + esc(x.m.status) : '') + '</span></td><td>' + esc(x.t.name) + '</td><td>' + renewBadge(x) + '</td>' +
             '<td class="nowrap">' + (x.r ? esc(planText(x)) : '') + '</td><td class="nowrap">' + (x.next ? esc(fmt.dateShort(x.next.date)) + ' · ' + money(x.next.amount) : (x.r ? '<span class="muted">All posted</span>' : '')) + '</td><td class="num">' + (x.r ? money(x.posted) : '') + '</td></tr>';
@@ -809,7 +1025,7 @@
       (pays.length ? '<table class="table bil-sheet-table"><thead><tr><th>Date</th><th>Method</th><th>Reference</th><th class="num">Amount</th></tr></thead><tbody>' + pays.map(function (x) {
         return '<tr><td class="nowrap">' + esc(fmt.dateShort(x.date)) + '</td><td>' + esc(methodLabel(x.method)) + '</td><td>' + esc(x.reference || '') + '</td><td class="num">' + money(-x.amount) + '</td></tr>';
       }).join('') + '</tbody></table>' : '<p class="muted">No payments received in this period.</p>') +
-      '<footer class="bil-sheet-foot"><p class="bil-sheet-thanks">Thank you for being part of ' + esc(info.name) + '. We look forward to seeing you at the club.</p><p>Please remit by ' + (s.dueOn ? esc(fmt.date(s.dueOn)) : 'return') + '. Yearly dues may be paid in instalments from sign-up until August. Questions about your house account may be directed to the Controller at <span class="nowrap">' + esc(info.phone) + ' ext. 202</span>.</p></footer>' +
+      '<footer class="bil-sheet-foot"><p class="bil-sheet-thanks">Thank you for being part of ' + esc(info.name) + '. We look forward to seeing you at the club.</p><p>Please remit by ' + (s.dueOn ? esc(fmt.date(s.dueOn)) : 'return') + '. The balance is due on receipt of this statement and is to be paid in full by the last day of the month. Time payment plans: payments are due on the 15th of each month, and all dues are paid in full by August 15. Questions about your house account may be directed to the Controller at <span class="nowrap">' + esc(info.phone) + ' ext. 202</span>.</p></footer>' +
       '</article>';
 
     ui.on(view, 'click', '[data-action=print]', function () { window.print(); });
@@ -852,11 +1068,13 @@
     const stmts = S.all('statements').filter(function (s) { return s.memberId === id; }).sort(function (x, y) { return y.period.localeCompare(x.period); });
     const drift = Math.abs(r2(run) - r2(m.balance || 0)) > 0.01;
     const rn = renewalRows().find(function (x) { return x.m.id === id; }) || null;
+    const stHead = standingBadge(Club.billing.standing(id), true), fs = Club.billing.fnb.state(id);
 
     view.innerHTML = '<a class="bil-back" href="#/billing">' + Club.icon('chevronLeft') + 'Billing</a>' + ui.pageHeader({
       eyebrow: 'Member account · No. ' + m.memberNo, title: m.firstName + ' ' + m.lastName,
-      subtitle: esc(t ? t.name : 'No tier') + ' · ' + esc(m.status === 'active' ? 'Active' : m.status) + (m.email ? ' · <a href="mailto:' + esc(m.email) + '">' + esc(m.email) + '</a>' : ''),
-      actions: '<a class="btn btn-ghost" href="#/members/' + esc(id) + '">' + Club.icon('user') + '<span>Profile</span></a>' + ui.btn('Record payment', { icon: 'cash', action: 'pay' }) + ui.btn('Post charge', { kind: 'primary', icon: 'plus', action: 'charge' })
+      subtitle: esc(t ? t.name : 'No tier') + ' · ' + esc(m.status === 'active' ? 'Active' : m.status) + (m.email ? ' · <a href="mailto:' + esc(m.email) + '">' + esc(m.email) + '</a>' : '') +
+        (stHead || flagBadges(m) ? ' <span class="bil-head-badges">' + stHead + flagBadges(m) + '</span>' : ''),
+      actions: '<a class="btn btn-ghost" href="#/members/' + esc(id) + '">' + Club.icon('user') + '<span>Profile</span></a>' + ui.btn('Refund dues', { icon: 'refresh', action: 'refund' }) + ui.btn('Record payment', { icon: 'cash', action: 'pay' }) + ui.btn('Post charge', { kind: 'primary', icon: 'plus', action: 'charge' })
     }) + statStrip([
       { label: 'Balance due', html: moneyCount(m.balance || 0, true), meta: a.credit > 0.005 && (m.balance || 0) < 0 ? 'Account in credit' : (a.pastDue > 0 ? '<span class="bil-bad">' + money(a.pastDue) + ' past due</span>' : 'Within terms') },
       { label: 'Current', html: money(a.current), meta: '0 to 30 days' },
@@ -874,13 +1092,23 @@
       (stmts.length ? '<ul class="list">' + stmts.map(function (s) {
         return '<li class="row between"><a class="bil-stack" href="#/billing/statement/' + esc(s.id) + '"><span class="person-name">' + esc(monthLabel(s.period)) + '</span><span class="person-sub">' + money(s.total) + ' · issued ' + esc(fmt.dateShort(s.issuedOn)) + '</span></a>' + ui.badge(stLabel(s.status), ST_KIND[s.status]) + '</li>';
       }).join('') + '</ul>' : ui.empty({ icon: 'billing', title: 'No statements yet', text: 'Generate a statement for the current month.' })) + '</div></section>' +
+      standingPanel(m) + tpPanel(m) + fnbPanel(m) +
       receiptsPanel(id) +
-      '<section class="panel" data-reveal><div class="panel-head"><h3>Account</h3></div><div class="panel-body"><dl class="kv bil-kv"><dt>Tier</dt><dd>' + esc(t ? t.name : 'None') + '</dd><dt>Monthly dues</dt><dd>' + money(t ? t.annualDues / 12 : 0) + '</dd><dt>F&amp;B minimum</dt><dd>' + (t && t.monthlyMinimum ? money(t.monthlyMinimum) + ' a month' : 'None') + '</dd>' +
+      '<section class="panel" data-reveal><div class="panel-head"><h3>Account</h3></div><div class="panel-body"><dl class="kv bil-kv"><dt>Tier</dt><dd>' + esc(t ? t.name : 'None') + '</dd><dt>Monthly dues</dt><dd>' + money(t ? t.annualDues / 12 : 0) + '</dd><dt>F&amp;B credit</dt><dd>' + fnbLine(fs) + '</dd><dt>Card on file</dt><dd>' + (m.cardOnFile ? 'Yes, with the club' : 'No') + '</dd>' +
         '<dt>' + RENEW_SEASON + ' renewal</dt><dd>' + (rn && rn.r ? renewBadge(rn) + ' <span class="ink-2">' + esc(planText(rn)) + '</span>' : renewBadge({})) + '</dd><dt>Phone</dt><dd>' + esc(m.phone || 'Not recorded') + '</dd><dt>Address</dt><dd>' + esc(m.address || 'Not recorded') + '</dd></dl></div></section></aside></div>';
 
     runMoney(view);
     ui.on(view, 'click', '[data-action=charge]', function () { openPostCharge(id, rerender); });
     ui.on(view, 'click', '[data-action=pay]', function () { openRecordPayment(id, rerender); });
+    ui.on(view, 'click', '[data-action=refund]', function () { openRefund(id, rerender); });
+    ui.on(view, 'click', '[data-action=allow-charge]', function () { staffChargeGuard(id, rerender); });
+    ui.on(view, 'change', '[data-action=card-on-file]', function () { toggleCardOnFile(id); rerender(); });
+    ui.on(view, 'change', '[data-action=flag]', function (e, b) { toggleFlag(id, b.dataset.flag); rerender(); });
+    ui.on(view, 'click', '[data-action=fnb-post]', function () {
+      const y = Club.billing.fnb.year();
+      const r = undoRun(function () { return Club.billing.fnb.post(id, y); }, { message: function (x) { return x && x.charge ? y + ' F&B assessment charged to ' + mname(id) : (x && x.error) || 'Already charged'; }, undone: y + ' F&B assessment reversed', after: rerenderAfterUndo });
+      if (r) rerender();
+    });
     ui.on(view, 'change', 'select[name=acctPeriod]', function (e, f) { acct.period = f.value; acct.page = 0; rerender(); });
     ui.on(view, 'click', '[data-action=apage]', function (e, b) { acct.page = +b.dataset.page; rerender(); });
     ui.on(view, 'click', '[data-receipt-open]', function (e, b) { Club.receipts.open(b.dataset.receiptOpen); });
@@ -911,6 +1139,7 @@
     render: function (view, params) {
       const p = params[0];
       if (p === 'statement') return renderStatement(view, params[1]);
+      if (p === 'minimums') return renderMain(view, 'fnb');   /* the old F&B minimums tab: the handbook's assessment replaced it */
       if (p && TABS.indexOf(p) >= 0) return renderMain(view, p);
       if (p) return renderAccount(view, p);
       return renderMain(view, 'overview');

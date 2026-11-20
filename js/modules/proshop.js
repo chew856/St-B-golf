@@ -544,6 +544,9 @@
       if (tender === 'Member account') {
         if (!cust || cust.kind !== 'member') { custErr(cust ? 'Only a member can charge to an account. Take card or cash.' : 'Choose the member to charge.'); return; }
         if (cust.doc.status === 'suspended' || cust.doc.status === 'resigned') { custErr('This member cannot charge to their account. Take card or cash.'); return; }
+        /* Credit policy (js/shared/billing-data.js): an account 60 days past its statement date cannot charge; staff can
+           allow it for today with a reason, and the sale then completes. */
+        if (Club.billing && Club.billing.staffChargeGuard && !Club.billing.staffChargeGuard(cust.doc.id, complete)) return;
       } else if (tender === 'Cash') {
         cashTendered = parseFloat(state.cash);
         if (isNaN(cashTendered)) { fieldError(form, 'cash', 'Enter the cash tendered.'); return; }

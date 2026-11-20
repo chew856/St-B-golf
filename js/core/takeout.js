@@ -152,6 +152,8 @@
     const due = r2(t.total - giftAmount);
     const method = due <= 0 ? 'gift' : pay.method === 'account' && c.memberId ? 'account' : 'card';
     if (method === 'card' && !(pay.card && pay.card.last4)) return { ok: false, msg: 'Choose a card to pay with.' };
+    /* Credit policy (Club.billing.chargeCheck): no charging 60 days after a statement date, unless staff allowed it today. */
+    if (method === 'account' && due > 0 && Club.billing && Club.billing.chargeCheck && !Club.billing.chargeCheck(c.memberId).ok) return { ok: false, msg: Club.billing.memberChargeMessage(c.memberId) };
     const no = nextNo();
     const order = S.insert(COLL, { id: S.uid('to'), no: no, placedAt: new Date().toISOString(), date: o.date, time: o.time, status: 'new', source: o.source || 'public',
       customer: { kind: c.kind || (c.memberId ? 'member' : c.publicPlayerId ? 'public' : 'guest'), memberId: c.memberId || null, publicPlayerId: c.memberId ? null : (c.publicPlayerId || null),
@@ -167,7 +169,7 @@
     if (method === 'account' && due > 0) {
       const ch = Club.chargeMember(c.memberId, { description: title + ' · ' + itemsText(items), category: 'Dining', amount: due, source: 'takeout', refId: order.id, date: today(), title: title, lines: lines, noReceipt: !!giftAmount });
       chargeId = ch ? ch.id : null;
-      if (!giftAmount) { rc = Club.receipts.forRef('takeout', order.id)[0] || null; if (rc && !rc.tenders) rc = S.update('receipts', rc.id, Object.assign(rc.note ? {} : { note: note }, onlineAccount(due))); }
+      if (!giftAmount) { rc = Club.receipts.forRef('takeout', order.id)[0] || null; if (rc && !rc.tenders) rc = S.update('receipts', rc.id, Object.assign({ note: rc.note ? note + ' ' + rc.note : note }, onlineAccount(due))); }
     }
     const who = { memberId: c.memberId || null, publicPlayerId: c.memberId ? null : (c.publicPlayerId || null), name: c.memberId || c.publicPlayerId ? undefined : String(c.name).trim() };
     if (giftAmount) {

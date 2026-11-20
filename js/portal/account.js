@@ -1,5 +1,5 @@
-/* Portal: My account. Balance, activity, statements (printable letterhead), receipts, online payments, F&B minimum (only
-   when the tier has one). Reads charges, payments and statements (owned by js/modules/billing.js). Writes payments,
+/* Portal: My account. Balance, activity, statements (printable letterhead), receipts, online payments, the F&B credit
+   (Food & Beverage Assessment, adult members) and any suspension under the club's credit policy. Reads charges, payments and statements (owned by js/modules/billing.js). Writes payments,
    member.balance and statement status exactly as the staff "Record payment" flow does, plus the payment's receipt
    (Club.receipts, js/core/receipts.js). Also next season's renewal (#/account/renew, Club.billing.renewal), the season
    summary (#/account/summary, printable) and a link to Rate your visits (js/portal/feedback.js). */
@@ -7,9 +7,9 @@
   'use strict';
   const S = Club.store, ui = Club.ui, fmt = Club.fmt, esc = ui.esc;
 
-  const CATS = ['Dues', 'Golf', 'Pro Shop', 'Dining', 'Events', 'Lessons', 'Other'];
-  const CAT_COLOR = { Dues: 'var(--c1)', Golf: 'var(--c3)', 'Pro Shop': 'var(--c4)', Dining: 'var(--c2)', Events: 'var(--c5)', Lessons: 'var(--c6)', Other: 'var(--rule-strong)' };
-  const CAT_ICON = { Dues: 'crest', Golf: 'flag', 'Pro Shop': 'shop', Dining: 'dining', Events: 'events', Lessons: 'lesson', Other: 'tag', Payment: 'check' };
+  const CATS = ['Dues', 'Golf', 'Pro Shop', 'Dining', 'F&B assessment', 'Events', 'Lessons', 'Other'];
+  const CAT_COLOR = { Dues: 'var(--c1)', Golf: 'var(--c3)', 'Pro Shop': 'var(--c4)', Dining: 'var(--c2)', 'F&B assessment': 'var(--c2)', Events: 'var(--c5)', Lessons: 'var(--c6)', Other: 'var(--rule-strong)' };
+  const CAT_ICON = { Dues: 'crest', Golf: 'flag', 'Pro Shop': 'shop', Dining: 'dining', 'F&B assessment': 'dining', Events: 'events', Lessons: 'lesson', Other: 'tag', Payment: 'check' };
   const SOURCE = { teesheet: 'Golf shop', proshop: 'Golf shop', dining: 'Gallery Taphouse', events: 'Club events', lessons: 'Golf shop', billing: 'Club office', manual: 'Club office' };
   const MAX_PAYMENT = 50000;
 
@@ -73,34 +73,39 @@
   }
 
   /* ---------------- Overview ---------------- */
-  function fbInfo(m) {
-    const t = tierOf(m); const key = curMonth(); const start = key + '-01', end = monthEnd(key);
-    const min = t ? +t.monthlyMinimum || 0 : 0;
-    let spend = 0, posted = null;
-    myCharges(m.id).forEach(function (c) {
-      if (c.date < start || c.date > end) return;
-      if (c.refId && String(c.refId).indexOf('fbmin-') === 0) { posted = c; return; }
-      if (c.category === 'Dining') spend += +c.amount || 0;
-    });
-    return { min: min, spend: r2(spend), short: r2(Math.max(0, min - spend)), posted: posted, key: key, end: end, tier: t };
-  }
-
+  /* F&B credit (the club's Food & Beverage Assessment, Club.billing.fnb): adult members pre-pay it each season; dining,
+     takeout and beverage cart purchases are paid from it first, gratuities are not; what is left at season end expires. */
   function fbPanel(m) {
-    const f = fbInfo(m);
-    let body;
-    if (!f.min) return '';
-    {
-      const pct = Math.min(100, f.spend / f.min * 100);
-      const left = Math.max(0, Math.round((Club.fmt.toDate(f.end) - Club.fmt.toDate(today())) / 86400000));
-      const note = f.posted ? 'A shortfall of ' + fmt.money(f.posted.amount) + ' has been applied for ' + monthName(f.key) + '. It appears in your activity.'
-        : f.short <= 0 ? 'You have met your ' + monthName(f.key) + ' minimum. Thank you.'
-          : 'You have ' + fmt.money(f.short) + ' left to spend toward your ' + monthName(f.key) + ' minimum, with ' + (left === 0 ? 'today' : left === 1 ? '1 day' : left + ' days') + ' left in the month. Anything left over is added to your account at month end.';
-      body = '<div class="pa-fb-figs"><div><span class="pa-fig-l">Dining this month</span><span class="pa-fb-val">' + money(f.spend) + '</span></div><div class="right"><span class="pa-fig-l">Monthly minimum</span><span class="pa-fb-val muted">' + money(f.min) + '</span></div></div>' +
-        '<div class="bar pa-fb-bar' + (pct >= 100 ? '' : ' brass') + '" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(pct) + '" aria-label="Dining minimum progress"><span style="width:' + Math.max(2, pct) + '%"></span></div>' +
-        '<p class="pa-fb-note">' + esc(note) + '</p>' +
-        (f.short > 0 && !f.posted ? '<a class="p-link" href="#/dining">Reserve a table' + Club.icon('chevronRight') + '</a>' : '');
+    const F = Club.billing && Club.billing.fnb; if (!F) return '';
+    const f = F.state(m.id);
+    if (!f.applies && !f.assessed) return '';
+    const pct = f.assessed ? Math.min(100, f.used / f.assessed * 100) : 0;
+    let head, note;
+    if (!f.assessed) {
+      head = '<p class="pa-fb-line">Your ' + f.year + ' F&amp;B credit of ' + money(f.amount) + ' is not on your account yet.</p>';
+      note = f.status === 'ended' ? 'The ' + (f.year + 1) + ' assessment of ' + fmt.money(f.amount) + ' is charged on ' + fmt.date(f.next) + '.' : 'It is charged at the start of the season, ' + fmt.date(f.start) + '.';
+    } else if (f.status === 'ended') {
+      head = '<p class="pa-fb-line">' + f.year + ' F&amp;B credit: ' + money(f.used) + ' used of ' + money(f.assessed) + '</p>';
+      note = (f.expired > 0.005 ? fmt.money(f.expired) + ' was left on ' + fmt.date(f.end) + ' and has expired. ' : 'You used all of it. ') + 'The ' + (f.year + 1) + ' assessment of ' + fmt.money(f.amount) + ' is charged on ' + fmt.date(f.next) + '.';
+    } else {
+      head = '<p class="pa-fb-line">F&amp;B credit: ' + money(f.left) + ' left of ' + money(f.assessed) + ', until ' + esc(fmt.dateShort(f.end)) + '</p>';
+      note = 'Food and drink in the clubhouse, takeout and the beverage cart are paid from it first. Anything left after ' + fmt.date(f.end) + ' expires.';
     }
-    return '<section class="panel pa-fb" data-reveal><div class="panel-head"><div><h3>Food and drink minimum</h3><div class="pa-head-sub">' + esc(monthLabel(f.key)) + '</div></div>' + Club.icon('dining', 'pa-head-icon') + '</div><div class="panel-body">' + body + '</div></section>';
+    const body = head +
+      '<div class="pa-fb-figs"><div><span class="pa-fig-l">Credit used</span><span class="pa-fb-val">' + money(f.used) + '</span></div><div class="right"><span class="pa-fig-l">' + (f.status === 'ended' ? 'Credit expired' : 'Credit left') + '</span><span class="pa-fb-val muted">' + money(f.status === 'ended' ? f.expired : f.left) + '</span></div></div>' +
+      '<div class="bar pa-fb-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(pct) + '" aria-label="F&amp;B credit used"><span style="width:' + Math.max(f.used ? 2 : 0, pct) + '%"></span></div>' +
+      '<p class="pa-fb-note">' + esc(note) + '</p>' +
+      '<p class="pa-fine">Gratuities and service charges are not paid from the credit. It cannot be transferred.</p>' +
+      (f.status === 'open' && f.left > 0.005 ? '<a class="p-link" href="#/dining">Reserve a table' + Club.icon('chevronRight') + '</a>' : '');
+    return '<section class="panel pa-fb" data-reveal><div class="panel-head"><div><h3>Food and beverage credit</h3><div class="pa-head-sub">' + f.year + ' season, ' + esc(Club.season ? Club.season.dayLabel() : '') + '</div></div>' + Club.icon('dining', 'pa-head-icon') + '</div><div class="panel-body">' + body + '</div></section>';
+  }
+  /* Credit policy (Club.billing.standing): what is suspended on the account, and why. */
+  function standingNote(m) {
+    const st = Club.billing && Club.billing.standing ? Club.billing.standing(m.id) : null;
+    if (!st || (!st.level && !st.tpArrears)) return '';
+    const what = st.level >= 120 ? 'All club privileges are suspended on your account.' : st.level >= 90 ? 'Charging, tee time booking and golf are suspended on your account.' : st.level >= 60 ? 'Charging to your account is suspended.' : 'Tee time booking and golf are suspended on your account.';
+    const why = st.level ? fmt.money(st.amount) + ' is unpaid ' + st.days + ' days after the statement date.' : 'Your time payment of ' + fmt.money(st.tpArrears.amount) + ' due ' + fmt.date(st.tpArrears.date) + ' is ' + st.tpArrears.days + ' days late.';
+    return '<div class="pa-standing" role="status">' + Club.icon('info') + '<span><strong>' + esc(what) + '</strong> ' + esc(why) + ' Please make a payment, or call the club office at ' + esc(Club.info.phone) + '.</span></div>';
   }
 
   function rowHTML(r) {
@@ -138,6 +143,7 @@
         '<section class="panel pa-balance" data-reveal><div class="panel-body">' +
           '<div class="eyebrow">Your account</div><div class="pa-bal-h">Current balance</div>' +
           '<div class="pa-bal-val"><span data-count="' + Math.abs(bal) + '" data-prefix="' + (bal < -0.005 ? '-$' : '$') + '" data-decimals="2">' + esc(fmt.money(0)) + '</span></div>' +
+          standingNote(m) +
           (aging.pastDue > 0.005 && bal > 0.005 ? '<p class="pa-past">' + Club.icon('info') + '<span>' + money(Math.min(aging.pastDue, bal)) + ' is more than 30 days old. If you have already paid, you can ignore this.</span></p>' : '') +
           '<dl class="pa-facts"><div><dt>Payment due</dt><dd>' + esc(dueLine) + '</dd><dd class="muted">' + dueSub + '</dd></div>' +
           '<div><dt>Last payment</dt><dd>' + (last ? money(last.amount) : 'None yet') + '</dd><dd class="muted">' + (last ? esc(fmt.date(last.date)) + ' · ' + esc(payMethod(last)) : 'Your payments will appear here') + '</dd></div>' +
@@ -172,54 +178,71 @@
     '</div>';
   }
 
-  /* ---------------- Next season: renew (Club.billing.renewal, js/modules/billing.js) ----------------
+  /* ---------------- Next season: renew (Club.billing.renewal, js/shared/billing-data.js) ----------------
      Dues are the tier's annualDues: placeholders in this demo, shown as amounts only, never as the club's prices.
-     Pay in full, or equal monthly instalments from this month until August (verified: yearly dues can be spread from
-     the sign-up date until August). Renew opens a review sheet; Confirm records the renewal and charges the first
-     instalment (or the full amount) to the account, with its receipt. */
+     Pay in full, or the time payment plan from the club's Membership Handbook: for members in good standing, a $50
+     administration fee when applying, payments due on the 15th of each month, all dues paid by August 15; a valid credit
+     card must be on file with the club office (this site never stores one) and is charged if a payment is missed; credit
+     card payments carry a 1.5% fee; 30 days in arrears suspends tee time booking and golf. Renew opens a review sheet;
+     Confirm records the renewal and charges the full amount, or the administration fee, to the account with a receipt. */
   function renewApi() { return Club.billing && Club.billing.renewal ? Club.billing.renewal : null; }
   function canRenew(m) { return m.status !== 'suspended' && m.status !== 'resigned' && !!tierOf(m); }
   function planLine(r) {
     const done = r.schedule.filter(function (s) { return s.chargeId; }).length;
-    return r.plan === 'monthly' ? 'Monthly instalments, ' + done + ' of ' + r.schedule.length + ' on your account' : 'Paid in full';
+    return r.plan === 'monthly' ? 'Time payment plan, ' + done + ' of ' + r.schedule.length + ' payments on your account' : 'Paid in full';
   }
   function instalmentsLine(sched) {
     const a = sched[0].amount, b = sched[sched.length - 1].amount;
-    return sched.length + ' monthly instalments of ' + fmt.money(a) + (Math.abs(a - b) > 0.005 ? ' (the last is ' + fmt.money(b) + ')' : '');
+    return sched.length + ' payments of ' + fmt.money(a) + (Math.abs(a - b) > 0.005 ? ' (the last is ' + fmt.money(b) + ')' : '') + ', due on the 15th';
   }
+  const TP_TAG = { paid: ['Paid', 'good'], scheduled: ['Scheduled', 'outline'], due: ['Due today', 'info'], missed: ['Missed', 'warn'], arrears: ['30 days late', 'bad'], legacy: ['Posted', 'plain'] };
   function renewCard(m) {
     const RN = renewApi(), t = tierOf(m);
     if (!RN || !t) return '';
     const r = RN.forMember(m.id);
     let body;
     if (r) {
-      const left = r.schedule.filter(function (s) { return !s.chargeId; }), next = left[0];
+      const ps = RN.status ? RN.status(r) : null;
+      const left = r.schedule.filter(function (s) { return !s.chargeId; }), next = ps ? ps.next : left[0];
+      const missed = ps ? ps.missed : [];
       body = '<div class="pa-rn-state">' + ui.badge('Renewed', 'good') + '<span>' + esc(planLine(r)) + '</span></div>' +
-        '<p class="pa-rn-line">' + (next ? 'Next instalment ' + money(next.amount) + ' on ' + esc(fmt.date(next.date)) + '. ' + left.length + ' of ' + r.schedule.length + ' still to come.' : 'Your ' + RN.SEASON + ' dues of ' + money(r.total) + ' are on your account. Thank you.') + '</p>' +
+        (missed.length ? '<p class="pa-rn-line pa-rn-late">' + esc('A payment of ' + fmt.money(missed[0].owed) + ' was due ' + fmt.date(missed[0].date) + '. Please pay it now; the card on file with the club is charged for missed payments.') + '</p>'
+          : '<p class="pa-rn-line">' + (next ? 'Next payment ' + money(next.owed || next.amount) + ' due ' + esc(fmt.date(next.date)) + '. ' + left.length + ' of ' + r.schedule.length + ' still to come.' : 'Your ' + RN.SEASON + ' dues of ' + money(r.total) + ' are on your account. Thank you.') + '</p>') +
         '<a class="p-link" href="#/account/renew">View your plan' + Club.icon('chevronRight') + '</a>';
     } else if (!canRenew(m)) {
       body = '<p class="pa-rn-line">To renew for ' + RN.SEASON + ', please call the club office at <a class="nowrap" href="tel:' + esc(String(Club.info.phone).replace(/[^0-9+]/g, '')) + '">' + esc(Club.info.phone) + '</a>.</p>';
     } else {
       const sched = RN.schedule(t.annualDues, today(), 'monthly');
       body = '<div class="pa-rn-fig"><span class="pa-fig-l">' + esc(t.name) + ' dues for ' + RN.SEASON + '</span><span class="pa-rn-val">' + money(t.annualDues) + '</span></div>' +
-        '<p class="pa-rn-line">Pay in full' + (sched.length > 1 ? ', or in ' + esc(instalmentsLine(sched)) + ' from ' + esc(monthName(mkey(today()))) + ' until August' : '') + '.</p>' +
+        '<p class="pa-rn-line">Pay in full' + (sched.length > 1 ? ', or on the time payment plan: ' + esc(sched.length) + ' payments due on the 15th of each month until August 15' : '') + '.</p>' +
         '<p class="pa-fine pa-rn-demo">Placeholder amount in this demo.</p>' +
         '<a class="btn btn-primary pa-rn-go" href="#/account/renew">' + Club.icon('crest') + '<span>Renew for ' + RN.SEASON + '</span></a>';
     }
     return '<section class="panel pa-rn-card" data-reveal><div class="panel-head"><div><h3>' + RN.SEASON + ' membership</h3><div class="pa-head-sub">' + (r ? 'You are renewed for next season' : 'Renewal for next season') + '</div></div>' + Club.icon('crest', 'pa-head-icon') + '</div><div class="panel-body">' + body + '</div></section>';
   }
   function schedRows(sched, r, m) {
-    return '<ol class="pa-rn-list">' + sched.map(function (s) {
-      const d = fmt.toDate(s.date), posted = !!s.chargeId;
+    const RN = renewApi(), ps = r && r.plan === 'monthly' && RN && RN.status ? RN.status(r) : null;
+    return '<ol class="pa-rn-list">' + sched.map(function (s, i) {
+      const d = fmt.toDate(s.date), posted = !!s.chargeId, st = ps ? ps.rows[i] : null;
       const rc = posted && Club.receipts ? Club.receipts.forMember(m.id).filter(function (x) { return x.chargeId === s.chargeId; }) : [];
-      const what = sched.length === 1 ? 'Paid in full' : 'Instalment ' + s.n + ' of ' + sched.length;
-      const when = !r && s.date === today() ? 'Today, charged when you confirm' : fmt.date(s.date);
+      const what = sched.length === 1 ? 'Paid in full' : 'Payment ' + s.n + ' of ' + sched.length;
+      const when = !r && s.date === today() ? 'Today, charged when you confirm' : (sched.length > 1 ? 'Due ' : '') + fmt.date(s.date);
+      const tag = st ? TP_TAG[st.state] : posted ? ['Posted', 'plain'] : ['Scheduled', 'outline'];
       return '<li class="pa-rn-row' + (posted ? ' is-posted' : '') + '"><span class="pa-date" aria-hidden="true"><span class="pa-date-d">' + d.getDate() + '</span><span class="pa-date-m">' + esc(d.toLocaleDateString('en-US', { month: 'short' })) + '</span></span>' +
         '<span class="pa-row-main"><span class="pa-row-desc">' + esc(what) + '</span><span class="pa-row-sub">' + esc(when) + '</span>' + (rc.length ? Portal.receiptLink(rc) : '') + '</span>' +
-        '<span class="pa-row-amt num">' + money(s.amount) + (r ? '<span class="pa-row-tag">' + (posted ? 'Posted' : 'Scheduled') + '</span>' : '') + '</span></li>';
+        '<span class="pa-row-amt num">' + money(s.amount) + (r ? '<span class="pa-row-tag">' + esc(tag[0]) + '</span>' : '') + '</span></li>';
     }).join('') + '</ol>';
   }
-  let renewPlan = 'monthly';
+  /* The Time Payment Policy, in the member's words (shown before they choose the plan and on their plan). */
+  function tpTerms(RN) {
+    return '<ul class="pa-tp-terms">' +
+      '<li>A $50.00 administration fee applies to every time payment application.</li>' +
+      '<li>Payments are due on the 15th of each month, and all dues are paid in full by August 15, ' + RN.SEASON + '.</li>' +
+      '<li>Pay by EFT, cash, cheque, debit or credit card. Credit card payments carry a 1.5% processing fee.</li>' +
+      '<li>A valid credit card must be on file with the club office. It is charged if a monthly payment is missed. This website never stores your card.</li>' +
+      '<li>A payment 30 days in arrears suspends tee time booking and golf until it is paid.</li></ul>';
+  }
+  let renewPlan = 'full';
   let renewBusy = false;
   function renderRenew(view, m) {
     const RN = renewApi(), t = tierOf(m);
@@ -229,13 +252,18 @@
     if (r) {
       const left = r.schedule.filter(function (s) { return !s.chargeId; });
       const posted = r2(sum(r.schedule.filter(function (s) { return s.chargeId; }), function (s) { return s.amount; }));
+      const ps = r.plan === 'monthly' && RN.status ? RN.status(r) : null;
+      const owe = ps ? ps.owedNow : 0;
       view.innerHTML = hero(m, 'Your ' + SEASON + ' membership', 'You are renewed for ' + SEASON + '. Thank you, ' + m.firstName + '.') + subnav('renew') +
         '<div class="grid pa-rn">' +
           '<section class="panel pa-rn-done" data-reveal><div class="panel-head"><div><h3>Your plan</h3><div class="pa-head-sub">Renewed ' + esc(fmt.date(String(r.createdAt).slice(0, 10))) + '</div></div>' + ui.badge('Renewed', 'good') + '</div><div class="panel-body">' +
             '<dl class="pa-review-kv"><div><dt>Membership</dt><dd>' + esc((S.find('membershipTiers', r.tierId) || t).name) + '</dd></div><div><dt>Season</dt><dd>' + SEASON + '</dd></div>' +
             '<div><dt>Plan</dt><dd>' + esc(RN.PLAN_LABEL[r.plan]) + '</dd></div><div><dt>Dues for the year</dt><dd>' + money(r.total) + '</dd></div>' +
+            (r.adminFee ? '<div><dt>Administration fee</dt><dd>' + money(r.adminFee.amount) + '</dd></div>' : '') +
             '<div><dt>On your account so far</dt><dd>' + money(posted) + '</dd></div><div><dt>Still to come</dt><dd class="pa-rv-amt">' + money(r2(r.total - posted)) + '</dd></div></dl>' +
-            '<p class="pa-fine">' + (left.length ? 'Each instalment is added to your account on its date and appears on that month’s statement.' : 'Everything for ' + SEASON + ' is on your account.') + ' Questions? Call the club office at ' + esc(Club.info.phone) + '.</p>' +
+            (owe > 0.005 ? '<p class="pa-rn-line pa-rn-late">' + esc(fmt.money(owe) + ' is due on your plan now.') + '</p><a class="btn btn-primary" href="#/account/pay/plan">' + Club.icon('card') + '<span>Pay ' + esc(fmt.money(owe)) + '</span></a>' : '') +
+            (r.plan === 'monthly' ? tpTerms(RN) : '') +
+            '<p class="pa-fine">' + (left.length ? 'Each payment is added to your account on its due date and appears on that month’s statement.' : 'Everything for ' + SEASON + ' is on your account.') + ' Questions? Call the club office at ' + esc(Club.info.phone) + '.</p>' +
           '</div></section>' +
           '<section class="panel pa-rn-sched" data-reveal><div class="panel-head"><div><h3>' + (left.length ? 'Remaining schedule' : 'Schedule') + '</h3><div class="pa-head-sub">' + esc(left.length ? left.length + ' of ' + r.schedule.length + ' still to come' : 'All on your account') + '</div></div></div><div class="panel-body flush">' + schedRows(r.schedule, r, m) + '</div></section>' +
         '</div>';
@@ -244,9 +272,12 @@
     if (!canRenew(m)) { view.innerHTML = back + '<section class="panel">' + ui.empty({ icon: 'crest', title: 'Please call the club office', text: 'Your membership cannot be renewed online. The club office at ' + Club.info.phone + ' can help.' }) + '</section>'; return; }
     const total = r2(t.annualDues), start = today();
     const monthly = RN.schedule(total, start, 'monthly'), full = RN.schedule(total, start, 'full');
-    if (monthly.length < 2) renewPlan = 'full';
-    function opt(value, title, amount, sub) {
-      return '<label class="pa-opt"><input type="radio" name="renewPlan" value="' + value + '"' + (value === renewPlan ? ' checked' : '') + '><span class="pa-opt-body"><span class="pa-opt-title">' + esc(title) + '</span><span class="pa-opt-sub">' + esc(sub) + '</span></span><span class="pa-opt-amt num">' + money(amount) + '</span></label>';
+    const el = RN.eligible ? RN.eligible(m.id) : { ok: true };
+    const tpOk = monthly.length > 1 && el.ok;
+    if (!tpOk) renewPlan = 'full';
+    const fee = RN.TP ? RN.TP.FEE : 50;
+    function opt(value, title, amount, sub, off) {
+      return '<label class="pa-opt' + (off ? ' is-off' : '') + '"><input type="radio" name="renewPlan" value="' + value + '"' + (value === renewPlan ? ' checked' : '') + (off ? ' disabled' : '') + '><span class="pa-opt-body"><span class="pa-opt-title">' + esc(title) + '</span><span class="pa-opt-sub">' + esc(sub) + '</span></span><span class="pa-opt-amt num">' + money(amount) + '</span></label>';
     }
     view.innerHTML = hero(m, 'Renew for ' + SEASON, 'Choose how to pay next season’s dues. Nothing is charged until you confirm.') + subnav('renew') +
       '<div class="grid pa-rn">' +
@@ -256,8 +287,8 @@
             '<p class="pa-fine">Placeholder amount in this demo, not a confirmed club price.</p></div></section>' +
           '<section class="panel" data-reveal><div class="panel-head"><h3>How would you like to pay?</h3></div><div class="panel-body">' +
             '<div class="pa-opts" role="radiogroup" aria-label="Payment plan">' + opt('full', 'Pay in full', total, 'Charged to your member account today') +
-              (monthly.length > 1 ? opt('monthly', 'Monthly instalments', monthly[0].amount, monthly.length + ' payments, ' + monthName(mkey(start)) + ' to August ' + SEASON) : '') + '</div>' +
-            '<p class="pa-fine">Yearly dues can be spread from the sign-up date until August.</p></div></section>' +
+              (monthly.length > 1 ? opt('monthly', 'Time payment plan', monthly[0].amount, el.ok ? fmt.money(fee) + ' administration fee today, then ' + monthly.length + ' payments due on the 15th, ' + monthName(mkey(monthly[0].date)) + ' to August 15, ' + SEASON : el.reason, !el.ok) : '') + '</div>' +
+            (monthly.length > 1 ? '<h4 class="pa-rn-rh">Time payment plan</h4>' + tpTerms(RN) : '') + '</div></section>' +
         '</div>' +
         '<section class="panel pa-rn-sched" data-reveal><div class="panel-head"><div><h3>Your schedule</h3><div class="pa-head-sub pa-rn-sub"></div></div></div><div class="panel-body flush"><div class="pa-rn-host"></div>' +
           '<div class="pa-rn-total"><span>Total for ' + SEASON + '</span><strong class="num">' + money(total) + '</strong></div></div></section>' +
@@ -267,23 +298,26 @@
       const s = sched();
       ui.$('.pa-rn-host', view).innerHTML = schedRows(s, null, m);
       ui.$('.pa-rn-sub', view).textContent = s.length > 1 ? instalmentsLine(s) : 'One payment today';
-      Portal.actionBar.show({ summaryHTML: '<span class="pa-bar-amt">' + esc(fmt.money(s[0].amount)) + '</span><small>' + esc(s.length > 1 ? 'today, then ' + (s.length - 1) + ' more' : 'today, in full') + '</small>', label: 'Renew for ' + SEASON, onClick: review });
+      Portal.actionBar.show({ summaryHTML: s.length > 1 ? '<span class="pa-bar-amt">' + esc(fmt.money(fee)) + '</span><small>' + esc('fee today, then ' + s.length + ' payments') + '</small>' : '<span class="pa-bar-amt">' + esc(fmt.money(s[0].amount)) + '</span><small>' + esc('today, in full') + '</small>', label: 'Renew for ' + SEASON, onClick: review });
     }
     function review() {
-      const s = sched(), first = s[0];
+      const s = sched(), first = s[0], tp = s.length > 1;
       const content = '<div class="pa-rn-review"><dl class="pa-review-kv">' +
           '<div><dt>Renewing</dt><dd>' + esc(t.name) + ' membership, ' + SEASON + ' season</dd></div>' +
-          '<div><dt>Plan</dt><dd>' + esc(s.length > 1 ? 'Monthly instalments, ' + s.length + ' payments' : 'Pay in full') + '</dd></div>' +
+          '<div><dt>Plan</dt><dd>' + esc(tp ? 'Time payment plan, ' + s.length + ' payments' : 'Pay in full') + '</dd></div>' +
           '<div><dt>Dues for the year</dt><dd>' + money(total) + '</dd></div>' +
-          '<div><dt>First charge</dt><dd><span class="pa-rv-amt">' + money(first.amount) + '</span><span class="pa-rn-rsub">Charged to your member account today</span></dd></div></dl>' +
-        (s.length > 1 ? '<h4 class="pa-rn-rh">Schedule</h4><ol class="pa-rn-mini">' + s.map(function (x) { return '<li><span>' + esc(fmt.date(x.date)) + '</span><span class="num">' + money(x.amount) + '</span></li>'; }).join('') + '</ol>' : '') +
-        '<p class="pa-rn-terms">' + esc(s.length > 1 ? 'The other ' + (s.length - 1) + ' instalments are added to your account on the 1st of each month until August ' + SEASON + ' and appear on your monthly statements.' : 'The full amount is added to your account today and appears on your next statement.') + '</p></div>';
+          '<div><dt>' + (tp ? 'Charged today' : 'First charge') + '</dt><dd><span class="pa-rv-amt">' + money(tp ? fee : first.amount) + '</span><span class="pa-rn-rsub">' + esc(tp ? 'Administration fee, charged to your member account today' : 'Charged to your member account today') + '</span></dd></div></dl>' +
+        (tp ? '<h4 class="pa-rn-rh">Payments</h4><ol class="pa-rn-mini">' + s.map(function (x) { return '<li><span>' + esc(fmt.date(x.date)) + '</span><span class="num">' + money(x.amount) + '</span></li>'; }).join('') + '</ol>' : '') +
+        '<p class="pa-rn-terms">' + esc(tp ? 'Each payment is added to your account on the 15th of its month and is due that day. All dues are paid in full by August 15, ' + SEASON + '.' : 'The full amount is added to your account today and appears on your next statement.') + '</p>' +
+        (tp ? '<label class="check pa-rn-agree"><input type="checkbox" name="tpAgree"><span>I have a valid credit card on file with the club office, or will call ' + esc(Club.info.phone) + ' to give one. It is charged if a payment is missed.</span></label>' : '') + '</div>';
       const sh = Portal.openSheet({ title: 'Confirm your renewal', content: content,
         footer: '<div class="pa-rn-acts"><button type="button" class="btn" data-rv="back">Back</button><button type="button" class="btn btn-primary" data-rv="ok">Confirm renewal</button></div>' });
       if (sh.duplicate) return;
       ui.on(sh.foot, 'click', '[data-rv]', function (e, b) {
         if (b.dataset.rv === 'back') { sh.close(); return; }
         if (renewBusy) return;
+        const agree = sh.body ? ui.$('input[name=tpAgree]', sh.body) : document.querySelector('input[name=tpAgree]');
+        if (tp && agree && !agree.checked) { ui.toast('Please confirm the card on file with the club office', 'bad'); agree.focus(); return; }
         renewBusy = true; b.disabled = true; b.setAttribute('aria-busy', 'true');
         const res = RN.renew(m.id, renewPlan);
         sh.close();
@@ -536,7 +570,13 @@
     if (!st) st = open[0] || null;
     const stOwed = st ? owedOn(st, m) : 0;
     const showStmt = st && stOwed > 0.005 && Math.abs(stOwed - bal) > 0.005;
-    const initial = bal > 0.005 ? (stId && showStmt ? 'statement' : 'full') : 'other';
+    /* Time payment plan: what is due now (or the next payment, to pay ahead). A credit card payment toward the plan
+       carries the club's 1.5% processing fee, added to the account as its own charge. */
+    const RN = renewApi(), plan = RN && RN.status ? RN.forMember(m.id) : null, ps = plan && plan.plan === 'monthly' ? RN.status(plan) : null;
+    const planAmt = ps ? (ps.owedNow > 0.005 ? ps.owedNow : ps.next ? r2(ps.next.owed || ps.next.amount) : 0) : 0;
+    const planRow = ps ? (ps.missed[0] || ps.rows.find(function (x) { return x.state === 'due'; }) || ps.next) : null;
+    const cardFee = function (a) { return r2(a * (RN && RN.TP ? RN.TP.CARD_FEE : 0.015)); };
+    const initial = stId === 'plan' && planAmt > 0 ? 'plan' : bal > 0.005 ? (stId && showStmt ? 'statement' : 'full') : 'other';
 
     function opt(value, title, amount, sub) {
       return '<label class="pa-opt"><input type="radio" name="amountOpt" value="' + value + '"' + (value === initial ? ' checked' : '') + '><span class="pa-opt-body"><span class="pa-opt-title">' + esc(title) + '</span>' + (sub ? '<span class="pa-opt-sub">' + esc(sub) + '</span>' : '') + '</span>' + (amount != null ? '<span class="pa-opt-amt num">' + money(amount) + '</span>' : '') + '</label>';
@@ -548,6 +588,7 @@
             (bal <= 0.005 ? '<p class="pa-note">Your account is ' + (bal < -0.005 ? 'in credit by ' + esc(fmt.money(-bal)) : 'fully paid') + '. You can still pay ahead. The amount is kept as a credit for future charges.</p>' : '') +
             '<div class="pa-opts">' +
               (bal > 0.005 ? opt('full', 'Full balance', bal, 'Everything you owe today') : '') +
+              (planAmt > 0 ? opt('plan', 'Time payment', planAmt, (planRow ? (planRow.state === 'missed' || planRow.state === 'arrears' ? 'Missed, was due ' : 'Due ') + fmt.date(planRow.date) + ' · ' : '') + 'plus a 1.5% card fee of ' + fmt.money(cardFee(planAmt))) : '') +
               (showStmt ? opt('statement', monthName(st.period) + ' statement', stOwed, st.status === 'overdue' ? 'Past due since ' + fmt.date(st.dueOn) : (st.dueOn ? 'Due ' + fmt.date(st.dueOn) : 'Issued ' + fmt.date(st.issuedOn))) : '') +
               opt('other', 'Another amount', null, 'Enter any amount') +
             '</div>' +
@@ -561,6 +602,7 @@
         '</div>' +
         '<div class="pa-review" data-reveal>' +
           '<dl class="pa-review-kv"><div><dt>Balance today</dt><dd class="num">' + money(bal) + '</dd></div><div><dt>Balance after this payment</dt><dd class="pa-rv-after num">' + money(bal) + '</dd></div></dl>' +
+          '<p class="pa-fine pa-rv-fee" hidden></p>' +
           '<p class="pa-fine">Credited right away. We never store your full card number or security code.</p>' +
         '</div>' +
       '</form>';
@@ -571,10 +613,12 @@
     const nm = ui.$('.cc-in-name', form); if (nm && !nm.value) { nm.value = m.firstName + ' ' + m.lastName; nm.dispatchEvent(new Event('input')); }
     function amountOpt() { const r = q('input[name=amountOpt]:checked'); return r ? r.value : 'other'; }
     function parseAmt(s) { s = String(s || '').replace(/[$,\s]/g, ''); if (!/^\d+(\.\d{1,2})?$/.test(s)) return NaN; return r2(+s); }
-    function amount() { const o = amountOpt(); if (o === 'full') return bal; if (o === 'statement') return stOwed; return parseAmt(q('[name=other]').value); }
+    function amount() { const o = amountOpt(); if (o === 'full') return bal; if (o === 'statement') return stOwed; if (o === 'plan') return planAmt; return parseAmt(q('[name=other]').value); }
     function updateReview() {
       const a = amount(); const ok = !isNaN(a) && a > 0;
-      q('.pa-rv-after').textContent = fmt.money(r2(bal - (ok ? a : 0)));
+      q('.pa-rv-after').textContent = fmt.money(r2(bal - (ok ? a : 0) + (ok && amountOpt() === 'plan' ? cardFee(a) : 0)));
+      const fe = q('.pa-rv-fee'); fe.hidden = !(ok && amountOpt() === 'plan');
+      if (!fe.hidden) fe.textContent = 'A 1.5% credit card processing fee of ' + fmt.money(cardFee(a)) + ' is added to your account as its own charge.';
       const d = (ui.$('.cc-in-num', form).value || '').replace(/\D/g, ''), b = Club.cards.detect(d).brand;
       const html = d.length >= 4 && b !== 'unknown' ? markChip(b, 14) + '<span>' + esc(cardLabel(b, d.slice(-4))) + '</span>' : 'Card';
       /* the final button lives in the sticky bar */
@@ -623,7 +667,7 @@
         if (balanceMoved()) return;
         /* Wipe sensitive inputs before anything else happens */
         card.reset();
-        const res = postPayment(m.id, a, c.brand, c.last4);
+        const res = postPayment(m.id, a, c.brand, c.last4, amountOpt() === 'plan' && plan ? plan : null);
         if (!res) { ui.toast('We could not take that payment. Please call the club office.', 'bad'); return; }
         ui.toast('Thank you. Your payment of ' + fmt.money(a) + ' has been received');
         justPaid = res;
@@ -633,14 +677,14 @@
   }
 
   /* Mirrors Club.billing.recordPayment (staff): insert into payments, reduce member.balance, mark statement paid. */
-  function postPayment(memberId, amount, brand, last4) {
+  function postPayment(memberId, amount, brand, last4, plan) {
     const mem = fresh(memberId); if (!mem) return null;
     const amt = r2(amount); if (!(amt > 0)) return null;
     const before = r2(mem.balance || 0);
     const date = today();
     const open = openStatements(memberId);
     const label = cardLabel(brand, last4);
-    const p = S.insert('payments', { memberId: memberId, date: date, amount: amt, method: 'Card', brand: brand, last4: last4, reference: label + ', members portal' });
+    const p = S.insert('payments', Object.assign({ memberId: memberId, date: date, amount: amt, method: 'Card', brand: brand, last4: last4, reference: label + ', members portal' }, plan ? { toward: 'tp-' + plan.id } : {}));
     S.update('members', memberId, { balance: r2(before - amt) });
     const after = r2(before - amt);
     const settled = [];
@@ -651,7 +695,13 @@
     });
     const receipt = Club.receipts ? Club.receipts.create({ memberId: memberId, paymentId: p.id, title: 'Account payment', date: date,
       lines: [{ name: 'Payment on account', qty: 1, price: amt }], total: amt, method: 'card', methodLabel: Club.receipts.cardLabel(brand, last4), source: 'portal',
-      note: settled.length ? 'Pays your ' + settled.map(function (s) { return monthLabel(s.period); }).join(' and ') + (settled.length === 1 ? ' statement.' : ' statements.') : null }) : null;
+      note: plan ? 'Toward your ' + plan.season + ' time payment plan.' : settled.length ? 'Pays your ' + settled.map(function (s) { return monthLabel(s.period); }).join(' and ') + (settled.length === 1 ? ' statement.' : ' statements.') : null }) : null;
+    /* Time Payment Policy: credit card payments carry a 1.5% processing fee, as its own charge with its receipt. */
+    if (plan) {
+      const TPc = renewApi() && renewApi().TP ? renewApi().TP.CARD_FEE : 0.015, fee = r2(amt * TPc), FE = Club.fmtEn || Club.fmt;
+      if (fee > 0) Club.chargeMember(memberId, { description: 'Credit card processing fee (1.5%) on a time payment of ' + FE.money(amt), category: 'Dues', amount: fee, source: 'billing', refId: 'tpcard-' + p.id, date: date,
+        title: 'Credit card processing fee', lines: [{ name: 'Processing fee, 1.5% of a ' + FE.money(amt) + ' credit card payment toward the ' + plan.season + ' time payment plan', qty: 1, price: fee }] });
+    }
     return { payment: p, receipt: receipt, before: before, after: after, settled: settled, label: label };
   }
 

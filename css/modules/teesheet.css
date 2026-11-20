@@ -706,8 +706,7 @@ button.ts-slot.open.is-held .ts-dash { display: block; border-top-style: dotted;
 .ts-addfive { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; padding: 0 4px; margin-left: -4px; border: 0; border-radius: 6px; background: none; color: var(--forest-500); font: 600 0.875rem/1.2 var(--sans); cursor: pointer; }
 .ts-addfive[hidden] { display: none; }
 .ts-addfive svg { width: 16px; height: 16px; }
-.ts-addfive:disabled { color: var(--text-3); cursor: default; }
-@media (hover: hover) { .ts-addfive:not(:disabled):hover { color: var(--forest-800); text-decoration: underline; text-underline-offset: 3px; } }
+@media (hover: hover) { .ts-addfive:hover { color: var(--forest-800); text-decoration: underline; text-underline-offset: 3px; } }
 .ts-addfive:focus-visible { outline: 2px solid var(--forest-700); outline-offset: 1px; }
 .ts-five-note { font-size: 0.8125rem; line-height: 1.4; }
 .ts-five-note.is-warn { color: var(--warn); }

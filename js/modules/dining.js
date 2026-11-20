@@ -433,6 +433,8 @@
               const id = U.$('[name=memberId]', form).value; const mem = id && Club.members.get(id);
               if (!mem) { fieldError(form, 'memberId', 'Choose the member to charge.'); return false; }
               if (mem.status === 'suspended' || mem.status === 'resigned') { fieldError(form, 'memberId', 'This member cannot charge to their account. Settle by card.'); return false; }
+              /* Credit policy: charging is suspended 60 days after a statement date unless staff allow it today (with a reason). */
+              if (Club.billing && Club.billing.staffChargeGuard && !Club.billing.staffChargeGuard(mem.id, function () { const b = U.$('.modal-foot .btn-primary', api.el); if (b && document.contains(b)) b.click(); })) return false;
               memberId = mem.id;
             }
             const tt = orderTotals(cur);
@@ -445,7 +447,7 @@
             if (gc) Club.giftcards.redeem(gc.card.id, gc.amount, { where: 'dining', refId: o.id, note: 'Check No. ' + o.number });
             if (gc && (memberId || cur.memberId)) {
               /* One receipt naming the gift card and whatever paid the rest; the account is charged only the rest. */
-              const ch = memberId && due > 0 ? Club.chargeMember(memberId, { description: o.venue + (o.table ? ', ' + tableLabel(o.venue, o.table) : '') + ' · Check No. ' + o.number + ' · ' + (o.covers || 1) + (o.covers === 1 ? ' cover' : ' covers'), category: 'Dining', amount: due, source: 'dining', refId: o.id, noReceipt: true }) : null;
+              const ch = memberId && due > 0 ? Club.chargeMember(memberId, { description: o.venue + (o.table ? ', ' + tableLabel(o.venue, o.table) : '') + ' · Check No. ' + o.number + ' · ' + (o.covers || 1) + (o.covers === 1 ? ' cover' : ' covers'), category: 'Dining', amount: due, source: 'dining', refId: o.id, gratuity: Math.min(due, tt.service), noReceipt: true }) : null;
               Club.giftcards.receipt({ memberId: memberId || cur.memberId, title: rcTitle, lines: rcLines, total: tt.grand, gift: gc, rest: { method: memberId ? 'account' : 'card', label: 'card', amount: due }, source: 'dining', refId: o.id, chargeId: ch ? ch.id : null, channel: 'counter' });
             } else if (memberId) {
               const ch = Club.chargeMember(memberId, { description: o.venue + (o.table ? ', ' + tableLabel(o.venue, o.table) : '') + ' · Check No. ' + o.number + ' · ' + (o.covers || 1) + (o.covers === 1 ? ' cover' : ' covers'), category: 'Dining', amount: tt.grand, source: 'dining', refId: o.id,

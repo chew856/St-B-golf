@@ -236,3 +236,51 @@ body.staff .bil-stats-5 .stat-value { font-size: 1.75rem; white-space: nowrap; }
 @media (max-width: 768px) {
   a.bil-stack { min-height: 44px; justify-content: center; }
 }
+
+/* Billing policies (the club's Membership Handbook): account standing, F&B credit, time payment, refunds */
+.bil-check { min-height: 44px; font-size: 0.9375rem; color: var(--text); align-items: center; }
+.bil-check input { width: 18px; height: 18px; flex: none; }
+.bil-fine { margin: 0.25rem 0 0.5rem; font-size: 0.8125rem; color: var(--text-3); line-height: 1.45; }
+.bil-field-label { font-size: 0.875rem; font-weight: 500; color: var(--text-2); }
+.bil-radio-row { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; }
+.bil-radio { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 44px; cursor: pointer; font-size: 0.9375rem; }
+.bil-radio input { accent-color: var(--green); width: 18px; height: 18px; }
+.bil-fee-hint { margin: 0.5rem 0 0; padding: 0.5rem 0.75rem; font-size: 0.875rem; color: var(--ochre-ink); background: var(--ochre-tint); border-radius: var(--r-panel); }
+.bil-warn-box, .bil-ok-box { display: flex; gap: 0.5rem; align-items: flex-start; margin: 0; padding: 0.625rem 0.75rem; font-size: 0.875rem; line-height: 1.45; border-radius: var(--r-panel); }
+.bil-warn-box { color: var(--oxblood); background: var(--oxblood-tint); }
+.bil-ok-box { color: var(--moss); background: var(--moss-tint); }
+.bil-warn-box svg, .bil-ok-box svg { width: 16px; height: 16px; flex: none; margin-top: 2px; }
+.bil-refund-board { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.75rem; border: 1px solid var(--border); border-radius: var(--r-panel); }
+.bil-refund-dl { margin: 0; display: grid; gap: 0.25rem; }
+.bil-refund-dl > div { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.9375rem; }
+.bil-refund-dl dt { color: var(--text-2); }
+.bil-refund-dl dd { margin: 0; font-variant-numeric: tabular-nums lining-nums; }
+.bil-refund-total { padding-top: 0.375rem; border-top: 1px solid var(--border); font-weight: 600; }
+.bil-refund-total dt { color: var(--text); }
+.bil-head-badges { display: inline-flex; flex-wrap: wrap; gap: 0.375rem; vertical-align: middle; margin-left: 0.25rem; }
+.bil-standing-why, .bil-guard-why { margin: 0 0 0.75rem; font-size: 0.9375rem; line-height: 1.5; color: var(--text); }
+.bil-priv { list-style: none; margin: 0 0 0.5rem; padding: 0; display: grid; gap: 0.375rem; }
+.bil-priv li { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; font-size: 0.875rem; color: var(--text-2); }
+.bil-fnb-figs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; margin-bottom: 0.75rem; }
+.bil-fnb-figs > div { display: flex; flex-direction: column; min-width: 0; }
+.bil-fnb-figs strong { font-family: var(--serif); font-weight: 500; font-size: 1.25rem; font-variant-numeric: tabular-nums lining-nums; color: var(--text); }
+.bil-fnb-card .bar { margin-bottom: 0.5rem; }
+.bil-tp-list > li { padding: 0.5rem 1.25rem; }
+.bil-tp-foot { padding: 0.5rem 1.25rem 0.75rem; margin: 0; border-top: 1px solid var(--border); }
+.bil-lv { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; padding: 0.75rem 1.25rem; }
+.bil-lv-box { display: flex; flex-direction: column; gap: 2px; padding: 0.625rem 0.75rem; border: 1px solid var(--border); border-radius: var(--r-panel); min-width: 0; }
+.bil-lv-box.warn { border-color: var(--oxblood-tint); background: var(--oxblood-tint); }
+.bil-lv-n { font-family: var(--serif); font-size: 1.5rem; line-height: 1.1; color: var(--text); font-variant-numeric: tabular-nums lining-nums; }
+.bil-lv-box.warn .bil-lv-n { color: var(--oxblood); }
+.bil-lv-l { font-size: 0.8125rem; font-weight: 500; color: var(--text-2); }
+.bil-lv-s { font-size: 0.75rem; color: var(--text-3); }
+.bil-flagged { padding: 0.5rem 1.25rem 0.75rem; border-top: 1px solid var(--border); }
+.bil-task { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.625rem 1.25rem; }
+.bil-task .bil-stack { display: flex; flex-direction: column; min-width: 0; color: var(--text); }
+@media (hover: hover) { .bil-task a.bil-stack:hover { text-decoration: none; } .bil-task a.bil-stack:hover .person-name { text-decoration: underline; text-underline-offset: 3px; } }
+@media (max-width: 640px) {
+  .bil-lv { grid-template-columns: 1fr; padding: 0.75rem 1rem; }
+  .bil-task { flex-wrap: wrap; padding: 0.625rem 1rem; }
+  .bil-tp-list > li, .bil-tp-foot { padding-left: 1rem; padding-right: 1rem; }
+  .bil-fnb-figs strong { font-size: 1.125rem; }
+}

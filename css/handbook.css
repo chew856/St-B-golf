@@ -33,5 +33,6 @@ body.public .pub-hb-hours .pub-hb-note { margin-top: 0.25rem; font-size: 0.8125r
 body.public .pub-hb-src { margin: 0.75rem 0 0; font-size: 0.8125rem; color: var(--text-2); }
 body.public .pub-hb-src a { color: var(--forest-800); }
 body.public .pub-remind-list li.pub-hb-item { flex-wrap: wrap; }
+body.public .pub-remind-list li.pub-hb-item > span { flex: 1 1 0; min-width: 0; }
 body.public .pub-remind-list li.pub-hb-item > .pub-hb-panel { flex: 1 0 100%; margin-left: calc(18px + var(--s3)); max-width: calc(100% - 18px - var(--s3)); }
 @media (max-width: 560px) { body.public .pub-remind-list li.pub-hb-item > .pub-hb-panel { margin-left: 0; max-width: 100%; } }

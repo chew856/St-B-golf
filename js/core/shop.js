@@ -252,6 +252,8 @@
     if (rest === 'account') {
       const m = S.find('members', c.memberId);
       if (!m || m.status === 'suspended' || m.status === 'resigned') return fail('Your account cannot take charges right now. Please pay by card, or call the club office at ' + Club.info.phone + '.', 'account');
+      /* Credit policy (Club.billing.chargeCheck): no charging 60 days after a statement date, unless staff allowed it today. */
+      if (Club.billing && Club.billing.chargeCheck && !Club.billing.chargeCheck(m.id).ok) return fail(Club.billing.memberChargeMessage(m.id), 'account');
     }
     const method = giftAmount > 0 && rest ? 'mixed' : giftAmount > 0 ? 'gift' : rest || 'none';
     const cardLabel = rest === 'card' ? Club.receipts.cardLabel(pay.card.brand, pay.card.last4) : null;

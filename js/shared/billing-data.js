@@ -198,14 +198,15 @@
      dated in the season; a credit or reversal belongs to the season of the purchase it refunds. Whatever is left on
      October 31 expires (non-transferable, no carry-over). Reports leave the 'F&B assessment' category out of revenue:
      food and drink count when they are bought, as Dining.
-     Adult categories: Eagle, Birdie and Young Adult (ages 19 to 23); Junior (under 18) is not charged. A category can
-     say otherwise with fnbAssessment: true|false. The amount can be changed with the 'fnbAssessment' setting { amount }. */
+     Adult categories: every category except Junior (under 18): Eagle, Eagle 60+, Eagle INT, Birdie, Birdie INT, Young
+     Adult (ages 19 to 23), Social and Club House, and any category added later. A category can say otherwise with
+     fnbAssessment: true|false. The amount can be changed with the 'fnbAssessment' setting { amount }. */
   const FNB_CAT = 'F&B assessment';
   const FNB_AMOUNT = 375;
-  const FNB_TIERS = { tier_founders: true, tier_full: true, tier_junior: true };
+  const FNB_NOT = { tier_nonresident: true };   /* Junior (under 18) */
   const GRAT = /^(service charge|gratuity|gratuities|tip|tips)\b/i;
   function fnbAmount() { const v = S.getObj('fnbAssessment', null); return v && +v.amount > 0 ? r2(v.amount) : FNB_AMOUNT; }
-  function fnbTier(t) { if (!t) return false; if (t.fnbAssessment != null) return !!t.fnbAssessment; return !!FNB_TIERS[t.id]; }
+  function fnbTier(t) { if (!t) return false; if (t.fnbAssessment != null) return !!t.fnbAssessment; return !FNB_NOT[t.id]; }
   function fnbAdult(m) { return !!m && fnbTier(S.find('membershipTiers', m.tierId)); }
   function seasonApi() { return Club.season; }
   function fnbYearOf(date) { return date && seasonApi() && seasonApi().inSeason(date) ? +String(date).slice(0, 4) : null; }
@@ -559,7 +560,7 @@
     const ex = S.all('charges').find(function (c) { return c.refId === refId && c.memberId === r.memberId; });
     const t = S.find('membershipTiers', r.tierId);
     const ch = ex || Club.chargeMember(r.memberId, { description: renewDesc(r, s, t), category: 'Dues', amount: s.amount, source: 'billing', refId: refId, date: s.date,
-      title: RENEW_SEASON + ' membership renewal', lines: [{ name: (t ? t.name : 'Membership') + ' membership, ' + RENEW_SEASON + ' season' + (r.plan === 'monthly' ? ', instalment ' + s.n + ' of ' + r.schedule.length + ', due ' + FE.date(s.date) : ''), qty: 1, price: s.amount }] });
+      title: RENEW_SEASON + ' membership renewal', lines: [{ name: (t ? t.name : 'Membership') + ' membership, ' + RENEW_SEASON + ' season' + (r.plan === 'monthly' ? ', instalment ' + s.n + ' of ' + r.schedule.length : ''), qty: 1, price: s.amount }] });
     if (!ch) return null;
     const sched = r.schedule.map(function (x, j) { return j === i ? Object.assign({}, x, { chargeId: ch.id }) : x; });
     S.update('renewals', r.id, { schedule: sched });
@@ -702,7 +703,24 @@
   Club.billing.refunds = { FEE: REFUND.FEE, deadline: refundDeadline, duesFor: duesFor };
   /* After every script has seeded its data (the demo history comes later on the staff page): the demo assessment once,
      this season's assessments when due, and the F&B credit checked against the ledger. */
+  /* Demo, once ('demoBackfills' marker 'timePaymentDemo1'): the demo renewals made by js/modules/reports-growth.js on the
+     time payment plan get the $50 administration fee they would have paid when applying (dated the day they renewed),
+     and every second one a card on file with the club, so Billing shows both kinds of follow-up. */
+  function tpDemo() {
+    if (S.find('demoBackfills', 'timePaymentDemo1')) return;
+    const list = S.all('renewals').filter(function (r) { return r.plan === 'monthly' && r.status === 'renewed' && r.demo && !r.adminFee && !r.migrated; });
+    if (!list.length && !S.getObj('growthDemoVersion', 0)) return;   /* the staff page has not made its demo renewals yet */
+    list.forEach(function (r, i) {
+      const on = String(r.createdAt || today()).slice(0, 10);
+      const ch = Club.chargeMember(r.memberId, { description: 'Time payment administration fee, ' + RENEW_SEASON + ' dues', category: 'Dues', amount: TP.FEE, source: 'billing', refId: 'tpfee-' + r.id, date: on,
+        title: 'Time payment plan', lines: [{ name: 'Administration fee, time payment plan for ' + RENEW_SEASON + ' dues', qty: 1, price: TP.FEE }] });
+      S.update('renewals', r.id, { adminFee: { amount: TP.FEE, chargeId: ch ? ch.id : null } });
+      if (i % 2 === 1) S.update('members', r.memberId, { cardOnFile: true, cardOnFileOn: on });
+    });
+    S.insert('demoBackfills', { id: 'timePaymentDemo1', at: new Date().toISOString(), plans: list.length });
+  }
   function fnbStartup() {
+    try { tpDemo(); } catch (e) { console.error('Time payment demo failed', e); }
     try { fnbDemo(); } catch (e) { console.error('F&B demo failed', e); }
     try { fnbPostDue(); } catch (e) { console.error('F&B assessments failed', e); }
     try { fnbReconcileAll(); } catch (e) { console.error('F&B credit check failed', e); }

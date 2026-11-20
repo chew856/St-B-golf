@@ -429,3 +429,14 @@ body.portal .pa-rn-acts .btn-primary { flex: 1 1 auto; }
    not move the line */
 body.portal .pa-facts dd > a, body.portal .pa-rn-line a, body.portal .pa-sheet-foot a { position: relative; }
 body.portal .pa-facts dd > a::after, body.portal .pa-rn-line a::after, body.portal .pa-sheet-foot a::after { content: ""; position: absolute; inset: -14px -4px; }
+
+/* Billing policies (the club's Membership Handbook): suspension notice, F&B credit, time payment plan */
+.pa-standing { display: flex; gap: 10px; align-items: flex-start; background: var(--oxblood-tint); color: var(--oxblood); padding: 12px 14px; border-radius: var(--radius-ctl); font-size: 0.875rem; line-height: 1.45; margin: 0 0 12px; }
+.pa-standing svg { width: 18px; height: 18px; flex: none; margin-top: 1px; }
+.pa-standing strong { font-weight: 600; }
+.pa-fb-line { margin: 0 0 10px; font-size: 1rem; font-weight: 600; color: var(--text); }
+.pa-tp-terms { margin: 8px 0 12px; padding-left: 1.125rem; display: grid; gap: 6px; font-size: 0.875rem; line-height: 1.45; color: var(--text-2); }
+.pa-rn-late { color: var(--oxblood); font-weight: 500; }
+.pa-rn-agree { display: flex; align-items: flex-start; gap: 10px; min-height: 44px; margin-top: 12px; font-size: 0.9375rem; line-height: 1.45; color: var(--text); }
+.pa-rn-agree input { width: 20px; height: 20px; margin-top: 2px; flex: none; }
+.pa-opt.is-off { cursor: default; opacity: 0.6; }

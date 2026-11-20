@@ -2974,3 +2974,126 @@
     ]
   });
 })();
+
+/* ---------------- Weekend ballot (js/portal/teetimes.js, Club.ballot in js/shared/ballot-data.js) ----------------
+   Saturdays, Sundays and holidays are booked by ballot; the Member Guest Policy limits; account standing. Dates and
+   times inside these sentences are already French (fmt and toLocale* switch to fr-CA). Keys already translated
+   elsewhere are left as they are. */
+(function () {
+  if (!window.Club || !Club.i18n || typeof Club.i18n.add !== 'function') return;
+  var NB = ' ';
+  function t(s) { return Club.i18n.t(s); }
+  var S = {}, P = [];
+  var EXACT = {
+    'Weekend ballot': 'Tirage au sort de fin de semaine',
+    'Holiday ballot': 'Tirage au sort du jour férié',
+    'Enter the ballot': 'Participer au tirage',
+    'Change your ballot entry': 'Modifier votre inscription au tirage',
+    'Your entry': 'Votre inscription',
+    'Entered': 'Inscrite',
+    'Tee time': 'Départ',
+    'No time': 'Aucun départ',
+    'Withdrawn': 'Retirée',
+    'Preferred time': 'Heure souhaitée',
+    'Entered by': 'Inscrite par',
+    'Change entry': 'Modifier l’inscription',
+    'Only the member who entered can change or withdraw this entry.': 'Seul le membre qui a fait l’inscription peut la modifier ou la retirer.',
+    'Choose a preferred time, how flexible you are and who you play with. The draw gives each entry the open time closest to its choice.': 'Choisissez une heure souhaitée, votre marge de souplesse et vos partenaires. Le tirage attribue à chaque inscription l’heure libre la plus proche de son choix.',
+    'How the ballot works': 'Fonctionnement du tirage',
+    'Entries open 15 days ahead': 'Inscriptions 15 jours à l’avance',
+    'Saturdays, Sundays and holidays are booked by ballot. Weekdays book as usual.': 'Les samedis, dimanches et jours fériés sont attribués par tirage au sort. En semaine, la réservation se fait comme d’habitude.',
+    'Enter from 15 days before until the draw at 12:00 PM, 13 days before. A Saturday is drawn on the Sunday, a Sunday on the Monday.': 'Inscrivez-vous de 15 jours avant jusqu’au tirage à 12 h, 13 jours avant. Le samedi est tiré le dimanche, le dimanche le lundi.',
+    'Entries are drawn in a random order that anyone can check. Each gets the open time closest to its preferred time, inside its range and the play times of everyone in the group.': 'Les inscriptions sont tirées dans un ordre aléatoire que chacun peut vérifier. Chacune reçoit l’heure libre la plus proche de l’heure souhaitée, dans sa plage et dans les heures de jeu de tout le groupe.',
+    'You can change or withdraw your entry until the draw. One entry per member a day.': 'Vous pouvez modifier ou retirer votre inscription jusqu’au tirage. Une inscription par membre et par jour.',
+    'After the draw, times still open can be booked online or by calling the golf shop.': 'Après le tirage, les heures encore libres se réservent en ligne ou en appelant la boutique du golf.',
+    'Ballot result': 'Résultat du tirage',
+    'Ballot results': 'Résultats du tirage',
+    'See tee time': 'Voir le départ',
+    'See open times': 'Voir les heures libres',
+    'The draw gave your group this tee time. It is in My tee times.': 'Le tirage a attribué ce départ à votre groupe. Il figure dans Mes départs.',
+    'The times you asked for went to entries drawn earlier. Times still open can be booked now.': 'Les heures demandées sont allées à des inscriptions tirées plus tôt. Les heures encore libres peuvent être réservées dès maintenant.',
+    'Your ballot entry did not get a time. Any time still open below can be booked.': 'Votre inscription au tirage n’a pas obtenu de départ. Les heures encore libres ci-dessous peuvent être réservées.',
+    'How flexible': 'Souplesse',
+    'How flexible are you?': 'Quelle est votre souplesse' + NB + '?',
+    'Up to 30 minutes either way': 'Jusqu’à 30 minutes avant ou après',
+    'Up to 1 hour either way': 'Jusqu’à 1 heure avant ou après',
+    'Up to 2 hours either way': 'Jusqu’à 2 heures avant ou après',
+    'Any time of day': 'N’importe quelle heure de la journée',
+    'Any open time that day suits you.': 'Toute heure libre ce jour-là vous convient.',
+    'You’re in the ballot': 'Vous participez au tirage',
+    'Your ballot entry has been updated': 'Votre inscription au tirage a été modifiée',
+    'Withdraw from the ballot?': 'Se retirer du tirage' + NB + '?',
+    'Keep my entry': 'Garder mon inscription',
+    'Your ballot entry has been withdrawn': 'Votre inscription au tirage a été retirée',
+    'Ballot entries': 'Inscriptions au tirage',
+    'The ballot for this day is closed': 'Le tirage de ce jour est fermé',
+    'In the ballot': 'Inscrit au tirage',
+    'Ballot': 'Tirage',
+    'Draw today': 'Tirage aujourd’hui',
+    'The draw is being made': 'Le tirage est en cours',
+    'Already in a ballot entry that day.': 'Déjà inscrit au tirage ce jour-là.',
+    'Prime time: one guest per member': 'Heure de pointe' + NB + ': un invité par membre',
+    'Up to three guests per member at this time.': 'Jusqu’à trois invités par membre à cette heure.',
+    'One guest per member at this time. Fridays are prime time all day.': 'Un invité par membre à cette heure. Le vendredi est une période de pointe toute la journée.',
+    'One guest per member at this time. Weekend and holiday mornings from 6:00 to 11:00 AM are prime time.': 'Un invité par membre à cette heure. Les matins de fin de semaine et de jours fériés, de 6 h à 11 h, sont une période de pointe.',
+    'Weekend and holiday prime time (6:00 AM to 11:00 AM): one guest per member': 'Période de pointe des fins de semaine et jours fériés (6 h à 11 h)' + NB + ': un invité par membre',
+    'Friday prime time: one guest per member': 'Période de pointe du vendredi' + NB + ': un invité par membre',
+    'Up to three guests per member': 'Jusqu’à trois invités par membre',
+    'Booking paused on your account': 'Réservation suspendue à votre compte',
+    'Online booking is paused on your account. Please call the golf shop.': 'La réservation en ligne est suspendue à votre compte. Veuillez appeler la boutique du golf.',
+    'Ballots are for Saturdays, Sundays and holidays only.': 'Le tirage ne vise que les samedis, dimanches et jours fériés.',
+    'Choose the member entering the ballot.': 'Choisissez le membre qui s’inscrit au tirage.',
+    'Your membership does not allow booking right now.': 'Votre adhésion ne permet pas de réserver pour le moment.',
+    'The member entering must be the first player.': 'Le membre qui s’inscrit doit être le premier joueur.',
+    'Choose a preferred time.': 'Choisissez une heure souhaitée.',
+    'Choose 9 or 18 holes.': 'Choisissez 9 ou 18 trous.',
+    'There is no time in this window that suits every player. Widen the range or choose another preferred time.': 'Aucune heure de cette plage ne convient à tous les joueurs. Élargissez la plage ou choisissez une autre heure.',
+    'This ballot entry can no longer be changed.': 'Cette inscription au tirage ne peut plus être modifiée.',
+    'This ballot entry can no longer be withdrawn.': 'Cette inscription au tirage ne peut plus être retirée.'
+  };
+  /* Only what no other dictionary translates yet */
+  Object.keys(EXACT).forEach(function (k) { if (t(k) === k) S[k] = EXACT[k]; });
+  /* Pieces a general pattern elsewhere would only half translate */
+  S['See tee time'] = 'Voir le départ';
+  S['See open times'] = 'Voir les heures libres';
+  S['Draw on'] = 'Tirage le';
+  S['Drawn on'] = 'Tiré le';
+  S['Ballot · draw'] = 'Tirage au sort · tirage le';
+  function guests(s) { var m = /^(\d+) guests$/.exec(s); return s === 'a guest' ? 'un invité' : m ? m[1] + ' invités' : s; }
+  P.push(
+    [/^Enter the ballot for (.+)$/, 'Participer au tirage du $1'],
+    [/^You’re in the ballot for (.+)$/, 'Vous participez au tirage du $1'],
+    [/^Draw on (.+?) at (.+?)\. The result shows here and in My tee times\. You can change or withdraw your entry until then\.$/, 'Tirage le $1 à $2. Le résultat s’affichera ici et dans Mes départs. Vous pouvez modifier ou retirer votre inscription d’ici là.'],
+    [/^Draw on (.+) at (.+)$/, 'Tirage le $1 à $2'],
+    [/^Drawn on (.+) at (.+)$/, 'Tiré le $1 à $2'],
+    [/^Ballot · draw (.+) at (.+)$/, 'Tirage au sort · tirage le $1 à $2'],
+    [/^Ballot opens on (.+)$/, 'Le tirage ouvre le $1'],
+    [/^Ballot opens (.+)$/, 'Tirage dès le $1'],
+    [/^Ballot for (.+)$/, 'Tirage du $1'],
+    [/^Draw (\S+ \d+ \S+)$/, 'Tirage $1'],
+    [/^No tee time on (.+)$/, 'Aucun départ le $1'],
+    [/^The ballot gave your group (.+)\.$/, 'Le tirage a attribué $1 à votre groupe.'],
+    [/^The draw looks for a time from (.+?) to (.+?), closest to (.+) first\.$/, 'Le tirage cherche une heure de $1 à $2, la plus proche de $3 d’abord.'],
+    [/^Weekend and holiday tee times start with a ballot\. You can enter from (.+?) until the draw on (.+) at (.+)\.$/, 'Les départs des fins de semaine et jours fériés commencent par un tirage au sort. Vous pouvez vous inscrire du $1 jusqu’au tirage du $2 à $3.'],
+    [/^Weekend and holiday tee times start with a ballot\. Entries for (.+?) open on (.+)\.$/, 'Les départs des fins de semaine et jours fériés commencent par un tirage au sort. Les inscriptions pour le $1 ouvrent le $2.'],
+    [/^Tee times for (.+?) are given out by ballot\. Draw on (.+) at (.+)\.$/, 'Les départs du $1 sont attribués par tirage au sort. Tirage le $2 à $3.'],
+    [/^The ballot draw for (.+?) is being made\. Please check again in a moment\.$/, 'Le tirage du $1 est en cours. Veuillez revenir dans un instant.'],
+    [/^Your entry for (.+?) will be taken out of the draw( for everyone in your group)?\. You can enter again until the draw on (.+) at (.+)\.$/, function (m) {
+      return 'Votre inscription du ' + m[1] + ' sera retirée du tirage' + (m[2] ? ' pour tout votre groupe' : '') + '. Vous pouvez vous réinscrire jusqu’au tirage du ' + m[3] + ' à ' + m[4] + '.'; }],
+    [/^(.+), ballot entry\. (.+)\. Open details$/, function (m) { return m[1] + ', inscription au tirage. ' + t(m[2]) + '. Ouvrir les détails'; }],
+    [/^Ballot · (9|18) holes · (.+)$/, function (m) { return 'Tirage · ' + m[1] + ' trous · ' + (m[2] === 'Just you' ? 'Vous seul' : 'Avec ' + m[2].replace(/^With /, '').replace(/ and ([^,]+)$/, ' et $1')); }],
+    [/^Too many guests for (.+?)\. (.+?\.(?: .+?\.)?) Please remove (a guest|\d+ guests)\.$/, function (m) { return 'Trop d’invités pour ' + m[1] + '. ' + t(m[2]) + ' Veuillez retirer ' + guests(m[3]) + '.'; }],
+    [/^Too many guests for this time\. (.+)\. Choose a later time or bring fewer guests\.$/, function (m) { return 'Trop d’invités à cette heure. ' + t(m[1]) + '. Choisissez une heure plus tardive ou moins d’invités.'; }],
+    [/^You cannot play in this window\. (.+)$/, function (m) { return 'Vous ne pouvez pas jouer dans cette plage. ' + t(m[1]); }],
+    [/^(.+) cannot play in this window\. (.+)$/, function (m) { return m[1] + ' ne peut pas jouer dans cette plage. ' + t(m[2]); }],
+    [/^You are already in a ballot entry for (.+?)(?: \(entered by (.+)\))?\.$/, function (m) { return 'Vous êtes déjà inscrit au tirage du ' + m[1] + (m[2] ? ' (inscription de ' + m[2] + ')' : '') + '.'; }],
+    [/^(.+) is already in a ballot entry for (.+?)(?: \(entered by (.+)\))?\.$/, function (m) { return m[1] + ' est déjà inscrit au tirage du ' + m[2] + (m[3] ? ' (inscription de ' + m[3] + ')' : '') + '.'; }],
+    [/^The ballot for (.+?) opens on (.+)\.$/, 'Le tirage du $1 ouvre le $2.'],
+    [/^The draw for (.+?) has been made\. Book any time still open instead\.$/, 'Le tirage du $1 a eu lieu. Réservez plutôt une heure encore libre.'],
+    [/^The draw for (.+?) has been made\.$/, 'Le tirage du $1 a eu lieu.'],
+    [/^(.+) is in the group twice\.$/, '$1 figure deux fois dans le groupe.'],
+    [/^(.+) cannot play at present\.$/, '$1 ne peut pas jouer pour le moment.']
+  );
+  P.forEach(function (p) { if (typeof p[1] === 'string') { var to = p[1]; p[1] = function (m) { return m[0].replace(p[0], to); }; } });
+  Club.i18n.add({ strings: S, patterns: P });
+})();

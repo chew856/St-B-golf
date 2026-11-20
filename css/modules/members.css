@@ -266,3 +266,12 @@ body.staff .mem-pk-left .bar > span { background: var(--forest-500); }
 @media (max-width: 640px) {
   .mem-pk { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Billing policies: account standing and the F&B credit (js/shared/billing-data.js) */
+.mem-fact-sub { display: block; margin-top: 2px; font-size: 0.75rem; color: var(--on-dark-2); }
+.mem-standing { display: inline-flex; text-decoration: none; }
+.mem-acct-policy { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 0.75rem; margin: 0 0 1rem; }
+.mem-acct-pol { display: flex; flex-direction: column; gap: 0.375rem; padding: 0.75rem 1rem; min-height: 44px; border: 1px solid var(--border); border-radius: var(--r-panel); background: var(--surface); color: var(--text); }
+.mem-acct-pol > span:nth-child(2) { display: flex; flex-wrap: wrap; gap: 0.375rem; align-items: center; font-size: 0.9375rem; }
+.mem-acct-why { font-size: 0.8125rem; color: var(--text-2); line-height: 1.45; }
+@media (hover: hover) { .mem-acct-pol:hover { text-decoration: none; border-color: var(--border-strong); } }

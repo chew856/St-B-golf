@@ -63,3 +63,17 @@
   .bl-prow { grid-template-columns: 1fr; }
   .bl-acts .btn { flex: 1 1 auto; min-height: 44px; }
 }
+
+/* Phones: each entry and result as a card, labels from data-l */
+@media (max-width: 768px) {
+  .bl-tbl thead { display: none; }
+  .bl-tbl, .bl-tbl tbody, .bl-tbl tr, .bl-tbl td { display: block; width: 100%; }
+  .bl-tbl tr { padding: var(--s3) var(--s4); border-bottom: 1px solid var(--rule); }
+  .bl-tbl td { border: 0; padding: 2px 0; display: flex; justify-content: space-between; gap: var(--s3); text-align: right; overflow-wrap: anywhere; }
+  .bl-tbl td::before { content: attr(data-l); flex: none; color: var(--ink-3); font-size: var(--fs-12); text-align: left; font-weight: 400; letter-spacing: 0; }
+  .bl-tbl td.num { text-align: right; }
+  .bl-tbl td > strong, .bl-tbl td .bl-src, .bl-tbl td .bl-why { text-align: right; }
+  .bl-tbl td:first-child { flex-wrap: wrap; }
+  .bl-c-win, .bl-c-at { display: none !important; }
+  .bl-tbl .badge { align-self: flex-start; }
+}

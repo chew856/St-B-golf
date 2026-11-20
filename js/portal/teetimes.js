@@ -1050,7 +1050,7 @@
         const n = fitCount(sum);
         const parts = [];
         if (wx) parts.push(Club.icon(wx.icon) + '<span>' + esc(wx.cond) + ', ' + String(wx.hi).replace('-', '−') + '°</span>');
-        parts.push('<span>' + (sum.locked && sum.locked.ballot === 'open' ? 'Ballot · draw ' + esc(drawWhen(d)) : sum.locked ? 'Not open for booking yet' : sum.closed ? 'Course closed' : n ? plural(n, 'time') + ' available' : 'No times available') + '</span>');
+        parts.push('<span>' + (sum.locked && sum.locked.ballot === 'open' ? 'Ballot · draw <span>' + esc(drawWhen(d)) + '</span>' : sum.locked ? 'Not open for booking yet' : sum.closed ? 'Course closed' : n ? plural(n, 'time') + ' available' : 'No times available') + '</span>');
         return parts.join('<span aria-hidden="true">·</span>');
       }
       function mountDate(panel) {
@@ -1392,7 +1392,7 @@
         { value: '720', label: 'Any time of day' }
       ];
       function rangeWords(e) { const r = RANGES.find(function (x) { return +x.value === +e.range; }); return r ? r.label : ''; }
-      function windowWords(e) { return rangeLabel(fmt.time(e.earliest), fmt.time(e.latest)); }
+      function windowWords(e) { return rangeLabel(fmt.time(e.earliest), fmt.time(e.latest), '–'); }
       function prefWords(e) { return +e.range >= 720 ? 'Any time' : fmt.time(e.time) + ' (' + windowWords(e) + ')'; }
       function holdersOf(e, m) { return (e.players || []).filter(function (p) { return p.memberId !== m.id; }).map(function (p) { return p.type === 'guest' ? p.name + ' (guest)' : otherLabel(p); }); }
       function ballotKind(d) { const s = BL().schedule(d); return s.kind === 'holiday' ? 'Holiday ballot' : 'Weekend ballot'; }
@@ -1423,7 +1423,7 @@
           '<div class="bl-head"><span class="bl-ic" aria-hidden="true">' + Club.icon('flag') + '</span><div class="bl-head-t">' +
             '<p class="bl-eyebrow">' + esc(ballotKind(d)) + '</p>' +
             '<h3 class="bl-title">' + esc(e ? 'You’re in the ballot for ' + longDate(d) : 'Enter the ballot for ' + longDate(d)) + '</h3>' +
-            '<p class="bl-draw">' + Club.icon('clock') + '<span>' + esc('Draw on ' + drawWhen(d)) + '</span></p></div></div>' +
+            '<p class="bl-draw">' + Club.icon('clock') + '<span>Draw on <span>' + esc(drawWhen(d)) + '</span></span></p></div></div>' +
           (e ? entryCardHTML(e, m, { actions: true })
             : (stand.ok ? '<p class="bl-lead">Choose a preferred time, how flexible you are and who you play with. The draw gives each entry the open time closest to its choice.</p>' +
                 '<button type="button" class="btn btn-primary tt-full bl-enter" data-act="bl-enter">Enter the ballot</button>'
@@ -1504,7 +1504,7 @@
         };
         const sh = Portal.openSheet({ title: cur ? 'Change your ballot entry' : 'Enter the ballot', size: 'full',
           content: '<div class="tt-sheet bl-sheet">' +
-            '<div class="tt-sum bl-sum"><span class="bl-sum-d">' + esc(longDate(d)) + '</span><span class="bl-sum-s">' + esc('Draw on ' + drawWhen(d)) + '</span></div>' +
+            '<div class="tt-sum bl-sum"><span class="bl-sum-d">' + esc(longDate(d)) + '</span><span class="bl-sum-s">Draw on <span>' + esc(drawWhen(d)) + '</span></span></div>' +
             '<div class="bl-fields"><div class="bl-f bl-f-time"></div><div class="bl-f bl-f-range"></div></div>' +
             '<p class="tt-hint bl-window"></p>' +
             '<div class="tt-holes-row"><span class="pk-label" id="bl-holes-l">Holes</span>' + ui.segmented([{ value: '18', label: '18 holes' }, { value: '9', label: '9 holes' }], String(model.holes), 'bl-holes') + '</div>' +
@@ -1584,7 +1584,7 @@
         const m = Portal.member() || me, en = BL().entry(b.dataset.id); if (!en) return;
         const open = en.status === 'entered' && BL().phase(en.date) === 'open';
         const sh = Portal.openSheet({ title: 'Ballot for ' + shortDay(en.date),
-          content: '<div class="tt-sheet"><p class="bl-draw">' + Club.icon('clock') + '<span>' + esc(en.status === 'entered' ? 'Draw on ' + drawWhen(en.date) : 'Drawn on ' + drawWhen(en.date)) + '</span></p>' + entryCardHTML(en, m, { actions: false }) +
+          content: '<div class="tt-sheet"><p class="bl-draw">' + Club.icon('clock') + '<span>' + (en.status === 'entered' ? 'Draw on' : 'Drawn on') + ' <span>' + esc(drawWhen(en.date)) + '</span></span></p>' + entryCardHTML(en, m, { actions: false }) +
             (en.status === 'missed' ? '<p class="tt-hint">' + esc('The times you asked for went to entries drawn earlier. Times still open can be booked now.') + '</p>' : '') + '</div>',
           footer: en.status === 'missed' ? '<button type="button" class="btn btn-primary tt-full" data-act="pick-day-book" data-date="' + esc(en.date) + '">See open times</button>'
             : open && en.memberId === m.id ? '<div class="tt-detail-acts"><button type="button" class="btn" data-act="bl-edit" data-id="' + esc(en.id) + '">Change entry</button><button type="button" class="btn btn-danger" data-act="bl-withdraw" data-id="' + esc(en.id) + '">Withdraw</button></div>' : '' });

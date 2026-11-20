@@ -239,6 +239,19 @@
   function resLabel(s) { s = String(s || ''); return s ? (s.charAt(0).toUpperCase() + s.slice(1)).replace(/-/g, ' ') : ''; }
   const RES_KIND = { confirmed: 'info', seated: 'brass', completed: 'plain', cancelled: 'outline', 'no-show': 'bad', scheduled: 'info', published: 'info', draft: 'outline' };
 
+  /* Billing policies (js/shared/billing-data.js): account standing under the club's credit policy, and the F&B credit. */
+  function standingHTML(m) {
+    const B = Club.billing; if (!B || !B.standing || m.status === 'resigned') return '';
+    const st = B.standing(m.id), f = B.arFlags ? B.arFlags(m) : {};
+    const b = st.level ? ui.badge(st.label + ', ' + st.days + ' days', st.level >= 90 ? 'bad' : 'warn') : st.tpArrears ? ui.badge('Golf suspended, time payment ' + st.tpArrears.days + ' days late', 'bad') : '';
+    return (b ? '<a class="mem-standing" href="#/billing/' + esc(m.id) + '" title="' + esc(st.reason) + '">' + b + '</a>' : '') + (f.perpetual ? ui.badge('Perpetual delinquency', 'bad') : '') + (f.yearEnd ? ui.badge('In arrears at year end', 'bad') : '');
+  }
+  function fnbFact(m) {
+    const F = Club.billing && Club.billing.fnb; if (!F) return '';
+    const fs = F.state(m.id); if (!fs.applies && !fs.assessed) return '';
+    const txt = !fs.assessed ? 'Not charged yet' : fs.status === 'ended' ? fmt.money(fs.used) + ' used of ' + fmt.money(fs.assessed) : fmt.money(fs.left) + ' left of ' + fmt.money(fs.assessed);
+    return '<div><dt>' + fs.year + ' F&amp;B credit</dt><dd><a class="mem-fact-link" href="#/billing/' + esc(m.id) + '">' + esc(txt) + '</a>' + (fs.assessed && fs.status === 'ended' ? '<span class="mem-fact-sub">' + (fs.expired > 0.005 ? esc(fmt.money(fs.expired)) + ' expired ' : 'Season ended ') + esc(fmt.dateShort(fs.end)) + '</span>' : fs.assessed ? '<span class="mem-fact-sub">Until ' + esc(fmt.dateShort(fs.end)) + '</span>' : '') + '</dd></div>';
+  }
   function renderProfile(view, id) {
     const m = S.find('members', id);
     if (!m) {
@@ -258,7 +271,7 @@
       '<section class="panel dark mem-hero" data-reveal>' +
       '<div class="mem-hero-main">' + ui.avatar(fullName(m), 'xl') +
       '<div class="mem-hero-id"><div class="eyebrow">Member No. ' + esc(m.memberNo) + '</div><h1 class="mem-hero-name">' + esc(fullName(m)) + '</h1>' +
-      '<div class="row wrap mem-hero-badges">' + ui.badge(t ? t.name : 'No tier', 'plain') + statusBadge(m.status) +
+      '<div class="row wrap mem-hero-badges">' + ui.badge(t ? t.name : 'No tier', 'plain') + statusBadge(m.status) + standingHTML(m) +
       (back ? '<button type="button" class="mem-status-back" data-action="status-back" title="' + esc('Status changed from ' + statusMeta(back.from).label.toLowerCase() + ' on ' + fmt.date(back.on)) + '">' + Club.icon('chevronLeft') + '<span>Undo: back to ' + esc(statusMeta(back.from).label) + '</span></button>' : '') +
       (m.tags || []).map(function (g) { return ui.badge(g, 'plain'); }).join('') + '</div>' +
       '<p class="mem-since">' + (sinceY ? 'Member since ' + sinceY + (yrs > 0 ? ', ' + yrs + (yrs === 1 ? ' year' : ' years') : '') : 'Joining date not recorded') + '</p></div></div>' +
@@ -268,6 +281,7 @@
       '<div><dt>Golf Canada no.</dt><dd>' + (m.ghin ? esc(m.ghin) : '<span class="muted">None</span>') + '</dd></div>' +
       '<div><dt>Locker</dt><dd>' + (m.locker ? 'No. ' + esc(m.locker) : '<span class="muted">Unassigned</span>') + '</dd></div>' +
       '<div><dt>Account balance</dt><dd><a class="mem-fact-link" href="#/billing/' + esc(m.id) + '">' + esc(fmt.money(bal)) + '</a></dd></div>' +
+      fnbFact(m) +
       '</dl>' +
       '<div class="mem-hero-actions">' +
       ui.btn('Book tee time', { kind: 'brass', icon: 'teesheet', action: 'book' }) + ui.btn('Post charge', { icon: 'billing', action: 'charge' }) +
@@ -436,6 +450,14 @@
     else p.innerHTML = ui.empty({ icon: 'billing', title: 'Spending is not available', text: 'The spending breakdown comes from Reports, which is not loaded.' });
   }
 
+  /** Account tab: standing and F&B credit in one line each, linking to the billing account. */
+  function acctPolicy(m) {
+    const B = Club.billing; if (!B || !B.standing) return '';
+    const st = B.standing(m.id), fs = B.fnb ? B.fnb.state(m.id) : null;
+    const ok = !st.level && !st.tpArrears;
+    return '<div class="mem-acct-policy" data-reveal><a class="mem-acct-pol" href="#/billing/' + esc(m.id) + '"><span class="label-caps">Account standing</span><span>' + (ok ? ui.badge(m.status === 'active' ? 'Good standing' : statusMeta(m.status).label, m.status === 'active' ? 'good' : 'plain') : '') + standingHTML(m).replace(/<a [^>]*>|<\/a>/g, '') + '</span>' + (st.reason ? '<span class="mem-acct-why">' + esc(st.reason) + '</span>' : '') + '</a>' +
+      (fs && (fs.applies || fs.assessed) ? '<a class="mem-acct-pol" href="#/billing/' + esc(m.id) + '"><span class="label-caps">' + fs.year + ' F&amp;B credit</span><span>' + (B.fnbLine ? B.fnbLine(fs) : '') + '</span></a>' : '') + '</div>';
+  }
   function tabAccount(p, m) {
     const charges = S.all('charges').filter(function (c) { return c.memberId === m.id; }).sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); });
     const pays = S.all('payments').filter(function (x) { return x.memberId === m.id; }).sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); });
@@ -448,7 +470,8 @@
       '<div><span class="label-caps">Charges this month</span><span class="stat-value">' + esc(fmt.money(monthCharges)) + '</span></div>' +
       '<div><span class="label-caps">Paid this year</span><span class="stat-value">' + esc(fmt.money(ytdPaid)) + '</span></div>' +
       '<div><span class="label-caps">Monthly dues</span><span class="stat-value">' + (t && t.annualDues == null ? 'Not set' : esc(fmt.money(t ? t.annualDues / 12 : 0))) + '</span></div></div>' +
-      '<div class="row wrap mem-acct-actions">' + ui.btn('Open account statement', { kind: 'primary', icon: 'billing', action: 'open-billing' }) + ui.btn('Post charge', { icon: 'plus', action: 'charge' }) + '</div>' +
+      '<div class="row wrap mem-acct-actions">' + ui.btn('Open account statement', { kind: 'primary', icon: 'billing', action: 'open-billing' }) + ui.btn('Post charge', { icon: 'plus', action: 'charge' }) + ui.btn('Refund dues', { icon: 'refresh', action: 'refund' }) + '</div>' +
+      acctPolicy(m) +
       '<div class="grid grid-main-side">' +
       '<section class="panel" data-reveal><div class="panel-head"><h3>Recent charges</h3><a href="#/billing/' + esc(m.id) + '">Full ledger</a></div><div class="panel-body flush">' +
       (charges.length ? '<div class="table-wrap"><table class="table"><thead><tr><th>Date</th><th>Description</th><th>Category</th><th class="num">Amount</th></tr></thead><tbody>' + charges.slice(0, 10).map(function (c) {
@@ -459,6 +482,7 @@
         return '<li class="row between"><span class="mem-stack"><span class="person-name">' + esc(fmt.date(x.date)) + '</span><span class="person-sub">' + esc(Club.billing && Club.billing.methodLabel ? Club.billing.methodLabel(x.method) : (x.method || '')) + (x.reference ? ' · ' + esc(x.reference) : '') + '</span></span><span class="num">' + esc(fmt.money(x.amount)) + '</span></li>';
       }).join('') + '</ul>' : ui.empty({ icon: 'cash', title: 'No payments', text: 'Recorded payments appear here.' })) + '</div></section></div>';
     ui.on(p, 'click', '[data-action=open-billing]', function () { Club.app.go('billing/' + m.id); });
+    ui.on(p, 'click', '[data-action=refund]', function () { if (Club.billing && Club.billing.refundDues) Club.billing.refundDues(m.id, rerender); });
   }
 
   /* ---------------- Add / edit member ---------------- */

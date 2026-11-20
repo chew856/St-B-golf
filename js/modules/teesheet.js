@@ -1748,8 +1748,7 @@
       function paintFive(d, t) {
         const fs = fiveState(d, t), open = fiveOpen(), filled = readPlayers().slice(0, STD_GROUP).filter(Boolean).length;
         const btn = ui.$('.ts-addfive', form), note = ui.$('.ts-five-note', form);
-        btn.hidden = open || !fs.ok;
-        btn.disabled = filled < STD_GROUP;
+        btn.hidden = open || !fs.ok || filled < STD_GROUP;   /* offered once four places are filled */
         const txt = open ? (fs.ok ? 'Groups of five are at the golf shop\u2019s discretion: at most ' + fs.max + ' an hour, never six.' : fs.reason)
           : !fs.ok ? fs.reason + ' No fifth player at this time.' : filled < STD_GROUP ? 'A fifth player can join once four places are filled.' : '';
         if (note.textContent !== txt) note.textContent = txt;

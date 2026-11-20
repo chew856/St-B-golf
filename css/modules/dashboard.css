@@ -31,7 +31,7 @@
 .dash-group-time { display: flex; flex-direction: column; line-height: 1.2; }
 .dash-group-clock { font-size: 1.0625rem; font-weight: 500; color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .dash-when { font-size: 0.8125rem; color: var(--forest-500); margin-top: 2px; }
-.dash-group-names { font-weight: 500; color: var(--text); overflow-wrap: anywhere; }
+.dash-group-names { font-weight: 500; color: var(--text); overflow-wrap: break-word; }
 .dash-group-names i { font-style: normal; color: var(--text-3); margin: 0 6px; }
 .dash-group-meta { font-size: 0.8125rem; color: var(--text-2); }
 .dash-util-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s3); flex-wrap: wrap; margin-bottom: var(--s1); }
@@ -236,9 +236,8 @@ button.dd-hole.selected .dd-hole-dots i { background: var(--on-dark); }
 
 /* ---------- Tablet: keep two columns where the work area allows ---------- */
 @media (min-width: 769px) { .dash .dash-stats .stats { grid-template-columns: repeat(5, minmax(0, 1fr)); } .dash-stats .stat { padding: var(--s4); } .dash-stats .stat-value { font-size: clamp(1.75rem, 2.6vw, 2.4rem); } }
-@media (min-width: 1000px) and (max-width: 1180px) {
-  .dash .grid-main-side { grid-template-columns: minmax(0, 1.55fr) minmax(280px, 1fr); }
-}
+/* Up to 1180px the tee panel and course conditions stack (the theme's one column): side by side, names broke
+   mid-word in the narrow tee panel (owner's iPad, Nov 20). */
 @media (max-width: 1180px) {
   .dash .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dash .grid-3 > :last-child { grid-column: span 2; }

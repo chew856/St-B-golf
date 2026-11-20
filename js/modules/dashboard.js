@@ -168,6 +168,9 @@
     return U.badge('Booked', 'outline');
   }
 
+  /* The tee panel sits beside the taller course conditions panel; the chart grows to fill the space the row gives it
+     (owner, Nov 20: "so much blank space"), between 130px and 360px. Set by fitTeeChart() in render(). */
+  let teeChartH = 0;
   function teePanel() {
     const today = D.today();
     const now = nowHM();
@@ -223,7 +226,7 @@
     } else {
       chart = '<div class="dash-util-head"><span class="label-caps">Utilization by hour</span><span class="dash-util-sum">' +
         '<strong>' + Math.round(booked / totalCap * 100) + '%</strong> of capacity · peak ' + esc(labels[peak].replace('a', ' AM').replace('p', ' PM')) + ' at ' + values[peak] + '%</span></div>' +
-        Club.charts.bar({ labels: labels, series: [{ name: 'Utilization %', values: values }], height: px(130) });
+        Club.charts.bar({ labels: labels, series: [{ name: 'Utilization %', values: values }], height: teeChartH || px(130) });
     }
 
     return head('Today on the tee', label, 'teesheet/' + today, 'Open tee sheet') +
@@ -839,6 +842,7 @@
         const fk = document.activeElement && el.contains(document.activeElement) && document.activeElement.dataset ? document.activeElement.dataset.drill : null;
         if (sec.acc) { const hadFocus = el.contains(document.activeElement); el.innerHTML = safe(sec.render, !!el.querySelector('.pk-acc.is-open')); if (hadFocus) { const h = el.querySelector('.pk-acc-head'); if (h) h.focus(); } return; }
         el.innerHTML = safe(sec.render);
+        if (id === 'tee') setTimeout(fitTeeChart, 60);
         if (fk) { const back = el.querySelector('[data-drill="' + fk + '"]'); if (back) back.focus(); }
         if (sec.stats) {
           U.$$('[data-reveal]', el).forEach(function (n) { n.classList.add('revealed'); });
@@ -857,12 +861,30 @@
     Object.keys(SECTIONS).forEach(function (id) { SECTIONS[id].deps.forEach(function (c) { (colls[c] = colls[c] || []).push(id); }); });
     const unsubs = Object.keys(colls).map(function (c) { return S.subscribe(c, function () { colls[c].forEach(refresh); }); });
 
+    /* Fill the tee panel: measure the empty space under its content and redraw the chart taller (or back down). */
+    function fitTeeChart() {
+      const el = view.querySelector('[data-sec="tee"]'), svg = el && el.querySelector('.dash-util svg.chart');
+      if (!el || !svg || getComputedStyle(el.querySelector('.dash-util')).display === 'none') return;
+      /* the empty space sits at the bottom of the panel body (it is stretched to the row height) */
+      const body = el.querySelector('.dash-tee') || el, kids = Array.prototype.slice.call(body.children);
+      const last = kids[kids.length - 1], cs = getComputedStyle(body);
+      const free = body.getBoundingClientRect().bottom - (parseFloat(cs.paddingBottom) || 0) - (last ? last.getBoundingClientRect().bottom : body.getBoundingClientRect().bottom);
+      const cur = svg.getBoundingClientRect().height, want = Math.max(px(130), Math.min(px(360), Math.round(cur + free - 4)));
+      if (Math.abs(want - cur) < 6) return;
+      teeChartH = want; const util = el.querySelector('.dash-util'); const html = safe(SECTIONS.tee.render);
+      const tmp = document.createElement('div'); tmp.innerHTML = html; const fresh = tmp.querySelector('.dash-util');
+      if (util && fresh) util.innerHTML = fresh.innerHTML;
+    }
+    let fitT = null; function fitSoon() { clearTimeout(fitT); fitT = setTimeout(function () { teeChartH = 0; const el = view.querySelector('[data-sec="tee"] .dash-util'); if (el) { const tmp = document.createElement('div'); tmp.innerHTML = safe(SECTIONS.tee.render); const f = tmp.querySelector('.dash-util'); if (f) el.innerHTML = f.innerHTML; } fitTeeChart(); }, 200); }
+    setTimeout(fitTeeChart, 450); setTimeout(fitTeeChart, 1200);
+    window.addEventListener('resize', fitSoon);
+
     // Keep "next groups" and "on course" honest as the clock moves.
     const tick = setInterval(function () { refresh('tee'); refresh('stats'); }, 60000);
 
     return function () {
       unsubs.forEach(function (u) { u(); });
-      clearInterval(tick);
+      clearInterval(tick); window.removeEventListener('resize', fitSoon); clearTimeout(fitT);
       Object.keys(timers).forEach(function (k) { clearTimeout(timers[k]); });
     };
   }

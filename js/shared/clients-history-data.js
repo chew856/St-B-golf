@@ -65,7 +65,7 @@
     /* ---- What the existing three months show for each member ---- */
     const existing = {}, earliest = {};
     S.all('charges').forEach(function (c) {
-      if (!c.memberId || !c.date) return;
+      if (!c.memberId || !c.date || c.category === 'F&B assessment') return;   /* the F&B assessment demo (billing-data.js) may come first */
       if (!earliest[c.memberId] || c.date < earliest[c.memberId]) earliest[c.memberId] = c.date;
       if (c.category === 'Dues' || c.reversedBy || c.reverses || !(c.amount > 0)) return;
       const x = existing[c.memberId] || (existing[c.memberId] = { total: 0, byMonth: {}, recentHouse: 0, extras: false, shop: false, events: false });

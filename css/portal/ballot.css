@@ -1,0 +1,70 @@
+/* Members' portal: the weekend and holiday ballot on Tee times (js/portal/teetimes.js, Club.ballot in
+   js/shared/ballot-data.js). Portal tokens only (css/portal-theme.css). */
+
+/* ---------- Ballot panel: shown instead of times on a ballot day before its draw ---------- */
+body.portal .bl-panel { display: grid; gap: 14px; }
+body.portal .bl-head { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: start; }
+body.portal .bl-ic { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 999px; background: var(--sage-100); color: var(--forest-800); }
+body.portal .bl-ic svg { width: 20px; height: 20px; }
+body.portal .bl-head-t { min-width: 0; }
+body.portal .bl-eyebrow { margin: 0; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--forest-500); }
+body.portal .bl-title { margin: 2px 0 0; font-family: var(--serif); font-size: 1.1875rem; font-weight: 500; line-height: 1.3; color: var(--text); overflow-wrap: break-word; }
+body.portal .bl-draw { display: flex; align-items: flex-start; gap: 6px; margin: 6px 0 0; font-size: 0.875rem; line-height: 1.4; color: var(--text-2); }
+body.portal .bl-draw svg { flex: none; width: 16px; height: 16px; margin-top: 1px; color: var(--forest-500); }
+body.portal .bl-lead { margin: 0; font-size: 0.9375rem; line-height: 1.5; color: var(--text-2); }
+body.portal .bl-enter { min-height: 48px; }
+body.portal .bl-panel .pk-acc { box-shadow: none; background: var(--sage-50); border-color: transparent; }
+body.portal .bl-panel .pk-acc-body { border-top-color: var(--border); }
+body.portal .bl-standing { display: flex; gap: 8px; align-items: flex-start; margin: 0 0 12px; padding: 10px 12px; border-radius: var(--radius-ctl); background: var(--danger-bg); color: var(--danger); }
+body.portal .bl-standing svg { flex: none; width: 18px; height: 18px; margin-top: 1px; }
+
+/* ---------- An entry ---------- */
+body.portal .bl-entry { display: grid; gap: 10px; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius-ctl); background: var(--surface); }
+body.portal .bl-entry-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+body.portal .bl-entry-k { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--forest-500); }
+body.portal .bl-dl { display: grid; gap: 8px; margin: 0; }
+body.portal .bl-dl > div { display: grid; grid-template-columns: minmax(7rem, auto) minmax(0, 1fr); gap: 12px; }
+body.portal .bl-dl dt { font-size: 0.875rem; color: var(--text-2); }
+body.portal .bl-dl dd { margin: 0; font-size: 0.9375rem; color: var(--text); overflow-wrap: break-word; }
+body.portal .bl-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+body.portal .bl-acts .btn { flex: 1 1 10rem; min-height: 44px; }
+
+/* ---------- After the draw: the member's result above the times ---------- */
+body.portal .bl-result { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 12px; padding: 10px 12px; border-radius: var(--radius-ctl); background: var(--sage-50); color: var(--text-2); font-size: 0.875rem; line-height: 1.45; }
+body.portal .bl-result svg { flex: none; width: 18px; height: 18px; margin-top: 1px; color: var(--forest-500); }
+body.portal .bl-result.is-won { background: var(--sage-100); color: var(--text); }
+
+/* ---------- Results above the tabs ---------- */
+body.portal .bl-host:empty { display: none; }
+body.portal .bl-notices { display: grid; gap: 12px; margin: 0 0 16px; }
+body.portal .bl-note { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 12px; align-items: start; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--forest-500); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
+body.portal .bl-note.is-won { border-left-color: var(--forest-800); }
+body.portal .bl-note-ic { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 999px; background: var(--sage-100); color: var(--forest-800); }
+body.portal .bl-note-ic svg { width: 18px; height: 18px; }
+body.portal .bl-note-main { min-width: 0; }
+body.portal .bl-note-main p { margin: 0; }
+body.portal .bl-note-k { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--forest-500); }
+body.portal .bl-note-t { margin-top: 2px !important; font-family: var(--serif); font-size: 1.125rem; line-height: 1.3; color: var(--text); overflow-wrap: break-word; }
+body.portal .bl-note-s { margin-top: 2px !important; font-size: 0.875rem; line-height: 1.45; color: var(--text-2); overflow-wrap: break-word; }
+body.portal .bl-note-acts { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+body.portal .bl-note-acts .btn { min-height: 44px; }
+body.portal .bl-note-acts .p-link { min-height: 44px; }
+@media (min-width: 640px) {
+  body.portal .bl-note { grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; }
+  body.portal .bl-note-acts { grid-column: auto; justify-content: flex-end; }
+}
+
+/* ---------- Enter / change sheet ---------- */
+body.portal .bl-sheet { display: grid; gap: 14px; }
+body.portal .bl-sum { display: grid; gap: 2px; }
+body.portal .bl-sum-d { font-family: var(--serif); font-size: 1.25rem; font-weight: 500; line-height: 1.25; color: var(--text); }
+body.portal .bl-sum-s { font-size: 0.875rem; color: var(--text-2); }
+body.portal .bl-fields { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+@media (min-width: 560px) { body.portal .bl-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+body.portal .bl-window { margin: 0; }
+body.portal .bl-sheet .tt-holes-row { margin: 0; }
+body.portal .tt-guest-lim { display: flex; gap: 6px; align-items: flex-start; }
+body.portal .tt-guest-lim svg { flex: none; width: 16px; height: 16px; margin-top: 2px; color: var(--forest-500); }
+
+/* ---------- My tee times ---------- */
+body.portal .bl-row-t { font-family: var(--serif); }

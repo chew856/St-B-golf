@@ -78,21 +78,39 @@
    * Every non-zero charge also gets a receipt (Club.receipts, js/core/receipts.js): title (else the description) and
    * lines [{ name, qty, price, size? }] (else one line for the description) go on the receipt, not on the charge.
    * noReceipt: true skips it. A negative amount makes a credit receipt.
+   * gratuity (optional): the part of a Dining charge that is a service charge, gratuity or tip. Without it, receipt lines
+   * named "Service charge", "Gratuity" or "Tip" are counted. Gratuities are never paid from the F&B credit.
+   *
+   * Billing policies (js/shared/billing-data.js, the club's Membership Handbook):
+   * - Food & Beverage Assessment: a Dining charge in the golf season is paid first from the member's F&B credit
+   *   (Club.billing.fnb). The credit lines it posts are owned by Club.billing.fnb and written with Club.storeRaw, so
+   *   staff Undo never reverses them directly: undoing the Dining charge returns the credit instead.
+   * - Credit policy: a purchase charged while charging privileges are suspended (Club.billing.chargeCheck) still posts,
+   *   so a sale already handed over is never lost, but it is marked standingWarning and logged. Tills and the portal
+   *   check first and refuse (staff can override with a reason).
    */
+  /* The store's own insert and update, before js/core/undo.js wraps them (ui.js loads first). */
+  Club.storeRaw = { insert: Club.store.insert, update: Club.store.update };
   Club.chargeMember = function (memberId, c) {
     const m = Club.store.find('members', memberId); if (!m) return null;
-    const fields = Object.assign({}, c); delete fields.title; delete fields.lines; delete fields.noReceipt;
-    const ch = Club.store.insert('charges', Object.assign({ memberId: memberId, date: Club.date.today(), category: 'Other', source: 'manual', refId: null, statementId: null }, fields, { amount: Math.round((+c.amount || 0) * 100) / 100 }));
+    const fields = Object.assign({}, c); delete fields.title; delete fields.lines; delete fields.noReceipt; delete fields.gratuity;
+    fields.amount = Math.round((+c.amount || 0) * 100) / 100;
+    const B = Club.billing, FNB = B && B.fnb;
+    if (FNB && FNB.prepare) { try { FNB.prepare(memberId, fields, c); } catch (e) { console.error('F&B credit check failed', e); } }
+    if (B && B.flagCharge) { try { B.flagCharge(memberId, fields); } catch (e) { console.error('Standing check failed', e); } }
+    const ch = Club.store.insert('charges', Object.assign({ memberId: memberId, date: Club.date.today(), category: 'Other', source: 'manual', refId: null, statementId: null }, fields));
     Club.store.update('members', memberId, { balance: Math.round(((m.balance || 0) + ch.amount) * 100) / 100 });
+    let note = null;
+    if (FNB && FNB.after) { try { note = FNB.after(ch); } catch (e) { console.error('F&B credit failed for charge ' + ch.id, e); } }
     if (!c.noReceipt && ch.amount && Club.receipts) {
       try {
         const amt = Math.abs(ch.amount);
         Club.receipts.create({ memberId: memberId, kind: ch.amount < 0 ? 'credit' : 'sale', title: c.title || c.description,
           lines: c.lines || [{ name: c.description, qty: 1, price: amt }], total: amt, method: 'account',
-          source: ch.source, refId: ch.refId, chargeId: ch.id });
+          source: ch.source, refId: ch.refId, chargeId: ch.id, note: note });
       } catch (e) { console.error('Receipt failed for charge ' + ch.id, e); }
     }
-    return ch;
+    return Club.store.find('charges', ch.id) || ch;
   };
   /* Manitoba: 5% GST + 7% PST */
   Club.taxRate = function () { return Club.store.getObj('taxRate', 0.12); };

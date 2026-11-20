@@ -695,3 +695,25 @@ button.ts-slot.open.is-held .ts-dash { display: block; border-top-style: dotted;
   .ts-dd-table td:first-child, .ts-dd-table th:first-child { white-space: nowrap; }
   .ts-dd-table .badge { white-space: nowrap; }
 }
+
+/* ---------- Handbook rules (Nov 20): groups of five, guest limit, override reason ---------- */
+/* A group of five (Fivesome Policy, staff only) shows five places in the row; the phone layout keeps two columns. */
+.ts-slots.is-five { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.ts-mark.five { background: var(--sage-100); color: var(--forest-800); cursor: help; }
+.ts-five { display: flex; align-items: center; gap: 4px 12px; flex-wrap: wrap; padding-top: 4px; }
+.ts-five:has(.ts-addfive[hidden]):has(.ts-five-note:empty) { display: none; }
+.ts-addfive { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; padding: 0 4px; margin-left: -4px; border: 0; border-radius: 6px; background: none; color: var(--forest-500); font: 600 0.875rem/1.2 var(--sans); cursor: pointer; }
+.ts-addfive[hidden] { display: none; }
+.ts-addfive svg { width: 16px; height: 16px; }
+.ts-addfive:disabled { color: var(--text-3); cursor: default; }
+@media (hover: hover) { .ts-addfive:not(:disabled):hover { color: var(--forest-800); text-decoration: underline; text-underline-offset: 3px; } }
+.ts-addfive:focus-visible { outline: 2px solid var(--forest-700); outline-offset: 1px; }
+.ts-five-note { font-size: 0.8125rem; line-height: 1.4; }
+.ts-five-note.is-warn { color: var(--warn); }
+.ts-ghint.is-prime { color: var(--warn); }
+.ts-ov-reason { flex: 1 1 100%; }
+.ts-ov-reason[hidden] { display: none; }
+.ts-ov-reason .input { width: 100%; background: var(--surface); }
+.ts-ov-reason .input.invalid { border-color: var(--danger); }
+@container tssheet (max-width: 600px) { .ts-slots.is-five { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 768px) { .ts-addfive { min-height: 44px; } }

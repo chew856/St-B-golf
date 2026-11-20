@@ -5,7 +5,7 @@
   const { settings, PACE_TARGET, toMin, toHM, nowMin, slotList, closeHM, blockAt } = Club.shared.teesheet;
 
   /** Two rounds overlap when the later one starts before the earlier one is expected to finish (the earlier round's length sets the window). */
-  function overlaps(t1, h1, t2, h2) { const a = toMin(t1), b = toMin(t2); return a <= b ? b - a < (PACE_TARGET[h1] || 255) : a - b < (PACE_TARGET[h2] || 255); }   /* read by Reports > Golf */
+  function overlaps(t1, h1, t2, h2) { const a = toMin(t1), b = toMin(t2); return a <= b ? b - a < (PACE_TARGET[h1] || PACE_TARGET[18]) : a - b < (PACE_TARGET[h2] || PACE_TARGET[18]); }   /* read by Reports > Golf */
   const BLOCK_KINDS = [
     { value: 'maintenance', label: 'Course maintenance' },
     { value: 'shotgun', label: 'Shotgun start' },
@@ -69,12 +69,16 @@
     if (r && validDate(date)) return r.greenFee(date, time, holes);
     return settings().guestFee * (+holes === 9 ? 0.6 : 1);
   }
-  const RULE_LABEL = { playWindow: 'outside their play times', bookingWindow: 'outside their booking window', publicSlot: 'outside public tee times', publicBooking: 'outside the public booking window' };
+  const RULE_LABEL = { playWindow: 'outside their play times', bookingWindow: 'outside their booking window', publicSlot: 'outside public tee times', publicBooking: 'outside the public booking window',
+    guestLimit: 'over the guest limit', standing: 'with an account on hold' };
+  /* Overrides of these rules need a reason (Member Guest Policy; an account the billing office has put on hold). */
+  const REASON_RULES = { guestLimit: 1, standing: 1 };
+  const MAX_GROUP = (Club.teeRules && Club.teeRules.MAX_GROUP) || 5, STD_GROUP = (Club.teeRules && Club.teeRules.STANDARD_GROUP) || 4;
   function overrideKey(o) { return (o.memberId || 'pub:' + String(o.name || '').trim().toLowerCase()) + '|' + o.rule; }
   function overrideText(tt) {
     return 'Booked with a staff override: ' + (tt.overrides || []).map(function (o) {
       const n = o.memberId ? Club.members.name(o.memberId) : (o.name || 'Public golfer');
-      return n + ' ' + (RULE_LABEL[o.rule] || 'outside the rules');
+      return n + ' ' + (RULE_LABEL[o.rule] || 'outside the rules') + (o.reason ? ' (' + o.reason + ')' : '');
     }).join('; ');
   }
   /** Online green fee payments for tee times on this day (owner: public site; read defensively). */
@@ -253,7 +257,7 @@
     const online = Math.round(pays.reduce(function (a, p) { return a + (+p.amount || 0); }, 0) * 100) / 100;
     return { groups: tts.length, players: players, guests: guests, noShows: noShows, rounds: rounds, open: open, places: open * 4,
       publics: publics, publicOnline: publicOnline, online: online, onlineCount: pays.length,
-      util: open ? Math.min(100, Math.round(booked / open * 100)) : 0, placeUtil: open ? Math.round(players / (open * 4) * 100) : 0 };
+      util: open ? Math.min(100, Math.round(booked / open * 100)) : 0, placeUtil: open ? Math.min(100, Math.round(players / (open * 4) * 100)) : 0 };   /* 4 places a tee time; the odd fivesome cannot push it past 100% */
   }
   function avgPace(fromDate, toDate) {
     const done = S.where('teeTimes', function (t) { return t.status === 'completed' && t.holes === 18 && t.startedAt && t.finishedAt && t.date >= fromDate && t.date <= toDate; });
@@ -534,7 +538,7 @@
     const from = Club.date.addDays(date, -13);
     const hist = S.where('teeTimes', function (t) { return t.status === 'completed' && +t.holes !== 9 && t.startedAt && t.finishedAt && t.date >= from && t.date <= date; })
       .map(function (t) { return toMin(t.finishedAt) - toMin(t.startedAt); });
-    const bands = [{ label: 'Under 4 hours', test: function (m) { return m < 240; } }, { label: '4h 00m to ' + dur(tgt), test: function (m) { return m >= 240 && m <= tgt; } },
+    const bands = [{ label: 'Under ' + dur(tgt - 30), test: function (m) { return m < tgt - 30; } }, { label: dur(tgt - 30) + ' to ' + dur(tgt), test: function (m) { return m >= tgt - 30 && m <= tgt; } },
       { label: 'Up to 15 min over', test: function (m) { return m > tgt && m <= tgt + 15; } }, { label: 'More than 15 min over', test: function (m) { return m > tgt + 15; } }];
     html += ddSec('18-hole round times', esc('Last 14 days, ' + plural(hist.length, 'round')), hist.length ? Club.charts.ranked(bands.map(function (b) { return { label: b.label, value: hist.filter(b.test).length }; }), { total: hist.length }) : ddNote('No timed 18-hole rounds in the last 14 days.'));
     html += ddSec('This week', esc('Players finished each day'), weekCols(date, function (x) { return x.rounds; }, { tipName: 'Players finished' }));
@@ -636,14 +640,16 @@
     const past = ctx.isPast || (ctx.isToday && toMin(time) < ctx.now - 10);
     const bookable = !past && (!tt || ['booked', 'checked-in'].indexOf(tt.status) >= 0);
     const names = players.map(function (p) { return memberLabel(p) + ' | ' + shortName(p); }).join(' | ').toLowerCase();
-    const openCount = 4 - players.length;
+    const openCount = Math.max(0, STD_GROUP - players.length);
     const blk = ctx.blockFor(time);
+    /* Four places a tee time; a group of five (Fivesome Policy, staff only) shows its fifth player in a fifth column. */
+    const five = players.length > STD_GROUP;
     let cells = '';
-    for (let i = 0; i < 4; i++) cells += slotHTML(tt, players[i], i, date, time, bookable);
+    for (let i = 0; i < Math.max(STD_GROUP, Math.min(MAX_GROUP, players.length)); i++) cells += slotHTML(tt, players[i], i, date, time, bookable && !five);
     const tp = fmt.time(time).split(' ');
     const withAdds = players.filter(function (p) { return realAdds(p).length; });
     const promos = tt ? promosFor(tt) : [];
-    const marks = (tt && tt.source === 'public' ? '<span class="ts-mark src" title="Booked on the public tee times site">Online</span>' : '') +
+    const marks = (five ? '<span class="ts-mark five" title="A group of five, allowed by the golf shop">Five</span>' : '') + (tt && tt.source === 'public' ? '<span class="ts-mark src" title="Booked on the public tee times site">Online</span>' : '') +
       (tt && tt.overrides && tt.overrides.length ? '<span class="ts-mark ovr" title="' + esc(overrideText(tt)) + '">Override</span>' : '') +
       (withAdds.length ? '<span class="ts-mark add" title="' + esc('Add-ons: ' + withAdds.map(function (p) { return memberLabel(p) + ' (' + addsText(p) + ')'; }).join('; ')) + '">Add-ons</span>' : '') +
       (promos.length ? '<span class="ts-mark promo" title="' + esc(promos.map(function (x) { return 'Promo code ' + x.promo.code + ', ' + money(x.promo.discount) + ' off'; }).join('; ')) + '">Promo</span>' : '');
@@ -658,7 +664,7 @@
     const fade = past && ctx.isToday && !(tt && (tt.status === 'on-course' || tt.status === 'checked-in'));
     const data = ' data-time="' + time + '"' + (tt ? ' data-id="' + esc(tt.id) + '" data-status="' + esc(tt.status) + '"' : '') +
       ' data-names="' + esc(names) + '" data-open="' + (bookable ? openCount : 0) + '" data-mem="' + (hasMem ? 1 : 0) + '" data-pub="' + (hasPub ? 1 : 0) + '" style="--i:' + Math.min(idx, 36) + '"';
-    const cls = 'ts-row' + (tt ? ' has-group' : ' empty-row') + (fade ? ' past' : '') + (isNext ? ' is-next' : '') + (late ? ' is-late' : '') + (tt && tt.overrides && tt.overrides.length ? ' has-override' : '');
+    const cls = 'ts-row' + (tt ? ' has-group' : ' empty-row') + (five ? ' is-five' : '') + (fade ? ' past' : '') + (isNext ? ' is-next' : '') + (late ? ' is-late' : '') + (tt && tt.overrides && tt.overrides.length ? ' has-override' : '');
     if (!tt) {
       /* A fully empty tee time: a thin row; pointing at it shows "+ Book <time>", and a click anywhere on it books. */
       const can = bookable && !blk;
@@ -670,7 +676,7 @@
     }
     return '<div class="' + cls + '"' + data + '>' +
       '<button type="button" class="ts-time" data-action="open" data-id="' + esc(tt.id) + '" title="Open group">' + timeInner + '</button>' +
-      '<div class="ts-slots">' + cells + '</div>' +
+      '<div class="ts-slots' + (five ? ' is-five' : '') + '">' + cells + '</div>' +
       '<div class="ts-state">' + stateHTML(tt, ctx) + '</div>' +
       (tt.notes ? '<div class="ts-note">' + Club.icon('info') + esc(tt.notes) + '</div>' : '') +
       '</div>';
@@ -1168,7 +1174,7 @@
           : '<p class="ts-st-quiet">No more groups are due off today.</p>';
         const onList = on.slice().sort(function (a, b) { return a.time < b.time ? -1 : 1; }).slice(-6).reverse().map(function (t) {
           const start = toMin(t.startedAt || t.time); const el2 = Math.max(0, c.now - start);
-          const len = PACE_TARGET[t.holes] || 255; const hole = Math.min(t.holes, Math.floor(el2 / (len / t.holes)) + 1);
+          const len = PACE_TARGET[t.holes] || PACE_TARGET[18]; const hole = Math.min(t.holes, Math.floor(el2 / (len / t.holes)) + 1);
           const over = el2 > len;
           const nm = shortName((t.players || [])[0] || {}) + ((t.players || []).length > 1 ? ' +' + ((t.players || []).length - 1) : '');
           /* A group keeping a live scorecard (Play, js/shared/play-data.js) shows the hole from its card instead of the pace estimate */
@@ -1500,7 +1506,7 @@
          all here, whichever kind the spot is. */
       const prow = function (i) {
         const p = pl[i]; const type = p ? p.type : 'member'; const pub = type === 'public' ? p : null;
-        return '<div class="ts-prow" data-i="' + i + '" data-kind="' + esc(type) + '">' +
+        return '<div class="ts-prow" data-i="' + i + '" data-kind="' + esc(type) + '"' + (i >= STD_GROUP && !p ? ' hidden' : '') + '>' +
           (p && p.paid ? '<span class="ts-prow-n paid" title="Fees settled">' + Club.icon('check') + '</span>' : '<span class="ts-prow-n serif">' + (i + 1) + '</span>') +
           '<input type="hidden" name="type_' + i + '" value="' + esc(type) + '">' +
           '<div class="ts-pwho">' +
@@ -1546,7 +1552,10 @@
                The beverage cart uses it to predict where the group is (teeTimes.startTee). */
             ui.field({ label: 'Starts on', name: 'startTee', type: 'select', options: '<option value="1"' + (startsTen ? '' : ' selected') + '>1st tee</option><option value="10"' + (startsTen ? ' selected' : '') + '>10th tee</option>' }) +
           '</div>' +
-          '<div class="ts-plist"><div class="ts-plist-head"><span class="label-caps ts-pcount">Players</span><span class="muted ts-hint">The first member hosts any guests</span></div>' + [0, 1, 2, 3].map(prow).join('') + '</div>' +
+          '<div class="ts-plist"><div class="ts-plist-head"><span class="label-caps ts-pcount">Players</span><span class="muted ts-hint ts-ghint">The first member hosts any guests</span></div>' + [0, 1, 2, 3, 4].map(prow).join('') +
+            /* Fivesome Policy: a fifth player at the golf shop's discretion, at most 2 groups of five an hour, never six */
+            '<div class="ts-five"><button type="button" class="ts-addfive" data-action="ts-addfive">' + Club.icon('plus') + 'Add a fifth player</button><span class="muted ts-five-note"></span></div>' +
+          '</div>' +
           '<div class="ts-notes"' + (isEdit && tt.notes ? '' : ' hidden') + '>' + ui.field({ label: 'Notes', name: 'notes', type: 'textarea', value: isEdit ? tt.notes : '', placeholder: 'Rental clubs, occasions, pairing preferences' }) + '</div>' +
           '<button type="button" class="ts-addnote" data-action="ts-addnote"' + (isEdit && tt.notes ? ' hidden' : '') + '>' + Club.icon('plus') + 'Add a note</button>' +
           '<div class="ts-override" hidden></div>' +
@@ -1592,8 +1601,10 @@
       });
       liftSheets(ui.$('.ts-mdp', form));
 
+      function fiveOpen() { const r = ui.$('.ts-prow[data-i="4"]', form); return !!r && !r.hidden; }
       function readPlayers() {
-        return [0, 1, 2, 3].map(function (i) {
+        return [0, 1, 2, 3, 4].map(function (i) {
+          if (i >= STD_GROUP && !fiveOpen()) return null;
           const type = form['type_' + i].value; const cart = form['cart_' + i].checked;
           if (type === 'guest') {
             const n = form['guest_' + i].value.replace(/\s+/g, ' ').trim(); if (!n) return null;
@@ -1635,7 +1646,7 @@
           }
         });
         const n = raw.filter(Boolean).length;
-        ui.$('.ts-pcount', form).textContent = 'Players · ' + n + ' of 4';
+        ui.$('.ts-pcount', form).textContent = 'Players · ' + n + ' of ' + (fiveOpen() ? MAX_GROUP : STD_GROUP);
       }
       /* Switch a spot to a member, guest or public golfer (the links under an empty spot) */
       function setKind(r, kind, focus) {
@@ -1662,7 +1673,12 @@
           if (p.type === 'member') {
             const mem = Club.members.get(p.memberId); if (!mem) return;
             const play = r.memberCanPlay(mem, d, t);
-            if (!play.ok) out.push({ i: p.i, memberId: mem.id, rule: 'playWindow', text: play.reason });
+            /* A Social member's voucher round already on this booking keeps its voucher */
+            const hadVoucher = play.voucher && isEdit && (tt.players || []).some(function (q) { return q.memberId === mem.id && q.voucher; });
+            if (!play.ok && !hadVoucher) out.push({ i: p.i, memberId: mem.id, rule: 'playWindow', text: play.reason });
+            /* An account the billing office has put on hold (Club.billing.standing, when the billing module has it) */
+            const sd = Club.billing && Club.billing.standing ? Club.billing.standing(mem.id) : null;
+            if (sd && (sd.canBook === false || sd.canPlay === false)) out.push({ i: p.i, memberId: mem.id, rule: 'standing', text: sd.reason || (Club.members.name(mem) + '\u2019s account is on hold.') });
             if (d >= today) { const bo = r.bookingOpen('member', mem, d, today); if (!bo.ok) out.push({ i: p.i, memberId: mem.id, rule: 'bookingWindow', text: bo.reason }); }
           } else if (p.type === 'public' && p.name) {
             const sl = r.publicSlot(d, t);
@@ -1670,8 +1686,33 @@
             if (d >= today) { const bo = r.bookingOpen('public', null, d, today); if (!bo.ok) out.push({ i: p.i, memberId: null, name: p.name, rule: 'publicBooking', text: bo.reason }); }
           }
         });
+        /* Member Guest Policy (Club.teeRules.guestLimit): guests per host member. A guest's host is the member who brought
+           them (hostId) or the group's first member. Public golfers who may play here only with a member (Friday, weekend
+           and holiday mornings) count as that member's guests. */
+        if (r.guestLimit) {
+          const gl = r.guestLimit(d, t), firstMem = ps.find(function (p) { return p.type === 'member'; });
+          const withMember = r.publicSlot(d, t).requiresMember;
+          const per = {};
+          ps.forEach(function (p) {
+            if (!(p.type === 'guest' || (p.type === 'public' && p.name && withMember))) return;
+            const prev = rowPrev(p.i, p); const hid = prev && prev.hostId && ps.some(function (q) { return q.memberId === prev.hostId; }) ? prev.hostId : firstMem ? firstMem.memberId : null;
+            if (!hid) return;
+            (per[hid] = per[hid] || []).push(p);
+          });
+          Object.keys(per).forEach(function (hid) {
+            const gs = per[hid]; if (gs.length <= gl.max) return;
+            const nm = Club.members.name(hid);
+            out.push({ i: gs[gl.max].i, memberId: hid, rule: 'guestLimit', count: gs.length, text: gl.label + '. ' + nm + ' has ' + gs.length + ' guests in this group.' });
+          });
+        }
         // Players already booked at this exact time before the rules were checked are shown, not re-flagged.
         const wasIn = function (w) {
+          if (w.rule === 'guestLimit') {   /* kept only if the booking already had this many guests for this host */
+            if (!(isEdit && tt.date === d && tt.time === t)) return false;
+            const old = tt.players || [], first = old.find(function (q) { return q.type === 'member' && q.memberId; });
+            const n = old.filter(function (q) { return (q.type === 'guest' || q.type === 'public') && (q.hostId ? q.hostId === w.memberId : !!first && first.memberId === w.memberId); }).length;
+            return n >= w.count;
+          }
           return isEdit && tt.date === d && tt.time === t && (tt.players || []).some(function (q) {
             return w.memberId ? q.memberId === w.memberId : isPublic(q) && String(q.name || '').toLowerCase() === String(w.name || '').toLowerCase();
           });
@@ -1679,12 +1720,40 @@
         out.forEach(function (w) { w.acked = !!acked[overrideKey(w)]; w.legacy = !w.acked && wasIn(w); });
         return out;
       }
+      /* Social members golf with vouchers: say this round uses one, and how many are left after it */
+      function voucherHint(p, d) {
+        const r = rules(), mem = Club.members.get(p.memberId); if (!r || !r.vouchers || !mem || !validDate(d)) return '';
+        const v = r.vouchers(mem, d); if (!v) return '';
+        const had = isEdit && (tt.players || []).some(function (q) { return q.memberId === mem.id && q.voucher; }) && tt.date.slice(0, 4) === d.slice(0, 4);
+        const left = had ? v.left : v.left - 1;
+        return 'Uses a golf voucher. ' + Math.max(0, left) + ' of ' + v.total + ' left for ' + v.year + (had ? '.' : ' after this round.');
+      }
       function publicHint(d, t, hasMember) {
         const r = rules(); if (!r || !validDate(d) || !t) return '';
         const sl = r.publicSlot(d, t);
         if (sl.ok) return sl.label + ' public tee time. Green fee ' + money(greenFee(d, t, +form.holes.value)) + '.';
         if (sl.requiresMember && hasMember) return 'Weekend and holiday morning: public golfers play here with a member. Green fee ' + money(greenFee(d, t, +form.holes.value)) + '.';
         return '';
+      }
+      /* The guest limit for the chosen time, under the Players heading */
+      function paintGuestHint(d, t) {
+        const el = ui.$('.ts-ghint', form), r = rules();
+        const gl = r && r.guestLimit && validDate(d) && t ? r.guestLimit(d, t) : null;
+        const txt = 'The first member hosts any guests' + (gl ? '. ' + gl.label : '');
+        if (el.textContent !== txt) el.textContent = txt;
+        el.classList.toggle('is-prime', !!(gl && gl.prime));
+      }
+      /* Fivesome Policy: "Add a fifth player" while the clock hour has fewer than 2 groups of five */
+      function fiveState(d, t) { const r = rules(); return r && r.fivesome && validDate(d) && t ? r.fivesome(d, t, tt && tt.id) : { ok: true, count: 0, max: 2, reason: '' }; }
+      function paintFive(d, t) {
+        const fs = fiveState(d, t), open = fiveOpen(), filled = readPlayers().slice(0, STD_GROUP).filter(Boolean).length;
+        const btn = ui.$('.ts-addfive', form), note = ui.$('.ts-five-note', form);
+        btn.hidden = open || !fs.ok;
+        btn.disabled = filled < STD_GROUP;
+        const txt = open ? (fs.ok ? 'Groups of five are at the golf shop\u2019s discretion: at most ' + fs.max + ' an hour, never six.' : fs.reason)
+          : !fs.ok ? fs.reason + ' No fifth player at this time.' : filled < STD_GROUP ? 'A fifth player can join once four places are filled.' : '';
+        if (note.textContent !== txt) note.textContent = txt;
+        note.classList.toggle('is-warn', !fs.ok);
       }
       let current = [];
       function refresh() {
@@ -1713,16 +1782,24 @@
           const p = raw[i];
           let html = mine.map(function (w) { return '<div class="ts-pwarn' + (w.acked || w.legacy ? ' acked' : '') + '">' + Club.icon('alert') + '<span>' + esc(w.text) + (w.acked ? ' Override recorded.' : w.legacy ? ' Already booked at this time, so it is kept.' : '') + '</span></div>'; }).join('');
           if (p && p.type === 'public' && !mine.some(function (w) { return w.rule === 'publicSlot'; })) { const hint = publicHint(d, t, hasMember); if (hint) html += '<div class="ts-phint">' + Club.icon('info') + '<span>' + esc(hint) + '</span></div>'; }
+          if (p && p.type === 'member' && !mine.length) { const vh = voucherHint(p, d); if (vh) html += '<div class="ts-phint">' + Club.icon('tag') + '<span>' + esc(vh) + '</span></div>'; }
           note.innerHTML = html; note.hidden = !html;
           r.classList.toggle('has-warn', mine.some(function (w) { return !w.acked && !w.legacy; }));
         });
         const fresh = warns.filter(function (w) { return !w.acked && !w.legacy; });
-        const ov = ui.$('.ts-override', form); const was = form.override ? form.override.checked : false;
+        const ov = ui.$('.ts-override', form);
         if (fresh.length) {
-          ov.innerHTML = '<div class="ts-ov-text">' + Club.icon('alert') + '<div><strong>' + fresh.length + ' booking rule' + (fresh.length === 1 ? ' is' : 's are') + ' not met.</strong> <span>Staff can still book this tee time. The override is recorded on the booking.</span></div></div>' +
-            '<label class="check ts-ov-check"><input type="checkbox" name="override"' + (was ? ' checked' : '') + '> Override and book anyway</label>';
+          /* Built once and then only updated, so the reason being typed keeps its focus */
+          if (!ui.$('.ts-ov-check', ov)) ov.innerHTML = '<div class="ts-ov-text"></div>' +
+            '<label class="check ts-ov-check"><input type="checkbox" name="override"> Override and book anyway</label>' +
+            '<div class="ts-ov-reason" hidden><input class="input" name="ovreason" maxlength="120" placeholder="Reason for the override" aria-label="Reason for the override"></div>';
+          const needReason = fresh.some(function (w) { return REASON_RULES[w.rule]; });
+          ui.$('.ts-ov-text', ov).innerHTML = Club.icon('alert') + '<div><strong>' + fresh.length + ' booking rule' + (fresh.length === 1 ? ' is' : 's are') + ' not met.</strong> <span>Staff can still book this tee time. The override' + (needReason ? ' and its reason are' : ' is') + ' recorded on the booking.</span></div>';
+          const rs = ui.$('.ts-ov-reason', ov); rs.hidden = !needReason; rs.dataset.need = needReason ? '1' : '';
           ov.hidden = false;
         } else { ov.innerHTML = ''; ov.hidden = true; }
+        paintGuestHint(d, t);
+        paintFive(d, t);
         paintHeld();
       }
       /* A time held online (a golfer is booking it) takes no new players here until the hold ends: say so, count down,
@@ -1823,10 +1900,19 @@
         ui.$('.ts-pubf .ts-pubpay', r).innerHTML = shopBox(i, false); pl[i] = null; delete pend[i];
         ui.$$('.ts-gcontact, .ts-gpay', r).forEach(function (x) { x.remove(); });   /* that guest's contact line and golf shop box went with them */
         const n = ui.$('.ts-prow-n', r); if (n.classList.contains('paid')) { n.className = 'ts-prow-n serif'; n.removeAttribute('title'); n.textContent = +i + 1; }
+        if (+i >= STD_GROUP) { r.hidden = true; setKind(r, 'member', false); const fb = ui.$('.ts-addfive', form); if (fb && !fb.hidden) fb.focus({ preventScroll: true }); return; }   /* the fifth place folds away again */
         setKind(r, 'member', false);
         const f = memberBtn(form['member_' + i]); if (f) f.focus({ preventScroll: true });
       });
       /* Notes fold away behind "Add a note" until needed; a booking that has notes shows them open */
+      ui.on(form, 'click', '[data-action=ts-addfive]', function (e, b) {
+        e.preventDefault();
+        const fs = fiveState(form.date.value, form.time.value); if (!fs.ok || fiveOpen()) return;
+        const r = ui.$('.ts-prow[data-i="4"]', form); r.hidden = false;
+        setTimeout(function () { ui.$$('.ts-msel', r).forEach(function (sel) { const mb = memberBtn(sel); if (mb && !mb.querySelector('.ts-msel-ic')) mb.insertAdjacentHTML('afterbegin', Club.icon('search', 'ts-msel-ic')); }); }, 0);
+        refresh();
+        focusRow(r);
+      });
       ui.on(form, 'click', '[data-action=ts-addnote]', function (e, b) {
         const box = ui.$('.ts-notes', form); box.hidden = false; b.hidden = true; form.notes.focus();
       });
@@ -1840,10 +1926,10 @@
           const mem = Club.members.get(e.target.value); const i = e.target.name.split('_')[1];
           if (mem && mem.preferences && !isEdit) form['cart_' + i].checked = mem.preferences.cart === 'Cart';
         }
-        if (e.target.name === 'override') return;
+        if (e.target.name === 'override' || e.target.name === 'ovreason') return;
         refresh();
       });
-      form.addEventListener('input', function (e) { if (e.target.name !== 'notes') refresh(); });
+      form.addEventListener('input', function (e) { if (e.target.name !== 'notes' && e.target.name !== 'ovreason') refresh(); });
 
       function fail(msgs, fields) {
         const al = ui.$('.ts-alert', form);
@@ -1890,6 +1976,12 @@
         if (blk && !(tt && tt.date === d && tt.time === t)) { errs.push(fmt.time(t) + ' is blocked for ' + String(blk.reason || 'club use').toLowerCase() + '.'); bad.push(form.time); }
         const hx = validDate(d) ? holdAt(d, t) : null;
         if (hx && addsPlayers()) { errs.push(fmt.time(t) + ' is held online for ' + clock(hx.left) + '. Wait for the hold to end, or choose another time.'); bad.push(form.time); }
+        if (ps.length > MAX_GROUP) { errs.push('A group can have at most five players.'); }
+        else if (ps.length > STD_GROUP && validDate(d)) {
+          const fs = fiveState(d, t);
+          const keep = isEdit && tt.date === d && tt.time === t && (tt.players || []).length > STD_GROUP;   /* already a group of five here */
+          if (!fs.ok && !keep) { errs.push(fs.reason + ' Remove the fifth player or choose another time.'); bad.push(form.time); }
+        }
         if (errs.length) return fail(errs, bad);
         // Membership rules warn, they never block: staff acknowledge with the override box.
         const warns = current; const fresh = warns.filter(function (w) { return !w.acked && !w.legacy; });
@@ -1897,10 +1989,13 @@
           const ov = ui.$('.ts-override', form); ov.classList.remove('shake'); void ov.offsetWidth; ov.classList.add('shake');
           return fail(['Tick "Override and book anyway" to book outside the membership or public play rules.'], [form.override && form.override.closest('.check')]);
         }
+        const ovReason = form.ovreason ? form.ovreason.value.replace(/\s+/g, ' ').trim() : '';
+        if (fresh.some(function (w) { return REASON_RULES[w.rule]; }) && ovReason.length < 3) return fail(['Give a reason for the override.'], [form.ovreason]);
         const overrides = warns.filter(function (w) { return !w.legacy; }).map(function (w) {
           const prev = acked[overrideKey(w)];
           const o = { memberId: w.memberId, rule: w.rule, by: 'staff', on: prev && prev.on ? prev.on : today };
           if (!w.memberId) o.name = w.name;
+          if (prev && prev.reason) o.reason = prev.reason; else if (!w.acked && ovReason) o.reason = ovReason;
           return o;
         });
 
@@ -1923,6 +2018,8 @@
           if (prev) ['addons', 'discount', 'paidWith', 'paidAt', 'shopPay', 'shopRefunds'].forEach(function (k) { if (prev[k] != null) out[k] = prev[k]; });   // add-ons and golf shop payments
           if (p.type === 'guest' && p.pays === 'shop') { out.pays = 'shop'; out.payAt = 'shop'; out.paid = p.shopPaid != null ? !!p.shopPaid : out.paid; if (out.paid) out.paidAt = 'shop'; }
           if (prev && prev.addedBy && p.type === 'member') out.addedBy = prev.addedBy;
+          /* A Social member's round uses one of their golf vouchers (Club.teeRules.vouchers counts these) */
+          if (p.type === 'member') { const mm = Club.members.get(p.memberId); if ((prev && prev.voucher) || (mm && rules() && rules().tierRules(mm).vouchers)) out.voucher = true; }
           return out;
         });
         /* Golf shop payments taken in this form, and refunds of recorded ones. Checked first, then written with their receipts. */

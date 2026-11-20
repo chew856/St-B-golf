@@ -589,15 +589,42 @@
   window.addEventListener('pagehide', function () { if (hasPending()) flush(); });
   document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden' && hasPending()) flush(); });
   /* ---------- Core seed: tiers, members, staff, course ---------- */
-  /* St. Boniface membership categories. IDs are stable (modules reference them); dues are placeholders
-     because the club does not publish prices. playWindows are the published times each category may tee off
-     (null = unlimited); see Club.teeRules in js/core/teerules.js. */
-  store.seed('membershipTiers', [
-    { id: 'tier_founders', name: 'Eagle', annualDues: 3450, monthlyMinimum: 0, golf: true, advanceDays: 15, playWindows: null, description: 'Unlimited golf, 7 days a week. Club storage and a private locker. Book 15 days in advance.', color: 'night' },
-    { id: 'tier_full', name: 'Birdie', annualDues: 2650, monthlyMinimum: 0, golf: true, advanceDays: 13, playWindows: { weekday: [['00:00', '07:30'], ['10:30', '16:00'], ['17:30', '23:59']], weekend: [['10:30', '23:59']] }, description: 'Weekdays before 7:30am, 10:30am to 4pm and after 5:30pm; weekends after 10:30am. Club storage and a private locker. Book 13 days in advance.', color: 'green' },
-    { id: 'tier_junior', name: 'Young Adult', annualDues: 1150, monthlyMinimum: 0, golf: true, advanceDays: 8, playWindows: { weekday: [['10:30', '16:00'], ['17:30', '23:59']], weekend: [['11:00', '23:59']] }, description: 'Ages 19 to 23. Weekdays 10:30am to 4pm and after 5:30pm; weekends after 11am. Club storage and a private locker. Book 8 days in advance.', color: 'brass' },
-    { id: 'tier_nonresident', name: 'Junior', annualDues: 450, monthlyMinimum: 0, golf: true, advanceDays: 8, playWindows: { weekday: [['10:30', '16:00'], ['17:30', '23:59']], weekend: [['11:00', '23:59']] }, description: 'Under 18. Weekdays 10:30am to 4pm and after 5:30pm; weekends after 11am. Book 8 days in advance.', color: 'parchment' },
-  ]);
+  /* St. Boniface membership categories, from the club's 2025 Membership Handbook (Adult and Youth Membership
+     Categories & Play Allowances). IDs are stable (members and modules reference them): tier_founders is Eagle,
+     tier_full Birdie, tier_junior Young Adult and tier_nonresident Junior. The four original dues are demo placeholders;
+     the handbook gives no prices, so the categories added from it have annualDues null ("Price to be set by the club").
+     playWindows are the times each category may tee off (null = no restrictions); weekend windows also apply on
+     holidays, and a holiday on a weekday counts as a weekend day (Club.teeRules in js/core/teerules.js).
+     golfVouchers: Social members golf with vouchers (5 a season), not on play windows. discountPct: the 10% member
+     discount in the Gallery and Pro Shop (stored for when the shop and dining apply member discounts; neither does yet). */
+  const BIRDIE_WINDOWS = { weekday: [['00:00', '07:30'], ['10:30', '16:00'], ['17:30', '23:59']], weekend: [['10:30', '23:59']] };
+  const TIERS = [
+    { id: 'tier_founders', name: 'Eagle', annualDues: 3450, monthlyMinimum: 0, golf: true, advanceDays: 15, playWindows: null, description: 'No tee time restrictions. Book tee times 15 days in advance.', color: 'night' },
+    { id: 'tier_eagle60', name: 'Eagle 60+', annualDues: null, monthlyMinimum: 0, golf: true, advanceDays: 15, playWindows: null, description: 'For members 60 and over (ID required). No tee time restrictions. Book tee times 15 days in advance.', color: 'night' },
+    { id: 'tier_eagleint', name: 'Eagle INT', annualDues: null, monthlyMinimum: 0, golf: true, advanceDays: 15, playWindows: null, description: 'Intermediate, ages 19 to 39 (ID required). No tee time restrictions. Book tee times 15 days in advance.', color: 'night' },
+    { id: 'tier_full', name: 'Birdie', annualDues: 2650, monthlyMinimum: 0, golf: true, advanceDays: 13, playWindows: BIRDIE_WINDOWS, description: 'Weekdays before 7:30am, 10:30am to 4pm and after 5:30pm. Weekends and holidays after 10:30am. Book tee times 13 days in advance.', color: 'green' },
+    { id: 'tier_birdieint', name: 'Birdie INT', annualDues: null, monthlyMinimum: 0, golf: true, advanceDays: 13, playWindows: BIRDIE_WINDOWS, description: 'Intermediate, ages 19 to 39 (ID required). Weekdays before 7:30am, 10:30am to 4pm and after 5:30pm. Weekends and holidays after 10:30am. Book tee times 13 days in advance.', color: 'green' },
+    { id: 'tier_junior', name: 'Young Adult', annualDues: 1150, monthlyMinimum: 0, golf: true, advanceDays: 8, playWindows: { weekday: [['10:30', '16:00'], ['17:30', '23:59']], weekend: [['10:30', '23:59']] }, description: 'Weekdays 10:30am to 4pm and after 5:30pm. Weekends and holidays after 10:30am. Book tee times 8 days in advance.', color: 'brass' },
+    { id: 'tier_nonresident', name: 'Junior', annualDues: 450, monthlyMinimum: 0, golf: true, advanceDays: 8, playWindows: { weekday: [['10:30', '16:00'], ['17:30', '23:59']], weekend: [['11:00', '23:59']] }, description: 'Must meet MGA requirements: 18 and under by August 31. Weekdays 10:30am to 4pm and after 5:30pm. Weekends and holidays after 11am. Book tee times 8 days in advance.', color: 'parchment' },
+    { id: 'tier_social', name: 'Social', annualDues: null, monthlyMinimum: 0, golf: false, golfVouchers: 5, discountPct: 10, advanceDays: null, playWindows: null, description: '5 golf vouchers included. Member at the Opening Mixer in April and the Closing Social in October. 10% member discount in the Gallery and Pro Shop. Keeps membership status.', color: 'parchment' },
+    { id: 'tier_clubhouse', name: 'Club House', annualDues: null, monthlyMinimum: 0, golf: false, discountPct: 10, advanceDays: null, playWindows: null, description: 'Member at the Opening Mixer in April and the Closing Social in October. 10% member discount in the Gallery and Pro Shop. Keeps membership status. No golf.', color: 'parchment' }
+  ];
+  store.seed('membershipTiers', TIERS);
+  /* Browsers seeded before the handbook rules (Nov 20): bring the four original categories' rules and descriptions in
+     line (names, dues and other fields staff may have edited are kept) and add the five new categories, once. */
+  if (!store.find('demoBackfills', 'tiersHandbook1') && store.all('membershipTiers').length) {
+    const RULE_KEYS = ['golf', 'golfVouchers', 'discountPct', 'advanceDays', 'playWindows', 'description'];
+    TIERS.forEach(function (t, i) {
+      const have = store.find('membershipTiers', t.id);
+      if (have) {
+        if (i === 0 || t.id === 'tier_full' || t.id === 'tier_junior' || t.id === 'tier_nonresident') {
+          const patch = {}; RULE_KEYS.forEach(function (k) { if (t[k] !== undefined) patch[k] = t[k]; });
+          store.update('membershipTiers', t.id, patch);
+        }
+      } else store.insert('membershipTiers', Object.assign({}, t));
+    });
+    store.insert('demoBackfills', { id: 'tiersHandbook1', at: new Date().toISOString(), added: TIERS.filter(function (t) { return !/^tier_(founders|full|junior|nonresident)$/.test(t.id); }).map(function (t) { return t.id; }) });
+  }
 
   store.seed('members', function () {
     R.reseed(1924);

@@ -58,11 +58,45 @@
   function portalBadge(o) { return fromPortal(o) ? '<span class="badge info ot-portal" title="Sent by a member from the members’ portal">Members’ portal</span>' : ''; }
   function memberOf(o) { return o && o.memberId ? S.find('members', o.memberId) : null; }
 
+  /* ---------------- Tournament limits (2025 Membership Handbook, Tournament Information) ----------------
+     A tournament is any event needing 6 or more consecutive tee times, or all tee boxes at one time (a shotgun).
+     At most 3 a week (Monday to Sunday) in May, June, September and October, and 2 a week in July and August
+     (Club.teeRules.tournamentLimit). Counted: outings not lost, plus shotgun blocks on the tee sheet that no outing owns.
+     None is booked on a Friday (Fridays are for members). */
+  const FRIDAY_EVENTS = (Club.teeRules && Club.teeRules.FRIDAY_EVENTS) || 'No tournaments or outside golf events are booked on a Friday. Fridays are for members.';
+  function isFri(iso) { return !!iso && dow(iso) === 5; }
+  function isTournament(o) { return o.format === 'Shotgun' || Math.ceil((+o.players || 0) / 4) >= 6; }
+  function tournamentsInWeek(date, excludeId) {
+    const days = Club.date.week(date), from = days[0], to = days[6];
+    const owned = {}; all().forEach(function (x) { if (x.teeBlockId) owned[x.teeBlockId] = 1; });
+    const list = all().filter(function (x) { return x.id !== excludeId && x.stage !== 'Lost' && x.date >= from && x.date <= to && isTournament(x); })
+      .map(function (x) { return { date: x.date, name: x.organization }; });
+    const seen = {};
+    S.all('teeBlocks').forEach(function (b) {
+      if (b.kind !== 'shotgun' || owned[b.id] || b.date < from || b.date > to) return;
+      const k = b.date + '|' + b.reason; if (seen[k]) return; seen[k] = 1;
+      list.push({ date: b.date, name: String(b.reason || 'Shotgun').replace(/ shotgun$/i, '') });
+    });
+    return list.sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+  }
+  /** { over, max, count, list, text } for this outing's week, or null when it is not a tournament or no limit applies. */
+  function tournamentLimit(o, excludeId) {
+    if (!o.date || !isTournament(o) || !Club.teeRules || !Club.teeRules.tournamentLimit) return null;
+    const lim = Club.teeRules.tournamentLimit(o.date); if (lim.max == null) return null;
+    const list = tournamentsInWeek(o.date, excludeId);
+    const week = Club.date.week(o.date);
+    return { over: list.length >= lim.max, max: lim.max, count: list.length, list: list,
+      text: 'The week of ' + fmt.dateShort(week[0]) + ' already has ' + list.length + ' tournament' + (list.length === 1 ? '' : 's') + (list.length ? ' (' + list.map(function (x) { return x.name + ', ' + fmt.weekday(x.date); }).join('; ') + ')' : '') + '. The handbook allows ' + lim.label + '.' };
+  }
+
   /* ---------------- Rules check (from the tournament terms) ---------------- */
   function rulesFor(o, excludeId) {
     const warn = [], errors = [];
     const p = S.find('outingPackages', o.packageId); const m = o.date ? monthOf(o.date) : 0; const n = +o.players || 0;
     if (o.date && !inSeason(o.date)) errors.push('Tournaments and outings run during the golf season, ' + seasonText() + '. Choose a date in the golf season.');
+    if (isFri(o.date)) errors.push(FRIDAY_EVENTS);
+    const tl = o.stage === 'Lost' || o.stage === 'Completed' ? null : tournamentLimit(o, excludeId);
+    if (tl && tl.over) warn.push('Over the weekly tournament limit. ' + tl.text + (o.limitOverride ? ' Booked with an override: ' + o.limitOverride.reason + '.' : ''));
     /* "Only available May and July" reads "only available May and July": only the first letter drops, month names keep theirs.
        A package whose availability text names no months (Platinum) gets its months spelled out instead. */
     if (p && m && inSeason(o.date) && (p.months || []).indexOf(m) < 0) {
@@ -291,12 +325,25 @@
       ui.field({ label: 'Package', name: 'packageId', type: 'select', options: ui.options(pkgOpts, o.packageId || 'op_birdie') }) +
       '</div><div class="field"><label>Food and beverage add-ons</label><div class="ot-aos">' + addOnsFieldHtml(o.addOns, o.packageId || 'op_birdie', o.players) + '</div><span class="field-hint">All pricing is surcharge inclusive. F&B must be arranged at least 8 weeks before the event.</span></div>' +
       ui.field({ label: 'Notes', name: 'notes', type: 'textarea', value: o.notes || '', placeholder: 'Prizes, hole sponsors, contests, special requests' }) +
-      '<div class="ot-rules" aria-live="polite"></div></form>';
+      '<div class="ot-rules" aria-live="polite"></div>' +
+      /* Over the weekly tournament limit: staff may still book it, with a reason (kept on the outing) */
+      '<div class="ot-limit" hidden><label class="check"><input type="checkbox" name="limitOk"> Book over the weekly tournament limit</label>' +
+        '<input class="input" name="limitReason" maxlength="120" placeholder="Reason for the override" aria-label="Reason for booking over the tournament limit"></div></form>';
     const m = ui.modal({ eyebrow: 'Tournament & Corporate Services', title: existing ? 'Edit outing' : 'New outing enquiry', size: 'lg', body: body, actions: [{ label: 'Cancel', kind: 'ghost' }, { label: existing ? 'Save outing' : 'Save enquiry', kind: 'primary', icon: 'check', onClick: function () { return save(); } }] });
     const form = ui.$('form', m.body);
     let format = o.format || 'Tee times', holes = +(o.holes || 18), pkgTouched = !!existing;
     function current() { return { date: form.date.value, players: +form.players.value || 0, format: format, start: form.start.value, holes: holes, packageId: form.packageId.value }; }
-    function check() { ui.$('.ot-rules', form).innerHTML = rulesHtml(rulesFor(current(), existing && existing.id), form.date.value && form.players.value ? 'This outing fits the package and course policies.' : ''); }
+    /* The limit needs an override when this save makes the outing count in a week that is already full: a new
+       tournament, or one moved to another week or turned into a tournament. An unchanged booking keeps its place. */
+    function limitNow() {
+      const cur = current(); const tl = tournamentLimit(cur, existing && existing.id); if (!tl || !tl.over) return null;
+      if (existing && isTournament(existing) && existing.stage !== 'Lost' && existing.date && Club.date.week(existing.date)[0] === Club.date.week(cur.date)[0]) return null;
+      return tl;
+    }
+    function check() {
+      ui.$('.ot-rules', form).innerHTML = rulesHtml(rulesFor(Object.assign({}, existing || {}, current()), existing && existing.id), form.date.value && form.players.value ? 'This outing fits the package and course policies.' : '');
+      ui.$('.ot-limit', form).hidden = !limitNow();
+    }
     function redrawAddOns() { const sel = readAddOns(form); ui.$('.ot-aos', form).innerHTML = addOnsFieldHtml(sel.length ? sel : o.addOns, form.packageId.value, +form.players.value || 0); }
     ui.on(form, 'click', '.segmented button', function (e, b) {
       const seg = b.closest('.segmented'); ui.$$('button', seg).forEach(function (x) { x.classList.toggle('active', x === b); });
@@ -311,6 +358,7 @@
     form.players.addEventListener('input', function () { const n = +form.players.value || 0; if (!pkgTouched && n) { form.packageId.value = suggestPkg(n); redrawAddOns(); } check(); });
     form.packageId.addEventListener('change', function () { pkgTouched = true; redrawAddOns(); check(); });
     form.addEventListener('change', function (e) { if (e.target.name === 'date' || e.target.name === 'start') check(); });
+    form.players.addEventListener('change', check);
     check();
     function err(input, msg) { input.classList.add('invalid'); input.insertAdjacentHTML('afterend', '<span class="field-error">' + esc(msg) + '</span>'); }
     function save() {
@@ -320,8 +368,17 @@
       if (!(d.players >= MIN_PLAYERS && d.players <= MAX_PLAYERS)) { err(form.players, 'Packages are for 16 to 144 players.'); ok = false; }
       if (!inSeason(d.date)) { err(form.date, 'Choose a date in the golf season, ' + seasonText() + '.'); ok = false; }
       else if (!existing && d.date < today()) { err(form.date, 'Choose an upcoming date.'); ok = false; }
+      else if (isFri(d.date) && (!existing || existing.date !== d.date)) { err(form.date, FRIDAY_EVENTS + ' Choose another day.'); ok = false; }
+      const over = ok ? limitNow() : null; let limitOverride = null;
+      if (over) {
+        const reason = String(form.limitReason.value || '').replace(/\s+/g, ' ').trim();
+        if (!form.limitOk.checked || reason.length < 3) { err(form.limitReason, 'Over the weekly tournament limit. Tick the override and give a reason, or choose another week.'); ok = false; }
+        else limitOverride = { reason: reason, by: Club.user ? (Club.user.firstName + ' ' + Club.user.lastName).trim() : 'Golf shop', on: today(), week: Club.date.week(d.date)[0] };
+      }
       if (!ok) { const f1 = ui.$('.invalid', form); if (f1) f1.focus(); return false; }
       const doc = { organization: d.organization, contactName: d.contactName, email: d.email, phone: d.phone, date: d.date, players: d.players, format: cur.format, start: d.start, holes: cur.holes, packageId: d.packageId, addOns: readAddOns(form), notes: d.notes };
+      if (limitOverride) doc.limitOverride = limitOverride;
+      const limitNote = limitOverride ? 'Booked over the weekly tournament limit: ' + limitOverride.reason : '';
       let id;
       if (existing) undoRun(function () {
         const blk = blockOf(existing); const patch = Object.assign({}, doc);
@@ -333,14 +390,15 @@
           const w = defaultWindow(doc); S.update('teeBlocks', blk.id, { date: doc.date, start: w.start, end: w.end, reason: doc.organization + ' shotgun' });
           patch.blockStart = w.start; patch.blockEnd = w.end; extraNote = 'Tee sheet block moved to ' + fmt.dateShort(doc.date) + ', ' + fmt.time(w.start) + ' until ' + endLabel(w.end);
         } else if (blk && doc.organization !== existing.organization) S.update('teeBlocks', blk.id, { reason: doc.organization + ' shotgun' });
+        if (limitNote) extraNote = extraNote ? extraNote + '. ' + limitNote : limitNote;
         if (extraNote) patch.history = (existing.history || []).concat([{ at: stamp(), stage: existing.stage, note: extraNote }]);
         S.update('outings', existing.id, patch); id = existing.id;
         return extraNote;
       }, undoOpts(function (extraNote) { return extraNote ? 'Outing saved. ' + extraNote : 'Outing saved'; }, 'Outing details put back as they were'));
       else {
         const n = undoRun(function () {
-          return S.insert('outings', Object.assign(doc, { stage: 'Enquiry', quote: null, deposits: [], teeBlockId: null, roster: [], buffet: null, bar: '', history: [{ at: stamp(), stage: 'Enquiry', note: 'Enquiry taken by the golf shop' }] }));
-        }, undoOpts('Enquiry saved for ' + d.organization, 'Enquiry removed', function () { if (location.hash.indexOf('#/outings/') === 0) Club.app.go('outings'); else rerenderAfterUndo(); }));
+          return S.insert('outings', Object.assign(doc, { stage: 'Enquiry', quote: null, deposits: [], teeBlockId: null, roster: [], buffet: null, bar: '', history: [{ at: stamp(), stage: 'Enquiry', note: 'Enquiry taken by the golf shop' + (limitNote ? '. ' + limitNote : '') }] }));
+        }, undoOpts('Enquiry saved for ' + d.organization + (limitNote ? ' over the weekly tournament limit' : ''), 'Enquiry removed', function () { if (location.hash.indexOf('#/outings/') === 0) Club.app.go('outings'); else rerenderAfterUndo(); }));
         id = n.id;
       }
       if (done) done(id);

@@ -1,4 +1,4 @@
-/* Public site: Become a member. The new-member offer, the four membership categories and an online application.
+/* Public site: Become a member. The new-member offer, the membership categories and an online application.
    Categories and dues come from `membershipTiers`; whether a category is full comes from Club.membership
    (js/modules/members.js), which staff set on the Applications page. An application is written to the staff
    `applications` collection in the office's shape plus source 'Online': stage 'Received' for an open category,
@@ -9,12 +9,22 @@
   const S = Club.store, ui = Club.ui, esc = ui.esc, fmt = Club.fmt;
   function M() { return Club.membership; }
 
-  /* What each category includes, as the club publishes it (stbonifacegolfclub.com, Golf > Membership). */
+  /* What each category includes: play allowances from the club's 2025 Membership Handbook; storage and lockers as the
+     club publishes them (stbonifacegolfclub.com, Golf > Membership). Order here is the order on the page. */
+  const LOCKER = 'Club storage and a private locker';
+  const EAGLE = ['No tee time restrictions', 'Book tee times 15 days in advance', LOCKER];
+  const BIRDIE = ['Weekdays before 7:30 AM, 10:30 AM to 4 PM and after 5:30 PM', 'Weekends and holidays after 10:30 AM', 'Book tee times 13 days in advance', LOCKER];
+  const SOCIAL = ['Member at the Opening Mixer in April and the Closing Social in October', '10% member discount in the Gallery and Pro Shop', 'Keeps your membership status'];
   const FACTS = {
-    tier_founders: ['Unlimited golf, 7 days a week', 'Book tee times 15 days in advance', '10% senior discount, ages 60 and over', '25% intermediate discount, ages 24 to 39', 'Club storage and a private locker'],
-    tier_full: ['Weekdays before 7:30 AM, 10:30 AM to 4 PM and after 5:30 PM', 'Weekends after 10:30 AM', 'Book tee times 13 days in advance', '25% intermediate discount, ages 24 to 39', 'Club storage and a private locker'],
-    tier_junior: ['Weekdays 10:30 AM to 4 PM and after 5:30 PM', 'Weekends after 11 AM', 'Book tee times 8 days in advance', 'Club storage and a private locker'],
-    tier_nonresident: ['Weekdays 10:30 AM to 4 PM and after 5:30 PM', 'Weekends after 11 AM', 'Book tee times 8 days in advance']
+    tier_founders: EAGLE,
+    tier_eagle60: EAGLE,
+    tier_eagleint: EAGLE,
+    tier_full: BIRDIE,
+    tier_birdieint: BIRDIE,
+    tier_junior: ['Weekdays 10:30 AM to 4 PM and after 5:30 PM', 'Weekends and holidays after 10:30 AM', 'Book tee times 8 days in advance', LOCKER],
+    tier_nonresident: ['Must meet MGA requirements', 'Weekdays 10:30 AM to 4 PM and after 5:30 PM', 'Weekends and holidays after 11 AM', 'Book tee times 8 days in advance'],
+    tier_social: ['5 golf vouchers included'].concat(SOCIAL),
+    tier_clubhouse: SOCIAL.concat(['No golf'])
   };
   /* "How did you hear about us?" answers: Club.membership.HEARD_FROM (js/modules/members.js), stored in English as `heardFrom`. */
   function heardList() { return M().HEARD_FROM; }
@@ -34,7 +44,12 @@
   function includes(t) { return FACTS[t.id] || (t.description ? [t.description] : []); }
   function ageLabel(t) { const r = M().AGE_RULES[t.id]; return r ? r.label : ''; }
   function isFull(t) { return M().isFull(t); }
-  function dues(t) { return '<span class="label-caps">Annual dues</span><span class="join-dues-amt serif">' + esc(fmt.money(t.annualDues, false)) + '</span><span class="join-dues-per">a year</span>'; }
+  /* The handbook's newer categories have no price yet (annualDues null): say so instead of showing $0. */
+  function priced(t) { return t.annualDues != null && t.annualDues !== ''; }
+  function dues(t) {
+    if (!priced(t)) return '<span class="label-caps">Annual dues</span><span class="join-dues-tbd">Price to be set by the club</span>';
+    return '<span class="label-caps">Annual dues</span><span class="join-dues-amt serif">' + esc(fmt.money(t.annualDues, false)) + '</span><span class="join-dues-per">a year</span>';
+  }
   function officeLink() { return '<a href="' + Pub.phoneHref() + '">' + esc(Club.info.phone) + '</a>'; }
   function nameOk(v) { return /^[\p{L}][\p{L}' .-]{0,39}$/u.test(String(v || '').trim()); }
   function phoneOk(v) { let d = String(v || '').replace(/\D/g, ''); if (d.length === 11 && d[0] === '1') d = d.slice(1); return d.length === 10 && /^[2-9]/.test(d) && /^[2-9]/.test(d.slice(3)); }
@@ -99,7 +114,7 @@
       const full = isFull(t), age = ageLabel(t);
       return '<label class="join-opt' + (full ? ' is-full' : '') + '"><input type="radio" name="tierId" value="' + esc(t.id) + '"' + (t.id === sel ? ' checked' : '') + '>' +
         '<span class="join-opt-name">' + esc(t.name) + '</span>' +
-        '<span class="join-opt-s">' + (full ? 'Full, waiting list' : esc(fmt.money(t.annualDues, false)) + ' a year') + '</span>' +
+        '<span class="join-opt-s">' + (full ? 'Full, waiting list' : priced(t) ? esc(fmt.money(t.annualDues, false)) + ' a year' : 'Price to be set by the club') + '</span>' +
         (age ? '<span class="join-opt-age">' + esc(age) + '</span>' : '') + '</label>';
     }).join('');
   }
@@ -172,7 +187,7 @@
       const full = isFull(t), age = ageLabel(t);
       note.innerHTML = full
         ? '<p class="join-note is-full">' + Club.icon('clock') + '<span><strong>' + esc(t.name) + ' is full.</strong> Your application joins the waiting list and the club office will contact you when a place opens.' + (age ? ' ' + esc(age) + '.' : '') + '</span></p>'
-        : '<p class="join-note">' + Club.icon('info') + '<span><strong>' + esc(t.name) + '</strong>, ' + esc(fmt.money(t.annualDues, false)) + ' a year as listed.' + (age ? ' ' + esc(age) + '.' : '') + ' The club office confirms your dues.</span></p>';
+        : '<p class="join-note">' + Club.icon('info') + '<span><strong>' + esc(t.name) + '</strong>, ' + (priced(t) ? esc(fmt.money(t.annualDues, false)) + ' a year as listed.' : 'price to be set by the club.') + (age ? ' ' + esc(age) + '.' : '') + ' The club office confirms your dues.</span></p>';
       btn.textContent = full ? 'Join the waiting list' : 'Send my application';
       if (history.replaceState) history.replaceState(null, '', '#/join/apply/' + slug(t));
     }
@@ -246,7 +261,7 @@
         else if (age > 110) { dobErr('dobYear', 'Please check the year.'); dob = null; }
         else if (t && M().ageProblem(t.id, age)) {
           const r = M().AGE_RULES[t.id];
-          dobErr('', t.name + ' membership is for ' + (r.min != null ? 'ages ' + r.min + ' to ' + r.max : 'golfers under ' + (r.max + 1)) + '. You are ' + age + ', so please choose another category.');
+          dobErr('', t.name + ' membership is for ' + (r.min != null && r.max != null ? 'ages ' + r.min + ' to ' + r.max : r.min != null ? 'ages ' + r.min + ' and over' : 'golfers under ' + (r.max + 1)) + '. You are ' + age + ', so please choose another category.');
           dob = null;
         }
       }

@@ -447,7 +447,7 @@
       '<div><span class="label-caps">Balance due</span><span class="stat-value">' + esc(fmt.money(m.balance || 0)) + '</span></div>' +
       '<div><span class="label-caps">Charges this month</span><span class="stat-value">' + esc(fmt.money(monthCharges)) + '</span></div>' +
       '<div><span class="label-caps">Paid this year</span><span class="stat-value">' + esc(fmt.money(ytdPaid)) + '</span></div>' +
-      '<div><span class="label-caps">Monthly dues</span><span class="stat-value">' + esc(fmt.money(t ? t.annualDues / 12 : 0)) + '</span></div></div>' +
+      '<div><span class="label-caps">Monthly dues</span><span class="stat-value">' + (t && t.annualDues == null ? 'Not set' : esc(fmt.money(t ? t.annualDues / 12 : 0))) + '</span></div></div>' +
       '<div class="row wrap mem-acct-actions">' + ui.btn('Open account statement', { kind: 'primary', icon: 'billing', action: 'open-billing' }) + ui.btn('Post charge', { icon: 'plus', action: 'charge' }) + '</div>' +
       '<div class="grid grid-main-side">' +
       '<section class="panel" data-reveal><div class="panel-head"><h3>Recent charges</h3><a href="#/billing/' + esc(m.id) + '">Full ledger</a></div><div class="panel-body flush">' +
@@ -472,7 +472,7 @@
       ui.field({ label: 'First name', name: 'firstName', value: d.firstName, required: true }) +
       ui.field({ label: 'Last name', name: 'lastName', value: d.lastName, required: true }) +
       ui.field({ label: 'Member number', name: 'memberNo', value: d.memberNo, required: true, hint: 'Three to six digits, unique to this member' }) +
-      ui.field({ label: 'Tier', name: 'tierId', type: 'select', required: true, options: ui.options(S.all('membershipTiers').map(function (t) { return { value: t.id, label: t.name + ' · ' + fmt.money(t.annualDues, false) + ' a year' }; }), d.tierId) }) +
+      ui.field({ label: 'Tier', name: 'tierId', type: 'select', required: true, options: ui.options(S.all('membershipTiers').map(function (t) { return { value: t.id, label: t.name + ' · ' + (t.annualDues == null ? 'price not set' : fmt.money(t.annualDues, false) + ' a year') }; }), d.tierId) }) +
       ui.field({ label: 'Status', name: 'status', type: 'select', options: ui.options(STATUSES, d.status) }) +
       ui.field({ label: 'Member since', name: 'memberSince', type: 'date', value: d.memberSince, required: true }) +
       ui.field({ label: 'Date of birth', name: 'dob', type: 'date', value: d.dob }) +

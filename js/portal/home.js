@@ -2,7 +2,7 @@
    account snapshot, handicap, club notices and the next club event. */
 (function () {
   const S = Club.store, ui = Club.ui, esc = ui.esc, fmt = Club.fmt;
-  const PACE = { 18: 255, 9: 135 };
+  const PACE = (Club.teeRules && Club.teeRules.PACE) || { 18: 234, 9: 117 };   /* handbook: 13 minutes a hole */
 
   function toMin(t) { const p = String(t || '0:0').split(':'); return (+p[0]) * 60 + (+p[1] || 0); }
   function nowMin() { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); }

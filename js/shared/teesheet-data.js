@@ -13,7 +13,7 @@
   if (S.getObj('teeSheetSettings') === undefined) S.setObj('teeSheetSettings', Object.assign({}, DEFAULTS));
   function settings() { return Object.assign({}, DEFAULTS, S.getObj('teeSheetSettings', {}) || {}); }
 
-  const PACE_TARGET = { 18: 255, 9: 135 };
+  const PACE_TARGET = (Club.teeRules && Club.teeRules.PACE) || { 18: 234, 9: 117 };   /* handbook: 13 minutes a hole */
   Club.teeSheet = Object.assign(Club.teeSheet || {}, { PACE_TARGET: PACE_TARGET });
 
   function toMin(t) { const p = String(t || '0:0').split(':'); return (+p[0]) * 60 + (+p[1] || 0); }

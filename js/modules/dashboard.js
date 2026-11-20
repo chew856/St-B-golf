@@ -440,7 +440,7 @@
   }
 
   /* ---------------- Drill-down drawers (stat tiles) ---------------- */
-  const PACE = { 18: 255, 9: 135 };
+  const PACE = (Club.teeRules && Club.teeRules.PACE) || { 18: 234, 9: 117 };   /* handbook: 13 minutes a hole */
   function toHM(m) { m = Math.max(0, Math.round(m)); return pad(Math.floor(m / 60) % 24) + ':' + pad(m % 60); }
   function dur(m) { m = Math.round(m); return Math.floor(m / 60) + 'h ' + pad(m % 60) + 'm'; }
   /** Time for a table cell, kept on one line. */
@@ -611,7 +611,7 @@
             ? '<button type="button" class="dd-hole has' + (h === 10 ? ' turn' : '') + '" data-hole="' + h + '" aria-expanded="false" aria-label="' + esc('Hole ' + h + ', ' + n + ' ' + plural(n, 'group') + '. Show who') + '" data-tip="' + esc('Hole ' + h + ': ' + n + ' ' + plural(n, 'group')) + '">' + inner + '</button>'
             : '<div class="dd-hole' + (h === 10 ? ' turn' : '') + '">' + inner + '</div>';
         }).join('') + '</div><div class="dd-holes-legend"><span>Front nine</span><span>Back nine</span></div>' + details);
-      html += dSec('Groups out', esc('Pace target 4h 15m for 18 holes, 2h 15m for 9'), dTable(
+      html += dSec('Groups out', esc('Pace target ' + dur(PACE[18]) + ' for 18 holes, ' + dur(PACE[9]) + ' for 9 (13 minutes a hole)'), dTable(
         [{ label: 'Group' }, { label: 'Off', num: true }, { label: 'Hole', num: true }, { label: 'Finish', num: true }, { label: 'Pace' }],
         rows.map(function (r) {
           return ['<span class="primary-cell">' + esc(lead(r.t)) + '</span><div class="dd-sub">' + esc(F.time(r.t.time) + ' tee time · ' + r.holes + ' holes') + '</div><div class="dd-prog bar' + (r.status.kind === 'bad' ? ' brass' : '') + '"><span style="width:' + Math.min(100, r.el / r.len * 100).toFixed(1) + '%"></span></div>',
@@ -620,7 +620,7 @@
     }
     const pace = avg ? Math.min(100, avg / 300 * 100) : 0;
     html += dSec('Pace of play', esc(done.length + ' 18-hole ' + plural(done.length, 'round') + ' finished ' + paceWhen),
-      done.length ? '<div class="dd-pace"><div class="dd-pace-track"><span style="width:' + pace.toFixed(1) + '%"></span><i style="left:' + (PACE[18] / 300 * 100) + '%" data-tip="Target 4h 15m"></i></div><div class="dd-pace-scale"><span>0h</span><span>Target 4h 15m</span><span>5h</span></div></div>' +
+      done.length ? '<div class="dd-pace"><div class="dd-pace-track"><span style="width:' + pace.toFixed(1) + '%"></span><i style="left:' + (PACE[18] / 300 * 100) + '%" data-tip="Target ' + dur(PACE[18]) + '"></i></div><div class="dd-pace-scale"><span>0h</span><span>Target ' + dur(PACE[18]) + '</span><span>5h</span></div></div>' +
         dNote('Average ' + dur(avg) + ', fastest ' + dur(Math.min.apply(null, done.map(function (t) { return toMin(t.finishedAt) - toMin(t.startedAt); }))) + ', slowest ' + dur(Math.max.apply(null, done.map(function (t) { return toMin(t.finishedAt) - toMin(t.startedAt); }))) + '.')
         : dNote('Pace will be measured once the first 18-hole groups come in.'));
     const next = teeFor(today).filter(function (t) { return (t.status === 'booked' || t.status === 'checked-in') && toMin(t.time) >= now - 10; }).sort(byTime).slice(0, 4);

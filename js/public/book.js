@@ -32,6 +32,25 @@
       '</div>' +
     '</section>';
   }
+  /* Handbook: the dress code and hours from the club's 2025 Membership Handbook (Club.handbook,
+     js/shared/handbook-data.js), each behind a "Read the dress code" / "See all hours" expander. The dress code is the
+     handbook section as the club keeps it (French while it is unedited); the hours are the handbook's. */
+  function handbookItems() {
+    const H = Club.handbook;
+    if (!H) return '<li>' + Club.icon('user') + '<span><strong>Dress code.</strong> Our dress code must be adhered to by members and guests.</span></li>';
+    const sec = H.get('dress-code'), v = sec ? H.view(sec) : null, skip = H.french() ? ' data-i18n-skip' : '';
+    const src = '<p class="pub-hb-src">From the club’s 2025 Membership Handbook.</p>';
+    const more = function (id, label) { return ' <button type="button" class="pub-hb-more" aria-expanded="false" aria-controls="' + id + '"><span>' + label + '</span>' + Club.icon('chevronDown') + '</button>'; };
+    const hours = '<ul class="pub-hb-hours">' + H.hours.map(function (h) {
+      return '<li><h4>' + esc(h.venue) + '</h4>' + h.rows.map(function (r) { return '<p><span>' + esc(r.days) + '</span> · <span>' + esc(H.range(r)) + '</span></p>'; }).join('') +
+        (h.note ? '<p class="pub-hb-note">' + esc(h.note) + '</p>' : '') + '</li>';
+    }).join('') + '</ul>';
+    return (v ? '<li class="pub-hb-item">' + Club.icon('user') + '<span><strong>Dress code.</strong> Appropriate golf attire is required for all players.' + more('pub-hb-dress', 'Read the dress code') + '</span>' +
+        '<div class="pub-hb-panel" id="pub-hb-dress" hidden><div class="hb-text"' + skip + ' lang="' + v.lang + '">' + H.html(v.body) + '</div>' + src + '</div></li>'
+      : '<li>' + Club.icon('user') + '<span><strong>Dress code.</strong> Our dress code must be adhered to by members and guests.</span></li>') +
+      '<li class="pub-hb-item">' + Club.icon('clock') + '<span><strong>Hours.</strong> The Pro Shop is open Monday to Sunday from 6:00 AM, as dictated by business and hours of daylight.' + more('pub-hb-hours', 'See all hours') + '</span>' +
+        '<div class="pub-hb-panel" id="pub-hb-hours" hidden>' + hours + src + '</div></li>';
+  }
   function goodToKnowHTML() {
     const holes = S.all('holes'); const h17 = holes.find(function (h) { return +h.number === 17; });
     return '<section class="pub-know" data-reveal>' +
@@ -43,7 +62,7 @@
       '<article class="panel pub-remind"><div class="panel-body">' +
         '<div class="eyebrow">Before you play</div><h2>Good to know</h2>' +
         '<ul class="pub-remind-list">' +
-          '<li>' + Club.icon('user') + '<span><strong>Dress code.</strong> Our dress code must be adhered to by members and guests.</span></li>' +
+          handbookItems() +
           '<li>' + Club.icon('leaf') + '<span><strong>Soft spikes only,</strong> on the course and in the clubhouse.</span></li>' +
           '<li>' + Club.icon('clock') + '<span><strong>Check in at the golf shop</strong> fifteen minutes before your tee time.</span></li>' +
           '<li>' + Club.icon('calendar') + '<span><strong>Change of plans?</strong> Cancel online up to ' + Pub.REFUND_HOURS + ' hours before your tee time for a full refund. After that, please call the golf shop at <a href="' + Pub.phoneHref() + '">' + esc(Club.info.phone) + '</a>.</span></li>' +
@@ -82,6 +101,14 @@
       let ck = null, flow = null;                    /* the shared pay panel (Club.checkout.mount) and its Payment / Review steps */
       let payQ = null;                               /* the fees the payment step was drawn with (the promo box prices these lines) */
 
+      /* Handbook expanders in Good to know */
+      ui.on(view, 'click', '.pub-hb-more', function (e, b) {
+        const panel = document.getElementById(b.getAttribute('aria-controls')); if (!panel) return;
+        const open = b.getAttribute('aria-expanded') !== 'true', dress = panel.id === 'pub-hb-dress';
+        panel.hidden = !open; b.setAttribute('aria-expanded', String(open));
+        ui.$('span', b).textContent = dress ? (open ? 'Hide the dress code' : 'Read the dress code') : (open ? 'Hide the hours' : 'See all hours');
+        if (Club.i18n) Club.i18n.translate(b);
+      });
       ui.on(view, 'click', '[data-act=jump]', function (e) { e.preventDefault(); const b = ui.$('#book', view); if (b) b.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
 
       function stepsHTML() {

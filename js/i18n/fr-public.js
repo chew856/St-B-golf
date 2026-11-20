@@ -608,8 +608,8 @@
     [/^, (.+) a year as listed\.(?: (.+?)\.)? The club office confirms your dues\.$/, function (m, d, a) { return ', ' + d + ' par année selon la liste.' + (a ? ' ' + T(a) + '.' : '') + ' Le bureau du club confirme votre cotisation.'; }],
     [/^The club already has an application from this email address\. To change it, please call the office at (.+)\.$/, 'Le club a déjà reçu une demande de cette adresse courriel. Pour la modifier, veuillez appeler le bureau au $1.'],
     [new RegExp('^(' + MONTHS.join('|') + ') does not have (\\d+) days\\.$'), function (m, mo, d) { var f = MOIS[MONTHS.indexOf(mo)]; return 'Le mois ' + (/^[aeiou]/.test(f) ? 'd’' : 'de ') + f + ' n’a pas ' + d + ' jours.'; }],
-    [/^(.+) membership is for (?:ages (\d+) to (\d+)|golfers under (\d+))\. You are (\d+), so please choose another category\.$/, function (m, t, a, b, u, age) {
-      return 'La catégorie ' + t + ' s’adresse ' + (a ? 'aux ' + a + ' à ' + b + ' ans' : 'aux golfeurs de moins de ' + u + ' ans') + '. Vous avez ' + age + ' ans : veuillez choisir une autre catégorie.';
+    [/^(.+) membership is for (?:ages (\d+) to (\d+)|ages (\d+) and over|golfers under (\d+))\. You are (\d+), so please choose another category\.$/, function (m, t, a, b, o, u, age) {
+      return 'La catégorie ' + t + ' s’adresse ' + (a ? 'aux ' + a + ' à ' + b + ' ans' : o ? 'aux ' + o + ' ans et plus' : 'aux golfeurs de moins de ' + u + ' ans') + '. Vous avez ' + age + ' ans : veuillez choisir une autre catégorie.';
     }],
     [/^Thank you, (.+)$/, 'Merci, $1'],
     [/^Your application for (.+) membership is on the waiting list\.$/, 'Votre demande d’adhésion à la catégorie $1 est sur la liste d’attente.'],
@@ -652,6 +652,30 @@
     [/^You have left the waitlist for (.+)$/, 'Vous avez quitté la liste d’attente pour le $1']
   ]);
 
+
+  /* ---------- Booking rules (Nov 20): the club's 2025 Membership Handbook. Fridays are for members (Club.teeRules
+     publicSlot reasons), and the membership categories added from the handbook on Become a member (join.js). ---------- */
+  Object.assign(S, {
+    'Fridays are for members all day. Public golfers can play on a Friday only as a member’s guest.': 'Le vendredi est réservé aux membres toute la journée. Les golfeurs publics ne peuvent jouer le vendredi qu’à titre d’invités d’un membre.',
+    'Public tee times are Monday to Thursday 10:30 AM to 3:30 PM and after 5:30 PM, and weekends and holidays after 1:00 PM. Fridays are for members.': 'Les heures de départ publiques sont du lundi au jeudi de 10 h 30 à 15 h 30 et après 17 h 30, et les fins de semaine et jours fériés après 13 h. Le vendredi est réservé aux membres.',
+    'Friday': 'Vendredi',
+    'No tee time restrictions': 'Aucune restriction d’heure de départ',
+    'Weekends and holidays after 10:30 AM': 'Fins de semaine et jours fériés après 10 h 30',
+    'Weekends and holidays after 11 AM': 'Fins de semaine et jours fériés après 11 h',
+    'Must meet MGA requirements': 'Doit satisfaire aux exigences de la MGA',
+    '5 golf vouchers included': '5 bons de golf inclus',
+    'Member at the Opening Mixer in April and the Closing Social in October': 'Participation à titre de membre à la soirée d’ouverture en avril et à la soirée de clôture en octobre',
+    '10% member discount in the Gallery and Pro Shop': 'Rabais de membre de 10 % au Gallery et à la boutique du pro',
+    'Keeps your membership status': 'Conserve votre statut de membre',
+    'No golf': 'Golf non inclus',
+    'Price to be set by the club': 'Prix à confirmer par le club',
+    'Ages 60 and over, ID required': '60 ans et plus, pièce d’identité requise',
+    'Ages 19 to 39, ID required': '19 à 39 ans, pièce d’identité requise',
+    '18 and under by August 31': '18 ans ou moins au 31 août'
+  });
+  P = P.concat([
+    [/^, price to be set by the club\.(?: (.+?)\.)? The club office confirms your dues\.$/, function (m, a) { return ', prix à confirmer par le club.' + (a ? ' ' + T(a) + '.' : '') + ' Le bureau du club confirme votre cotisation.'; }]
+  ]);
 
   /* Last: text joined with " · " (payment lines, receipt rows, cart banners) when every part translates on its own or
      is neutral (money, times, codes, French dates). Anything else is left for later dictionaries. */

@@ -1,0 +1,37 @@
+/* ==========================================================================
+   Handbook text (Club.handbook.html output) on all three pages, and the public site's "Good to know" expanders
+   (dress code and hours). Tokens only.
+   ========================================================================== */
+.hb-text { font-size: 0.9375rem; line-height: 1.6; color: var(--text); overflow-wrap: anywhere; }
+.hb-text > :first-child { margin-top: 0; }
+.hb-text > :last-child { margin-bottom: 0; }
+.hb-text p { margin: 0 0 0.75rem; }
+.hb-text h4 { margin: 1rem 0 0.375rem; font-family: var(--sans, var(--font-body)); font-size: 0.9375rem; font-weight: 600; color: var(--text); }
+.hb-text ul, .hb-text ol { margin: 0 0 0.75rem; padding-left: 1.375rem; }
+.hb-text li { margin: 0.25rem 0; padding-left: 0.125rem; }
+.hb-text li::marker { color: var(--forest-500); }
+.hb-text ol li::marker { font-variant-numeric: tabular-nums; font-weight: 600; }
+.hb-text strong { font-weight: 600; }
+.hb-text a { color: var(--forest-800); text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 3px; }
+@media (hover: hover) { .hb-text a:hover { text-decoration-color: var(--forest-800); } }
+
+/* ---------------- Public site: Good to know ---------------- */
+body.public .pub-hb-more { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; margin: -12px 0; padding: 0 2px; border: 0; background: none; font: inherit; font-weight: 600; color: var(--forest-800); text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 3px; cursor: pointer; vertical-align: baseline; }
+@media (hover: hover) { body.public .pub-hb-more:hover { text-decoration-color: var(--forest-800); } }
+body.public .pub-hb-more .icon { width: 16px; height: 16px; transition: transform var(--t-ui, 180ms) var(--ease-ui, ease); }
+body.public .pub-hb-more[aria-expanded="true"] .icon { transform: rotate(180deg); }
+body.public .pub-hb-panel { margin: 0.5rem 0 0.25rem; padding: 0.875rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-ctl, 10px); background: var(--sage-50); }
+body.public .pub-hb-panel[hidden] { display: none; }
+body.public .pub-hb-panel .hb-text { font-size: 0.875rem; }
+body.public .pub-hb-hours { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.75rem; }
+/* the panel sits inside .pub-remind-list li: undo that row style for the lists inside it */
+body.public .pub-remind-list .pub-hb-panel li { display: list-item; border: 0; padding: 0 0 0 0.125rem; margin: 0.25rem 0; gap: 0; font-size: inherit; color: var(--text); }
+body.public .pub-remind-list .pub-hb-hours li { display: block; padding: 0; margin: 0; }
+body.public .pub-hb-hours h4 { margin: 0 0 0.125rem; font-size: 0.875rem; font-weight: 600; color: var(--text); }
+body.public .pub-hb-hours p { margin: 0; font-size: 0.875rem; color: var(--text); font-variant-numeric: tabular-nums; }
+body.public .pub-hb-hours .pub-hb-note { margin-top: 0.25rem; font-size: 0.8125rem; line-height: 1.45; color: var(--text-2); }
+body.public .pub-hb-src { margin: 0.75rem 0 0; font-size: 0.8125rem; color: var(--text-2); }
+body.public .pub-hb-src a { color: var(--forest-800); }
+body.public .pub-remind-list li.pub-hb-item { flex-wrap: wrap; }
+body.public .pub-remind-list li.pub-hb-item > .pub-hb-panel { flex: 1 0 100%; margin-left: calc(18px + var(--s3)); max-width: calc(100% - 18px - var(--s3)); }
+@media (max-width: 560px) { body.public .pub-remind-list li.pub-hb-item > .pub-hb-panel { margin-left: 0; max-width: 100%; } }

@@ -19,7 +19,7 @@
   const COLL = 'teeWaitlist';
   const HOLD_MIN = 30;
   const DEFAULTS = { interval: 9, first: '06:30', last: '19:00' };
-  const PACE = { 18: 255, 9: 135 };
+  const PACE = (Club.teeRules && Club.teeRules.PACE) || { 18: 234, 9: 117 };   /* handbook: 13 minutes a hole */
   /* The same parts of the day as the portal's Tee times page. */
   const WINDOWS = [
     { id: 'any', label: 'Any time', sub: 'Any time that day', from: 0, to: 1440 },
@@ -69,7 +69,7 @@
     return S.all('teeTimes').some(function (x) {
       /* The round that starts first sets the window (the waitlisted round's length is e.holes, 18 when not set). */
       const a = toMin(x.time), b = toMin(time);
-      return x.date === date && x.status !== 'cancelled' && x.status !== 'no-show' && (a <= b ? b - a < (PACE[x.holes] || 255) : a - b < (PACE[e.holes] || 255)) && inGroup(x, e);
+      return x.date === date && x.status !== 'cancelled' && x.status !== 'no-show' && (a <= b ? b - a < (PACE[x.holes] || PACE[18]) : a - b < (PACE[e.holes] || PACE[18])) && inGroup(x, e);
     });
   }
   /** Could this golfer book this time under the booking rules (ignoring how full it is)? */

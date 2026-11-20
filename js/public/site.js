@@ -7,7 +7,7 @@
   const EN = Club.fmtEn;   /* English formatting for stored text (js/i18n/fr-shared.js) */
   const SESSION = 'stboniface.public.session';
   const DEFAULTS = { interval: 9, first: '06:30', last: '19:00', guestFee: 66, cartFee: 28 };
-  const PACE = { 18: 255, 9: 135 };
+  const PACE = (Club.teeRules && Club.teeRules.PACE) || { 18: 234, 9: 117 };   /* handbook: 13 minutes a hole */
   const REFUND_HOURS = 24;
   const pages = [];
   let cleanup = null, currentId = null;
@@ -104,7 +104,7 @@
     if (!pid) return null;
     return S.all('teeTimes').filter(function (x) {
       return x.date === date && x.status !== 'cancelled' && x.status !== 'no-show' && x.id !== excludeId &&
-        Math.abs(toMin(x.time) - toMin(time)) < (PACE[x.holes] || 255) && hasMine(x, pid);
+        Math.abs(toMin(x.time) - toMin(time)) < (PACE[x.holes] || PACE[18]) && hasMine(x, pid);
     })[0] || null;
   }
   /** Fresh tee times from storage, so a slot taken in another tab is caught before payment. */
@@ -211,7 +211,7 @@
   function icsEscape(s) { return String(s || '').replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/([,;])/g, '\\$1'); }
   function downloadIcs(tt, names) {
     const start = fmt.toDate(tt.date); start.setHours(0, toMin(tt.time), 0, 0);
-    const end = new Date(start.getTime() + (PACE[tt.holes] || 255) * 60000);
+    const end = new Date(start.getTime() + (PACE[tt.holes] || PACE[18]) * 60000);
     const local = function (d) { return d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') + 'T' + String(d.getHours()).padStart(2, '0') + String(d.getMinutes()).padStart(2, '0') + '00'; };
     const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
     const body = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//' + Club.info.short + '//Public tee times//EN', 'CALSCALE:GREGORIAN', 'BEGIN:VEVENT',

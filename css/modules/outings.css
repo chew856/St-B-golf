@@ -6,6 +6,10 @@
 .ot-err { background: var(--oxblood-tint); }
 .ot-err svg { color: var(--danger); }
 .ot-rules { margin-top: var(--s2); }
+/* Over the weekly tournament limit (Membership Handbook): an override with a reason */
+.ot-limit { display: flex; flex-direction: column; gap: var(--s2); margin-top: var(--s2); padding: var(--s3); background: var(--ochre-tint); border-radius: var(--radius-ctl); }
+.ot-limit[hidden] { display: none; }
+.ot-limit .input { width: 100%; background: var(--surface); }
 .ot-impact { margin-top: var(--s2); }
 
 /* ---------- Add-on picker ---------- */

@@ -5,14 +5,18 @@
   const S = Club.store, ui = Club.ui, fmt = Club.fmt, esc = ui.esc;
   const READ = 'portalNewsRead';
 
-  /* Hours: only what the club publishes. Everything else points to the club office. */
-  const CALL = 'For hours, call the club office at ' + Club.info.phone + '.';
-  const HOURS = [
-    { venue: 'Gallery Taphouse & Grill', icon: 'dining', lines: [['Daily', 'Breakfast, lunch and dinner'], ['Breakfast', 'Served until 2pm']], note: 'Longer hours during the golf season.' },
-    { venue: 'Golf shop', icon: 'flag', lines: [['Tee times', 'Book online or call the golf shop']], note: CALL },
-    { venue: 'Practice and instruction', icon: 'ball', lines: [['Short game practice facility', 'Members'], ['SIM teaching technology', 'With our professionals']], note: CALL },
-    { venue: 'Club office', icon: 'billing', lines: [['Main line', Club.info.phone]], note: 'Membership, accounts and general questions.' }
-  ];
+  /* Hours: the club's 2025 Membership Handbook (Club.handbook.hours, js/shared/handbook-data.js), with the main line
+     under the office and the Gallery's breakfast hours as before. */
+  function hoursList() {
+    const H = Club.handbook;
+    if (!H) return [{ venue: 'Club office', icon: 'billing', lines: [['Main line', Club.info.phone]], note: 'For hours, call the club office at ' + Club.info.phone + '.' }];
+    return H.hours.map(function (h) {
+      const lines = h.rows.map(function (r) { return [r.days, H.range(r)]; });
+      if (h.id === 'office') lines.push(['Main line', Club.info.phone]);
+      if (h.id === 'gallery') lines.push(['Breakfast', 'Served until 2pm']);
+      return { venue: h.venue, icon: h.icon, lines: lines, note: h.note };
+    });
+  }
   /* Key contacts: the real people on the club's contact page. Emails are not published, so contact is by phone. */
   const CONTACTS = [
     { id: 'stf_2', note: 'Golf, the golf shop, lessons and tournaments' },
@@ -29,7 +33,7 @@
     'Gallery Taphouse member pricing', 'Reduced meeting room rates'
   ];
   const ETIQUETTE = [
-    { title: 'Dress code', text: 'For members and guests: golf attire on the course, golf casual in the clubhouse. Not sure? Ask the golf shop.' },
+    { title: 'Dress code', text: 'Appropriate golf attire is required for all players. It is expected that members will advise their guests of our dress requirements.', link: ['#/handbook/dress-code', 'Read the full dress code'] },
     { title: 'Soft spikes only', text: 'Soft spikes only, on the course and in the clubhouse.' },
     { title: 'On the course', text: 'Repair pitch marks, rake bunkers, replace divots and keep up with the group ahead.' },
     { title: 'Guests', text: 'Members can bring guests, who pay the green fee. You are responsible for your guests’ conduct and dress. Check in at the golf shop when you arrive.' }
@@ -228,12 +232,13 @@
         callMain +
       '</section>' +
       '<div class="pc-accs">' +
-        Portal.accordion({ id: 'pc-hours', icon: 'clock', title: 'Hours', summary: 'Gallery daily · Golf shop · Club office',
-          body: '<ul class="pc-rows">' + HOURS.map(function (h) {
+        Portal.accordion({ id: 'pc-hours', icon: 'clock', title: 'Hours', summary: 'Office · Pro Shop · Gallery · Beer Cart',
+          body: '<ul class="pc-rows">' + hoursList().map(function (h) {
             return '<li>' + Club.icon(h.icon, 'pc-row-ic') + '<div class="pc-row-main"><h3>' + esc(h.venue) + '</h3>' + h.lines.map(function (l) {
-              const v = l[1] === Club.info.phone ? '<a href="' + esc(main.href) + '">' + esc(l[1]) + '</a>' : esc(l[1]);
-              return '<p class="pc-hour-line"><span>' + esc(l[0]) + '</span> · ' + v + '</p>'; }).join('') + '<p class="pc-hour-note">' + telLine(h.note) + '</p></div></li>';
-          }).join('') + '</ul>' }) +
+              const v = l[1] === Club.info.phone ? '<a href="' + esc(main.href) + '">' + esc(l[1]) + '</a>' : '<span>' + esc(l[1]) + '</span>';
+              return '<p class="pc-hour-line"><span>' + esc(l[0]) + '</span> · ' + v + '</p>'; }).join('') + (h.note ? '<p class="pc-hour-note">' + telLine(h.note) + '</p>' : '') + '</div></li>';
+          }).join('') + '</ul>' +
+          (Club.handbook ? '<p class="pc-hour-src">From the club’s 2025 Membership Handbook. <a class="p-link" href="#/handbook/hours">Read the handbook</a></p>' : '') }) +
         Portal.accordion({ id: 'pc-people', icon: 'phone', title: 'Who to contact', summary: people.length ? people.length + ' people, by phone' : 'Call the club office',
           body: people.length ? '<ul class="pc-rows pc-people">' + people.map(function (x) {
             const s = x.s; const ph = phoneOf(s.phone);
@@ -243,7 +248,7 @@
         Portal.accordion({ id: 'pc-benefits', icon: 'star', title: 'Membership benefits', summary: BENEFITS.length + ' included',
           body: '<ul class="pc-benefits">' + BENEFITS.map(function (b) { return '<li>' + Club.icon('check') + '<span>' + esc(b) + '</span></li>'; }).join('') + '</ul>' }) +
         Portal.accordion({ id: 'pc-et', icon: 'info', title: 'Dress code and etiquette', summary: 'Golf attire · soft spikes only',
-          body: '<ul class="pc-rows">' + ETIQUETTE.map(function (e) { return '<li><div class="pc-row-main"><h3>' + esc(e.title) + '</h3><p>' + esc(e.text) + '</p></div></li>'; }).join('') + '</ul>' }) +
+          body: '<ul class="pc-rows">' + ETIQUETTE.map(function (e) { return '<li><div class="pc-row-main"><h3>' + esc(e.title) + '</h3><p>' + esc(e.text) + '</p>' + (e.link && Club.handbook ? '<a class="p-link" href="' + e.link[0] + '">' + esc(e.link[1]) + '</a>' : '') + '</div></li>'; }).join('') + '</ul>' }) +
         (links.length ? Portal.accordion({ id: 'pc-links', icon: 'link', title: 'Website and social', summary: links.map(function (l) { return l.label; }).slice(0, 3).join(' · ') + (links.length > 3 ? ' and more' : ''),
           body: '<ul class="pc-rows pc-links">' + links.map(function (l) { return '<li><a href="' + esc(l.url) + '" target="_blank" rel="noopener">' + Club.icon('link') + '<span>' + esc(l.label) + '</span>' + Club.icon('chevronRight', 'pc-chev') + '</a></li>'; }).join('') + '</ul>' }) : '') +
       '</div>';

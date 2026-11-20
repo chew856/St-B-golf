@@ -6,7 +6,7 @@
 
   /* ---------------- Rules mirrored from the staff tee sheet ---------------- */
   const DEFAULTS = { interval: 9, first: '06:30', last: '19:00', guestFee: 66, cartFee: 28 };
-  const PACE = { 18: 255, 9: 135 };
+  const PACE = (Club.teeRules && Club.teeRules.PACE) || { 18: 234, 9: 117 };   /* handbook: 13 minutes a hole */
   const PREVIEW_DAYS = 3;      // days shown past the member's booking window, marked "Opens <date>"
   const CUTOFF_MIN = 120;      // changes and cancellations close 2 hours before the tee time
 
@@ -29,10 +29,55 @@
   function advanceDays(m) { return tierRules(m).advanceDays; }
   /** Last bookable day for this member (today plus their tier's advance days). */
   function lastDay(m) { return Club.date.fromToday(advanceDays(m)); }
-  function windowOpen(m, d) { return TR() ? TR().bookingOpen('member', m, d, today()) : { ok: d >= today() && d <= lastDay(m), reason: 'That date is outside your booking window.', opensOn: null }; }
+  function windowOpen(m, d) {
+    const bl = ballotLock(d); if (bl) return bl;   /* weekends and holidays: the ballot comes first (js/shared/ballot-data.js) */
+    return TR() ? TR().bookingOpen('member', m, d, today()) : { ok: d >= today() && d <= lastDay(m), reason: 'That date is outside your booking window.', opensOn: null };
+  }
   function canPlay(m, d, t) { return TR() ? TR().memberCanPlay(m, d, t) : { ok: true, reason: '' }; }
-  /** Days on the strip: the member's window plus a short preview of days that are not open yet. */
-  function stripDays(m) { const out = []; const n = advanceDays(m) + 1 + PREVIEW_DAYS; for (let i = 0; i < n; i++) out.push(Club.date.fromToday(i)); return out; }
+  /** Days on the strip: the member's window plus a short preview of days that are not open yet, and the ballot days up
+      to 15 days ahead (every category may enter the ballot, whatever its advance booking days). */
+  function stripDays(m) {
+    const out = []; const n = advanceDays(m) + 1 + PREVIEW_DAYS;
+    for (let i = 0; i < n; i++) out.push(Club.date.fromToday(i));
+    if (BL()) for (let i = n; i <= BL().OPEN_DAYS + PREVIEW_DAYS; i++) { const d = Club.date.fromToday(i); if (BL().isBallotDay(d)) out.push(d); }
+    return out;
+  }
+
+  /* ---- Weekend ballot (Club.ballot, js/shared/ballot-data.js): Saturdays, Sundays and holidays ---- */
+  function BL() { return Club.ballot || null; }
+  function drawWhen(d) { const s = BL().schedule(d); return fmt.toDate(s.drawOn).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }) + ' at ' + fmt.time(s.drawTime); }
+  /** Ordinary booking is closed on a ballot day until its draw: { ok: false, ballot: phase, reason, opensOn } or null. */
+  function ballotLock(d) {
+    if (!BL() || !BL().blocksBooking(d)) return null;
+    const s = BL().schedule(d), ph = BL().phase(d);
+    if (ph === 'before') return { ok: false, ballot: 'before', opensOn: s.opensOn, reason: 'Weekend and holiday tee times start with a ballot. Entries for ' + longDate(d) + ' open on ' + longDate(s.opensOn) + '.' };
+    if (ph === 'open') return { ok: false, ballot: 'open', opensOn: s.drawOn, reason: 'Tee times for ' + longDate(d) + ' are given out by ballot. Draw on ' + drawWhen(d) + '.' };
+    return { ok: false, ballot: 'due', opensOn: s.drawOn, reason: 'The ballot draw for ' + longDate(d) + ' is being made. Please check again in a moment.' };
+  }
+  /* ---- Member Guest Policy (Club.teeRules.guestLimit): one guest per member in prime time, else up to three ---- */
+  function guestLimitAt(d, t) {
+    if (!d || !t) return null;
+    if (TR() && typeof TR().guestLimit === 'function') return TR().guestLimit(d, t);
+    return BL() ? BL().guestLimit(d, t) : null;
+  }
+  function guestLimitText(lim, d) {
+    if (!lim) return '';
+    if (lim.max >= 3) return 'Up to three guests per member at this time.';
+    return 'One guest per member at this time. ' + (fmt.toDate(d).getDay() === 5 ? 'Fridays are prime time all day.' : 'Weekend and holiday mornings from 6:00 to 11:00 AM are prime time.');
+  }
+  /** Guests this member brings in a list of players (a guest with no host is the booker's). */
+  function guestsOf(players, mid, bookerId) { return (players || []).filter(function (p) { return p && p.type === 'guest' && (p.hostId || bookerId) === mid; }).length; }
+  /** '' or the reason the member's guests are over the limit at this date and time. */
+  function guestProblem(players, mid, d, t, bookerId) {
+    const lim = guestLimitAt(d, t); const n = guestsOf(players, mid, bookerId || mid);
+    return lim && n > lim.max ? 'Too many guests for ' + fmt.time(t) + '. ' + guestLimitText(lim, d) + ' Please remove ' + (n - lim.max === 1 ? 'a guest' : (n - lim.max) + ' guests') + '.' : '';
+  }
+  /* ---- Account standing (Club.billing.standing, when the billing module provides it) ---- */
+  function standingOf(mid) {
+    if (!Club.billing || typeof Club.billing.standing !== 'function') return { ok: true, reason: '' };
+    let s = null; try { s = Club.billing.standing(mid); } catch (e) { s = null; }
+    return s && s.canBook === false ? { ok: false, reason: s.reason || 'Online booking is paused on your account. Please call the golf shop.' } : { ok: true, reason: '' };
+  }
   function guestFee(d, t, holes) { return TR() ? TR().greenFee(d, t, holes) : settings().guestFee * (+holes === 9 ? 0.6 : 1); }
   function windowLine(m) {
     const r = tierRules(m);
@@ -387,6 +432,7 @@
           '</ul>' +
           (left <= 0 ? '<p class="tt-hint">' + esc(opts.fullNote || 'Your group is full (4 players).') + '</p>' : want && n < want && !(model.existing || []).length ? '<p class="tt-hint">' + plural(want - n, 'more player') + ' to add, or book just for yourself.</p>' : '') +
           (!opts.allowGuests && opts.guestNote && left > 0 ? '<p class="tt-hint">' + esc(opts.guestNote) + '</p>' : '') +
+          (function () { const lim = opts.allowGuests ? guestLimitAt(opts.date, opts.time) : null; return lim && lim.max < 3 ? '<p class="tt-hint tt-guest-lim">' + Club.icon('info') + '<span>' + esc(guestLimitText(lim, opts.date)) + '</span></p>' : ''; })() +
           (cr !== 'Normal' ? '<p class="tt-hint tt-rule">' + Club.icon('info') + '<span>' + esc(cartInfo(cr).label + '. ' + cartInfo(cr).text) + '</span></p>' : '') +
         '</div>' +
         (opts.showHoles ? '<div class="tt-holes-row"><span class="pk-label">Holes</span>' + ui.segmented([{ value: '18', label: '18 holes' }, { value: '9', label: '9 holes' }], String(model.holes), 'tt-holes-ed') + '</div>' : '') +
@@ -500,6 +546,10 @@
     });
     ui.on(root, 'click', '[data-act=remove]', function (e, b) { model.players.splice(+b.dataset.i, 1); render(); const a = ui.$('.tt-add-btn', root); if (a) a.focus(); });
     ui.on(root, 'click', '[data-act=add-guest]', function () {
+      /* Member Guest Policy: the guests this member already brings here, against the limit at this time */
+      const lim = guestLimitAt(opts.date, opts.time);
+      const have = guestsOf((model.existing || []).concat(model.players), me.id, opts.hostId ? opts.hostId() : me.id);
+      if (lim && have + 1 > lim.max) { ui.toast(guestLimitText(lim, opts.date), 'bad'); return; }
       pickGuest(me, function (g) {
         const p = { memberId: null, name: g.name, type: 'guest', cart: false, paid: false, hostId: me.id, pays: g.pays, phone: g.phone, email: g.email };
         if (g.handicap != null) p.handicap = g.handicap;
@@ -508,7 +558,7 @@
       });
     });
     ui.on(root, 'click', '[data-act=add-member]', function () {
-      pickMember(model, me, { date: opts.date, time: opts.time, excludeId: opts.excludeId }, function (m) {
+      pickMember(model, me, { date: opts.date, time: opts.time, excludeId: opts.excludeId, ballot: opts.ballot || null }, function (m) {
         model.players.push({ memberId: m.id, name: m.firstName + ' ' + m.lastName, type: 'member', cart: !noCarts(opts.date) && !!(m.preferences && m.preferences.cart === 'Cart'), paid: false });
         render();
       });
@@ -614,8 +664,13 @@
   }
 
   /** Why a member cannot be added at this date and time ('' when they can): play times, booking window, overlap. */
-  function blockReason(m, date, time, excludeId) {
+  function blockReason(m, date, time, excludeId, ballot) {
     if (!date || !time) return '';
+    if (ballot) {   /* a ballot entry: play times at the preferred time, and one ballot entry a day */
+      if (tierRules(m).golf) { const play = canPlay(m, date, time); if (!play.ok) return play.reason; }
+      const other = BL() ? BL().entryFor(m.id, date) : null;
+      return other && other.id !== ballot.entryId ? 'Already in a ballot entry that day.' : '';
+    }
     if (tierRules(m).golf) { // social members play by invitation, like a guest
       const play = canPlay(m, date, time); if (!play.ok) return play.reason;
       const win = windowOpen(m, date); if (!win.ok) return win.reason;
@@ -631,7 +686,7 @@
     const friends = {}; (Portal.friends ? Portal.friends.friendsOf(me.id) : []).forEach(function (id) { friends[id] = 1; });
     const pool = S.all('members').filter(function (m) { return m.id !== me.id && friends[m.id] && !taken[m.id] && (m.status === 'active' || m.status === 'leave'); })
       .sort(function (a, b) { return (a.lastName + a.firstName).localeCompare(b.lastName + b.firstName); })
-      .map(function (m) { return { m: m, why: blockReason(m, ctx.date, ctx.time, ctx.excludeId) }; })
+      .map(function (m) { return { m: m, why: blockReason(m, ctx.date, ctx.time, ctx.excludeId, ctx.ballot) }; })
       .sort(function (a, b) { return (a.why ? 1 : 0) - (b.why ? 1 : 0); });
     const sh = Portal.openSheet({ title: 'Add a friend', size: 'full',
       content: '<div class="tt-find"><div class="tt-find-search">' + Club.icon('search') + '<input type="search" class="input" placeholder="Search your friends" aria-label="Search your friends by name" autocomplete="off"></div><div class="tt-find-list"></div></div>' });
@@ -649,7 +704,7 @@
     input.addEventListener('input', function () { draw(input.value.trim().toLowerCase()); });
     ui.on(list, 'click', 'button.tt-find-row', function (e, b) {
       const m = Club.members.get(b.dataset.id); if (!m) return;
-      const why = blockReason(m, ctx.date, ctx.time, ctx.excludeId);
+      const why = blockReason(m, ctx.date, ctx.time, ctx.excludeId, ctx.ballot);
       if (why) { ui.toast(m.firstName + ' ' + m.lastName + ' cannot play at this time', 'bad'); draw(input.value.trim().toLowerCase()); return; }
       sh.close(); done(m); ui.toast(m.firstName + ' ' + m.lastName + ' added to your group');
     });
@@ -705,6 +760,7 @@
     const blk = blockAt(blocksOn(d), d, t);
     if (blk) return no('blocked', [fmt.time(t) + ' has just been reserved for ' + String(blk.reason || 'club use').toLowerCase() + '.'], { again: true });
     if (m.status === 'suspended' || !canGolf(m)) return no('member', ['Online booking is not available on your membership. Please call the golf shop on ' + Club.info.phone + '.']);
+    const stand = standingOf(m.id); if (!stand.ok) return no('standing', [stand.reason]);
     // 2. Re-check the slot in memory and in storage (another device or the golf shop may have just taken it).
     const sameSlot = function (list) { return (list || []).filter(function (x) { return x.date === d && x.time === t && x.status !== 'cancelled'; }); };
     const memNow = sameSlot(S.all('teeTimes'));
@@ -731,6 +787,7 @@
     const jt = ctx.joinId ? S.find('teeTimes', ctx.joinId) : null;
     const errs = validateMembers(ctx.players, d, t, null, m, undefined, jt ? jt.holes : ctx.holes);
     if (ctx.players.some(function (p) { return p.type === 'guest' && !p.name; })) errs.push('Please enter a name for each guest.');
+    const gp = guestProblem(existing.filter(function (p) { return p.hostId === m.id; }).concat(ctx.players), m.id, d, t, m.id); if (gp) errs.push(gp);   /* Member Guest Policy */
     /* 4. A friends league chosen for the member's own round: it must still be able to take this round. */
     const mine = ctx.players.find(function (p) { return p.memberId === m.id; });
     if (mine && mine.friendLeagueId) {
@@ -783,7 +840,7 @@
   /* ---------------- Shared hook: joining a friend's group (used by js/portal/friends.js) ----------------
      The same checkBooking and commitBooking as the Book flow, and My tee times' Withdraw. */
   const JOIN_REASON = { locked: null, rule: 'Outside your play times', past: 'Already teed off', closed: 'Course closed today', blocked: 'Reserved for club use',
-    member: 'Not available on your membership', full: 'Full', changed: 'Already teed off', stale: 'Just changed', taken: 'Full' };
+    member: 'Not available on your membership', standing: 'Booking paused on your account', full: 'Full', changed: 'Already teed off', stale: 'Just changed', taken: 'Full' };
   function joinState(m, tt) {
     if (!tt) return { ok: false, code: 'gone', reason: 'No longer available' };
     if (isIn(tt, m.id)) return { ok: false, code: 'mine', reason: 'You’re in' };
@@ -851,10 +908,11 @@
     id: 'tee-times', label: 'Tee times', short: 'Tee times', icon: 'flag', order: 10, tab: true,
     render: function (view, params, member) {
       const me = Portal.member() || member;
+      if (BL()) BL().runDue();   /* a ballot draw whose time has passed runs now (once; js/shared/ballot-data.js) */
       const cs = courseStatus(); const st = settings();
       const td = today();
       const startTab = params[0] === 'mine' ? 'mine' : 'book';
-      const wantDate = /^\d{4}-\d{2}-\d{2}$/.test(params[0] || '') && params[0] >= td && params[0] <= Club.date.fromToday(advanceDays(me) + PREVIEW_DAYS) ? params[0] : null;
+      const wantDate = /^\d{4}-\d{2}-\d{2}$/.test(params[0] || '') && params[0] >= td && stripDays(me).indexOf(params[0]) >= 0 ? params[0] : null;
       let uidN = 0, pastShown = 10, dp = null;
       /* #/tee-times/<date>/<HH:MM>/<players>: a waitlist notice's Book link selects that time. */
       let wantTime = wantDate && /^\d{2}:\d{2}$/.test(params[1] || '') ? params[1] : null;
@@ -894,6 +952,7 @@
           Portal.accordion({ id: 'tt-status', icon: 'course', title: statusTitle, body: statusBody }) +
         '</section>' +
         '<div class="wl-host"></div>' +
+        '<div class="bl-host"></div>' +
         '<div class="tt-tabs"></div>';
 
       const tabsHost = ui.$('.tt-tabs', view);
@@ -909,6 +968,7 @@
       });
       refreshTabCount();
       paintWl();
+      paintBallot();
       if (Portal.waitlist) Portal.waitlist.wire(view, me, function () { paintWl(); rerenderMine(); refreshBook(false); });
       const offHolds = Club.holds ? Club.holds.subscribe(function () { if (!document.body.classList.contains('ps-open')) refreshBook(false); }) : null;
 
@@ -935,7 +995,9 @@
         }
         if (!canGolf(m)) { panel.innerHTML = socialHTML(m); return; }
         const RT = (TR() && TR().RATES) || { weekday: st.guestFee, weekend: st.guestFee, twilight: st.guestFee };
+        const stand = standingOf(m.id);
         panel.innerHTML = '<div class="tt-book">' +
+          (stand.ok ? '' : '<p class="tt-hint tt-rule bl-standing" role="note">' + Club.icon('alert') + '<span>' + esc(stand.reason) + '</span></p>') +
           '<section class="tt-card">' +
             '<div class="tt-date"></div>' +
             '<div class="tt-grp-row"><div class="tt-players"></div><div class="tt-holes"><span class="pk-label" id="tt-holes-l">Holes</span>' +
@@ -974,6 +1036,11 @@
       function pickerDays(days, sums) {
         return days.map(function (d) {
           const s = sums[d], n = fitCount(s), mt = myTimes(s);
+          if (s.locked && s.locked.ballot) {   /* a ballot day before its draw */
+            const en = BL().entryFor((Portal.member() || me).id, d);
+            if (s.locked.ballot === 'before') return { date: d, meta: '', pill: '', disabled: true, reason: 'Ballot opens ' + shortDay(s.locked.opensOn) };
+            return { date: d, meta: s.locked.ballot === 'due' ? 'Draw today' : 'Ballot', pill: en ? 'In the ballot' : '', disabled: false, reason: '' };
+          }
           const reason = s.locked ? 'Not open yet' : s.closed ? 'Closed' : d === td && s.over ? 'No times left' : s.avail ? 'No times for ' + plural(state.players, 'player') : 'Fully booked';
           return { date: d, meta: n ? plural(n, 'time') : '', pill: mt.length ? 'Your tee time · ' + fmt.time(mt[0]) + (mt.length > 1 ? ' +' + (mt.length - 1) : '') : '', disabled: !!(s.locked || s.closed || !n), reason: reason };
         });
@@ -983,7 +1050,7 @@
         const n = fitCount(sum);
         const parts = [];
         if (wx) parts.push(Club.icon(wx.icon) + '<span>' + esc(wx.cond) + ', ' + String(wx.hi).replace('-', '−') + '°</span>');
-        parts.push('<span>' + (sum.locked ? 'Not open for booking yet' : sum.closed ? 'Course closed' : n ? plural(n, 'time') + ' available' : 'No times available') + '</span>');
+        parts.push('<span>' + (sum.locked && sum.locked.ballot === 'open' ? 'Ballot · draw ' + esc(drawWhen(d)) : sum.locked ? 'Not open for booking yet' : sum.closed ? 'Course closed' : n ? plural(n, 'time') + ' available' : 'No times available') + '</span>');
         return parts.join('<span aria-hidden="true">·</span>');
       }
       function mountDate(panel) {
@@ -1036,6 +1103,7 @@
 
       function renderTimes(el, sum, days, sums) {
         const d = state.date;
+        if (sum.locked && sum.locked.ballot) { el.innerHTML = ballotPanelHTML(d, sum.locked); return; }
         if (sum.locked) { el.innerHTML = '<div class="tt-state">' + ui.empty({ icon: 'calendar', title: 'Opens on ' + longDate(sum.locked.opensOn), text: sum.locked.reason }) + '</div>'; return; }
         if (sum.closed) { el.innerHTML = '<div class="tt-state">' + ui.empty({ icon: 'course', title: 'The course is closed today', text: (courseStatus().message || 'There is no play today.') + ' You can still book from tomorrow.', action: nextDayBtn(days, sums, d, null) }) + '</div>'; return; }
         const counts = {}; PERIODS.forEach(function (p) { counts[p.id] = fitCount(sum, p.id); });
@@ -1057,6 +1125,7 @@
           chips = '<div class="tt-chips">' + parts.map(function (x) { return Array.isArray(x) ? runHTML(x) : chipHTML(x); }).join('') + '</div>';
         }
         el.innerHTML =
+          ballotResultHTML(d) +
           (state.notice ? '<p class="hold-ended" role="status">' + Club.icon('clock') + '<span>' + esc(state.notice) + '</span></p>' : '') +
           '<div class="segmented tt-periods" role="group" aria-label="Time of day">' + PERIODS.map(function (x) {
             const on = x.id === p.id;
@@ -1312,6 +1381,219 @@
       }
       ui.on(view, 'click', '[data-act=go-mine]', function () { tabs.activate('mine'); });
 
+      /* ======================= Weekend ballot (Club.ballot) =======================
+         A ballot day before its draw shows the ballot instead of times: enter (preferred time, how far either side,
+         holes, players up to 4), change or withdraw until the draw. After the draw the day books as usual, with the
+         result on top. Results also show above the tabs until the member closes them. */
+      const RANGES = [
+        { value: '30', label: 'Up to 30 minutes either way' },
+        { value: '60', label: 'Up to 1 hour either way' },
+        { value: '120', label: 'Up to 2 hours either way' },
+        { value: '720', label: 'Any time of day' }
+      ];
+      function rangeWords(e) { const r = RANGES.find(function (x) { return +x.value === +e.range; }); return r ? r.label : ''; }
+      function windowWords(e) { return rangeLabel(fmt.time(e.earliest), fmt.time(e.latest)); }
+      function prefWords(e) { return +e.range >= 720 ? 'Any time' : fmt.time(e.time) + ' (' + windowWords(e) + ')'; }
+      function holdersOf(e, m) { return (e.players || []).filter(function (p) { return p.memberId !== m.id; }).map(function (p) { return p.type === 'guest' ? p.name + ' (guest)' : otherLabel(p); }); }
+      function ballotKind(d) { const s = BL().schedule(d); return s.kind === 'holiday' ? 'Holiday ballot' : 'Weekend ballot'; }
+      function entryCardHTML(e, m, opts) {
+        const lead = e.memberId === m.id, others = holdersOf(e, m);
+        return '<div class="bl-entry">' +
+          '<div class="bl-entry-top"><span class="bl-entry-k">Your entry</span><span class="tt-pill">' + (e.status === 'entered' ? 'Entered' : e.status === 'won' ? 'Tee time' : e.status === 'missed' ? 'No time' : 'Withdrawn') + '</span></div>' +
+          '<dl class="bl-dl">' +
+            '<div><dt>Preferred time</dt><dd>' + esc(prefWords(e)) + '</dd></div>' +
+            '<div><dt>Players</dt><dd>' + esc(others.length ? 'You, ' + niceList(others) : 'Just you') + '</dd></div>' +
+            '<div><dt>Holes</dt><dd>' + e.holes + '</dd></div>' +
+            (lead ? '' : '<div><dt>Entered by</dt><dd>' + esc(otherLabel({ memberId: e.memberId, type: 'member', name: Club.members.name(e.memberId) })) + '</dd></div>') +
+          '</dl>' +
+          (opts && opts.actions && e.status === 'entered' ? (lead
+            ? '<div class="bl-acts"><button type="button" class="btn" data-act="bl-edit" data-id="' + esc(e.id) + '">' + Club.icon('edit') + '<span>Change entry</span></button><button type="button" class="btn btn-danger" data-act="bl-withdraw" data-id="' + esc(e.id) + '">Withdraw</button></div>'
+            : '<p class="tt-hint">Only the member who entered can change or withdraw this entry.</p>') : '') +
+        '</div>';
+      }
+      function ballotPanelHTML(d, lock) {
+        const m = Portal.member() || me, s = BL().schedule(d);
+        const e = BL().entryFor(m.id, d);
+        if (lock.ballot === 'before') {
+          return '<div class="tt-state">' + ui.empty({ icon: 'calendar', title: 'Ballot opens on ' + longDate(s.opensOn), text: 'Weekend and holiday tee times start with a ballot. You can enter from ' + longDate(s.opensOn) + ' until the draw on ' + drawWhen(d) + '.' }) + '</div>';
+        }
+        if (lock.ballot === 'due') return '<div class="tt-state">' + ui.empty({ icon: 'clock', title: 'The draw is being made', text: lock.reason }) + '</div>';
+        const stand = standingOf(m.id);
+        return '<div class="bl-panel">' +
+          '<div class="bl-head"><span class="bl-ic" aria-hidden="true">' + Club.icon('flag') + '</span><div class="bl-head-t">' +
+            '<p class="bl-eyebrow">' + esc(ballotKind(d)) + '</p>' +
+            '<h3 class="bl-title">' + esc(e ? 'You’re in the ballot for ' + longDate(d) : 'Enter the ballot for ' + longDate(d)) + '</h3>' +
+            '<p class="bl-draw">' + Club.icon('clock') + '<span>' + esc('Draw on ' + drawWhen(d)) + '</span></p></div></div>' +
+          (e ? entryCardHTML(e, m, { actions: true })
+            : (stand.ok ? '<p class="bl-lead">Choose a preferred time, how flexible you are and who you play with. The draw gives each entry the open time closest to its choice.</p>' +
+                '<button type="button" class="btn btn-primary tt-full bl-enter" data-act="bl-enter">Enter the ballot</button>'
+              : '<p class="tt-hint tt-rule">' + Club.icon('alert') + '<span>' + esc(stand.reason) + '</span></p>')) +
+          Portal.accordion({ id: 'bl-how', icon: 'info', title: 'How the ballot works', summary: 'Entries open 15 days ahead',
+            body: '<ul class="tt-bullets">' +
+              '<li>Saturdays, Sundays and holidays are booked by ballot. Weekdays book as usual.</li>' +
+              '<li>Enter from 15 days before until the draw at 12:00 PM, 13 days before. A Saturday is drawn on the Sunday, a Sunday on the Monday.</li>' +
+              '<li>Entries are drawn in a random order that anyone can check. Each gets the open time closest to its preferred time, inside its range and the play times of everyone in the group.</li>' +
+              '<li>You can change or withdraw your entry until the draw. One entry per member a day.</li>' +
+              '<li>After the draw, times still open can be booked online or by calling the golf shop.</li>' +
+            '</ul>' }) +
+        '</div>';
+      }
+      /** After the draw: one line above the times about the member's entry for this day. */
+      function ballotResultHTML(d) {
+        if (!BL() || !BL().isBallotDay(d)) return '';
+        const m = Portal.member() || me, e = BL().entryFor(m.id, d);
+        if (!e || (e.status !== 'won' && e.status !== 'missed')) return '';
+        return '<p class="bl-result ' + (e.status === 'won' ? 'is-won' : 'is-missed') + '">' + Club.icon(e.status === 'won' ? 'check' : 'info') + '<span>' + esc(e.status === 'won'
+          ? 'The ballot gave your group ' + fmt.time(e.drawnTime) + '.'
+          : 'Your ballot entry did not get a time. Any time still open below can be booked.') + '</span></p>';
+      }
+
+      /* ---- Results above the tabs (until closed) ---- */
+      function noticeList(m) {
+        if (!BL()) return [];
+        return BL().forMember(m.id).filter(function (e) { return e.date >= td && (e.status === 'won' || e.status === 'missed') && !e.seenAt && e.memberId === m.id; });
+      }
+      function paintBallot() {
+        const h = ui.$('.bl-host', view); if (!h) return;
+        const m = Portal.member() || me, list = noticeList(m);
+        h.innerHTML = list.length ? '<section class="bl-notices" aria-label="Ballot results">' + list.map(function (e) {
+          const won = e.status === 'won';
+          return '<article class="bl-note' + (won ? ' is-won' : '') + '" role="status">' +
+            '<span class="bl-note-ic" aria-hidden="true">' + Club.icon(won ? 'check' : 'bell') + '</span>' +
+            '<div class="bl-note-main"><p class="bl-note-k">Ballot result</p>' +
+              '<p class="bl-note-t">' + esc(won ? longDate(e.date) + ' at ' + fmt.time(e.drawnTime) : 'No tee time on ' + longDate(e.date)) + '</p>' +
+              '<p class="bl-note-s">' + esc(won ? 'The draw gave your group this tee time. It is in My tee times.' : 'The times you asked for went to entries drawn earlier. Times still open can be booked now.') + '</p></div>' +
+            '<div class="bl-note-acts">' + (won ? '<button type="button" class="btn btn-primary btn-sm" data-act="bl-see" data-tt="' + esc(e.teeTimeId || '') + '">See tee time</button>'
+              : '<button type="button" class="btn btn-primary btn-sm" data-act="pick-day-book" data-date="' + esc(e.date) + '">See open times</button>') +
+              '<button type="button" class="p-link" data-act="bl-seen" data-id="' + esc(e.id) + '">Got it</button></div>' +
+          '</article>';
+        }).join('') + '</section>' : '';
+      }
+      ui.on(view, 'click', '[data-act=bl-seen]', function (e, b) { BL().seen(b.dataset.id); paintBallot(); });
+      ui.on(view, 'click', '[data-act=bl-see]', function (e, b) { tabs.activate('mine'); if (b.dataset.tt && S.find('teeTimes', b.dataset.tt)) openDetail(b.dataset.tt); });
+      ui.on(view, 'click', '[data-act=pick-day-book]', function (e, b) {
+        tabs.activate('book');
+        if (b.dataset.date) setDate(b.dataset.date);
+      });
+
+      /* ---- Enter or change: one sheet ---- */
+      ui.on(view, 'click', '[data-act=bl-enter]', function () { openBallot(state.date, null); });
+      ui.on(view, 'click', '[data-act=bl-edit]', function (e, b) { const en = BL().entry(b.dataset.id); if (en) openBallot(en.date, en); });
+      ui.on(view, 'click', '[data-act=bl-withdraw]', function (e, b) { askWithdraw(b.dataset.id); });
+      /** Preferred times: every half hour of the day, those outside the member's play times greyed out. */
+      function prefRows(m, d) {
+        const sl = slotList(); const out = [];
+        const first = Math.ceil(toMin(sl[0]) / 30) * 30, last = toMin(sl[sl.length - 1]);
+        for (let x = first; x <= last; x += 30) {
+          const t = toHM(x), r = canPlay(m, d, t);
+          out.push({ value: t, label: fmt.time(t), sub: guestLimitAt(d, t) && guestLimitAt(d, t).max < 3 ? 'Prime time: one guest per member' : '', disabled: !r.ok, reason: r.ok ? '' : 'Outside your play times' });
+        }
+        return out;
+      }
+      function openBallot(d, cur) {
+        const m = Portal.member() || me;
+        if (!BL() || BL().phase(d) !== 'open') { ui.toast('The ballot for this day is closed', 'bad'); refreshBook(false); return; }
+        if (cur && cur.memberId !== m.id) return;
+        const stand = standingOf(m.id); if (!stand.ok) { ui.toast(stand.reason, 'bad'); return; }
+        const rows = prefRows(m, d);
+        const firstOk = (rows.find(function (r) { return !r.disabled && toMin(r.value) >= 450; }) || rows.find(function (r) { return !r.disabled; }) || rows[0]);
+        const pick = { time: cur ? cur.time : firstOk.value, range: cur ? String(cur.range) : '60' };
+        const model = {
+          holes: cur ? cur.holes : state.holes, notes: cur ? cur.notes || '' : '', existing: [],
+          players: cur ? cur.players.map(function (p) { return Object.assign({}, p); }) : [{ memberId: m.id, name: m.firstName + ' ' + m.lastName, type: 'member', cart: cartPref(m), paid: false }]
+        };
+        const sh = Portal.openSheet({ title: cur ? 'Change your ballot entry' : 'Enter the ballot', size: 'full',
+          content: '<div class="tt-sheet bl-sheet">' +
+            '<div class="tt-sum bl-sum"><span class="bl-sum-d">' + esc(longDate(d)) + '</span><span class="bl-sum-s">' + esc('Draw on ' + drawWhen(d)) + '</span></div>' +
+            '<div class="bl-fields"><div class="bl-f bl-f-time"></div><div class="bl-f bl-f-range"></div></div>' +
+            '<p class="tt-hint bl-window"></p>' +
+            '<div class="tt-holes-row"><span class="pk-label" id="bl-holes-l">Holes</span>' + ui.segmented([{ value: '18', label: '18 holes' }, { value: '9', label: '9 holes' }], String(model.holes), 'bl-holes') + '</div>' +
+            '<div class="tt-editor"></div><div class="tt-alert" role="alert" hidden></div></div>',
+          footer: '<button type="button" class="btn btn-primary tt-full" data-act="bl-save">' + (cur ? 'Save changes' : 'Enter the ballot') + '</button>' });
+        if (sh.duplicate) return;
+        const opts = { me: m, date: d, time: pick.time, excludeId: null, uid: 'bl' + (++uidN), target: cur ? 0 : state.players, allowGuests: true, addons: false, ballot: { entryId: cur ? cur.id : null },
+          hostId: function () { return m.id; } };
+        const editor = groupEditor(ui.$('.tt-editor', sh.body), model, opts);
+        ui.$('.segmented[data-name=bl-holes]', sh.body).setAttribute('aria-labelledby', 'bl-holes-l');
+        function windowLine() {
+          const w = BL().windowOf(pick.time, +pick.range);
+          ui.$('.bl-window', sh.body).textContent = +pick.range >= 720 ? 'Any open time that day suits you.' : 'The draw looks for a time from ' + rangeLabel(fmt.time(w.earliest), fmt.time(w.latest)) + ', closest to ' + fmt.time(pick.time) + ' first.';
+        }
+        Portal.selectField(ui.$('.bl-f-time', sh.body), { label: 'Preferred time', title: 'Preferred time', rows: rows, value: pick.time, icon: 'clock', onChange: function (v) {
+          pick.time = v; opts.time = v; windowLine(); editor.render();
+        } });
+        Portal.selectField(ui.$('.bl-f-range', sh.body), { label: 'How flexible', title: 'How flexible are you?', rows: RANGES, value: pick.range, onChange: function (v) { pick.range = v; windowLine(); } });
+        windowLine();
+        ui.on(sh.body, 'click', '.segmented[data-name=bl-holes] button', function (e, b) {
+          model.holes = +b.dataset.value;
+          ui.$$('button', b.parentNode).forEach(function (x) { const on = x === b; x.classList.toggle('active', on); x.setAttribute('aria-pressed', String(on)); });
+        });
+        ui.$('[data-act=bl-save]', sh.foot).addEventListener('click', function () {
+          editor.validate();
+          const al = ui.$('.tt-alert', sh.body); al.hidden = true;
+          const data = { date: d, memberId: m.id, players: model.players, time: pick.time, range: +pick.range, holes: model.holes, notes: model.notes };
+          const res = cur ? BL().change(cur.id, data) : BL().enter(data);   /* the same checks for staff and members */
+          if (!res.ok) { al.innerHTML = Club.icon('alert') + '<div>' + res.errs.map(function (x) { return '<p>' + esc(x) + '</p>'; }).join('') + '</div>'; al.hidden = false; al.scrollIntoView({ block: 'nearest' }); return; }
+          Portal.prefs.set('tt.players', Math.max(1, Math.min(4, model.players.length)));
+          Portal.prefs.set('tt.holes', model.holes);
+          ui.toast(cur ? 'Your ballot entry has been updated' : 'You’re in the ballot for ' + shortDay(d));
+          if (cur) { sh.close(); refreshBook(false); rerenderMine(); return; }
+          sh.setContent('<div class="tt-done" role="status"><span class="tt-done-ok">' + Club.icon('check') + '</span>' +
+            '<h3 class="tt-done-h">You’re in the ballot</h3>' +
+            '<p class="tt-done-d">' + esc(longDate(d)) + ' · ' + esc(prefWords(res.doc)) + '</p>' +
+            '<p class="tt-done-p">' + esc('Draw on ' + drawWhen(d) + '. The result shows here and in My tee times. You can change or withdraw your entry until then.') + '</p></div>');
+          sh.setFooter('<button type="button" class="btn btn-primary tt-full" data-act="bl-done">Done</button>');
+          ui.$('[data-act=bl-done]', sh.foot).addEventListener('click', function () { sh.close(); });
+          ui.$('[data-act=bl-done]', sh.foot).focus();
+          refreshBook(false); refreshTabCount();
+        });
+      }
+      function askWithdraw(id) {
+        const m = Portal.member() || me, e = BL().entry(id);
+        if (!e || e.memberId !== m.id) return;
+        const sh = Portal.openSheet({ title: 'Withdraw from the ballot?',
+          content: '<div class="tt-sheet tt-ask"><p>' + esc('Your entry for ' + longDate(e.date) + ' will be taken out of the draw' + ((e.players || []).length > 1 ? ' for everyone in your group' : '') + '. You can enter again until the draw on ' + drawWhen(e.date) + '.') + '</p></div>',
+          footer: '<div class="tt-detail-acts"><button type="button" class="btn" data-act="bl-keep">Keep my entry</button><button type="button" class="btn btn-danger" data-act="bl-yes">Withdraw</button></div>' });
+        if (sh.duplicate) return;
+        ui.$('[data-act=bl-keep]', sh.foot).addEventListener('click', function () { sh.close(); });
+        ui.$('[data-act=bl-yes]', sh.foot).addEventListener('click', function () {
+          const r = BL().withdraw(id);
+          sh.close();
+          if (!r.ok) { ui.toast(r.reason, 'bad'); }
+          else ui.toast('Your ballot entry has been withdrawn');
+          refreshBook(false); rerenderMine();
+        });
+        ui.$('[data-act=bl-keep]', sh.foot).focus();
+      }
+      /** My tee times: the member's ballot entries from today on. */
+      function ballotMineHTML(m) {
+        if (!BL()) return '';
+        const list = BL().forMember(m.id).filter(function (e) { return e.date >= td && e.status !== 'won'; });
+        if (!list.length) return '';
+        return '<section class="tt-mine-sec bl-mine"><h2 class="tt-mine-h">Ballot entries</h2><div class="p-list tt-rounds">' + list.map(function (e) {
+          const dt = fmt.toDate(e.date);
+          const pill = e.status === 'entered' ? 'Draw ' + shortDay(BL().schedule(e.date).drawOn) : 'No time';
+          return '<button type="button" class="tt-row" data-act="bl-row" data-id="' + esc(e.id) + '" aria-label="' + esc(longDate(e.date) + ', ballot entry. ' + pill + '. Open details') + '">' +
+            '<span class="tt-row-date" aria-hidden="true"><span class="tt-rd-wk">' + esc(fmt.weekday(e.date)) + '</span><span class="tt-rd-n">' + dt.getDate() + '</span></span>' +
+            '<span class="tt-row-main"><span class="tt-row-top"><span class="tt-row-time bl-row-t">' + esc(+e.range >= 720 ? 'Any time' : fmt.time(e.time)) + '</span><span class="tt-pill' + (e.status === 'missed' ? ' is-bad' : '') + '">' + esc(pill) + '</span></span>' +
+              '<span class="tt-row-meta">' + esc('Ballot · ' + e.holes + ' holes · ' + (holdersOf(e, m).length ? 'With ' + niceList(holdersOf(e, m)) : 'Just you')) + '</span></span>' +
+            Club.icon('chevronRight', 'tt-go') + '</button>';
+        }).join('') + '</div></section>';
+      }
+      ui.on(view, 'click', '[data-act=bl-row]', function (e, b) {
+        const m = Portal.member() || me, en = BL().entry(b.dataset.id); if (!en) return;
+        const open = en.status === 'entered' && BL().phase(en.date) === 'open';
+        const sh = Portal.openSheet({ title: 'Ballot for ' + shortDay(en.date),
+          content: '<div class="tt-sheet"><p class="bl-draw">' + Club.icon('clock') + '<span>' + esc(en.status === 'entered' ? 'Draw on ' + drawWhen(en.date) : 'Drawn on ' + drawWhen(en.date)) + '</span></p>' + entryCardHTML(en, m, { actions: false }) +
+            (en.status === 'missed' ? '<p class="tt-hint">' + esc('The times you asked for went to entries drawn earlier. Times still open can be booked now.') + '</p>' : '') + '</div>',
+          footer: en.status === 'missed' ? '<button type="button" class="btn btn-primary tt-full" data-act="pick-day-book" data-date="' + esc(en.date) + '">See open times</button>'
+            : open && en.memberId === m.id ? '<div class="tt-detail-acts"><button type="button" class="btn" data-act="bl-edit" data-id="' + esc(en.id) + '">Change entry</button><button type="button" class="btn btn-danger" data-act="bl-withdraw" data-id="' + esc(en.id) + '">Withdraw</button></div>' : '' });
+        if (sh.duplicate) return;
+        ui.on(sh.el, 'click', '[data-act=bl-edit]', function () { sh.close(); openBallot(en.date, BL().entry(en.id)); });
+        ui.on(sh.el, 'click', '[data-act=bl-withdraw]', function () { sh.close(); askWithdraw(en.id); });
+        ui.on(sh.el, 'click', '[data-act=pick-day-book]', function () { sh.close(); tabs.activate('book'); setDate(en.date); });
+      });
+
       /* ======================= My tee times ======================= */
       function renderMine(panel) {
         const m = Portal.member() || me;
@@ -1324,6 +1606,7 @@
               (up.length > 5 ? '<button type="button" class="tt-all-row" data-act="all-up">View all upcoming (' + up.length + ')' + Club.icon('chevronRight', 'tt-go') + '</button>' : '') + '</div>' :
               '<div class="panel tt-empty">' + ui.empty({ icon: 'flag', title: 'No tee times booked', text: canGolf(m) ? windowLine(m) : 'When a golfing member adds you to their tee time, it will show up here.', action: canGolf(m) && m.status !== 'suspended' ? ui.btn('Book a tee time', { kind: 'primary', action: 'go-book-empty' }) : '' }) + '</div>') +
           '</section>' +
+          ballotMineHTML(m) +
           (Portal.waitlist ? Portal.waitlist.listHTML(m) : '') +
           '<section class="tt-mine-sec">' +
             (pa.length ? Portal.accordion({ id: 'tt-past', icon: 'trophy', title: 'Past rounds', summary: plural(played, 'round') + ' played', body: pastBody(pa, m) })
@@ -1500,6 +1783,9 @@
           const errs = validateMembers(added, fresh.date, fresh.time, fresh.id, m, undefined, mgr ? model.holes : fresh.holes);
           if (model.existing.length + model.players.length > 4) errs.push('A group can have at most four players.');
           if (mgr && !model.players.some(function (p) { return p.memberId === m.id; })) errs.push('You cannot remove yourself here. Cancel the tee time instead.');
+          /* Member Guest Policy: only a change that brings more guests than before is held to the limit */
+          const gNow = guestsOf(model.players, m.id, '\u0000'), gWas = guestsOf(before, m.id, '\u0000');
+          if (gNow > gWas) { const gp = guestProblem(model.players.filter(function (p) { return p.hostId === m.id; }), m.id, fresh.date, fresh.time, m.id); if (gp) errs.push(gp); }
           const mineM = model.players.find(function (p) { return p.memberId === m.id; });
           const newHoles = mgr ? model.holes : fresh.holes;
           if (mineM && mineM.friendLeagueId) { const lc = leagueCheck(m.id, mineM.friendLeagueId, fresh.date, newHoles, fresh.id); if (!lc.ok) errs.push(lc.msg); }

@@ -10,7 +10,14 @@
      as the club publishes. WAIT is not an open stage: it stays out of the board, the nav badge and the average wait. */
   const WAIT = 'Waiting list';
   const FULL_DEFAULT = { tier_junior: true, tier_nonresident: true };
-  const AGE_RULES = { tier_junior: { min: 19, max: 23, label: 'Ages 19 to 23' }, tier_nonresident: { max: 17, label: 'Under 18' } };
+  /* Ages from the club's 2025 Membership Handbook: Intermediate 19 to 39 and 60+ (ID required); Junior 18 and under by
+     August 31 (checked on today's age here). The handbook gives no ages for Young Adult, so none is checked. */
+  const AGE_RULES = {
+    tier_eagle60: { min: 60, label: 'Ages 60 and over, ID required' },
+    tier_eagleint: { min: 19, max: 39, label: 'Ages 19 to 39, ID required' },
+    tier_birdieint: { min: 19, max: 39, label: 'Ages 19 to 39, ID required' },
+    tier_nonresident: { max: 18, label: '18 and under by August 31' }
+  };
 
   /* ---------------- Helpers ---------------- */
   function today() { return Club.date.today(); }

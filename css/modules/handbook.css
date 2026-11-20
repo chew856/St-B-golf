@@ -1,0 +1,45 @@
+/* ==========================================================================
+   Staff: Settings > Handbook (hbx-), js/modules/settings-handbook.js. Tokens only.
+   The handbook text and preview use .hb-text from css/handbook.css.
+   ========================================================================== */
+.hbx { display: flex; flex-direction: column; gap: var(--s4); }
+.hbx-lead { margin: 0 0 var(--s2); }
+.hbx-fr { display: flex; gap: var(--s2); align-items: flex-start; margin: 0 0 var(--s4); font-size: 0.875rem; }
+.hbx-fr .icon { width: 16px; height: 16px; flex: none; margin-top: 2px; color: var(--forest-500); }
+.hbx-actions { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.hbx-n { font-size: 0.8125rem; }
+.hbx-list > li.hbx-row { padding: 0; gap: 0; align-items: stretch; }
+.hbx-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px var(--s5); border: 0; background: none; font: inherit; color: var(--text); text-align: left; cursor: pointer; transition: background var(--t-ui) var(--ease-ui); }
+@media (hover: hover) { .hbx-main:hover { background: var(--sage-50); } .hbx-main:hover .hbx-title { color: var(--forest-800); } }
+.hbx-main:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--forest-700); }
+.hbx-title { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 0.9375rem; font-weight: 500; }
+.hbx-sum { display: block; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 0.8125rem; }
+.hbx-acts { display: flex; align-items: center; gap: 2px; padding: 0 var(--s3) 0 var(--s2); flex: none; }
+.hbx-ic { width: 36px; padding: 0; justify-content: center; color: var(--text-2); }
+.hbx-ic svg { width: 16px; height: 16px; margin: 0; }
+.hbx-ic[disabled] { opacity: 0.35; cursor: default; }
+@media (hover: hover) { .hbx-del:hover { color: var(--danger); } }
+
+/* Edit dialog */
+.hbx-modal .modal-body { padding-bottom: var(--s4); }
+.hbx-split { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s4); }
+.hbx-edit { margin: 0; }
+.hbx-body { min-height: 16rem; resize: vertical; font-family: var(--sans, inherit); line-height: 1.5; }
+.hbx-prev-wrap { min-width: 0; }
+.hbx-prev-wrap .label-caps { margin-bottom: 6px; }
+.hbx-prev { max-height: 22rem; overflow-y: auto; padding: var(--s3) var(--s4); border: 1px solid var(--border); border-radius: var(--radius-ctl); background: var(--surface); }
+.hbx-orig { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s3); margin: 0; font-size: 0.8125rem; }
+@media (min-width: 900px) {
+  .hbx-split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .hbx-prev { max-height: none; height: calc(100% - 24px); min-height: 16rem; }
+}
+@media (max-width: 768px) {
+  .hbx-main { padding: 10px var(--s4); min-height: 44px; }
+  html body.staff .hbx-ic { width: 40px; min-height: 40px; }
+  .hbx-acts { padding-right: var(--s2); }
+  .hbx-body { min-height: 12rem; }
+}
+@media (max-width: 420px) {
+  .hbx-list > li.hbx-row { flex-wrap: wrap; }
+  .hbx-acts { width: 100%; justify-content: flex-end; padding: 0 var(--s2) var(--s2); }
+}

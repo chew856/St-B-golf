@@ -671,6 +671,8 @@
     { id: 'profile', label: 'Club profile', fn: profileTab },
     { id: 'season', label: 'Golf season', fn: seasonTab },
     { id: 'billing', label: 'Billing', fn: billingTab },
+    /* Handbook: the members' handbook editor (js/modules/settings-handbook.js) */
+    { id: 'handbook', label: 'Handbook', fn: function (panel) { return Club.handbookAdmin ? Club.handbookAdmin.tab(panel) : null; } },
     { id: 'data', label: 'Data', fn: dataTab },
     { id: 'about', label: 'About', fn: aboutTab }
   ];
@@ -680,7 +682,7 @@
   function render(view, params) {
     if (params[0] === 'promotions' || params[0] === 'addons') { setTimeout(function () { Club.app.go('proshop/' + params[0]); }, 0); return; }
     const initial = TABS.some(function (t) { return t.id === params[0]; }) ? params[0] : 'profile';
-    view.innerHTML = '<div class="st-page">' + U.pageHeader({ eyebrow: 'Administration', title: 'Settings', subtitle: 'Club profile, golf season, dues schedule, taxes and data for ' + esc(Club.info.name) + '.' }) + '<div class="st-tabs"></div></div>';
+    view.innerHTML = '<div class="st-page">' + U.pageHeader({ eyebrow: 'Administration', title: 'Settings', subtitle: 'Club profile, golf season, dues schedule, taxes, the members’ handbook and data for ' + esc(Club.info.name) + '.' }) + '<div class="st-tabs"></div></div>';
     let tabCleanup = null;
     U.tabs(U.$('.st-tabs', view), TABS.map(function (t) {
       return { id: t.id, label: t.label, render: function (panel) { if (tabCleanup) { tabCleanup(); tabCleanup = null; } tabCleanup = t.fn(panel) || null; } };

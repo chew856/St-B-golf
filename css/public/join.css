@@ -30,6 +30,8 @@
 .join-dues .label-caps { color: var(--ink-3); }
 .join-dues-amt { font-size: var(--fs-32); line-height: 1.05; color: var(--night); }
 .join-dues-per { font-size: var(--fs-12); color: var(--ink-3); }
+/* A category the club has not priced yet (Membership Handbook categories added Nov 20) */
+.join-dues-tbd { font-size: var(--fs-15); line-height: 1.35; color: var(--ink-2); max-width: 18ch; }
 .join-cat-foot .btn { min-height: 44px; flex: none; }
 /* Long labels (French: « S’inscrire sur la liste d’attente ») wrap instead of pushing the button off the card. */
 .join-cat-foot { flex-wrap: wrap; }

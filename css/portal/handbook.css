@@ -1,0 +1,46 @@
+/* ==========================================================================
+   Portal: Handbook (ph-). Tokens only; the section text itself is styled in css/handbook.css (.hb-text).
+   ========================================================================== */
+.ph-title { margin-bottom: 12px; }
+.ph-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; }
+.ph-search { flex: 1 1 18rem; max-width: 36rem; }
+body.portal .ph-pdf { flex: 0 0 auto; min-height: 44px; }
+.ph-meta { display: flex; flex-wrap: wrap; gap: 2px 8px; margin: 10px 0 0; font-size: 0.875rem; color: var(--text-2); }
+.ph-dot { color: var(--text-3); }
+.ph-count { margin: 6px 0 0; min-height: 1.25rem; font-size: 0.875rem; font-weight: 500; color: var(--forest-800); }
+.ph-count:empty { min-height: 0; margin: 0; }
+.ph-layout { margin-top: 16px; }
+.ph-side { margin-bottom: 16px; }
+.ph-toc-g + .ph-toc-g { margin-top: 12px; }
+.ph-toc-g[hidden], .ph-toc li[hidden], .ph-group[hidden], .ph-sec[hidden] { display: none; }
+.ph-toc h3 { margin: 0 0 2px; font-family: var(--sans); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.02em; color: var(--text-3); text-transform: uppercase; }
+.ph-toc ul { list-style: none; margin: 0; padding: 0; }
+.ph-toc a { display: flex; align-items: center; min-height: 40px; padding: 6px 8px; margin: 0 -8px; border-radius: 8px; font-size: 0.9375rem; color: var(--text); text-decoration: none; }
+@media (hover: hover) { .ph-toc a:hover { background: var(--sage-50); color: var(--forest-800); text-decoration: none; } }
+.ph-tools { display: flex; justify-content: flex-end; margin: -6px 0 4px; }
+.ph-group + .ph-group { margin-top: 24px; }
+.ph-group-h { margin: 0 0 10px; font-size: 1.25rem; }
+.ph-sec .pk-acc-text { gap: 2px; }
+.ph-sum { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.ph-sec.is-open .ph-sum { display: none; }
+.ph-sec .pk-acc-body { padding: 14px 16px 18px; }
+.ph-text { max-width: 68ch; }
+.ph-hit { background: var(--sage-200); color: var(--text); border-radius: 3px; padding: 0 1px; box-shadow: 0 0 0 1px var(--sage-200); }
+.ph-untr { display: flex; gap: 8px; align-items: flex-start; margin: 0 0 12px; padding: 8px 10px; border-radius: 8px; background: var(--sage-50); font-size: 0.875rem; color: var(--text-2); }
+.ph-untr .icon { width: 18px; height: 18px; flex: none; color: var(--forest-500); margin-top: 1px; }
+.ph-none { margin-top: 8px; }
+.ph-foot { margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 0.875rem; color: var(--text-2); }
+.ph-foot p { margin: 0 0 6px; }
+.ph-fr-note { font-style: italic; }
+
+@media (min-width: 1024px) {
+  .ph-layout { display: grid; grid-template-columns: minmax(15rem, 18rem) minmax(0, 1fr); gap: 2rem; align-items: start; }
+  .ph-side { position: sticky; top: 5.5rem; margin: 0; max-height: calc(100vh - 7rem); max-height: calc(100dvh - 7rem); overflow-y: auto; border-radius: var(--radius-card); }
+  .ph-toc a { min-height: 36px; font-size: 0.875rem; }
+  .ph-main { max-width: 52rem; }
+}
+
+/* The Club page's Hours (js/portal/club.js) now come from the handbook: the time is the value, the days its label */
+.pc-hour-line > span ~ span { color: var(--text); font-variant-numeric: tabular-nums; }
+.pc-hour-src { margin: 12px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; font-size: 0.8125rem; color: var(--text-2); }
+body.portal .pc-hour-src .p-link { font-size: 0.875rem; }

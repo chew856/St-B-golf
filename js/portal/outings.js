@@ -70,6 +70,7 @@
         for (let d = 1; d <= n; d++) {
           const iso = yr + '-' + String(mo).padStart(2, '0') + '-' + String(d).padStart(2, '0');
           if (iso <= t) continue;
+          if (Club.teeRules && Club.teeRules.isFriday(iso)) continue;   /* no tournaments or outside golf events on a Friday (Membership Handbook) */
           out.push({ date: iso, meta: pkgs().filter(function (p) { return (p.months || []).indexOf(mo) >= 0; }).map(function (p) { return p.short; }).join(', ') });
         }
       });

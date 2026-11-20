@@ -47,18 +47,24 @@
   function rollCSV(ctx) { return [[ctx.gran === 'day' ? 'Date' : 'Month', 'Members']].concat(ctx.rows.map(function (r) { return [H.csvKey(r), r.members]; })); }
 
   /* ---------------- Age mix (the club's age rules) ---------------- */
-  const DISCOUNT = { intermediate: [24, 39], senior: 60 };
+  /* The 2025 Membership Handbook: Intermediate (Eagle INT, Birdie INT) is ages 19 to 39, Eagle 60+ is 60 and over. It gives
+     no ages for Young Adult, so that band shows only if staff data ever carries an age rule for it. */
+  const DISCOUNT = { intermediate: [19, 39], senior: 60 };
   function bands() {
     const AR = M().AGE_RULES || {};
-    const jr = AR.tier_nonresident, ya = AR.tier_junior;
+    const jr = AR.tier_nonresident, ya = AR.tier_junior && AR.tier_junior.min != null && AR.tier_junior.max != null ? AR.tier_junior : null;
     const jrName = (S.find('membershipTiers', 'tier_nonresident') || {}).name || 'Junior', yaName = (S.find('membershipTiers', 'tier_junior') || {}).name || 'Young Adult';
-    const jMax = jr && jr.max != null ? jr.max : 17, yMin = ya && ya.min != null ? ya.min : 19, yMax = ya && ya.max != null ? ya.max : 23;
+    const jMax = jr && jr.max != null ? jr.max : 18;
     const out = [{ key: 'jr', label: 'Under ' + (jMax + 1), min: 0, max: jMax, tag: jrName }];
-    if (yMin > jMax + 1) out.push({ key: 'gap', label: yMin - 1 === jMax + 1 ? String(jMax + 1) : (jMax + 1) + ' to ' + (yMin - 1), min: jMax + 1, max: yMin - 1, tag: 'Between ' + jrName + ' and ' + yaName });
-    out.push({ key: 'ya', label: yMin + ' to ' + yMax, min: yMin, max: yMax, tag: yaName });
-    out.push({ key: 'int', label: (yMax + 1) + ' to ' + DISCOUNT.intermediate[1], min: yMax + 1, max: DISCOUNT.intermediate[1], tag: 'Intermediate discount ages' });
+    let from = jMax + 1;
+    if (ya) {
+      if (ya.min > from) out.push({ key: 'gap', label: ya.min - 1 === from ? String(from) : from + ' to ' + (ya.min - 1), min: from, max: ya.min - 1, tag: 'Between ' + jrName + ' and ' + yaName });
+      out.push({ key: 'ya', label: ya.min + ' to ' + ya.max, min: ya.min, max: ya.max, tag: yaName });
+      from = ya.max + 1;
+    }
+    if (from <= DISCOUNT.intermediate[1]) out.push({ key: 'int', label: from + ' to ' + DISCOUNT.intermediate[1], min: from, max: DISCOUNT.intermediate[1], tag: 'Intermediate ages' });
     out.push({ key: 'mid', label: (DISCOUNT.intermediate[1] + 1) + ' to ' + (DISCOUNT.senior - 1), min: DISCOUNT.intermediate[1] + 1, max: DISCOUNT.senior - 1, tag: '' });
-    out.push({ key: 'sen', label: DISCOUNT.senior + ' and over', min: DISCOUNT.senior, max: 999, tag: 'Senior discount ages' });
+    out.push({ key: 'sen', label: DISCOUNT.senior + ' and over', min: DISCOUNT.senior, max: 999, tag: 'Eagle 60+ ages' });
     return out;
   }
   function ageData(ctx) {
@@ -66,7 +72,7 @@
       const ms = liveMembers(), Y = +today().slice(0, 4), AR = M().AGE_RULES || {};
       const B = bands().map(function (b) { return Object.assign({ n: 0 }, b); });
       const withAge = [], noDob = [], outside = [], leaving = [];
-      const adult = all('membershipTiers').filter(function (t) { return !AR[t.id]; }).sort(function (a, b) { return num(a.annualDues) - num(b.annualDues); })[0] || null;
+      const adult = all('membershipTiers').filter(function (t) { return !AR[t.id] && num(t.annualDues) > 0 && t.golf !== false; }).sort(function (a, b) { return num(a.annualDues) - num(b.annualDues); })[0] || null;
       ms.forEach(function (m) {
         const age = M().ageOn(m.dob);
         if (age == null) { noDob.push(m); return; }
@@ -368,7 +374,7 @@
     out.push('The roll counts every member who has not resigned; on leave and suspended members are included. Monthly counts come from the monthly ledger, this month from today\'s roll.');
     out.push((a.noDob.length ? a.noDob.length + ' ' + plural(a.noDob.length, 'member has', 'members have') + ' no birth date on file and ' + (a.noDob.length === 1 ? 'is' : 'are') + ' left out of the age mix. ' : 'Every member has a birth date on file. ') +
       (a.outside.length ? a.outside.length + ' ' + plural(a.outside.length, 'member is', 'members are') + ' already outside their category\'s ages. ' : '') +
-      'Junior ends at ' + (((M().AGE_RULES || {}).tier_nonresident || {}).max + 1 || 18) + ' and Young Adult at ' + (((M().AGE_RULES || {}).tier_junior || {}).max + 1 || 24) + ', counted in the year a member reaches that age. The rules do not say which category comes next, so the dues comparison in the details assumes ' + (a.adult ? a.adult.name + ', the lowest-dues category with no age limit' : 'an adult category') + '.');
+      'Junior ends at ' + (((M().AGE_RULES || {}).tier_nonresident || {}).max + 1 || 19) + ' and Intermediate at ' + (DISCOUNT.intermediate[1] + 1) + ', counted in the year a member reaches that age (the handbook gives no age limit for Young Adult). The rules do not say which category comes next, so the dues comparison in the details assumes ' + (a.adult ? a.adult.name + ', the lowest-dues category with no age limit' : 'an adult category') + '.');
     out.push('Quiet counts tee times, dining reservations, events, lessons and clinics, beverage cart and takeout orders, and house charges other than dues. Golf counts only golf season days, ' + Club.season.dayLabel() + ', so a member who last played before the course closed is not marked quiet over the winter.' + (q.first ? ' Activity records begin ' + F.date(q.first) + '.' : ''));
     if (rn) out.push('Renewals: committed is the ' + rn.rn.SEASON + ' dues of members who have renewed, ' + money0(rn.posted) + ' posted to accounts so far and ' + money0(rn.left) + ' in instalments still to come. Not yet renewed is what the others would owe at their category\'s current dues. Dues amounts in this demo are placeholders, and some renewals were added for the demo.');
     return out;

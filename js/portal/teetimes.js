@@ -1568,14 +1568,15 @@
       /** My tee times: the member's ballot entries from today on. */
       function ballotMineHTML(m) {
         if (!BL()) return '';
-        const list = BL().forMember(m.id).filter(function (e) { return e.date >= td && e.status !== 'won'; });
+        /* Won entries stay in the list too (owner, Nov 20), marked with the tee time the draw gave */
+        const list = BL().forMember(m.id).filter(function (e) { return e.date >= td && e.status !== 'withdrawn'; });
         if (!list.length) return '';
         return '<section class="tt-mine-sec bl-mine"><h2 class="tt-mine-h">Ballot entries</h2><div class="p-list tt-rounds">' + list.map(function (e) {
           const dt = fmt.toDate(e.date);
-          const pill = e.status === 'entered' ? 'Draw ' + shortDay(BL().schedule(e.date).drawOn) : 'No time';
+          const pill = e.status === 'entered' ? 'Draw ' + shortDay(BL().schedule(e.date).drawOn) : e.status === 'won' ? 'Tee time ' + fmt.time(e.drawnTime) : 'No time';
           return '<button type="button" class="tt-row" data-act="bl-row" data-id="' + esc(e.id) + '" aria-label="' + esc(longDate(e.date) + ', ballot entry. ' + pill + '. Open details') + '">' +
             '<span class="tt-row-date" aria-hidden="true"><span class="tt-rd-wk">' + esc(fmt.weekday(e.date)) + '</span><span class="tt-rd-n">' + dt.getDate() + '</span></span>' +
-            '<span class="tt-row-main"><span class="tt-row-top"><span class="tt-row-time bl-row-t">' + esc(+e.range >= 720 ? 'Any time' : fmt.time(e.time)) + '</span><span class="tt-pill' + (e.status === 'missed' ? ' is-bad' : '') + '">' + esc(pill) + '</span></span>' +
+            '<span class="tt-row-main"><span class="tt-row-top"><span class="tt-row-time bl-row-t">' + esc(+e.range >= 720 ? 'Any time' : fmt.time(e.time)) + '</span><span class="tt-pill' + (e.status === 'missed' ? ' is-bad' : e.status === 'won' ? ' is-good' : '') + '">' + esc(pill) + '</span></span>' +
               '<span class="tt-row-meta">' + esc('Ballot · ' + e.holes + ' holes · ' + (holdersOf(e, m).length ? 'With ' + niceList(holdersOf(e, m)) : 'Just you')) + '</span></span>' +
             Club.icon('chevronRight', 'tt-go') + '</button>';
         }).join('') + '</div></section>';
@@ -1585,13 +1586,16 @@
         const open = en.status === 'entered' && BL().phase(en.date) === 'open';
         const sh = Portal.openSheet({ title: 'Ballot for ' + shortDay(en.date),
           content: '<div class="tt-sheet"><p class="bl-draw">' + Club.icon('clock') + '<span>' + (en.status === 'entered' ? 'Draw on' : 'Drawn on') + ' <span>' + esc(drawWhen(en.date)) + '</span></span></p>' + entryCardHTML(en, m, { actions: false }) +
+            (en.status === 'won' ? '<p class="tt-hint">' + esc('The draw gave your group ' + fmt.time(en.drawnTime) + '. It is in your upcoming tee times.') + '</p>' : '') +
             (en.status === 'missed' ? '<p class="tt-hint">' + esc('The times you asked for went to entries drawn earlier. Times still open can be booked now.') + '</p>' : '') + '</div>',
-          footer: en.status === 'missed' ? '<button type="button" class="btn btn-primary tt-full" data-act="pick-day-book" data-date="' + esc(en.date) + '">See open times</button>'
+          footer: en.status === 'won' ? '<button type="button" class="btn btn-primary tt-full" data-act="bl-see-tt" data-tt="' + esc(en.teeTimeId || '') + '">See tee time</button>'
+            : en.status === 'missed' ? '<button type="button" class="btn btn-primary tt-full" data-act="pick-day-book" data-date="' + esc(en.date) + '">See open times</button>'
             : open && en.memberId === m.id ? '<div class="tt-detail-acts"><button type="button" class="btn" data-act="bl-edit" data-id="' + esc(en.id) + '">Change entry</button><button type="button" class="btn btn-danger" data-act="bl-withdraw" data-id="' + esc(en.id) + '">Withdraw</button></div>' : '' });
         if (sh.duplicate) return;
         ui.on(sh.el, 'click', '[data-act=bl-edit]', function () { sh.close(); openBallot(en.date, BL().entry(en.id)); });
         ui.on(sh.el, 'click', '[data-act=bl-withdraw]', function () { sh.close(); askWithdraw(en.id); });
         ui.on(sh.el, 'click', '[data-act=pick-day-book]', function () { sh.close(); tabs.activate('book'); setDate(en.date); });
+        ui.on(sh.el, 'click', '[data-act=bl-see-tt]', function (ev, x) { sh.close(); if (x.dataset.tt && S.find('teeTimes', x.dataset.tt)) openDetail(x.dataset.tt); });
       });
 
       /* ======================= My tee times ======================= */

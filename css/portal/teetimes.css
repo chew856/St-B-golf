@@ -184,6 +184,7 @@ body.portal .tt-mine-h { margin: 0 0 10px; font-size: 1.375rem; }
 .tt-row-meta { font-size: 0.8125rem; line-height: 1.35; color: var(--text-2); overflow-wrap: break-word; }
 .tt-pill { display: inline-block; font-size: 0.75rem; font-weight: 500; padding: 2px 8px; border-radius: 999px; background: var(--sage-100); color: var(--forest-800); }
 .tt-pill.is-bad { background: var(--danger-bg); color: var(--danger); }
+.tt-pill.is-good { background: var(--sage-100); color: var(--success); }   /* a ballot entry that won a tee time */
 .tt-all-row { justify-content: space-between; min-height: 52px; color: var(--forest-800); font-weight: 500; }
 .tt-past-list { list-style: none; margin: 0; padding: 0; }
 .tt-past-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); }

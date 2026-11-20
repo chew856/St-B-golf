@@ -710,6 +710,13 @@
     ui.on(p, 'click', '[data-action=lreset]', function () { Object.assign(lf, { member: '', category: '', source: '', type: 'all', from: '', to: '', q: '', page: 0 }); tabLedger(p); });
   }
 
+  /* Tabs that redraw themselves get a fresh panel each time, so the click handlers of the earlier drawing (which
+     hold that drawing's month and list) go away with it instead of piling up and firing on stale data. */
+  const panels = {};
+  function fresh(p) {
+    if (!p.dataset.drawn) { p.dataset.drawn = '1'; return p; }
+    const n = p.cloneNode(false); if (p.parentNode) p.replaceWith(n); return n;
+  }
   /* The monthly "Dues run" (1/12 of dues on the 1st) was removed (owner, Nov 20): dues are paid in full or on the
      handbook's time payment plan (renewals). Past demo instalment charges stay in the ledger as history. */
 

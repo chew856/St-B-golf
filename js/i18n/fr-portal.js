@@ -3069,6 +3069,8 @@
     [/^Ballot opens (.+)$/, 'Tirage dès le $1'],
     [/^Ballot for (.+)$/, 'Tirage du $1'],
     [/^Draw (\S+ \d+ \S+)$/, 'Tirage $1'],
+    [/^Tee time (\d{1,2}:\d{2} [AP]M)$/, 'Départ $1'],
+    [/^The draw gave your group (.+)\. It is in your upcoming tee times\.$/, 'Le tirage a attribué $1 à votre groupe. Le départ figure dans vos départs à venir.'],
     [/^No tee time on (.+)$/, 'Aucun départ le $1'],
     [/^The ballot gave your group (.+)\.$/, 'Le tirage a attribué $1 à votre groupe.'],
     [/^The draw looks for a time from (.+?) to (.+?), closest to (.+) first\.$/, 'Le tirage cherche une heure de $1 à $2, la plus proche de $3 d’abord.'],

@@ -510,7 +510,7 @@
     return memo(ctx, 'spend', function () {
       const inR = inRange(ctx), per_ = {};
       all('charges').forEach(function (c) {
-        if (!c.memberId || !inR(c.date) || c.category === 'Dues' || num(c.amount) <= 0 || c.reversedBy) return;   /* an undone or reversed charge is not spend */
+        if (!c.memberId || !inR(c.date) || c.category === 'Dues' || c.category === 'F&B assessment' || num(c.amount) <= 0 || c.reversedBy) return;   /* an undone or reversed charge is not spend; the F&B assessment is a pre-payment */
         const p = per_[c.memberId] = per_[c.memberId] || { total: 0, cats: {} };
         p.total += num(c.amount); p.cats[c.category || 'Other'] = (p.cats[c.category || 'Other'] || 0) + num(c.amount);
       });
@@ -802,7 +802,7 @@
       const spent = {}; s.list.forEach(function (a) { spent[a.id] = 1; });
       const cats = {};
       all('charges').forEach(function (c) {
-        if (!c.memberId || !inR(c.date) || c.category === 'Dues' || num(c.amount) <= 0 || c.reversedBy || !c.category || c.category === 'Other') return;
+        if (!c.memberId || !inR(c.date) || c.category === 'Dues' || c.category === 'F&B assessment' || num(c.amount) <= 0 || c.reversedBy || !c.category || c.category === 'Other') return;
         const x = cats[c.category] = cats[c.category] || { cat: c.category, who: {}, n: 0, total: 0 };
         x.who[c.memberId] = 1; x.n++; x.total += num(c.amount);
       });

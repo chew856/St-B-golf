@@ -130,7 +130,7 @@
               return '<li class="hbx-row" data-id="' + esc(s.id) + '">' +
                 '<button type="button" class="hbx-main" data-action="hbx-edit" data-id="' + esc(s.id) + '" aria-label="Edit ' + esc(s.title) + '">' +
                   '<span class="hbx-title">' + esc(s.title) + (st.label ? ' ' + U.badge(st.label, 'brass') : '') + (st.french ? '' : ' ' + U.badge('English only', 'outline')) + '</span>' +
-                  '<span class="hbx-sum muted">' + esc(H.plain(s.body)) + '</span></button>' +
+                  '<span class="hbx-sum muted">' + esc(H.summary(s.body)) + '</span></button>' +
                 '<span class="hbx-acts">' +
                   '<button type="button" class="btn btn-ghost btn-sm hbx-ic" data-action="hbx-up" data-id="' + esc(s.id) + '" title="Move up" aria-label="Move ' + esc(s.title) + ' up"' + (i === 0 ? ' disabled' : '') + '>' + Club.icon('arrowUp') + '</button>' +
                   '<button type="button" class="btn btn-ghost btn-sm hbx-ic" data-action="hbx-down" data-id="' + esc(s.id) + '" title="Move down" aria-label="Move ' + esc(s.title) + ' down"' + (i === g.secs.length - 1 ? ' disabled' : '') + '>' + Club.icon('arrowDown') + '</button>' +

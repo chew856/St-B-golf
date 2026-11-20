@@ -344,26 +344,25 @@
     return n;
   }
   /* Demo, once ('demoBackfills' marker 'fnbAssessment1'): every active adult member gets the assessment for the season
-     on file (2026 in this demo, charged April 1 and pre-paid by pre-authorized debit a week later), and the credit
+     on file (2026 in this demo, charged April 1), and the credit
      then pays their first in-season Dining charges in date order, one draw-down line per purchase, gratuities left out.
-     The demo's earlier Dining charges were already paid in full by monthly payments, so a member who used the credit
-     owes up to $375 less today; Reports revenue does not change (the assessment and its draw-downs are not revenue). */
+     What members owe today does not change: the demo's monthly payments already covered those Dining charges, so they
+     now count as paying the assessment, and any part of the credit left unused was pre-paid by pre-authorized debit a
+     week after April 1. Reports revenue does not change (the assessment and its draw-downs are not revenue). */
   const FNB_MARK = 'fnbAssessment1';
   function fnbDemo() {
     if (S.find('demoBackfills', FNB_MARK) || !S.getObj('billingSeeded', false) || !S.all('members').length) return;
     const year = fnbYear(), sa = seasonApi(); if (!sa) return;
     const start = sa.start(year), end = sa.end(year), T = today();
     if (T < start) return;
-    const amt = fnbAmount(), charges = S.all('charges').slice(), payments = S.all('payments').slice(), bal = {}, made = [];
+    const amt = fnbAmount(), charges = S.all('charges').slice(), payments = S.all('payments').slice(), made = [];
     let nc = 0, np = 0, nd = 0;
     S.all('members').filter(function (m) { return m.status === 'active' && fnbAdult(m); }).forEach(function (m) {
       const mine = charges.filter(function (c) { return c.memberId === m.id; });
       if (mine.some(function (c) { return c.category === FNB_CAT && c.refId === 'fnb-' + year; })) return;
       const ach = { id: 'chg_fnb' + year + '_' + m.id, memberId: m.id, date: start, description: year + ' Food and Beverage Assessment', category: FNB_CAT, amount: amt, source: 'billing',
         refId: 'fnb-' + year, statementId: null, createdAt: start + 'T09:00:00.000Z', demo: FNB_MARK };
-      const payDate = Club.date.addDays(start, 6) <= T ? Club.date.addDays(start, 6) : start;
-      const pay = { id: 'pay_fnb' + year + '_' + m.id, memberId: m.id, date: payDate, amount: amt, method: 'ACH', reference: 'Pre-authorized debit, ' + year + ' F&B assessment', createdAt: payDate + 'T09:00:00.000Z', demo: FNB_MARK };
-      charges.push(ach); payments.push(pay); nc++; np++; made.push([ach, pay]);
+      charges.push(ach); nc++;
       let left = amt, used = 0;
       mine.filter(function (c) { return isFnbPurchase(c) && (+c.amount || 0) > 0 && live(c) && c.date >= start && c.date <= end && c.date <= T; }).sort(byDate).forEach(function (c, i) {
         if (left <= 0.004) return;
@@ -373,17 +372,21 @@
           refId: 'fnbdraw-' + year, fnbFor: c.id, statementId: null, createdAt: c.date + 'T12:30:00.000Z', demo: FNB_MARK });
         nd++;
       });
-      bal[m.id] = r2(amt - amt - used);
+      /* What the credit did not use is paid by pre-authorized debit a week after the assessment; the rest was already
+         paid, since the demo's monthly payments covered the Dining charges the credit now pays. */
+      const rest = r2(amt - used), payDate = Club.date.addDays(start, 6) <= T ? Club.date.addDays(start, 6) : start;
+      const pay = rest > 0.004 ? { id: 'pay_fnb' + year + '_' + m.id, memberId: m.id, date: payDate, amount: rest, method: 'ACH', reference: 'Pre-authorized debit, ' + year + ' F&B assessment', createdAt: payDate + 'T09:00:00.000Z', demo: FNB_MARK } : null;
+      if (pay) { payments.push(pay); np++; }
+      made.push([ach, pay]);
     });
     S.replace('charges', charges);
     S.replace('payments', payments);
-    const ms = S.all('members'); ms.forEach(function (m) { if (bal[m.id]) m.balance = r2((m.balance || 0) + bal[m.id]); }); S.replace('members', ms);
     if (Club.receipts) made.forEach(function (x) {
       try {
         Club.receipts.create({ memberId: x[0].memberId, title: x[0].description, date: x[0].date, lines: [{ name: 'Food and Beverage Assessment, ' + year + ' season (' + sa.dayLabel() + '), set up as an F&B credit', qty: 1, price: amt }],
           total: amt, method: 'account', source: 'billing', refId: x[0].refId, chargeId: x[0].id });
-        Club.receipts.create({ memberId: x[1].memberId, title: 'Account payment', date: x[1].date, lines: [{ name: 'Payment on account', qty: 1, price: amt }], total: amt,
-          method: 'other', methodLabel: methodLabel('ACH'), source: 'billing', refId: x[1].id, paymentId: x[1].id, note: 'Reference ' + x[1].reference, tenders: [{ method: 'other', amount: amt }], channel: 'counter' });
+        if (x[1]) Club.receipts.create({ memberId: x[1].memberId, title: 'Account payment', date: x[1].date, lines: [{ name: 'Payment on account', qty: 1, price: x[1].amount }], total: x[1].amount,
+          method: 'other', methodLabel: methodLabel('ACH'), source: 'billing', refId: x[1].id, paymentId: x[1].id, note: 'Reference ' + x[1].reference, tenders: [{ method: 'other', amount: x[1].amount }], channel: 'counter' });
       } catch (e) { console.error('F&B demo receipt failed', e); }
     });
     S.insert('demoBackfills', { id: FNB_MARK, at: new Date().toISOString(), year: year, assessments: nc, payments: np, drawDowns: nd });

@@ -8,7 +8,9 @@
 
 
   const CATS = ['Dues', 'Golf', 'Pro Shop', 'Dining', 'Events', 'Lessons', 'Other'];
-  const METHODS = ['ACH', 'Card', 'Check'];
+  const METHODS = ['ACH', 'EFT', 'Card', 'Debit', 'Cash', 'Check'];
+  const FNB_CAT = Club.shared.billing.FNB_CAT, TP = Club.shared.billing.TP;
+  const fmtEn = Club.fmtEn || Club.fmt;   /* stored text stays English */
   function stLabel(s) { return s ? s[0].toUpperCase() + s.slice(1) : ''; }
   const ST_KIND = { draft: 'outline', sent: 'info', paid: 'good', overdue: 'bad' };
   /* ---------------- Undo ----------------
@@ -190,6 +192,14 @@
     function upd() { const m = S.find('members', sel.value); hint.innerHTML = m ? 'Current balance for ' + esc(mname(m.id)) + ': <strong class="ink-2">' + money(m.balance || 0) + '</strong>' : ''; }
     sel.addEventListener('change', upd); upd();
   }
+  /* Payment methods (the Time Payment Policy accepts EFT, cash, cheque, debit or credit card; pre-authorized debit is the
+     club's usual monthly method). Stored values: ACH, EFT, Card (credit card), Debit, Cash, Check. */
+  function methodOptions(sel) { return ui.options(METHODS.map(function (x) { return { value: x, label: x === 'Card' ? 'Credit card' : methodLabel(x) }; }), sel || 'ACH'); }
+  /** The member's time payment plan, if any, with what is owed on it now. */
+  function tpFor(memberId) {
+    const RN = Club.billing.renewal, r = memberId ? RN.forMember(memberId) : null;
+    return r && r.plan === 'monthly' ? { r: r, ps: RN.status(r) } : null;
+  }
   function openRecordPayment(memberId, done, o) {
     o = o || {};
     const m = S.find('members', memberId);
@@ -197,8 +207,9 @@
       ui.field({ label: 'Member', name: 'memberId', type: 'select', required: true, span2: true, options: memberOptions(memberId) }) +
       ui.field({ label: 'Amount', name: 'amount', type: 'number', step: 0.01, min: 0.01, required: true, value: o.amount != null ? r2(o.amount) : (m && m.balance > 0 ? r2(m.balance) : '') }) +
       ui.field({ label: 'Date', name: 'date', type: 'date', value: today(), required: true }) +
-      ui.field({ label: 'Method', name: 'method', type: 'select', options: ui.options(METHODS.map(function (x) { return { value: x, label: methodLabel(x) }; }), 'ACH') }) +
+      ui.field({ label: 'Method', name: 'method', type: 'select', options: methodOptions(o.method) }) +
       ui.field({ label: 'Reference', name: 'reference', placeholder: 'Cheque number or confirmation' }) +
+      '<div class="span-2 bil-tp-host"></div>' +
       '<div class="span-2 bil-balance-hint muted"></div></form>';
     const api = ui.modal({
       title: 'Record payment', eyebrow: o.statement ? 'Statement for ' + monthLabel(o.statement.period) : 'House account', body: body,
@@ -213,34 +224,62 @@
           if (v.memberId && !mem) { setErr(form, 'memberId', 'Select a member.'); ok = false; }
           if (!ok) { const f = ui.$('.invalid', form); if (f) f.focus(); return false; }
           const amt = r2(v.amount);
+          const tp = v.toward === 'plan' ? tpFor(v.memberId) : null;
+          const fee = tp && v.method === 'Card' ? r2(amt * TP.CARD_FEE) : 0;
           const forSt = o.statement && v.memberId === o.statement.memberId;
           let stPaid = false;
           const p = undoRun(function () {
-            const p0 = S.insert('payments', { memberId: v.memberId, date: v.date, amount: amt, method: v.method, reference: v.reference || '' });
+            const p0 = S.insert('payments', Object.assign({ memberId: v.memberId, date: v.date, amount: amt, method: v.method, reference: v.reference || '' }, tp ? { toward: 'tp-' + tp.r.id } : {}));
             S.update('members', v.memberId, { balance: r2((mem.balance || 0) - amt) });
             /* A statement is paid when this payment covers what is still owed on it, or earlier part payments and this one
                together cover its total; a part payment leaves it open. */
             if (forSt && (amt >= r2(o.amount || 0) - 0.005 || paidToward(o.statement) >= r2(o.statement.total || 0) - 0.005)) { stPaid = true; S.update('statements', o.statement.id, { status: 'paid', paidOn: v.date }); }
-            paymentReceipt(p0);
+            paymentReceipt(p0, tp ? 'Toward the ' + RENEW_SEASON + ' time payment plan.' : null);
+            /* Time Payment Policy: credit card payments are subject to a 1.5% processing fee, posted as its own line. */
+            if (fee > 0) Club.chargeMember(v.memberId, { description: 'Credit card processing fee (1.5%) on a time payment of ' + fmtEn.money(amt), category: 'Dues', amount: fee, source: 'billing', refId: 'tpcard-' + p0.id, date: v.date,
+              title: 'Credit card processing fee', lines: [{ name: 'Processing fee, 1.5% of a ' + fmtEn.money(amt) + ' credit card payment toward the ' + RENEW_SEASON + ' time payment plan', qty: 1, price: fee }] });
             return p0;
-          }, { message: function () { return 'Payment of ' + fmt.money(amt) + ' recorded for ' + mname(v.memberId) + (forSt ? (stPaid ? '. Statement marked paid' : '. Part payment: the statement stays open') : ''); },
-            undone: function () { return 'Payment reversed. ' + fmt.money(amt) + ' is back on the balance' + (stPaid ? ' and the statement is open again' : ''); }, after: rerenderAfterUndo });
+          }, { message: function () { return 'Payment of ' + fmt.money(amt) + ' recorded for ' + mname(v.memberId) + (tp ? ' toward the time payment plan' : '') + (fee > 0 ? '. Card fee of ' + fmt.money(fee) + ' added' : '') + (forSt ? (stPaid ? '. Statement marked paid' : '. Part payment: the statement stays open') : ''); },
+            undone: function () { return 'Payment reversed. ' + fmt.money(amt) + ' is back on the balance' + (fee > 0 ? ' and the card fee is taken off' : '') + (stPaid ? ' and the statement is open again' : ''); }, after: rerenderAfterUndo });
           if (done) done(p);
         }
       }]
     });
     wireBalanceHint(api.el);
+    /* "Apply to": shown when the member has a time payment plan. A credit card payment toward the plan adds the fee. */
+    const form = ui.$('form', api.el), host = ui.$('.bil-tp-host', form);
+    function drawTp() {
+      const tp = tpFor(ui.$('select[name=memberId]', form).value);
+      if (!tp) { host.innerHTML = ''; return; }
+      const owed = tp.ps.owedNow, nx = tp.ps.next;
+      host.innerHTML = '<div class="field"><span class="bil-field-label">Apply to</span><div class="bil-radio-row" role="radiogroup" aria-label="Apply to">' +
+        '<label class="bil-radio"><input type="radio" name="toward" value="plan"' + (o.toward !== 'account' ? ' checked' : '') + '><span>' + RENEW_SEASON + ' time payment plan</span></label>' +
+        '<label class="bil-radio"><input type="radio" name="toward" value="account"' + (o.toward === 'account' ? ' checked' : '') + '><span>Account balance</span></label></div>' +
+        '<span class="field-hint">' + (owed > 0.005 ? esc(fmt.money(owed)) + ' due on the plan now' : nx ? 'Next payment ' + esc(fmt.money(nx.owed || nx.amount)) + ' due ' + esc(fmt.date(nx.date)) : 'Nothing due on the plan') + '</span></div>' +
+        '<p class="bil-fee-hint" hidden></p>';
+      fee();
+    }
+    function fee() {
+      const h = ui.$('.bil-fee-hint', form); if (!h) return;
+      const plan = ui.$('input[name=toward]:checked', form), method = ui.$('[name=method]', form).value, amt = +ui.$('[name=amount]', form).value || 0;
+      const on = !!plan && plan.value === 'plan' && method === 'Card';
+      h.hidden = !on;
+      if (on) h.textContent = 'Credit card payments toward a time payment plan carry a 1.5% processing fee: ' + fmt.money(r2(amt * TP.CARD_FEE)) + ' will be added to the account as its own charge.';
+    }
+    ui.$('select[name=memberId]', form).addEventListener('change', drawTp);
+    form.addEventListener('change', fee); form.addEventListener('input', fee);
+    drawTp();
     return api;
   }
 
   /** The receipt for a payment staff recorded (Club.receipts; card numbers are not taken here, so the method reads 'Card'). */
-  const RECEIPT_METHOD = { Card: 'card', Cash: 'cash' };
-  function paymentReceipt(p) {
+  const RECEIPT_METHOD = { Card: 'card', Debit: 'card', Cash: 'cash' };
+  function paymentReceipt(p, extraNote) {
     if (!Club.receipts) return null;
     try {
       return Club.receipts.create({ memberId: p.memberId, title: 'Account payment', lines: [{ name: 'Payment on account', qty: 1, price: p.amount }], total: p.amount,
         date: p.date, method: RECEIPT_METHOD[p.method] || 'other', methodLabel: methodLabel(p.method) || 'Other', source: 'billing', refId: p.id, paymentId: p.id,
-        note: p.reference ? 'Reference ' + p.reference : null,
+        note: [p.reference ? 'Reference ' + p.reference : '', extraNote || ''].filter(Boolean).join('. ') || null,
         /* Recorded by staff at the office: the daily close (js/modules/accounting.js) counts card in the terminal batch. */
         tenders: [{ method: RECEIPT_METHOD[p.method] || 'other', amount: p.amount }], channel: 'counter' });
     } catch (e) { console.error('Receipt failed for payment ' + p.id, e); return null; }
@@ -294,7 +333,8 @@
       const a = ag[id]; const m = S.find('members', id);
       return '<tr class="clickable" data-href="billing/' + esc(id) + '"><td>' + ui.person(mname(id), m ? 'No. ' + esc(m.memberNo) + (m.status !== 'active' ? ' · ' + esc(m.status) : '') : '', 'sm') + '</td><td class="num">' + (a.d30 ? money(a.d30) : '<span class="muted">0</span>') + '</td><td class="num">' + (a.d60 ? money(a.d60) : '<span class="muted">0</span>') + '</td><td class="num' + (a.d90 ? ' bil-bad' : '') + '">' + (a.d90 ? money(a.d90) : '<span class="muted">0</span>') + '</td><td class="num primary-cell">' + money(a.total) + '</td></tr>';
     };
-    const byMethod = METHODS.map(function (mth) { return { label: methodLabel(mth), value: r2(sum(pays.filter(function (x) { return x.method === mth; }), function (x) { return x.amount; })) }; });
+    const byMethod = METHODS.map(function (mth) { return { label: methodLabel(mth), value: r2(sum(pays.filter(function (x) { return x.method === mth; }), function (x) { return x.amount; })) }; })
+      .filter(function (x, i) { return x.value > 0 || ['ACH', 'Card', 'Check'].indexOf(METHODS[i]) >= 0; });
 
     p.innerHTML = statStrip([
       { label: 'Accounts receivable', html: moneyCount(ar), meta: owing + ' accounts carry a balance' },

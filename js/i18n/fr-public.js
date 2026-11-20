@@ -704,3 +704,24 @@
   if (window.Club && Club.i18n && typeof Club.i18n.add === 'function') Club.i18n.add(dict);
   else window.__i18nQueue = (window.__i18nQueue || []).concat([dict]);
 })();
+
+/* ==========================================================================
+   Handbook: the public site's Good to know (js/public/book.js) shows the dress code and hours from the club's 2025
+   Membership Handbook. The dress code text itself and the hours lines are translated in js/i18n/fr-portal.js
+   (block "Handbook", Club.handbookFr, loaded on this page too); these are the words around them.
+   ========================================================================== */
+(function () {
+  'use strict';
+  var portal = document.body ? document.body.classList.contains('portal') : /member\.html/.test(location.pathname);
+  if (portal || !window.Club || !Club.i18n || typeof Club.i18n.add !== 'function') return;
+  var NB = ' ';
+  Club.i18n.add({ strings: {
+    'Appropriate golf attire is required for all players.': 'Une tenue de golf appropriée est exigée de tous les joueurs.',
+    'Read the dress code': 'Lire le code vestimentaire',
+    'Hide the dress code': 'Masquer le code vestimentaire',
+    'Hours.': 'Heures.',
+    'The Pro Shop is open Monday to Sunday from 6:00 AM, as dictated by business and hours of daylight.': 'La boutique du pro est ouverte du lundi au dimanche dès 6' + NB + 'h, selon l’achalandage et les heures d’ensoleillement.',
+    'See all hours': 'Voir toutes les heures',
+    'Hide the hours': 'Masquer les heures'
+  } });
+})();

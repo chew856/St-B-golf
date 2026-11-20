@@ -1451,7 +1451,7 @@
       /* ---- Results above the tabs (until closed) ---- */
       function noticeList(m) {
         if (!BL()) return [];
-        return BL().forMember(m.id).filter(function (e) { return e.date >= td && (e.status === 'won' || e.status === 'missed') && !e.seenAt && e.memberId === m.id; });
+        return BL().forMember(m.id).filter(function (e) { return e.date >= td && (e.status === 'won' || e.status === 'missed') && !BL().isSeen(e, m.id); });
       }
       function paintBallot() {
         const h = ui.$('.bl-host', view); if (!h) return;
@@ -1469,7 +1469,7 @@
           '</article>';
         }).join('') + '</section>' : '';
       }
-      ui.on(view, 'click', '[data-act=bl-seen]', function (e, b) { BL().seen(b.dataset.id); paintBallot(); });
+      ui.on(view, 'click', '[data-act=bl-seen]', function (e, b) { BL().seen(b.dataset.id, (Portal.member() || me).id); paintBallot(); });
       ui.on(view, 'click', '[data-act=bl-see]', function (e, b) { tabs.activate('mine'); if (b.dataset.tt && S.find('teeTimes', b.dataset.tt)) openDetail(b.dataset.tt); });
       ui.on(view, 'click', '[data-act=pick-day-book]', function (e, b) {
         tabs.activate('book');

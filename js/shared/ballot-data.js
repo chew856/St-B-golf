@@ -31,7 +31,7 @@
                       0 to 720), earliest, latest ('HH:MM', the window derived from time and range), holes (18|9), notes,
                       source ('portal'|'staff'), enteredBy, createdAt, updatedAt,
                       status: 'entered'|'won'|'missed'|'withdrawn', teeTimeId, drawnTime, missedReason, withdrawnAt,
-                      seenAt (the member closed the result notice) }
+                      seenBy (members in the group who closed the result notice) }
      ballotDraws    { id: 'bd_YYYYMMDD', date, ranAt, by: 'auto'|'staff', staffName, demo, seed, order: [entry ids in draw
                       order], open (free tee times before the draw), results: [{ entryId, memberId, status, time, teeTimeId,
                       reason }] }. The record is the draw's marker: a date is drawn once.
@@ -45,7 +45,7 @@
         member already has a round too close (the staff overlap rule), and where the guest limit (Member Guest Policy,
         Club.teeRules.guestLimit) allows each member's guests. A time is free when it has no tee time (any booking at
         all, including staff bookings and shotguns), is not inside a staff block, and nobody is holding it right now.
-     3. A placed entry becomes a booked tee time ('tt_bal_<entry id>', source 'ballot') and the entry is 'won'. An entry
+     3. A placed entry becomes a booked tee time ('tt_' + the entry id ('tt_bal_...'), source 'ballot') and the entry is 'won'. An entry
         that cannot be placed is 'missed' with the reason. Results show in the portal (Tee times and Home) and on the
         staff Weekend ballot page.
      The draw runs by itself on whichever page (staff or portal) loads first after 12:00 PM on draw day (runDue). The
@@ -304,7 +304,7 @@
         return res;
       }
       const t = cands[0];
-      res.status = 'won'; res.time = t; res.teeTimeId = 'tt_bal_' + id;
+      res.status = 'won'; res.time = t; res.teeTimeId = 'tt_' + id;
       free.splice(free.indexOf(t), 1);
       tees.push({ date: iso, time: t, holes: e.holes, status: 'booked', players: e.players });
       return res;
@@ -341,9 +341,9 @@
   }
   /** Run every draw that is due (ballot days from today to 13 days ahead whose draw time has passed). Idempotent. */
   function runDue(nowMs) {
-    const now = nowMs == null ? Date.now() : nowMs, done = [];
+    const now = nowMs == null ? Date.now() : nowMs, done = [], base = S.iso(new Date(now));
     for (let i = 0; i <= DRAW_DAYS; i++) {
-      const iso = Club.date.fromToday(i);
+      const iso = addDays(base, i);
       if (phase(iso, now) !== 'due') continue;
       try { const r = draw(iso, { by: 'auto', nowMs: now }); if (r.ok) done.push(iso); } catch (e) { console.error('Ballot draw failed for ' + iso, e); }
     }
@@ -367,8 +367,9 @@
     check: check, enter: enter, change: change, withdraw: withdraw,
     windowOf: windowOf, guestLimit: guestLimit, guestsByHost: guestsByHost, standing: standing,
     drawOrder: drawOrder, seedFor: seedFor, plan: plan, draw: draw, runDue: runDue, drawRecord: drawRecord, upcoming: upcoming,
-    /** The member closed the result notice for this entry (portal). */
-    seen: function (id) { const e = S.find('ballotEntries', id); if (e && !e.seenAt) S.update('ballotEntries', id, { seenAt: new Date().toISOString() }); }
+    /** A member in the group closed the result notice for this entry (portal). */
+    seen: function (id, memberId) { const e = S.find('ballotEntries', id); if (e && (e.seenBy || []).indexOf(memberId) < 0) S.update('ballotEntries', id, { seenBy: (e.seenBy || []).concat([memberId]) }); },
+    isSeen: function (e, memberId) { return (e.seenBy || []).indexOf(memberId) >= 0; }
   };
 
   /* ---------------- Demo (once per browser, 'demoBackfills' marker 'ballot1') ----------------
@@ -398,7 +399,8 @@
       if (drawn.some(function (x) { return fmt.toDate(x).getDay() === fmt.toDate(iso).getDay(); })) continue;
       drawn.push(iso);
     }
-    drawn.forEach(function (iso) {
+    let daveDays = 0;
+    drawn.sort().forEach(function (iso) {
       const s = schedule(iso);
       const tees = S.where('teeTimes', function (x) { return x.date === iso && x.status === 'booked' && toMin(x.time) < 660 && x.source !== 'ballot'; })
         .filter(function (x) { const h = (x.players || [])[0]; return h && h.type === 'member' && h.memberId && h.memberId !== DAVE; })
@@ -421,22 +423,25 @@
           holes: 18, notes: '', status: 'missed', source: 'portal', enteredBy: m.id, teeTimeId: null, missedReason: 'Every tee time from ' + EN.time(w.earliest) + ' to ' + EN.time(w.latest) + ' went to entries drawn earlier.', drawnAt: isoAt(s.drawAt), createdAt: pickTime(s) });
         list.push({ entryId: e.id, memberId: m.id, status: 'missed', time: null, teeTimeId: null, reason: e.missedReason });
       }
-      /* Dave: missed on the Saturday, won on the Sunday. */
+      /* Dave (when he is not already in an entry that day): his first such day missed, the second won. */
       const dave = member(DAVE);
-      if (dave && !busy[DAVE]) {
-        const sat = s.kind === 'Saturday';
-        const pref = '08:00', w = windowOf(pref, sat ? 30 : 60);
+      if (dave && !list.some(function (r) { const e = S.find('ballotEntries', r.entryId); return e && (e.players || []).some(function (p) { return p.memberId === DAVE; }); })) {
+        const sat = !daveDays++;
+        /* his preferred time sits inside his category's weekend play times */
+        const pref = ['08:00', '09:00', '10:00', '11:00', '12:00'].filter(function (t) { return canPlay(dave, iso, t).ok; })[0] || '12:00';
+        const w = windowOf(pref, sat ? 30 : 60);
         const taken = {}; S.where('teeTimes', function (x) { return x.date === iso && x.status !== 'cancelled'; }).forEach(function (x) { taken[x.time] = 1; });
         const blocks = S.where('teeBlocks', function (b) { return b.date === iso; });
-        const spot = sat ? null : slotList().filter(function (t) { return toMin(t) >= toMin(w.earliest) && toMin(t) <= toMin(w.latest) && !taken[t] && !blocks.some(function (b) { return t >= b.start && t < b.end; }) && canPlay(dave, iso, t).ok; })
-          .sort(function (a, b) { return Math.abs(toMin(a) - 480) - Math.abs(toMin(b) - 480); })[0];
+        const pool = S.where('teeTimes', function (x) { return x.date === iso; });
+        const spot = sat ? null : slotList().filter(function (t) { return toMin(t) >= toMin(w.earliest) && toMin(t) <= toMin(w.latest) && !taken[t] && !blocks.some(function (b) { return t >= b.start && t < b.end; }) && canPlay(dave, iso, t).ok && !clash(DAVE, iso, t, 18, pool); })
+          .sort(function (a, b) { return Math.abs(toMin(a) - toMin(pref)) - Math.abs(toMin(b) - toMin(pref)); })[0];
         const players = [{ memberId: DAVE, name: nameOf(dave), type: 'member', cart: true }, { memberId: null, name: 'Natalie Hollis', type: 'guest', cart: true, hostId: DAVE, pays: 'host' }];
         const base = { date: iso, memberId: DAVE, players: players, time: pref, range: sat ? 30 : 60, earliest: w.earliest, latest: w.latest, holes: 18, notes: '', source: 'portal', enteredBy: DAVE, drawnAt: isoAt(s.drawAt), createdAt: pickTime(s) };
         if (spot) {
           const id = S.uid('bal');
-          S.insert('teeTimes', { id: 'tt_bal_' + id, date: iso, time: spot, holes: 18, players: players.map(function (p) { return Object.assign({}, p, { paid: false }); }), status: 'booked', notes: '', eventId: null, startedAt: null, finishedAt: null, bookedBy: DAVE, source: 'ballot', ballotEntryId: id, createdAt: isoAt(s.drawAt) });
-          ins(Object.assign(base, { id: id, status: 'won', teeTimeId: 'tt_bal_' + id, drawnTime: spot }));
-          list.push({ entryId: id, memberId: DAVE, status: 'won', time: spot, teeTimeId: 'tt_bal_' + id, reason: '' });
+          S.insert('teeTimes', { id: 'tt_' + id, date: iso, time: spot, holes: 18, players: players.map(function (p) { return Object.assign({}, p, { paid: false }); }), status: 'booked', notes: '', eventId: null, startedAt: null, finishedAt: null, bookedBy: DAVE, source: 'ballot', ballotEntryId: id, createdAt: isoAt(s.drawAt) });
+          ins(Object.assign(base, { id: id, status: 'won', teeTimeId: 'tt_' + id, drawnTime: spot }));
+          list.push({ entryId: id, memberId: DAVE, status: 'won', time: spot, teeTimeId: 'tt_' + id, reason: '' });
         } else {
           const e = ins(Object.assign(base, { status: 'missed', teeTimeId: null, missedReason: 'Every tee time from ' + EN.time(w.earliest) + ' to ' + EN.time(w.latest) + ' went to entries drawn earlier.' }));
           list.push({ entryId: e.id, memberId: DAVE, status: 'missed', time: null, teeTimeId: null, reason: e.missedReason });

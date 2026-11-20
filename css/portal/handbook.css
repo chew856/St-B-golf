@@ -13,7 +13,7 @@ body.portal .ph-pdf { flex: 0 0 auto; min-height: 44px; }
 .ph-side { margin-bottom: 16px; }
 .ph-toc-g + .ph-toc-g { margin-top: 12px; }
 .ph-toc-g[hidden], .ph-toc li[hidden], .ph-group[hidden], .ph-sec[hidden] { display: none; }
-.ph-toc h3 { margin: 0 0 2px; font-family: var(--sans); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.02em; color: var(--text-3); text-transform: uppercase; }
+body.portal .ph-toc h3 { margin: 0 0 2px; font-family: var(--sans); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.02em; color: var(--text-3); text-transform: uppercase; }
 .ph-toc ul { list-style: none; margin: 0; padding: 0; }
 .ph-toc a { display: flex; align-items: center; min-height: 40px; padding: 6px 8px; margin: 0 -8px; border-radius: 8px; font-size: 0.9375rem; color: var(--text); text-decoration: none; }
 @media (hover: hover) { .ph-toc a:hover { background: var(--sage-50); color: var(--forest-800); text-decoration: none; } }

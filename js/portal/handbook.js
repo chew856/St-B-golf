@@ -43,7 +43,7 @@
 
   function sectionHTML(sec) {
     const v = H.view(sec), id = domId(sec.id), skip = H.french() ? ' data-i18n-skip' : '';
-    const first = H.plain(v.body);
+    const first = H.summary(v.body);
     return '<div class="pk-acc ph-sec" data-acc="' + esc(id) + '" id="' + esc(id) + '" data-sec="' + esc(sec.id) + '">' +
       '<button type="button" class="pk-acc-head" aria-expanded="false" aria-controls="' + esc(id) + '-b">' +
         '<span class="pk-acc-text"' + skip + ' lang="' + v.lang + '"><span class="pk-acc-title">' + esc(v.title) + '</span><span class="pk-acc-sum ph-sum">' + esc(first) + '</span></span>' +

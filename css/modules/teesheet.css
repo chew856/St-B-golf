@@ -698,6 +698,7 @@ button.ts-slot.open.is-held .ts-dash { display: block; border-top-style: dotted;
 
 /* ---------- Handbook rules (Nov 20): groups of five, guest limit, override reason ---------- */
 /* A group of five (Fivesome Policy, staff only) shows five places in the row; the phone layout keeps two columns. */
+.ts-prow[hidden] { display: none; }
 .ts-slots.is-five { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .ts-mark.five { background: var(--sage-100); color: var(--forest-800); cursor: help; }
 .ts-five { display: flex; align-items: center; gap: 4px 12px; flex-wrap: wrap; padding-top: 4px; }

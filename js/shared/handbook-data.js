@@ -284,9 +284,14 @@
     });
     return out.join('');
   }
-  /** Markup -> plain text (search and one-line summaries). */
+  /** Markup -> plain text (search). */
   function plain(body) {
     return String(body || '').replace(/\*\*/g, '').replace(/^\s*(#{2,4}|[-•·]|\d{1,3}[.)])\s+/gm, '').replace(/\s+/g, ' ').trim();
+  }
+  /** Markup -> one line for a summary: lines that do not end a sentence are joined with " · ". */
+  function summary(body) {
+    const lines = String(body || '').replace(/\*\*/g, '').split('\n').map(function (l) { return l.replace(/^\s*(#{2,4}|[-•·]|\d{1,3}[.)])\s+/, '').trim(); }).filter(Boolean);
+    return lines.reduce(function (out, l, i) { return i ? out + (/[.:!?]$/.test(lines[i - 1]) ? ' ' : ' · ') + l : l; }, '');
   }
 
   /* ---------------- Reading ---------------- */
@@ -317,7 +322,7 @@
   Club.handbook = {
     COLL: COLL, META: META, GROUPS: GROUPS, SEED: SEED,
     hours: HOURS, clock: clock, range: range,
-    html: html, plain: plain, esc: esc,
+    html: html, plain: plain, summary: summary, esc: esc,
     list: list, get: get, original: original, isOriginal: isOriginal, view: view, groupLabel: groupLabel,
     lastUpdated: lastUpdated, restore: restore, french: french
   };

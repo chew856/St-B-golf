@@ -97,6 +97,8 @@
     });
     charges.forEach(function (c) {
       if (!c.memberId || undone[c.id] || c.refId === 'opening' || /^Balance brought forward/i.test(c.description || '')) return;
+      /* The F&B assessment is a pre-payment, not spend: the food and drink it pays for count as Dining when bought. */
+      if (c.category === 'F&B assessment') return;
       const rc = byCharge[c.id];
       add('m:' + c.memberId, c.date, c.amount, chargeDept(c), rc && rc.lines && rc.lines.length ? itemsOf(rc.lines, 'name', 'price') : [{ name: c.description || 'House charge', qty: 1, amount: Math.abs(num(c.amount)) }], rc && rc.channel === 'online',
         { label: c.description || 'House charge', receiptId: rc ? rc.id : null, chargeId: c.id });

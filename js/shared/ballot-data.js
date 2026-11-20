@@ -373,10 +373,8 @@
   };
 
   /* ---------------- Demo (once per browser, 'demoBackfills' marker 'ballot1') ----------------
-     1. Results for the last drawn Saturday and Sunday the demo tee sheet already covers: the morning groups already on
-        the sheet become the winning entries (linked to those tee times, nothing on the sheet changes), a few members who
-        are not playing that morning missed, and the demo member Dave missed on the Saturday and won on the Sunday (a tee
-        time is added for him when he has none that morning).
+     1. Results for the last drawn Saturday and Sunday the demo tee sheet already covers, worked out from the sheet so
+        they always match it (details below): Dave wins one day and misses the other.
      2. Entries for every ballot day whose window is open now (on a Friday: the Saturday two weeks ahead), mostly asking
         for the same busy early morning, so a draw leaves some missed. Dave is left out so he can enter himself. */
   const MARK = 'ballot1';
@@ -391,7 +389,13 @@
     const pickTime = function (s) { return isoAt(s.opensAt + R.int(30, Math.max(31, Math.floor((Math.min(nowMs, s.drawAt) - s.opensAt) / 60000) - 5)) * 60000); };
     let made = { results: [], open: [] };
 
-    /* 1. The last drawn Saturday and Sunday inside the demo sheet (14 days ahead). */
+    /* 1. The last drawn Saturday and Sunday inside the demo sheet (13 days ahead at most). Everything is worked out from
+          the tee sheet as it stands, so the results match it whatever the date and time zone:
+          - Dave wins one day (W: the first day he already plays, else the first day; a tee time is added when he has none)
+            and misses the other (M: he is taken off any tee time he had that day, so no result there contradicts the sheet).
+          - Every group on the sheet before noon is a winning entry linked to its tee time (Dave's own groups too).
+          - Missed entries (Dave on M and four other members a day) ask for a window that is full: any time still free in
+            it goes to a small winning entry first, so "every time went to entries drawn earlier" is true on the sheet. */
     const drawn = [];
     for (let i = DRAW_DAYS; i >= 2 && drawn.length < 2; i--) {
       const iso = Club.date.fromToday(i); const s = schedule(iso);
@@ -399,54 +403,116 @@
       if (drawn.some(function (x) { return fmt.toDate(x).getDay() === fmt.toDate(iso).getDay(); })) continue;
       drawn.push(iso);
     }
-    let daveDays = 0;
-    drawn.sort().forEach(function (iso) {
-      const s = schedule(iso);
-      const tees = S.where('teeTimes', function (x) { return x.date === iso && x.status === 'booked' && toMin(x.time) < 660 && x.source !== 'ballot'; })
-        .filter(function (x) { const h = (x.players || [])[0]; return h && h.type === 'member' && h.memberId && h.memberId !== DAVE; })
-        .sort(function (a, b) { return a.time < b.time ? -1 : 1; });
-      const busy = {}; S.where('teeTimes', function (x) { return x.date === iso && x.status !== 'cancelled'; }).forEach(function (x) { (x.players || []).forEach(function (p) { if (p.memberId) busy[p.memberId] = 1; }); });
-      const list = [];
-      tees.forEach(function (tt) {
-        const r = R.pick([30, 30, 60, 60, 120]); const pref = toHM(toMin(tt.time) + R.pick([-18, -9, 0, 0, 0, 9, 18]));
-        const w = windowOf(pref, r);
-        if (toMin(tt.time) < toMin(w.earliest) || toMin(tt.time) > toMin(w.latest)) return;
-        const e = ins({ date: iso, memberId: tt.players[0].memberId, players: tt.players.map(function (p) { const o = Object.assign({}, p); delete o.paid; return o; }), time: pref, range: r, earliest: w.earliest, latest: w.latest,
-          holes: tt.holes || 18, notes: '', status: 'won', source: R.chance(0.8) ? 'portal' : 'staff', enteredBy: tt.players[0].memberId, teeTimeId: tt.id, drawnTime: tt.time, drawnAt: isoAt(s.drawAt), createdAt: pickTime(s) });
-        list.push({ entryId: e.id, memberId: e.memberId, status: 'won', time: tt.time, teeTimeId: tt.id, reason: '' });
-      });
-      const free = golfers.filter(function (m) { return !busy[m.id] && canPlay(m, iso, '07:30').ok; });
-      for (let k = 0; k < 4 && free.length; k++) {
-        const m = free.splice(R.int(0, free.length - 1), 1)[0]; const pref = R.pick(['07:00', '07:30', '08:00']);
+    drawn.sort();
+    const dave = member(DAVE);
+    const dayTees = function (iso) { return S.where('teeTimes', function (x) { return x.date === iso && x.status !== 'cancelled'; }); };
+    const hasDave = function (x) { return (x.players || []).some(function (p) { return p.memberId === DAVE; }); };
+    const busy = function (id, iso) { return dayTees(iso).some(function (x) { return (x.players || []).some(function (p) { return p.memberId === id; }); }); };
+    const blocked = function (iso, t) { return S.where('teeBlocks', function (b) { return b.date === iso && t >= b.start && t < b.end; }).length > 0; };
+    /* One ballot entry per member a day: who is already in one */
+    const entered = function (id, iso) { return entries(iso).some(function (e) { return (e.players || []).some(function (p) { return p.memberId === id; }); }); };
+    /* Could g be drawn alone at t (play times, no round too close, not in an entry yet)? */
+    const canTake = function (g, iso, t) { return !entered(g.id, iso) && canPlay(g, iso, t).ok && !clash(g.id, iso, t, 18, dayTees(iso)); };
+    const W = dave ? (drawn.find(function (iso) { return dayTees(iso).some(function (x) { return x.status === 'booked' && hasDave(x); }); }) || drawn[drawn.length - 1]) : null;
+    const M = dave ? drawn.find(function (iso) { return iso !== W; }) || null : null;
+    /* Dave is off the sheet on M: his guests leave with him; a group with no member left goes. */
+    if (M) dayTees(M).filter(hasDave).forEach(function (x) {
+      const rest = (x.players || []).filter(function (p) { return p.memberId !== DAVE && !(p.type === 'guest' && p.hostId === DAVE); });
+      const lead = rest.find(function (p) { return p.type === 'member' && p.memberId; });
+      if (lead) S.update('teeTimes', x.id, { players: rest, bookedBy: x.bookedBy === DAVE ? lead.memberId : x.bookedBy });
+      else S.remove('teeTimes', x.id);
+    });
+    const results = {};
+    drawn.forEach(function (iso) { results[iso] = []; });
+    const linked = {};
+    /** A winning entry for a group already on the sheet (lead: its first member). */
+    function linkGroup(iso, tt) {
+      if (linked[tt.id]) return;
+      const s = schedule(iso), lead = (tt.players || []).find(function (p) { return p.type === 'member' && p.memberId; });
+      /* a member in two groups that day won only one of them in the draw: the other was booked after it */
+      if (!lead || (tt.players || []).some(function (p) { return p.memberId && entered(p.memberId, iso); })) return;
+      const r = R.pick([30, 30, 60, 60, 120]); const pref = toHM(toMin(tt.time) + R.pick([-18, -9, 0, 0, 0, 9, 18]));
+      const w = windowOf(pref, r);
+      const e = ins({ date: iso, memberId: lead.memberId, players: tt.players.map(function (p) { const o = Object.assign({}, p); delete o.paid; return o; }), time: pref, range: r,
+        earliest: toMin(tt.time) < toMin(w.earliest) ? tt.time : w.earliest, latest: toMin(tt.time) > toMin(w.latest) ? tt.time : w.latest,
+        holes: tt.holes || 18, notes: '', status: 'won', source: R.chance(0.8) ? 'portal' : 'staff', enteredBy: lead.memberId, teeTimeId: tt.id, drawnTime: tt.time, drawnAt: isoAt(s.drawAt), createdAt: pickTime(s) });
+      linked[tt.id] = 1;
+      results[iso].push({ entryId: e.id, memberId: e.memberId, status: 'won', time: tt.time, teeTimeId: tt.id, reason: '' });
+    }
+    /** A new winning entry and its tee time at t (players: member or guest entries, lead first). */
+    function addWin(iso, t, players, pref, range) {
+      const s = schedule(iso), id = S.uid('bal'), w = windowOf(pref, range), lead = players[0].memberId;
+      S.insert('teeTimes', { id: 'tt_' + id, date: iso, time: t, holes: 18, players: players.map(function (p) { return Object.assign({}, p, { paid: false }); }), status: 'booked', notes: '', eventId: null, startedAt: null, finishedAt: null, bookedBy: lead, source: 'ballot', ballotEntryId: id, createdAt: isoAt(s.drawAt) });
+      ins({ id: id, date: iso, memberId: lead, players: players, time: pref, range: range, earliest: w.earliest, latest: w.latest, holes: 18, notes: '', status: 'won', source: 'portal', enteredBy: lead, teeTimeId: 'tt_' + id, drawnTime: t, drawnAt: isoAt(s.drawAt), createdAt: pickTime(s) });
+      linked['tt_' + id] = 1;
+      results[iso].push({ entryId: id, memberId: lead, status: 'won', time: t, teeTimeId: 'tt_' + id, reason: '' });
+    }
+    function solo(m) { return { memberId: m.id, name: nameOf(m), type: 'member', cart: R.chance(0.4) }; }
+    /** A missed entry for m (and players): a 30-minute window inside m's play times where, at the draw, every time went
+        to a winning entry. A window holding a round booked after the draw (no entry) cannot be used; a time still free
+        goes to a new one-member winning entry first. Returns false when no window can be made true. */
+    function addMissed(iso, m, players) {
+      const s = schedule(iso), grid = [];
+      for (let x = 405; x <= 720; x += 15) grid.push(toHM(x));
+      const plans = grid.map(function (pref) {
         const w = windowOf(pref, 30);
-        const e = ins({ date: iso, memberId: m.id, players: [{ memberId: m.id, name: nameOf(m), type: 'member', cart: R.chance(0.4) }], time: pref, range: 30, earliest: w.earliest, latest: w.latest,
-          holes: 18, notes: '', status: 'missed', source: 'portal', enteredBy: m.id, teeTimeId: null, missedReason: 'Every tee time from ' + EN.time(w.earliest) + ' to ' + EN.time(w.latest) + ' went to entries drawn earlier.', drawnAt: isoAt(s.drawAt), createdAt: pickTime(s) });
-        list.push({ entryId: e.id, memberId: m.id, status: 'missed', time: null, teeTimeId: null, reason: e.missedReason });
+        const ts = slotList().filter(function (t) { return toMin(t) >= toMin(w.earliest) && toMin(t) <= toMin(w.latest) && !blocked(iso, t); });
+        if (!ts.some(function (t) { return canPlay(m, iso, t).ok; })) return null;
+        const byTime = {}; dayTees(iso).forEach(function (x) { byTime[x.time] = x; });
+        /* rounds in the window not yet a winning entry become one, when none of their members is in an entry */
+        const link = [], mem = {};
+        const ok = ts.every(function (t) {
+          const x = byTime[t]; if (!x || linked[x.id]) return true;
+          const ids = (x.players || []).filter(function (p) { return p.memberId; }).map(function (p) { return p.memberId; });
+          if (!ids.length || ids.some(function (id) { return mem[id] || entered(id, iso) || (players || []).some(function (p) { return p.memberId === id; }) || id === m.id; })) return false;
+          ids.forEach(function (id) { mem[id] = 1; }); link.push(x); return true;
+        });
+        if (!ok) return null;
+        return { pref: pref, w: w, link: link, mem: mem, open: ts.filter(function (t) { return !byTime[t]; }) };
+      }).filter(Boolean).sort(function (a, b) { return a.open.length - b.open.length || a.link.length - b.link.length; });
+      const skip = {}; (players || [solo(m)]).forEach(function (p) { if (p.memberId) skip[p.memberId] = 1; });
+      for (let i = 0; i < plans.length; i++) {
+        const pl = plans[i], used = {}, pick = [];
+        const ok = pl.open.every(function (t) {
+          const who = golfers.filter(function (g) { return !skip[g.id] && !used[g.id] && !pl.mem[g.id] && canTake(g, iso, t); });
+          if (!who.length) return false;
+          const g = who[R.int(0, who.length - 1)]; used[g.id] = 1; pick.push([t, g]); return true;
+        });
+        if (!ok) continue;
+        pl.link.forEach(function (x) { linkGroup(iso, x); });
+        pick.forEach(function (x) { addWin(iso, x[0], [solo(x[1])], pl.pref, 30); });
+        const reason = 'Every tee time from ' + EN.time(pl.w.earliest) + ' to ' + EN.time(pl.w.latest) + ' went to entries drawn earlier.';
+        const e = ins({ date: iso, memberId: m.id, players: players || [solo(m)], time: pl.pref, range: 30, earliest: pl.w.earliest, latest: pl.w.latest, holes: 18, notes: '', status: 'missed', source: 'portal', enteredBy: m.id, teeTimeId: null, missedReason: reason, drawnAt: isoAt(s.drawAt), createdAt: pickTime(s) });
+        results[iso].push({ entryId: e.id, memberId: m.id, status: 'missed', time: null, teeTimeId: null, reason: reason });
+        return true;
       }
-      /* Dave (when he is not already in an entry that day): his first such day missed, the second won. */
-      const dave = member(DAVE);
-      if (dave && !list.some(function (r) { const e = S.find('ballotEntries', r.entryId); return e && (e.players || []).some(function (p) { return p.memberId === DAVE; }); })) {
-        const sat = !daveDays++;
-        /* his preferred time sits inside his category's weekend play times */
-        const pref = ['08:00', '09:00', '10:00', '11:00', '12:00'].filter(function (t) { return canPlay(dave, iso, t).ok; })[0] || '12:00';
-        const w = windowOf(pref, sat ? 30 : 60);
-        const taken = {}; S.where('teeTimes', function (x) { return x.date === iso && x.status !== 'cancelled'; }).forEach(function (x) { taken[x.time] = 1; });
-        const blocks = S.where('teeBlocks', function (b) { return b.date === iso; });
-        const pool = S.where('teeTimes', function (x) { return x.date === iso; });
-        const spot = sat ? null : slotList().filter(function (t) { return toMin(t) >= toMin(w.earliest) && toMin(t) <= toMin(w.latest) && !taken[t] && !blocks.some(function (b) { return t >= b.start && t < b.end; }) && canPlay(dave, iso, t).ok && !clash(DAVE, iso, t, 18, pool); })
-          .sort(function (a, b) { return Math.abs(toMin(a) - toMin(pref)) - Math.abs(toMin(b) - toMin(pref)); })[0];
-        const players = [{ memberId: DAVE, name: nameOf(dave), type: 'member', cart: true }, { memberId: null, name: 'Natalie Hollis', type: 'guest', cart: true, hostId: DAVE, pays: 'host' }];
-        const base = { date: iso, memberId: DAVE, players: players, time: pref, range: sat ? 30 : 60, earliest: w.earliest, latest: w.latest, holes: 18, notes: '', source: 'portal', enteredBy: DAVE, drawnAt: isoAt(s.drawAt), createdAt: pickTime(s) };
-        if (spot) {
-          const id = S.uid('bal');
-          S.insert('teeTimes', { id: 'tt_' + id, date: iso, time: spot, holes: 18, players: players.map(function (p) { return Object.assign({}, p, { paid: false }); }), status: 'booked', notes: '', eventId: null, startedAt: null, finishedAt: null, bookedBy: DAVE, source: 'ballot', ballotEntryId: id, createdAt: isoAt(s.drawAt) });
-          ins(Object.assign(base, { id: id, status: 'won', teeTimeId: 'tt_' + id, drawnTime: spot }));
-          list.push({ entryId: id, memberId: DAVE, status: 'won', time: spot, teeTimeId: 'tt_' + id, reason: '' });
-        } else {
-          const e = ins(Object.assign(base, { status: 'missed', teeTimeId: null, missedReason: 'Every tee time from ' + EN.time(w.earliest) + ' to ' + EN.time(w.latest) + ' went to entries drawn earlier.' }));
-          list.push({ entryId: e.id, memberId: DAVE, status: 'missed', time: null, teeTimeId: null, reason: e.missedReason });
+      return false;
+    }
+    drawn.forEach(function (iso) {
+      /* Dave first, so his result is never squeezed out by the groups around it */
+      if (iso === W) {
+        const mine = dayTees(iso).filter(function (x) { return x.status === 'booked' && hasDave(x); }).sort(function (a, b) { return a.time < b.time ? -1 : 1; });
+        if (mine.length) linkGroup(iso, mine[0]);   /* his first round that day is his ballot win */
+        else {
+          const pool = S.where('teeTimes', function (x) { return x.date === iso; });
+          const taken = {}; dayTees(iso).forEach(function (x) { taken[x.time] = 1; });
+          const spot = slotList().filter(function (t) { return !taken[t] && !blocked(iso, t) && canPlay(dave, iso, t).ok && !clash(DAVE, iso, t, 18, pool); })
+            .sort(function (a, b) { return Math.abs(toMin(a) - 660) - Math.abs(toMin(b) - 660); })[0];
+          if (spot) addWin(iso, spot, [{ memberId: DAVE, name: nameOf(dave), type: 'member', cart: true }, { memberId: null, name: 'Natalie Hollis', type: 'guest', cart: true, hostId: DAVE, pays: 'host' }], toHM(Math.round(toMin(spot) / 30) * 30), 60);
         }
       }
+      if (iso === M) addMissed(iso, dave, [{ memberId: DAVE, name: nameOf(dave), type: 'member', cart: true }, { memberId: null, name: 'Natalie Hollis', type: 'guest', cart: true, hostId: DAVE, pays: 'host' }]);
+      /* Groups on the sheet before noon are the draw's winners */
+      dayTees(iso).filter(function (x) { return x.status === 'booked' && toMin(x.time) < 720; }).sort(function (a, b) { return a.time < b.time ? -1 : 1; }).forEach(function (tt) { linkGroup(iso, tt); });
+      /* four members not playing that day who missed too */
+      for (let k = 0, made2 = 0; k < 12 && made2 < 4; k++) {
+        const free = golfers.filter(function (m) { return !busy(m.id, iso) && !entered(m.id, iso); });
+        if (!free.length) break;
+        if (addMissed(iso, free[R.int(0, free.length - 1)])) made2++;
+      }
+    });
+    drawn.forEach(function (iso) {
+      const s = schedule(iso), list = results[iso];
       /* The recorded order: the seeded shuffle of these entries, results listed in that order. */
       const order = drawOrder(iso, list.map(function (r) { return { id: r.entryId }; }));
       const byE = {}; list.forEach(function (r) { byE[r.entryId] = r; });
@@ -454,7 +520,6 @@
         open: null, results: order.map(function (id) { return byE[id]; }) });
       made.results.push(iso);
     });
-
     /* 2. Entries for every ballot day open now. */
     for (let i = DRAW_DAYS; i <= OPEN_DAYS; i++) {
       const iso = Club.date.fromToday(i); if (phase(iso, nowMs) !== 'open' || entries(iso).length) continue;

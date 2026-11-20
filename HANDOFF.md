@@ -239,6 +239,37 @@ Chromium only; check in Safari.
   hide themselves in Profile (`members.leaderboardHidden`); staff still see everyone, marked "Hidden from members".
 - Tested in Chromium only; needs a Safari check.
 
+## Membership Handbook: page and rules (Nov 19 to 20, NOT DEPLOYED YET)
+Source: the club's 2025 Membership Handbook PDF
+(https://s3.amazonaws.com/data.gallusgolf.com/files/1790/0f5bafd83c104da8b23e005a6d8e8cee.pdf). The owner chose "C":
+show it and make the system follow it. Tested in Chromium only; needs a Safari check.
+- **Handbook page**: `js/shared/handbook-data.js` (`Club.handbook`, collection `handbook`, 34 sections, simple markup,
+  `Club.handbook.hours`), portal `js/portal/handbook.js` (search, contents, PDF link, `#/handbook/<id>`), staff editor
+  Settings > Handbook (`js/modules/settings-handbook.js`, Undo on every change, "Restore the 2025 handbook"). French in
+  `fr-portal.js` (`Club.handbookFr`); an edited section shows English to French readers until translated. Portal Club
+  page hours and the public site's dress code and hours come from it.
+- **Golf season** April 1 to October 31 is now the confirmed default (handbook F&B season; storage and lockers by Oct 31).
+- **Booking rules** (`js/core/teerules.js`, tiers in `js/core/store.js`, one-time backfill `tiersHandbook1`): 9
+  categories (Eagle, Eagle 60+, Eagle INT, Birdie, Birdie INT, Young Adult, Junior, Social, Club House; new ones have
+  no price: "Not set"); Young Adult weekends from 10:30; Fridays members only all day (public and outside events);
+  `guestLimit(date, time)`: 1 guest per member on Fridays and weekend/holiday mornings 6 to 11, else 3; fivesomes
+  staff-only, max 2 per clock hour, never 6 (tee sheet rows show 5 places); pace target 13 min a hole (3h 54m, `PACE`);
+  tournaments (shotgun or 6+ tee times) max 3 a week in May, June, Sept, Oct and 2 in July, Aug, override with reason;
+  Social: 5 golf vouchers a calendar year (`voucher: true` on the player), 10% discount stored only (`discountPct`).
+- **Weekend ballot** (`js/shared/ballot-data.js` `Club.ballot`, staff `js/modules/ballot.js`, portal in
+  `js/portal/teetimes.js`): Sat, Sun, holidays; entries open 12:00 AM 15 days before, close at the draw, 12:00 PM 13
+  days before; seeded fair draw (seed saved), runs on the first page load after the draw time; then normal booking.
+- **Billing policies** (`js/shared/billing-data.js`, `js/modules/billing.js`, `chargeMember` in `js/core/ui.js`):
+  $375 F&B assessment each season as a declining credit for Dining charges (gratuity excluded, not revenue; food counts
+  when bought), per-tier `fnbAssessment` (Settings tier form; Junior off); `Club.billing.standing(memberId)` 60/90/120
+  days from statement date (charging, golf, everything) with staff override at the tills and portal refusals; time
+  payment plan: $50 fee, 15th of each month to Aug 15, 1.5% card fee line, card on file is a staff checkbox only (no
+  card stored), 30 days late suspends golf; Refund dues: $50 fee, written request before May 31, else Board approval.
+- **Friends** (owner, Nov 19): any friend can join without asking, and friends always see tee times (no hiding).
+Waiting on the owner: prices for the 5 new categories; Social voucher booking window (7 days, public window) and
+play times; whether "Meeting room booking" charges should use the F&B credit; the monthly "Dues run" vs the time
+payment plan; whether expired F&B credit is booked as income (accountant); real staff and board names for the demo.
+
 ## Future: live location on the course
 The owner plans live location for golfers. The tee sheet's "On pace", hole and finish estimate are computed from the
 4h 15m target today (js/modules/teesheet.js starter column); switch them to real positions when live location exists.

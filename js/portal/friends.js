@@ -140,10 +140,11 @@
 
   /* ---------------- Per-friend tee time sharing ----------------
      The owner's global "Upcoming tee times" setting applies first; then, per friend, "Can see my tee times" and
-     "Can join without asking" (both on unless the owner switched them off). */
+     joining. Owner, Nov 19: any friend can join a round without asking, so join is always true (an older saved
+     "Can join without asking: off" is ignored, and the switch is gone). */
   function sharing(owner, friend) {
     const d = S.all('friendSharing').find(function (x) { return x.owner === owner && x.friend === friend; });
-    return { see: d ? d.see !== false : true, join: d ? d.join !== false : true };
+    return { see: d ? d.see !== false : true, join: true };
   }
   function setSharing(owner, friend, patch) {
     const id = 'fs_' + owner + '_' + friend; const d = S.find('friendSharing', id);
@@ -488,15 +489,14 @@
   function openSharing(me, fid, after) {
     const first = firstOf(fid); const all = !!privacy(me).teeTimes;
     function body() {
-      const s = sharing(me, fid); const dis2 = !all || !s.see;
+      const s = sharing(me, fid);
       const sw = function (key, label, text, on, disabled) {
         const id = 'fr-sw-' + key;
         return '<li><label for="' + id + '" class="fr-sw-text"><span class="fr-sw-l">' + esc(label) + '</span><span class="fr-sw-s">' + esc(text) + '</span></label>' +
           '<label class="fr-sw-ctl" for="' + id + '"><span class="fr-sw-state" aria-hidden="true">' + (on && !disabled ? 'On' : 'Off') + '</span><span class="toggle"><input type="checkbox" id="' + id + '" data-share="' + key + '"' + (on && !disabled ? ' checked' : '') + (disabled ? ' disabled' : '') + '><span></span></span></label></li>';
       };
       return (all ? '' : '<p class="fr-note">' + Club.icon('info') + '<span>Your upcoming tee times are hidden from all friends. Turn them on in Profile, Friends and privacy.</span></p>') +
-        '<ul class="fr-sw">' + sw('see', 'Can see my tee times', 'When off, ' + first + ' sees your tee times as private.', s.see, !all) +
-        sw('join', 'Can join without asking', 'When off, ' + first + ' sends a request and you approve it.', s.join, dis2) + '</ul>' +
+        '<ul class="fr-sw">' + sw('see', 'Can see my tee times', 'When off, ' + first + ' sees your tee times as private.', s.see, !all) + '</ul>' +
         '<p class="fr-quiet">' + Club.icon('info') + '<span>Changes save as you go. ' + esc(first) + ' is not told about this setting.</span></p>';
     }
     const sh = Portal.openSheet({ title: 'Sharing with ' + first, content: '<div class="fr-sheet fr-sharebox">' + body() + '</div>', onClose: after });
@@ -889,10 +889,8 @@
     if (!me || !T || S.getObj('friendsShareDemo', null)) return;
     const fr = friendsOf(ME).filter(function (id) { return privacy(id).teeTimes; }).slice(0, 3);
     if (fr.length < 3) return;
-    setSharing(fr[1], ME, { join: false });     // Dave must ask fr[1]
     setSharing(fr[2], ME, { see: false });      // fr[2] hides tee times from Dave
-    setSharing(ME, fr[0], { join: false });     // fr[0] must ask Dave
-    /* A group of fr[1]'s that Dave could join, so "Request to join" shows. */
+    /* A group of fr[1]'s that Dave can join, so the Join button shows. */
     const has = upcomingTee(fr[1]).some(function (t) { return t.date <= Club.date.addDays(today(), 7) && jState(ME, t).ok; });
     if (!has) {
       const set = Object.assign({ interval: 9, first: '06:30', last: '19:00' }, S.getObj('teeSheetSettings', {}) || {});

@@ -102,7 +102,7 @@
      its real dates, April 1 to October 31 stands in (confirmed: false). Lesson packages, Reports, the members'
      league setup and Group outings all read the season from here. */
   (function () {
-    const DEF = { open: '04-01', close: '10-31', confirmed: false };
+    const DEF = { open: '04-01', close: '10-31', confirmed: true };   /* April 1 to October 31: the club's Membership Handbook (F&B assessment season; storage and lockers emptied by October 31) */
     const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     const MD = /^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/;
     function get() {

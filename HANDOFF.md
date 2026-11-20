@@ -266,9 +266,9 @@ show it and make the system follow it. Tested in Chromium only; needs a Safari c
   payment plan: $50 fee, 15th of each month to Aug 15, 1.5% card fee line, card on file is a staff checkbox only (no
   card stored), 30 days late suspends golf; Refund dues: $50 fee, written request before May 31, else Board approval.
 - **Friends** (owner, Nov 19): any friend can join without asking, and friends always see tee times (no hiding).
-Waiting on the owner: prices for the 5 new categories; Social voucher booking window (7 days, public window) and
-play times; whether "Meeting room booking" charges should use the F&B credit; the monthly "Dues run" vs the time
-payment plan; whether expired F&B credit is booked as income (accountant); real staff and board names for the demo.
+Owner answers (Nov 20): meeting room charges are separate from the F&B credit; the monthly "Dues run" tab is removed;
+the staff account shows "Duane" (`Club.user` in `js/core/club.js`) until real names are added. Everything still open
+is listed in `QUESTIONS.md`.
 
 ## Future: live location on the course
 The owner plans live location for golfers. The tee sheet's "On pace", hole and finish estimate are computed from the

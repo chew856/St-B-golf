@@ -125,7 +125,7 @@
       '<div class="topbar-spacer"></div>' +
       '<div class="search">' + Club.icon('search') + '<input type="search" placeholder="Search members, bookings, items" aria-label="Search"><div class="search-results" role="listbox"></div></div>' +
       '<div class="weather-chip" id="weather-chip" title="' + esc(w.cond) + '">' + Club.icon(w.icon) + '<span><strong>' + Club.weather.nowTemp + '°</strong> ' + esc(w.cond) + ' · Wind ' + w.wind + ' km/h</span></div>' +
-      '<div class="user-chip">' + ui.avatar(Club.user.firstName + ' ' + Club.user.lastName, 'sm', true) + '<span class="user-name">' + esc(Club.user.firstName + ' ' + Club.user.lastName) + '<br><span class="muted" style="font-size:11px">' + esc(Club.user.role) + '</span></span></div>';
+      '<div class="user-chip">' + ui.avatar((Club.user.firstName + ' ' + Club.user.lastName).trim(), 'sm', true) + '<span class="user-name">' + esc((Club.user.firstName + ' ' + Club.user.lastName).trim()) + '<br><span class="muted" style="font-size:11px">' + esc(Club.user.role) + '</span></span></div>';
     ui.$('.menu-toggle', tb).addEventListener('click', function () { document.querySelector('.app').classList.toggle('nav-open'); });
     const sbt = ui.$('.sb-toggle', tb);
     sbt.addEventListener('click', function () { setCollapsed(!document.documentElement.classList.contains('sb-collapsed')); });

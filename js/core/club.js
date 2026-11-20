@@ -16,7 +16,7 @@
   }, Club.store.getObj('clubInfo', {}));
 
   /** The signed-in staff account shown in the staff system's top bar and greeting. */
-  Club.user = { firstName: 'Dave', lastName: 'Nerada', role: 'Front Desk' };
+  Club.user = { firstName: 'Duane', lastName: '', role: 'Front Desk' };   /* owner, Nov 20: the staff account shows "Duane" (real staff names later) */
 
   /** The St.B oak-tree mark, tinted by the surrounding text colour (CSS mask). */
   Club.logo = function (cls) {

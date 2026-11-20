@@ -210,7 +210,8 @@
   function fnbAdult(m) { return !!m && fnbTier(S.find('membershipTiers', m.tierId)); }
   function seasonApi() { return Club.season; }
   function fnbYearOf(date) { return date && seasonApi() && seasonApi().inSeason(date) ? +String(date).slice(0, 4) : null; }
-  function isFnbPurchase(c) { return !!c && c.category === 'Dining' && !(c.refId && String(c.refId).indexOf('fbmin-') === 0); }
+  /* Meeting rooms are kept separate from the F&B credit (owner, Nov 20): only food and drink draw it down */
+  function isFnbPurchase(c) { return !!c && c.category === 'Dining' && !(c.refId && String(c.refId).indexOf('fbmin-') === 0) && !/meeting room|room rental|room booking/i.test(c.description || ''); }
   function eligible(c) { return r2((+c.amount || 0) - (+c.fnbGratuity || 0)); }
   function chargesOf(memberId) { return S.all('charges').filter(function (c) { return c.memberId === memberId; }); }
   /** The charge a reversal undoes: same account, category, reference and opposite amount, not yet reversed. */

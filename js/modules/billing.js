@@ -586,7 +586,6 @@
     ui.tabs(ui.$('.bil-tabs', view), [
       { id: 'overview', label: 'Overview', render: tabOverview },
       { id: 'ledger', label: 'Ledger', render: tabLedger },
-      { id: 'dues', label: 'Dues run', render: tabDues },
       { id: 'fnb', label: 'F&B assessment', render: tabFnb },
       { id: 'statements', label: 'Statements', render: tabStatements },
       { id: 'renewals', label: RENEW_SEASON + ' renewals', render: tabRenewals }
@@ -711,77 +710,8 @@
     ui.on(p, 'click', '[data-action=lreset]', function () { Object.assign(lf, { member: '', category: '', source: '', type: 'all', from: '', to: '', q: '', page: 0 }); tabLedger(p); });
   }
 
-  /* ---------------- Dues run ---------------- */
-  function duesPosted(key) {
-    const runs = S.getObj('billingDuesRuns', {});
-    if (runs[key]) return runs[key];
-    const ex = S.all('charges').filter(function (c) { return c.refId === 'dues-' + key && live(c); });
-    return ex.length ? { postedOn: ex[0].date, count: ex.length, total: r2(sum(ex, function (c) { return c.amount; })) } : null;
-  }
-  /* Tabs that redraw themselves get a fresh panel each time, so the click handlers of the earlier drawing (which
-     hold that drawing's month and list) go away with it instead of piling up and firing on stale data. */
-  const panels = {};
-  function fresh(p) {
-    if (!p.dataset.drawn) { p.dataset.drawn = '1'; return p; }
-    const n = p.cloneNode(false); if (p.parentNode) p.replaceWith(n); return n;
-  }
-  let duesKey = null;
-  function tabDues(p) {
-    p = fresh(p); panels.dues = p;
-    const cm = curMonth(); const choices = [cm, addMonths(cm, 1), addMonths(cm, 2)];
-    if (!duesKey || choices.indexOf(duesKey) < 0) duesKey = choices.find(function (k) { return !duesPosted(k); }) || choices[0];
-    const posted = duesPosted(duesKey);
-    const already = {}; S.all('charges').forEach(function (c) { if (c.refId === 'dues-' + duesKey && live(c)) already[c.memberId] = true; });
-    const list = S.all('members').filter(function (m) { return m.status === 'active' && S.find('membershipTiers', m.tierId) && !already[m.id]; })
-      .map(function (m) { const t = S.find('membershipTiers', m.tierId); return { m: m, t: t, amount: r2(t.annualDues / 12) }; })
-      .sort(function (a, b) { return a.m.lastName.localeCompare(b.m.lastName); });
-    const total = r2(sum(list, function (x) { return x.amount; }));
-    const byTier = S.all('membershipTiers').map(function (t) { const of = list.filter(function (x) { return x.t.id === t.id; }); return { t: t, n: of.length, total: r2(sum(of, function (x) { return x.amount; })) }; }).filter(function (x) { return x.n; });
-    const runs = S.getObj('billingDuesRuns', {});
-    const hist = Object.keys(runs).sort().reverse();
-
-    p.innerHTML = '<div class="grid grid-main-side">' +
-      '<section class="panel" data-reveal><div class="panel-head"><div><div class="eyebrow">Monthly dues</div><h3>' + esc(monthLabel(duesKey)) + '</h3></div>' +
-      '<select class="select bil-inline-select" name="duesKey" aria-label="Billing month">' + ui.options(choices.map(function (k) { return { value: k, label: monthLabel(k) + (duesPosted(k) ? ', posted' : '') }; }), duesKey) + '</select></div>' +
-      (posted && !list.length ? '<div class="panel-body">' + ui.empty({ icon: 'check', title: monthName(duesKey) + ' dues are posted', text: 'Posted ' + fmt.date(posted.postedOn) + ' for ' + posted.count + ' members, ' + fmt.money(posted.total) + ' in total. A run can only be posted once per month.' }) + '</div>'
-        : !list.length ? '<div class="panel-body">' + ui.empty({ icon: 'members', title: 'No active members to bill', text: 'Dues are charged to active members with a membership tier.' }) + '</div>'
-          : '<div class="bil-preview-head"><p class="ink-2">' + (posted ? 'Part of this run is already posted. ' : '') + 'Preview: one twelfth of annual dues for <strong>' + list.length + '</strong> active members, dated ' + esc(fmt.date(duesKey + '-01')) + '.</p>' +
-          '<div class="row wrap"><span class="bil-total">' + money(total) + '</span>' + ui.btn('Post ' + monthName(duesKey) + ' dues', { kind: 'primary', icon: 'check', action: 'post-dues' }) + '</div></div>' +
-          '<div class="bil-dues-acc">' + Portal.accordion({ id: 'bil-dues-list', icon: 'members', title: 'Charges in this run', summary: list.length + ' members · ' + byTier.map(function (x) { return x.t.name + ' ' + x.n; }).join(', '), body: '<div class="table-wrap bil-scroll"><table class="table"><thead><tr><th>Member</th><th>No.</th><th>Tier</th><th class="num">Annual dues</th><th class="num">This month</th></tr></thead><tbody>' + list.map(function (x) {
-            return '<tr><td class="primary-cell">' + esc(x.m.lastName + ', ' + x.m.firstName) + '</td><td class="num">' + esc(x.m.memberNo) + '</td><td>' + esc(x.t.name) + '</td><td class="num muted">' + esc(fmt.money(x.t.annualDues, false)) + '</td><td class="num">' + money(x.amount) + '</td></tr>';
-          }).join('') + '</tbody><tfoot><tr><td colspan="4">' + list.length + ' members</td><td class="num">' + money(total) + '</td></tr></tfoot></table></div>' }) + '</div>') +
-      '</section>' +
-      '<aside class="stack">' +
-      (list.length ? '<section class="panel" data-reveal><div class="panel-head"><h3>By tier</h3></div><div class="panel-body">' + Club.charts.hbars(byTier.map(function (x, i) { return { label: x.t.name + ' (' + x.n + ')', value: x.total, brass: i % 2 === 1 }; }), { money: true }) + '</div></section>' : '') +
-      '<section class="panel" data-reveal><div class="panel-head"><h3>Run history</h3></div><div class="panel-body flush">' +
-      (hist.length ? '<ul class="list">' + hist.map(function (k) { const r = runs[k]; return '<li class="row between"><span class="bil-stack"><span class="person-name">' + esc(monthLabel(k)) + '</span><span class="person-sub">Posted ' + esc(fmt.date(r.postedOn)) + ' · ' + r.count + ' members</span></span><span class="num">' + money(r.total) + '</span></li>'; }).join('') + '</ul>' : ui.empty({ icon: 'calendar', title: 'No runs yet', text: 'Each posted month is recorded here.' })) +
-      '</div></section></aside></div>';
-
-    ui.on(p, 'change', 'select[name=duesKey]', function (e, f) { duesKey = f.value; tabDues(p); p = panels.dues; ui.animateIn(p); });
-    ui.on(p, 'click', '[data-action=post-dues]', function (e, b) {
-      ui.confirm({ title: 'Post ' + monthLabel(duesKey) + ' dues?', text: list.length + ' charges totalling ' + fmt.money(total) + ' will be posted to member accounts. This cannot be run twice for the same month.', confirmLabel: 'Post dues' }).then(function (yes) {
-        if (!yes) return;
-        b.disabled = true;
-        const key = duesKey; let n = 0, tot = 0;
-        /* One Undo for the whole run: every dues charge is reversed with a credit and the run record goes back. */
-        undoRun(function () {
-          const have = {}; S.all('charges').forEach(function (c) { if (c.refId === 'dues-' + key && live(c)) have[c.memberId] = true; });
-          list.forEach(function (x) {
-            if (have[x.m.id]) return;
-            const c = Club.chargeMember(x.m.id, { description: monthName(key) + ' dues instalment, ' + x.t.name + ' membership', category: 'Dues', amount: x.amount, source: 'billing', refId: 'dues-' + key, date: key + '-01', title: 'Membership dues' });
-            if (c) { n++; tot += c.amount; }
-          });
-          const runs2 = Object.assign({}, S.getObj('billingDuesRuns', {})); const prev = runs2[key];
-          runs2[key] = { postedOn: today(), count: n + (prev ? prev.count : 0), total: r2(tot + (prev ? prev.total : 0)) };
-          S.setObj('billingDuesRuns', Object.assign({}, runs2));
-        }, { message: function () { return monthName(key) + ' dues posted: ' + n + ' members, ' + fmt.money(tot); }, undone: monthName(key) + ' dues run reversed', after: rerenderAfterUndo });
-        tabDues(p); p = panels.dues; ui.animateIn(p);
-      });
-    });
-  }
-
-  /* The per-category monthly F&B minimum (Settings) is replaced by the handbook's Food & Beverage Assessment: see the
-     F&B assessment tab above. Old 'fbmin-' shortfall charges stay on file and are not F&B purchases. */
+  /* The monthly "Dues run" (1/12 of dues on the 1st) was removed (owner, Nov 20): dues are paid in full or on the
+     handbook's time payment plan (renewals). Past demo instalment charges stay in the ledger as history. */
 
   /* ---------------- Statements ---------------- */
   function buildStatement(memberId, key, existing) {

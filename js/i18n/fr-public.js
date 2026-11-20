@@ -97,6 +97,7 @@
     'Monday to Thursday, 10:30 AM to 3:30 PM': 'Du lundi au jeudi, de 10 h 30 à 15 h 30',
     'Twilight': 'Crépuscule',
     'Weekdays after 5:30 PM': 'En semaine après 17 h 30',
+    'Monday to Thursday after 5:30 PM': 'Du lundi au jeudi après 17 h 30',
     'Weekend & holiday': 'Fin de semaine et fériés',
     'Weekends and holidays after 1:00 PM': 'Fins de semaine et jours fériés après 13 h',
     'Our signature hole': 'Notre trou emblématique',

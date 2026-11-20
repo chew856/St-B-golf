@@ -399,7 +399,7 @@
     const promoHost = opts.promo && Club.promos ? document.createElement('div') : null;
     if (promoHost) promoHost.className = 'tt-promo-host';
     let promoBox = null;
-    function max() { return 4 - (model.existing || []).length; }
+    function max() { return Math.max(0, 4 - (model.existing || []).length); }   /* a staff-booked fivesome leaves 0, never less */
     function rideHTML(p, i) {
       const self = p.memberId === me.id;
       if (noCarts(opts.date)) return '<span class="tt-walk-only">Walking only today</span>';
@@ -774,7 +774,7 @@
       target = S.find('teeTimes', ctx.joinId);
       if (!target || target.status !== 'booked' || target.date !== d || target.time !== t) return no('changed', ['This group has changed since you chose it. Please choose another time.'], { again: true });
       if ((target.players || []).length !== existing.length) {
-        const left = 4 - (target.players || []).length;
+        const left = Math.max(0, 4 - (target.players || []).length);
         existing = (target.players || []).map(function (p) { return Object.assign({}, p); });
         if (left < ctx.players.length) return no('full', [left > 0 ? 'Another player has just joined this group. There ' + (left === 1 ? 'is now 1 spot' : 'are now ' + left + ' spots') + ' left.' : 'This tee time has just filled.'], { again: true, existing: existing });
       }
@@ -847,7 +847,7 @@
     if (tt.status !== 'booked') return { ok: false, code: 'past', reason: 'Already teed off' };
     const self = { memberId: m.id, name: m.firstName + ' ' + m.lastName, type: 'member' };
     const c = checkBooking(m, { date: tt.date, time: tt.time, joinId: tt.id, existing: (tt.players || []).slice(), players: [self], skipStored: true });
-    if (c.ok) return { ok: true, code: 'open', reason: '', places: 4 - (tt.players || []).length };
+    if (c.ok) return { ok: true, code: 'open', reason: '', places: Math.max(0, 4 - (tt.players || []).length) };
     if (c.code === 'locked') return { ok: false, code: 'locked', reason: c.opensOn ? 'Opens to you ' + fmt.dateShort(c.opensOn) : 'Not open to you yet', opensOn: c.opensOn, detail: c.errs[0] };
     if (c.code === 'players') { const cl = clashFor(m.id, tt.date, tt.time, null); return cl ? { ok: false, code: 'clash', reason: 'You’re already playing at ' + fmt.time(cl.time), clash: cl, detail: c.errs[0] } : { ok: false, code: 'member', reason: 'Not available to you', detail: c.errs[0] }; }
     return { ok: false, code: c.code, reason: JOIN_REASON[c.code] || 'Not available', detail: c.errs[0] };

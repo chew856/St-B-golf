@@ -115,7 +115,7 @@
     t = t || {};
     return '<form class="form-grid" novalidate>' +
       U.field({ label: 'Tier name', name: 'name', value: t.name, required: true, span2: true, placeholder: 'For example, Senior' }) +
-      U.field({ label: 'Annual dues', name: 'annualDues', type: 'number', value: t.annualDues, required: true, min: 0, step: 50, hint: 'Canadian dollars a year, payable in instalments until August.' }) +
+      U.field({ label: 'Annual dues', name: 'annualDues', type: 'number', value: t.annualDues, min: 0, step: 50, hint: 'Canadian dollars a year. Leave empty until the club sets the price.' }) +
       U.field({ label: 'Monthly F&B minimum', name: 'monthlyMinimum', type: 'number', value: t.monthlyMinimum != null ? t.monthlyMinimum : 0, required: true, min: 0, step: 10, hint: 'St. Boniface has no minimums today. Leave at 0 for none.' }) +
       '<div class="field span-2"><label class="st-toggle-row"><span class="toggle"><input type="checkbox" name="golf"' + (t.golf !== false ? ' checked' : '') + '><span></span></span><span><strong>Golf privileges</strong><span class="field-hint st-block">Members of this tier may book tee times without invitation.</span></span></label></div>' +
       U.field({ label: 'Description', name: 'description', type: 'textarea', value: t.description, span2: true, placeholder: 'Privileges and eligibility' }) +
@@ -135,10 +135,10 @@
             let ok = true;
             const dup = all('membershipTiers').some(function (x) { return x.name.toLowerCase() === d.name.toLowerCase() && (!t || x.id !== t.id); });
             if (dup) { fieldError(form, 'name', 'A tier with this name already exists.'); ok = false; }
-            if (d.annualDues == null || d.annualDues < 0) { fieldError(form, 'annualDues', 'Dues cannot be negative.'); ok = false; }
+            if (d.annualDues != null && d.annualDues < 0) { fieldError(form, 'annualDues', 'Dues cannot be negative.'); ok = false; }
             if (d.monthlyMinimum == null || d.monthlyMinimum < 0) { fieldError(form, 'monthlyMinimum', 'The minimum cannot be negative.'); ok = false; }
             if (!ok) { focusFirstError(form); return false; }
-            const doc = { name: d.name, annualDues: Math.round(d.annualDues), monthlyMinimum: Math.round(d.monthlyMinimum), golf: !!d.golf, description: d.description };
+            const doc = { name: d.name, annualDues: d.annualDues == null ? null : Math.round(d.annualDues), monthlyMinimum: Math.round(d.monthlyMinimum), golf: !!d.golf, description: d.description };
             if (isNew) {
               let base = 'tier_' + d.name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 24) || 'tier_custom';
               let id = base, n = 2;
@@ -179,8 +179,8 @@
         tiers.map(function (t) {
           const used = anyUse[t.id] || 0;
           return '<tr class="clickable st-tier-row" data-tier="' + esc(t.id) + '"><td><div class="primary-cell">' + esc(t.name) + '</div>' + (t.description ? '<div class="muted st-desc" title="' + esc(t.description) + '">' + esc(t.description) + '</div>' : '') + '</td>' +
-            '<td class="num">' + esc(F.money0(t.annualDues)) + '</td><td class="num">' + (num(t.monthlyMinimum) > 0 ? esc(F.money0(t.monthlyMinimum)) + '<span class="muted"> / mo</span>' : '<span class="muted">None</span>') + '</td>' +
-            '<td>' + (t.golf ? U.badge('Included', 'good') : U.badge('By invitation', 'plain')) + '</td>' +
+            '<td class="num">' + (t.annualDues == null ? '<span class="muted" title="Price to be set by the club">Not set</span>' : esc(F.money0(t.annualDues))) + '</td><td class="num">' + (num(t.monthlyMinimum) > 0 ? esc(F.money0(t.monthlyMinimum)) + '<span class="muted"> / mo</span>' : '<span class="muted">None</span>') + '</td>' +
+            '<td>' + (t.golf ? U.badge('Included', 'good') : t.golfVouchers ? U.badge(t.golfVouchers + ' vouchers', 'plain') : U.badge('No golf', 'plain')) + '</td>' +
             '<td class="num">' + (count[t.id] || 0) + '</td>' +
             '<td class="nowrap right">' + U.btn('', { icon: 'edit', kind: 'ghost', sm: true, action: 'edit-tier', id: t.id, title: 'Edit ' + t.name }) +
             '<span class="st-del" ' + (used ? 'data-tip="In use by ' + used + ' ' + plural(used, 'member') + '"' : '') + '>' + U.btn('', { icon: 'trash', kind: 'ghost', sm: true, action: 'del-tier', id: t.id, title: used ? 'In use by ' + used + ' ' + plural(used, 'member') + ', cannot delete' : 'Delete ' + t.name }).replace('<button', used ? '<button disabled' : '<button') + '</span></td></tr>';

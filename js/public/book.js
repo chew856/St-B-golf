@@ -25,7 +25,7 @@
         '<div class="label-caps">Green fees, tax included</div>' +
         '<ul>' +
           '<li><span class="pub-rate-name">Weekday</span><span class="pub-rate-when">Monday to Thursday, 10:30 AM to 3:30 PM</span><span class="pub-rate-amt serif">' + fmt.money(RATES.weekday, false) + '</span></li>' +
-          '<li><span class="pub-rate-name">Twilight</span><span class="pub-rate-when">Weekdays after 5:30 PM</span><span class="pub-rate-amt serif">' + fmt.money(RATES.twilight, false) + '</span></li>' +
+          '<li><span class="pub-rate-name">Twilight</span><span class="pub-rate-when">Monday to Thursday after 5:30 PM</span><span class="pub-rate-amt serif">' + fmt.money(RATES.twilight, false) + '</span></li>' +
           '<li><span class="pub-rate-name">Weekend &amp; holiday</span><span class="pub-rate-when">Weekends and holidays after 1:00 PM</span><span class="pub-rate-amt serif">' + fmt.money(RATES.weekend, false) + '</span></li>' +
         '</ul>' +
         '<p class="pub-rates-note">Weekend and holiday mornings, 6:00 AM to 1:00 PM, are ' + fmt.money(RATES.weekend, false) + ' when you play with a member, so ask your member host to book. Nine holes are 60% of the 18-hole fee.</p>' +
@@ -213,7 +213,7 @@
           body = ui.empty({ icon: 'course', title: 'The course is closed today', text: (Pub.courseStatus().message || 'The course is closed for play today.') + ' Tee times from tomorrow are open for booking.', action: nextDayBtn(d) });
         } else if (!sum.pub.length) {
           const reason = rules.publicSlot(d, '12:00').reason || 'There are no public tee times on this day.';
-          body = ui.empty({ icon: 'members', title: 'Member play only', text: reason + ' Public tee times are Monday to Thursday 10:30 AM to 3:30 PM, weekdays after 5:30 PM, and weekends and holidays after 1:00 PM.', action: nextDayBtn(d) });
+          body = ui.empty({ icon: 'members', title: 'Member play only', text: reason + ' Public tee times are Monday to Thursday 10:30 AM to 3:30 PM and after 5:30 PM, and weekends and holidays after 1:00 PM.', action: nextDayBtn(d) });
         } else if (!sum.avail) {
           body = ui.empty({ icon: 'flag', title: sum.over ? 'Play has finished for today' : 'Every public tee time is taken', text: sum.over ? 'The last public tee time has gone off. We would be delighted to see you another day.' : Pub.longDate(d) + ' is fully booked. You might like another day, or call the golf shop to ask about cancellations.', action: !sum.over && Pub.waitlist ? '<div class="wl-acts">' + Pub.waitlist.buttonHTML(d) + nextDayBtn(d) + '</div>' : nextDayBtn(d) });
         } else {

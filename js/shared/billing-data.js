@@ -720,10 +720,16 @@
     S.insert('demoBackfills', { id: 'timePaymentDemo1', at: new Date().toISOString(), plans: list.length });
   }
   function fnbStartup() {
+    const n0 = S.all('charges').length;
     try { tpDemo(); } catch (e) { console.error('Time payment demo failed', e); }
     try { fnbDemo(); } catch (e) { console.error('F&B demo failed', e); }
     try { fnbPostDue(); } catch (e) { console.error('F&B assessments failed', e); }
     try { fnbReconcileAll(); } catch (e) { console.error('F&B credit check failed', e); }
+    /* The page may have drawn itself already (its DOMContentLoaded handler comes first): draw it again when this
+       changed the ledger, so the first view shows the demo assessment and any new postings. */
+    if (S.all('charges').length !== n0) setTimeout(function () {
+      try { if (window.Portal && Portal.render && document.body.classList.contains('portal')) Portal.render(); else if (Club.app && Club.app.render && document.getElementById('view')) Club.app.render(); } catch (e) { /* the next navigation redraws */ }
+    }, 0);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fnbStartup); else setTimeout(fnbStartup, 0);
 

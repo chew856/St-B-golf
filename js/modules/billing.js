@@ -339,14 +339,14 @@
     const body = '<form class="form-grid bil-refund" novalidate>' +
       ui.field({ label: 'Membership year', name: 'season', type: 'select', options: ui.options(seasons.map(function (y) { return { value: String(y), label: y + ' dues · ' + fmt.money(r2(info[y].charged - info[y].refunded)) + ' to refund' }; }), String(pick)) }) +
       ui.field({ label: 'Amount of dues to refund', name: 'amount', type: 'number', step: 0.01, min: 0, required: true, value: r2(Math.max(0, info[pick].charged - info[pick].refunded)) }) +
-      '<div class="field span-2"><label class="check bil-check"><input type="checkbox" name="writing"><span>Request received in writing on</span></label></div>' +
+      '<div class="field span-2"><label class="check bil-check"><input type="checkbox" name="writing"><span>Request received in writing</span></label></div>' +
       ui.field({ label: 'Date the written request was received', name: 'receivedOn', type: 'date', value: today(), required: true }) +
       ui.field({ label: 'How it goes back to the member', name: 'payback', type: 'select', options: ui.options([{ value: 'account', label: 'Leave as a credit on the account' }, { value: 'Check', label: 'Paid back by cheque' }, { value: 'EFT', label: 'Paid back by EFT' }, { value: 'Card', label: 'Refunded to a credit card' }], 'account') }) +
       '<div class="span-2 bil-refund-when"></div>' +
       '<div class="span-2 bil-refund-board" hidden>' +
         '<label class="check bil-check"><input type="checkbox" name="board"><span>Approved by the Board of Directors</span></label>' +
         ui.field({ label: 'Board decision and reason', name: 'boardReason', type: 'textarea', placeholder: 'For example, medical note received; moving out of province' }) +
-        '<label class="check bil-check"><input type="checkbox" name="credit2m"><span>The Board also granted a two-month credit toward the ' + (pick + 1) + ' season</span></label>' +
+        '<label class="check bil-check"><input type="checkbox" name="credit2m"><span class="bil-2m-label">The Board also granted a two-month credit toward the ' + (pick + 1) + ' season</span></label>' +
         ui.field({ label: 'Two-month credit', name: 'credit2mAmount', type: 'number', step: 0.01, min: 0, value: twoMonths, hint: 'Two twelfths of this year’s ' + (t ? t.name : '') + ' dues. Change it if the Board set another amount.' }) +
       '</div>' +
       '<div class="span-2 bil-refund-sum" aria-live="polite"></div></form>';
@@ -369,6 +369,7 @@
         ? '<p class="bil-warn-box">' + Club.icon('info') + '<span>Received after May 31, ' + x.season + '. The policy allows no refunds after May 31; the Board of Directors reviews later requests one by one (a medical note or proof of moving out of province may be required). Record it only once the Board has approved it.</span></p>'
         : '<p class="bil-ok-box">' + Club.icon('check') + '<span>Received before the May 31, ' + x.season + ' deadline. The $50.00 administrative fee applies to all refunds of golf dues, even if no golf has been played.</span></p>') : '';
       ui.$('.bil-refund-board', form).hidden = !x.late;
+      ui.$('.bil-2m-label', form).textContent = 'The Board also granted a two-month credit toward the ' + (x.season + 1) + ' season';
       ui.$('.bil-refund-sum', form).innerHTML = '<dl class="bil-refund-dl"><div><dt>Dues refunded</dt><dd>' + money(x.amt) + '</dd></div><div><dt>Administrative fee</dt><dd>' + (x.fee ? '-' + money(x.fee) : money(0)) + '</dd></div>' +
         (x.credit ? '<div><dt>Two-month credit toward ' + (x.season + 1) + '</dt><dd>' + money(x.credit) + '</dd></div>' : '') +
         '<div class="bil-refund-total"><dt>' + (x.v.payback === 'account' ? 'Credited to the account' : 'Paid back to the member') + '</dt><dd>' + money(x.net + (x.v.payback === 'account' ? x.credit : 0)) + '</dd></div></dl>' +
@@ -379,16 +380,18 @@
       paint();
     });
     paint();
+    /* A checkbox's message goes under its whole label, not inside it. */
+    function checkErr(name, msg) { const f = q(name); if (!f) return; f.classList.add('invalid'); f.closest('label').insertAdjacentHTML('afterend', '<span class="field-error">' + esc(msg) + '</span>'); }
     function submit(a) {
       clearErrs(form);
       const x = state(); let ok = ui.validate(form);
-      if (!x.v.writing) { setErr(form, 'writing', 'Refund requests must be received in writing. Tick this once you have it.'); ok = false; }
+      if (!x.v.writing) { checkErr('writing', 'Refund requests must be received in writing. Tick this once you have it.'); ok = false; }
       if (x.v.receivedOn && x.v.receivedOn > today()) { setErr(form, 'receivedOn', 'The request cannot be dated in the future.'); ok = false; }
       if (!(x.amt >= 0) || x.amt > x.max + 0.005) { setErr(form, 'amount', 'Enter an amount up to the ' + fmt.money(x.max) + ' of dues not yet refunded.'); ok = false; }
       else if (x.amt > 0 && x.amt <= RF.FEE) { setErr(form, 'amount', 'The refund must be more than the $50.00 administrative fee.'); ok = false; }
       else if (!x.amt && !x.credit) { setErr(form, 'amount', 'Enter the dues to refund.'); ok = false; }
       if (x.late) {
-        if (!x.v.board) { setErr(form, 'board', 'After May 31 a refund needs the Board’s approval.'); ok = false; }
+        if (!x.v.board) { checkErr('board', 'After May 31 a refund needs the Board’s approval.'); ok = false; }
         if (!String(x.v.boardReason || '').trim()) { setErr(form, 'boardReason', 'Record the Board’s decision and reason.'); ok = false; }
       }
       if (x.v.payback !== 'account' && dayClosed(today())) { setErr(form, 'payback', closedMsg(today())); ok = false; }

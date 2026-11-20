@@ -588,7 +588,7 @@
             (bal <= 0.005 ? '<p class="pa-note">Your account is ' + (bal < -0.005 ? 'in credit by ' + esc(fmt.money(-bal)) : 'fully paid') + '. You can still pay ahead. The amount is kept as a credit for future charges.</p>' : '') +
             '<div class="pa-opts">' +
               (bal > 0.005 ? opt('full', 'Full balance', bal, 'Everything you owe today') : '') +
-              (planAmt > 0 ? opt('plan', 'Time payment', planAmt, (planRow ? (planRow.state === 'missed' || planRow.state === 'arrears' ? 'Missed, was due ' : 'Due ') + fmt.date(planRow.date) + ' · ' : '') + 'plus a 1.5% card fee of ' + fmt.money(cardFee(planAmt))) : '') +
+              (planAmt > 0 ? opt('plan', 'Time payment', planAmt, 'Plus a 1.5% card fee of ' + fmt.money(cardFee(planAmt)) + '.' + (planRow ? (planRow.state === 'missed' || planRow.state === 'arrears' ? ' Missed, was due ' : ' Due ') + fmt.date(planRow.date) + '.' : '')) : '') +
               (showStmt ? opt('statement', monthName(st.period) + ' statement', stOwed, st.status === 'overdue' ? 'Past due since ' + fmt.date(st.dueOn) : (st.dueOn ? 'Due ' + fmt.date(st.dueOn) : 'Issued ' + fmt.date(st.issuedOn))) : '') +
               opt('other', 'Another amount', null, 'Enter any amount') +
             '</div>' +

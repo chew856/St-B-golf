@@ -3196,7 +3196,7 @@
     [/^Payment (\d+) of (\d+)$/, 'Paiement $1 sur $2'],
     [/^Payments are due on the 15th of each month, and all dues are paid in full by August 15, (\d{4})\.$/, 'Les paiements sont dus le 15 de chaque mois, et toute la cotisation est payée au plus tard le 15 août $1.'],
     [/^(.+) is due on your plan now\.$/, '$1 est dû sur votre plan maintenant.'],
-    [/^(.+) administration fee today, then (\d+) payments due on the 15th, (\w+) to August 15, (\d{4})$/, function (m) { return 'Frais d’administration de ' + m[1] + ' aujourd’hui, puis ' + m[2] + ' paiements dus le 15, ' + de(mo(m[3])) + ' au 15 août ' + m[4]; }],
+    [/^(.+) administration fee today, then (\d+) payments due on the 15th, (\S+) to August 15, (\d{4})$/, function (m) { return 'Frais d’administration de ' + m[1] + ' aujourd’hui, puis ' + m[2] + ' paiements dus le 15, ' + de(mo(m[3])) + ' au 15 août ' + m[4]; }],
     [/^fee today, then (\d+) payments$/, 'de frais aujourd’hui, puis $1 paiements'],
     [/^Each payment is added to your account on the 15th of its month and is due that day\. All dues are paid in full by August 15, (\d{4})\.$/, 'Chaque paiement est porté à votre compte le 15 de son mois et est dû ce jour-là. Toute la cotisation est payée au plus tard le 15 août $1.'],
     [/^I have a valid credit card on file with the club office, or will call (.+) to give one\. It is charged if a payment is missed\.$/, 'J’ai une carte de crédit valide au dossier au bureau du club, ou j’appellerai le $1 pour en donner une. Elle est débitée si un paiement est manqué.'],
@@ -3204,8 +3204,7 @@
     [/^The time payment plan is offered to members in good standing\. Please call the club office at (.+)\.$/, 'Le plan de paiements échelonnés est offert aux membres en règle. Veuillez appeler le bureau du club au $1.'],
     [/^The time payment plan is offered to members in good standing\. Please bring your account up to date, or call the club office at (.+)\.$/, 'Le plan de paiements échelonnés est offert aux membres en règle. Veuillez mettre votre compte à jour ou appeler le bureau du club au $1.'],
     [/^The time payment plan is not available on this account\. Please call the club office at (.+)\.$/, 'Le plan de paiements échelonnés n’est pas offert sur ce compte. Veuillez appeler le bureau du club au $1.'],
-    [/^(Missed, was due|Due) (.+) · plus a 1\.5% card fee of (.+)$/, function (m) { return (m[1] === 'Due' ? 'Dû le ' : 'Manqué, dû le ') + m[2] + ' · plus des frais de carte de 1,5' + NB + '% de ' + m[3]; }],
-    [/^plus a 1\.5% card fee of (.+)$/, 'plus des frais de carte de 1,5' + NB + '% de $1'],
+    [/^Plus a 1\.5% card fee of (.+?)\.( (Missed, was due|Due) (.+)\.)?$/, function (m) { return 'Plus des frais de carte de 1,5' + NB + '% de ' + m[1] + '.' + (m[2] ? (m[3] === 'Due' ? ' Dû le ' : ' Manqué, dû le ') + m[4] + '.' : ''); }],
     [/^A 1\.5% credit card processing fee of (.+) is added to your account as its own charge\.$/, 'Des frais de traitement de carte de crédit de 1,5' + NB + '% de $1 sont portés à votre compte séparément.']
   ];
   P.forEach(function (p) { if (typeof p[1] === 'string') { var to = p[1]; p[1] = function (m) { return m[0].replace(p[0], to); }; } });
@@ -3214,10 +3213,15 @@
      so the exact sentence is added once the renewal rules are loaded. */
   document.addEventListener('DOMContentLoaded', function () {
     try {
-      var RN = Club.billing && Club.billing.renewal; if (!RN || !Club.store || !document.body.classList.contains('portal')) return;
+      var RN = Club.billing && Club.billing.renewal; if (!RN || !Club.store) return;
       var o = {}, n = RN.schedule(1000, Club.date.today(), 'monthly').length;
       if (n > 1) o['Pay in full, or on the time payment plan: ' + n + ' payments due on the 15th of each month until August 15.'] = 'Payez en entier, ou avec le plan de paiements échelonnés' + NB + ': ' + n + ' paiements dus le 15 de chaque mois jusqu’au 15 août.';
       o['Pay in full.'] = 'Payez en entier.';
+      /* "2026 season, April 1 to October 31" and the assessment's receipt line, for last, this and next season. */
+      if (Club.season) { var y = +Club.date.today().slice(0, 4), dl = Club.season.dayLabel(); [y - 1, y, y + 1].forEach(function (k) {
+        o[k + ' season, ' + dl] = 'Saison ' + k + ', ' + span(dl);
+        o['Food and Beverage Assessment, ' + k + ' season (' + dl + '), set up as an F&B credit'] = 'Cotisation restauration, saison ' + k + ' (' + span(dl) + '), portée en crédit de restauration';
+      }); }
       Club.i18n.add({ strings: o });
     } catch (e) { /* the sentence stays as the shared dictionaries leave it */ }
   });

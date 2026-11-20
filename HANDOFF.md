@@ -239,7 +239,7 @@ Chromium only; check in Safari.
   hide themselves in Profile (`members.leaderboardHidden`); staff still see everyone, marked "Hidden from members".
 - Tested in Chromium only; needs a Safari check.
 
-## Membership Handbook: page and rules (Nov 19 to 20, NOT DEPLOYED YET)
+## Membership Handbook: page and rules (Nov 19 to 20, deployed Nov 20)
 Source: the club's 2025 Membership Handbook PDF
 (https://s3.amazonaws.com/data.gallusgolf.com/files/1790/0f5bafd83c104da8b23e005a6d8e8cee.pdf). The owner chose "C":
 show it and make the system follow it. Tested in Chromium only; needs a Safari check.

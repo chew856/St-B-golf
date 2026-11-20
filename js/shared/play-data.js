@@ -63,14 +63,15 @@
       const out = {};
       S().all(SCORES).forEach(function (d) {
         if (d.roundId !== roundId) return;
-        (out[d.pid] = out[d.pid] || {})[d.hole] = { strokes: d.strokes, by: d.by || null, at: d.at || null };
+        (out[d.pid] = out[d.pid] || {})[d.hole] = { strokes: d.strokes, by: d.by || null, at: d.at || null, auto: !!d.auto };
       });
       return out;
     },
-    /** Enter or change one player's score on one hole, recording who did it and when. */
-    setScore: function (roundId, pid, hole, strokes, who) {
+    /** Enter or change one player's score on one hole, recording who did it and when. auto: true marks par filled in
+        when someone moved on without touching that player's score (owner, Nov 19), so it is not announced as an entry. */
+    setScore: function (roundId, pid, hole, strokes, who, auto) {
       const id = roundId + '|' + pid + '|' + hole;
-      const doc = { roundId: roundId, pid: pid, hole: +hole, strokes: +strokes, by: who || null, at: new Date().toISOString() };
+      const doc = { roundId: roundId, pid: pid, hole: +hole, strokes: +strokes, by: who || null, at: new Date().toISOString(), auto: !!auto };
       return S().find(SCORES, id) ? S().update(SCORES, id, doc) : S().insert(SCORES, Object.assign({ id: id }, doc));
     },
     /** fn() runs after any change to live rounds or scores, made here or in another tab. Returns an unsubscribe. */

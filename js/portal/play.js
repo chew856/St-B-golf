@@ -230,7 +230,7 @@
       }).join('');
       /* Who last changed a score on this hole */
       let last = null;
-      round.players.forEach(function (p) { const c = g.raw[p.pid] && g.raw[p.pid][n]; if (c && c.at && (!last || c.at > last.at)) last = Object.assign({ pid: p.pid }, c); });
+      round.players.forEach(function (p) { const c = g.raw[p.pid] && g.raw[p.pid][n]; if (c && c.at && !c.auto && (!last || c.at > last.at)) last = Object.assign({ pid: p.pid }, c); });
       let syncLine;
       if (last && last.by) {
         const byMe = last.by.pid === who.pid, self = last.by.pid === last.pid;
@@ -256,7 +256,7 @@
       }).join('');
       const st = P.standingsOf(round, false);
       const lastHole = i === round.order.length - 1;
-      const missing = lastHole ? round.order.filter(function (x) { return !round.players.some(function (p) { return g.raw[p.pid] && g.raw[p.pid][x]; }); }) : [];
+      const missing = lastHole ? round.order.filter(function (x) { return x !== n && !round.players.some(function (p) { return g.raw[p.pid] && g.raw[p.pid][x]; }); }) : [];
       const prev = i > 0 ? '<button type="button" class="btn lv-prev" data-go="' + (i - 1) + '" data-fk="prev">' + Club.icon('chevronLeft') + '<span>Hole ' + round.order[i - 1] + '</span></button>' : '<button type="button" class="btn lv-prev" data-act="card" data-fk="prev">' + Club.icon('scorecard') + '<span>Card</span></button>';
       const next = lastHole ? '<button type="button" class="btn btn-primary lv-next" data-act="finish" data-fk="next"><span>Finish round</span>' + Club.icon('check') + '</button>'
         : '<button type="button" class="btn btn-primary lv-next" data-go="' + (i + 1) + '" data-fk="next"><span>Hole ' + round.order[i + 1] + '</span>' + Club.icon('chevronRight') + '</button>';
@@ -457,14 +457,23 @@
     ui.on(view, 'click', '[data-dn]', function (e, b) { refocus = 'dn-' + b.dataset.dn; bump(b.dataset.dn, -1); });
     ui.on(view, 'click', '[data-up]', function (e, b) { refocus = 'up-' + b.dataset.up; bump(b.dataset.up, 1); });
     ui.on(view, 'click', '[data-ok]', function (e, b) { refocus = 'ok-' + b.dataset.ok; bump(b.dataset.ok, 0); });
+    /* The screen starts each score at par, so moving on with Next (or finishing) without touching a player's score
+       means they made par: save it (owner, Nov 19). Going back, or jumping from the card, saves nothing. */
+    function fillPar(r, k) {
+      const n = r.order[k], h = n != null && P.holesOf([n])[0]; if (!h) return;
+      const sc = P.sync.scores(r.id);
+      r.players.forEach(function (p) { if (!(sc[p.pid] && sc[p.pid][n])) P.sync.setScore(r.id, p.pid, n, h.par, who, true); });
+    }
     ui.on(view, 'click', '[data-go]', function (e, b) {
       const r = P.sync.round(ttId); if (!r) return;
       const i = Math.max(0, Math.min(r.order.length - 1, +b.dataset.go));
+      if (b.classList.contains('lv-next')) fillPar(r, holeIndex(r));
       setHole(r.id, i); reach(r, i); refocus = b.classList.contains('lv-next') ? 'next' : 'prev'; draw(); top();
     });
     ui.on(view, 'click', '[data-act=card]', function () { openCard(); });
     ui.on(view, 'click', '[data-act=finish]', function () {
       const r = P.sync.round(ttId); if (!r || r.status !== 'playing') return;
+      fillPar(r, holeIndex(r));
       const done = P.finish(r.id, who);
       if (!done) return;
       draw(); top();

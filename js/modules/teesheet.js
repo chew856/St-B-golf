@@ -5,6 +5,13 @@
   const { settings, PACE_TARGET, toMin, toHM, nowMin, slotList, closeHM, blockAt } = Club.shared.teesheet;
 
   /** Two rounds overlap when the later one starts before the earlier one is expected to finish (the earlier round's length sets the window). */
+  /* Members may play more than one round a day, as long as the rounds do not overlap: a later round may start once the
+     earlier one is expected to finish (the pace target). The message says when the player is free (owner, Nov 20). */
+  function clashText(name, x, t, h) {
+    const a = toMin(x.time), b = toMin(t);
+    if (a <= b) { const end = toHM(a + (PACE_TARGET[x.holes] || PACE_TARGET[18])); return name + ' is still on the course then: their ' + fmt.time(x.time) + ' round should finish about ' + fmt.time(end) + '. A second round can start from ' + fmt.time(end) + '.'; }
+    return name + ' has a round at ' + fmt.time(x.time) + ', and this one would not finish until about ' + fmt.time(toHM(b + (PACE_TARGET[h] || PACE_TARGET[18]))) + '.';
+  }
   function overlaps(t1, h1, t2, h2) { const a = toMin(t1), b = toMin(t2); return a <= b ? b - a < (PACE_TARGET[h1] || PACE_TARGET[18]) : a - b < (PACE_TARGET[h2] || PACE_TARGET[18]); }   /* read by Reports > Golf */
   const BLOCK_KINDS = [
     { value: 'maintenance', label: 'Course maintenance' },
@@ -1967,7 +1974,7 @@
             return x.date === d && x.status !== 'cancelled' && x.status !== 'no-show' && (!tt || x.id !== tt.id) && overlaps(x.time, x.holes, t, h) &&
               (x.players || []).some(function (q) { return q.memberId === p.memberId; });
           })[0];
-          if (clash) { errs.push(Club.members.name(p.memberId) + ' is already playing at ' + fmt.time(clash.time) + ' that day.'); bad.push(form['member_' + p.i]); }
+          if (clash) { errs.push(clashText(Club.members.name(p.memberId), clash, t, h)); bad.push(form['member_' + p.i]); }
         });
         const other = activeOn(d).find(function (x) { return x.time === t && (!tt || x.id !== tt.id); });
         if (other) { errs.push(fmt.time(t) + ' already has a group. Choose another tee time.'); bad.push(form.time); }

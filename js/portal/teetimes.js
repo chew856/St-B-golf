@@ -119,6 +119,13 @@
   function endLabel(end) { return end >= closeHM() ? 'close of play' : fmt.time(end); }
 
   /** Staff overlap rule: a member never has two rounds whose start times sit within the other group's pace target. */
+  /** What to tell a member about a clash: more than one round a day is fine once the earlier round should be done. */
+  function hmOf(n) { n = Math.max(0, Math.min(n, 23 * 60 + 59)); return String(Math.floor(n / 60)).padStart(2, '0') + ':' + String(n % 60).padStart(2, '0'); }
+  function clashMsg(who, x, time, holes) {
+    const a = toMin(x.time), b = toMin(time);
+    if (a <= b) { const end = fmt.time(hmOf(a + (PACE[x.holes] || 255))); return (who ? who + ' is still on the course then: their ' : 'You are still on the course then: your ') + fmt.time(x.time) + ' round should finish about ' + end + '. A second round can start from ' + end + '.'; }
+    return (who ? who + ' has' : 'You have') + ' a round at ' + fmt.time(x.time) + ', and this one would not finish until about ' + fmt.time(hmOf(b + (PACE[holes] || 255))) + '.';
+  }
   function clashFor(memberId, date, time, excludeId, list, holes) {
     /* The round that starts first sets the window: a later round may start once the earlier one is expected to finish.
        `holes` is the new round's length (18 when not known). */
@@ -720,7 +727,7 @@
       if (!m || m.status === 'resigned') { errs.push(playerName(p) + ' is no longer a member. Please remove them from the group.'); return; }
       if (m.status === 'suspended') { errs.push(self ? 'Your golf privileges are currently paused.' : playerName(p) + ' is unable to play at present. Please remove them or add a guest instead.'); return; }
       const c = clashFor(p.memberId, date, time, excludeId, list, holes);
-      if (c) errs.push(self ? 'You are already playing at ' + fmt.time(c.time) + ' that day.' : playerName(p) + ' already has a round close to this time. Please choose another companion or time.');
+      if (c) errs.push(clashMsg(self ? null : playerName(p), c, time, holes));
       // Each member in the group must be allowed at this time under their own category (Club.teeRules).
       // Social members have no golf rules of their own: they play by invitation, like a guest.
       if (!self && !tierRules(m).golf) return;
@@ -849,7 +856,7 @@
     const c = checkBooking(m, { date: tt.date, time: tt.time, joinId: tt.id, existing: (tt.players || []).slice(), players: [self], skipStored: true });
     if (c.ok) return { ok: true, code: 'open', reason: '', places: Math.max(0, 4 - (tt.players || []).length) };
     if (c.code === 'locked') return { ok: false, code: 'locked', reason: c.opensOn ? 'Opens to you ' + fmt.dateShort(c.opensOn) : 'Not open to you yet', opensOn: c.opensOn, detail: c.errs[0] };
-    if (c.code === 'players') { const cl = clashFor(m.id, tt.date, tt.time, null); return cl ? { ok: false, code: 'clash', reason: 'You’re already playing at ' + fmt.time(cl.time), clash: cl, detail: c.errs[0] } : { ok: false, code: 'member', reason: 'Not available to you', detail: c.errs[0] }; }
+    if (c.code === 'players') { const cl = clashFor(m.id, tt.date, tt.time, null); return cl ? { ok: false, code: 'clash', reason: toMin(cl.time) <= toMin(tt.time) ? 'Your ' + fmt.time(cl.time) + ' round ends about ' + fmt.time(hmOf(toMin(cl.time) + (PACE[cl.holes] || 255))) : 'Too close to your ' + fmt.time(cl.time) + ' round', clash: cl, detail: c.errs[0] } : { ok: false, code: 'member', reason: 'Not available to you', detail: c.errs[0] }; }
     return { ok: false, code: c.code, reason: JOIN_REASON[c.code] || 'Not available', detail: c.errs[0] };
   }
   function joinCtx(m, ttId, opts) {

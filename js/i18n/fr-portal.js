@@ -353,6 +353,13 @@
   pat(/^Another player has just joined this group\. There (?:is now 1 spot|are now (\d+) spots) left\.$/, function (m) { return 'Un autre joueur vient de se joindre à ce groupe. Il reste maintenant ' + (m[1] ? m[1] + ' places.' : '1 place.'); });
   pat(/^Opens to you (.+)$/, 'Ouvert pour vous le $1');
   pat(/^You’re already playing at (.+)$/, 'Vous jouez déjà à $1');
+  /* Two rounds the same day: when the player is free again (Nov 20) */
+  pat(/^You are still on the course then: your (.+?) round should finish about (.+?)\. A second round can start from (.+)\.$/, 'Vous serez encore sur le parcours : votre partie de $1 devrait se terminer vers $2. Une deuxième partie peut commencer à partir de $3.');
+  pat(/^(.+?) is still on the course then: their (.+?) round should finish about (.+?)\. A second round can start from (.+)\.$/, '$1 sera encore sur le parcours : sa partie de $2 devrait se terminer vers $3. Une deuxième partie peut commencer à partir de $4.');
+  pat(/^You have a round at (.+?), and this one would not finish until about (.+)\.$/, 'Vous avez une partie à $1, et celle-ci ne se terminerait que vers $2.');
+  pat(/^(.+?) has a round at (.+?), and this one would not finish until about (.+)\.$/, '$1 a une partie à $2, et celle-ci ne se terminerait que vers $3.');
+  pat(/^Your (.+?) round ends about (.+)$/, 'Votre partie de $1 se termine vers $2');
+  pat(/^Too close to your (.+) round$/, 'Trop près de votre partie de $1');
   pat(/^Changes close two hours before play\. Please call the golf shop on (.+)\.$/, 'Les modifications ferment deux heures avant le jeu. Veuillez appeler la boutique du pro au $1.');
   pat(/^(.+) \((fast|medium|slow)\)$/, function (m) { return dec(m[1]) + ' (' + { fast: 'rapides', medium: 'moyens', slow: 'lents' }[m[2]] + ')'; });
   pat(/^Course open · First tee (.+) · (.+)$/, function (m) { return 'Parcours ouvert · Premier départ ' + m[1] + ' · ' + T(m[2]); });

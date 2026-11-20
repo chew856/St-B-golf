@@ -240,8 +240,9 @@
   ];
   /** '08:30' -> '8:30 AM' (English; the French dictionaries turn the whole line into French). */
   function clock(t) { const p = String(t).split(':'), h = +p[0]; return (h % 12 || 12) + ':' + (p[1] || '00') + ' ' + (h >= 12 ? 'PM' : 'AM'); }
-  /** One hours line: '8:30 AM to 5:00 PM', '9:00 AM to last call*', '10:00 AM to dusk'. */
-  function range(row) { return clock(row.open) + ' to ' + (row.close ? clock(row.close) : row.until) + (row.star ? '*' : ''); }
+  /** One hours line: '8:30 AM to 5:00 PM', '9:00 AM to last call', '10:00 AM to dusk'. The footnote star (row.star)
+      is left to the caller, outside this text, so the French dictionaries see the plain line. */
+  function range(row) { return clock(row.open) + ' to ' + (row.close ? clock(row.close) : row.until); }
 
   /* ---------------- Seed (once per browser) ---------------- */
   S.seed(COLL, function () { return SEED.map(function (s) { return Object.assign({}, s); }); });

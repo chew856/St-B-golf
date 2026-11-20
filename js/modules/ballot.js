@@ -139,7 +139,7 @@
   function dayCard(x) {
     const won = x.entries.filter(function (e) { return e.status === 'won'; }).length, missed = x.entries.filter(function (e) { return e.status === 'missed'; }).length;
     const line = x.phase === 'before' ? 'Entries open ' + dayShort(x.schedule.opensOn)
-      : x.phase === 'drawn' ? plural(won, 'tee time') + ' · ' + missed + ' missed'
+      : x.phase === 'drawn' ? (x.entries.length ? plural(won, 'tee time') + ' · ' + missed + ' missed' : 'No entries')
       : 'Draw ' + drawText(x.date);
     return '<button type="button" class="bl-day' + (x.date === sel ? ' is-sel' : '') + '" data-date="' + x.date + '" aria-pressed="' + (x.date === sel) + '">' +
       '<span class="bl-day-k">' + esc(kindWord(x.date)) + '</span>' +

@@ -42,7 +42,7 @@
     const src = '<p class="pub-hb-src">From the club’s 2025 Membership Handbook.</p>';
     const more = function (id, label) { return ' <button type="button" class="pub-hb-more" aria-expanded="false" aria-controls="' + id + '"><span>' + label + '</span>' + Club.icon('chevronDown') + '</button>'; };
     const hours = '<ul class="pub-hb-hours">' + H.hours.map(function (h) {
-      return '<li><h4>' + esc(h.venue) + '</h4>' + h.rows.map(function (r) { return '<p><span>' + esc(r.days) + '</span> · <span>' + esc(H.range(r)) + '</span></p>'; }).join('') +
+      return '<li><h4>' + esc(h.venue) + '</h4>' + h.rows.map(function (r) { return '<p><span>' + esc(r.days) + '</span> · <span>' + esc(H.range(r)) + '</span>' + (r.star ? '<span aria-hidden="true">*</span>' : '') + '</p>'; }).join('') +
         (h.note ? '<p class="pub-hb-note">' + esc(h.note) + '</p>' : '') + '</li>';
     }).join('') + '</ul>';
     return (v ? '<li class="pub-hb-item">' + Club.icon('user') + '<span><strong>Dress code.</strong> Appropriate golf attire is required for all players.' + more('pub-hb-dress', 'Read the dress code') + '</span>' +

@@ -11,7 +11,7 @@
     const H = Club.handbook;
     if (!H) return [{ venue: 'Club office', icon: 'billing', lines: [['Main line', Club.info.phone]], note: 'For hours, call the club office at ' + Club.info.phone + '.' }];
     return H.hours.map(function (h) {
-      const lines = h.rows.map(function (r) { return [r.days, H.range(r)]; });
+      const lines = h.rows.map(function (r) { return [r.days, H.range(r), r.star ? '*' : '']; });
       if (h.id === 'office') lines.push(['Main line', Club.info.phone]);
       if (h.id === 'gallery') lines.push(['Breakfast', 'Served until 2pm']);
       return { venue: h.venue, icon: h.icon, lines: lines, note: h.note };
@@ -235,7 +235,7 @@
         Portal.accordion({ id: 'pc-hours', icon: 'clock', title: 'Hours', summary: 'Office · Pro Shop · Gallery · Beer Cart',
           body: '<ul class="pc-rows">' + hoursList().map(function (h) {
             return '<li>' + Club.icon(h.icon, 'pc-row-ic') + '<div class="pc-row-main"><h3>' + esc(h.venue) + '</h3>' + h.lines.map(function (l) {
-              const v = l[1] === Club.info.phone ? '<a href="' + esc(main.href) + '">' + esc(l[1]) + '</a>' : '<span>' + esc(l[1]) + '</span>';
+              const v = l[1] === Club.info.phone ? '<a href="' + esc(main.href) + '">' + esc(l[1]) + '</a>' : '<span>' + esc(l[1]) + '</span>' + (l[2] ? '<span aria-hidden="true">' + l[2] + '</span>' : '');
               return '<p class="pc-hour-line"><span>' + esc(l[0]) + '</span> · ' + v + '</p>'; }).join('') + (h.note ? '<p class="pc-hour-note">' + telLine(h.note) + '</p>' : '') + '</div></li>';
           }).join('') + '</ul>' +
           (Club.handbook ? '<p class="pc-hour-src">From the club’s 2025 Membership Handbook. <a class="p-link" href="#/handbook/hours">Read the handbook</a></p>' : '') }) +

@@ -3097,3 +3097,128 @@
   P.forEach(function (p) { if (typeof p[1] === 'string') { var to = p[1]; p[1] = function (m) { return m[0].replace(p[0], to); }; } });
   Club.i18n.add({ strings: S, patterns: P });
 })();
+
+/* ---------------- Billing policies (the club's Membership Handbook): F&B credit, account standing, time payment
+   plan, dues refunds. Strings from js/portal/account.js and js/shared/billing-data.js, plus the stored English charge,
+   receipt and line texts they write (Club.fmtEn). Agent: billing policies. ---------------- */
+(function () {
+  if (!window.Club || !Club.i18n || typeof Club.i18n.add !== 'function') return;
+  var NB = ' ';
+  var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  var MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+  function mo(w) { var i = MONTHS.indexOf(w); return i >= 0 ? MOIS[i] : w; }
+  function day(d) { return +d === 1 ? '1er' : String(d); }
+  /* "April 1 to October 31" -> "du 1er avril au 31 octobre" */
+  function span(s) { var m = /^(\w+) (\d+) to (\w+) (\d+)$/.exec(s); return m ? 'du ' + day(m[2]) + ' ' + mo(m[1]) + ' au ' + day(m[4]) + ' ' + mo(m[3]) : s; }
+  function de(s) { return /^[aeiouyàâéèêîôû]/i.test(s) ? 'd’' + s : 'de ' + s; }
+  var S = {
+    /* F&B credit */
+    'Food and beverage credit': 'Crédit de restauration',
+    'Credit used': 'Crédit utilisé',
+    'Credit left': 'Crédit restant',
+    'Credit expired': 'Crédit expiré',
+    'F&B credit used': 'Crédit de restauration utilisé',
+    'Gratuities and service charges are not paid from the credit. It cannot be transferred.': 'Les pourboires et frais de service ne sont pas payés avec le crédit. Il n’est pas transférable.',
+    'Food and drink in the clubhouse, takeout and the beverage cart are paid from it first.': 'Les repas et boissons au pavillon, les commandes à emporter et la voiturette-bar sont d’abord payés avec ce crédit.',
+    'You used all of it.': 'Vous l’avez utilisé en entier.',
+    'F&B assessment': 'Cotisation restauration',
+    'Service charges and gratuities are not paid from the F&B credit.': 'Les frais de service et les pourboires ne sont pas payés avec le crédit de restauration.',
+    /* Account standing */
+    'All club privileges are suspended on your account.': 'Tous les privilèges du club sont suspendus à votre compte.',
+    'Charging, tee time booking and golf are suspended on your account.': 'Les achats au compte, la réservation de départs et le golf sont suspendus à votre compte.',
+    'Charging to your account is suspended.': 'Les achats portés à votre compte sont suspendus.',
+    'Tee time booking and golf are suspended on your account.': 'La réservation de départs et le golf sont suspendus à votre compte.',
+    /* Time payment plan */
+    'Time payment plan': 'Plan de paiements échelonnés',
+    'Time payment': 'Paiement échelonné',
+    'Administration fee': 'Frais d’administration',
+    'Charged today': 'Facturé aujourd’hui',
+    'Administration fee, charged to your member account today': 'Frais d’administration, portés à votre compte de membre aujourd’hui',
+    'Due today': 'Dû aujourd’hui',
+    '30 days late': 'En retard de 30 jours',
+    'Please confirm the card on file with the club office': 'Veuillez confirmer la carte au dossier au bureau du club',
+    'A $50.00 administration fee applies to every time payment application.': 'Des frais d’administration de 50,00 $ s’appliquent à chaque demande de paiements échelonnés.',
+    'Pay by EFT, cash, cheque, debit or credit card. Credit card payments carry a 1.5% processing fee.': 'Payez par TEF, en argent comptant, par chèque, par carte de débit ou par carte de crédit. Les paiements par carte de crédit comportent des frais de traitement de 1,5' + NB + '%.',
+    'A valid credit card must be on file with the club office. It is charged if a monthly payment is missed. This website never stores your card.': 'Une carte de crédit valide doit être au dossier au bureau du club. Elle est débitée si un paiement mensuel est manqué. Ce site n’enregistre jamais votre carte.',
+    'A payment 30 days in arrears suspends tee time booking and golf until it is paid.': 'Un paiement en retard de 30 jours suspend la réservation de départs et le golf jusqu’à ce qu’il soit payé.',
+    'Each payment is added to your account on its due date and appears on that month’s statement.': 'Chaque paiement est porté à votre compte à son échéance et figure sur le relevé de ce mois.',
+    'Time payment administration fee': 'Frais d’administration, paiements échelonnés',
+    'Credit card processing fee': 'Frais de traitement de carte de crédit',
+    'Dues refund': 'Remboursement de cotisation',
+    'Refund administrative fee': 'Frais administratifs de remboursement',
+    'Board credit': 'Crédit accordé par le conseil',
+    'Dues refund paid': 'Remboursement de cotisation versé',
+    'Refunded to a credit card': 'Remboursé sur une carte de crédit',
+    'Administrative fee on all refunds of golf dues': 'Frais administratifs sur tout remboursement de cotisation de golf',
+    'EFT (bank transfer)': 'TEF (virement bancaire)',
+    'Debit card': 'Carte de débit'
+  };
+  var P = [
+    /* F&B credit */
+    [/^(\d{4}) season, (\w+ \d+ to \w+ \d+)$/, function (m) { return 'Saison ' + m[1] + ', ' + span(m[2]); }],
+    [/^Your (\d{4}) F&B credit of (.+) is not on your account yet\.$/, 'Votre crédit de restauration $1 de $2 n’est pas encore à votre compte.'],
+    [/^(\d{4}) F&B credit: (.+) used of (.+)$/, 'Crédit de restauration $1' + NB + ': $2 utilisés sur $3'],
+    [/^F&B credit: (.+) left of (.+), until (.+)$/, 'Crédit de restauration' + NB + ': $1 restants sur $2, jusqu’au $3'],
+    [/^(.+) was left on (.+) and has expired\. The (\d{4}) assessment of (.+) is charged on (.+)\.$/, '$1 restait le $2 et est expiré. La cotisation restauration $3 de $4 est facturée le $5.'],
+    [/^You used all of it\. The (\d{4}) assessment of (.+) is charged on (.+)\.$/, 'Vous l’avez utilisé en entier. La cotisation restauration $1 de $2 est facturée le $3.'],
+    [/^The (\d{4}) assessment of (.+) is charged on (.+)\.$/, 'La cotisation restauration $1 de $2 est facturée le $3.'],
+    [/^It is charged at the start of the season, (.+)\.$/, 'Elle est facturée au début de la saison, le $1.'],
+    [/^Food and drink in the clubhouse, takeout and the beverage cart are paid from it first\. Anything left after (.+) expires\.$/, 'Les repas et boissons au pavillon, les commandes à emporter et la voiturette-bar sont d’abord payés avec ce crédit. Le solde restant après le $1 expire.'],
+    [/^F&B assessment( · (Golf shop|Gallery Taphouse|Club events|Club office))?$/, function (m) { return 'Cotisation restauration' + (m[1] ? ' · ' + ({ 'Golf shop': 'Boutique du pro', 'Gallery Taphouse': 'Gallery Taphouse', 'Club events': 'Événements du club', 'Club office': 'Bureau du club' })[m[2]] : ''); }],
+    /* Stored charge, receipt and line texts */
+    [/^(\d{4}) Food and Beverage Assessment$/, 'Cotisation restauration $1'],
+    [/^Food and Beverage Assessment, (\d{4}) season \((\w+ \d+ to \w+ \d+)\), set up as an F&B credit$/, function (m) { return 'Cotisation restauration, saison ' + m[1] + ' (' + span(m[2]) + '), portée en crédit de restauration'; }],
+    [/^F&B credit applied: (.+)$/, function (m) { return 'Crédit de restauration appliqué' + NB + ': ' + Club.i18n.t(m[1]); }],
+    [/^F&B credit returned: (.+)$/, function (m) { return 'Crédit de restauration rendu' + NB + ': ' + Club.i18n.t(m[1]); }],
+    [/^F&B credit (applied|returned), (\d{4}) season$/, function (m) { return 'Crédit de restauration ' + (m[1] === 'applied' ? 'appliqué' : 'rendu') + ', saison ' + m[2]; }],
+    [/^Paid from your (\d{4}) F&B credit: (.+)\. F&B credit left: (.+) of (.+)\.( Service charges and gratuities are not paid from the F&B credit\.)?$/, function (m) {
+      return 'Payé avec votre crédit de restauration ' + m[1] + NB + ': ' + m[2] + '. Crédit restant' + NB + ': ' + m[3] + ' sur ' + m[4] + '.' + (m[5] ? ' Les frais de service et les pourboires ne sont pas payés avec le crédit de restauration.' : ''); }],
+    [/^Time payment administration fee, (\d{4}) dues$/, 'Frais d’administration, paiements échelonnés de la cotisation $1'],
+    [/^Administration fee, time payment plan for (\d{4}) dues$/, 'Frais d’administration, plan de paiements échelonnés de la cotisation $1'],
+    [/^Credit card processing fee \(1\.5%\) on a time payment of (.+)$/, 'Frais de traitement de carte de crédit (1,5' + NB + '%) sur un paiement échelonné de $1'],
+    [/^Processing fee, 1\.5% of a (.+) credit card payment toward the (\d{4}) time payment plan$/, 'Frais de traitement, 1,5' + NB + '% d’un paiement par carte de crédit de $1 sur le plan de paiements échelonnés $2'],
+    [/^Toward your (\d{4}) time payment plan\.$/, 'Appliqué à votre plan de paiements échelonnés $1.'],
+    [/^Refund of (\d{4}) dues, (.+) membership( \(Board approved\))?(\. Request received in writing (.+))?$/, function (m) { return 'Remboursement de la cotisation ' + m[1] + ', adhésion ' + m[2] + (m[3] ? ' (approuvé par le conseil)' : '') + (m[4] ? '. Demande écrite reçue le ' + m[5] : ''); }],
+    [/^Administrative fee, refund of (\d{4}) dues$/, 'Frais administratifs, remboursement de la cotisation $1'],
+    [/^Two-month credit toward the (\d{4}) season(, granted by the Board of Directors| \(Board approved\))$/, function (m) { return 'Crédit de deux mois pour la saison ' + m[1] + (m[2] === ' (Board approved)' ? ' (approuvé par le conseil)' : ', accordé par le conseil d’administration'); }],
+    [/^Refund of (\d{4}) dues, less the administrative fee$/, 'Remboursement de la cotisation $1, moins les frais administratifs'],
+    /* Account standing */
+    [/^(.+) is unpaid (\d+) days after the statement date\. Please make a payment, or call the club office at (.+)\.$/, '$1 demeure impayé $2 jours après la date du relevé. Veuillez faire un paiement ou appeler le bureau du club au $3.'],
+    [/^Your time payment of (.+) due (.+) is (\d+) days late\. Please make a payment, or call the club office at (.+)\.$/, 'Votre paiement échelonné de $1 dû le $2 est en retard de $3 jours. Veuillez faire un paiement ou appeler le bureau du club au $4.'],
+    [/^Charging to your account is suspended: (.+) is unpaid (\d+) days after the statement date\. Please pay by card, or call the club office at (.+)\.$/, 'Les achats portés à votre compte sont suspendus' + NB + ': $1 demeure impayé $2 jours après la date du relevé. Veuillez payer par carte ou appeler le bureau du club au $3.'],
+    [/^Charging to your account is suspended because of an unpaid balance\. Please choose Pay at the cart, or call the club office at (.+)\.$/, 'Les achats portés à votre compte sont suspendus en raison d’un solde impayé. Veuillez choisir Payer à la voiturette ou appeler le bureau du club au $1.'],
+    /* Time payment plan */
+    [/^Time payment plan, (\d+) of (\d+) payments on your account$/, 'Plan de paiements échelonnés, $1 sur $2 paiements portés à votre compte'],
+    [/^Time payment plan, (\d+) payments$/, 'Plan de paiements échelonnés, $1 paiements'],
+    [/^(\d+) payments of (.+?)( \(the last is (.+)\))?, due on the 15th$/, function (m) { return m[1] + ' paiements de ' + m[2] + (m[3] ? ' (le dernier est de ' + m[4] + ')' : '') + ', dus le 15'; }],
+    [/^A payment of (.+) was due (.+)\. Please pay it now; the card on file with the club is charged for missed payments\.$/, 'Un paiement de $1 était dû le $2. Veuillez le payer maintenant' + NB + '; la carte au dossier au club est débitée pour les paiements manqués.'],
+    [/^Next payment (.+) due (.+)\. (\d+) of (\d+) still to come\.$/, 'Prochain paiement de $1 dû le $2. Il en reste $3 sur $4.'],
+    [/^Payment (\d+) of (\d+)$/, 'Paiement $1 sur $2'],
+    [/^Payments are due on the 15th of each month, and all dues are paid in full by August 15, (\d{4})\.$/, 'Les paiements sont dus le 15 de chaque mois, et toute la cotisation est payée au plus tard le 15 août $1.'],
+    [/^(.+) is due on your plan now\.$/, '$1 est dû sur votre plan maintenant.'],
+    [/^(.+) administration fee today, then (\d+) payments due on the 15th, (\w+) to August 15, (\d{4})$/, function (m) { return 'Frais d’administration de ' + m[1] + ' aujourd’hui, puis ' + m[2] + ' paiements dus le 15, ' + de(mo(m[3])) + ' au 15 août ' + m[4]; }],
+    [/^fee today, then (\d+) payments$/, 'de frais aujourd’hui, puis $1 paiements'],
+    [/^Each payment is added to your account on the 15th of its month and is due that day\. All dues are paid in full by August 15, (\d{4})\.$/, 'Chaque paiement est porté à votre compte le 15 de son mois et est dû ce jour-là. Toute la cotisation est payée au plus tard le 15 août $1.'],
+    [/^I have a valid credit card on file with the club office, or will call (.+) to give one\. It is charged if a payment is missed\.$/, 'J’ai une carte de crédit valide au dossier au bureau du club, ou j’appellerai le $1 pour en donner une. Elle est débitée si un paiement est manqué.'],
+    [/^Each payment is added to your account on its due date and appears on that month’s statement\. Questions\? Call the club office at (.+)\.$/, 'Chaque paiement est porté à votre compte à son échéance et figure sur le relevé de ce mois. Des questions' + NB + '? Appelez le bureau du club au $1.'],
+    [/^The time payment plan is offered to members in good standing\. Please call the club office at (.+)\.$/, 'Le plan de paiements échelonnés est offert aux membres en règle. Veuillez appeler le bureau du club au $1.'],
+    [/^The time payment plan is offered to members in good standing\. Please bring your account up to date, or call the club office at (.+)\.$/, 'Le plan de paiements échelonnés est offert aux membres en règle. Veuillez mettre votre compte à jour ou appeler le bureau du club au $1.'],
+    [/^The time payment plan is not available on this account\. Please call the club office at (.+)\.$/, 'Le plan de paiements échelonnés n’est pas offert sur ce compte. Veuillez appeler le bureau du club au $1.'],
+    [/^(Missed, was due|Due) (.+) · plus a 1\.5% card fee of (.+)$/, function (m) { return (m[1] === 'Due' ? 'Dû le ' : 'Manqué, dû le ') + m[2] + ' · plus des frais de carte de 1,5' + NB + '% de ' + m[3]; }],
+    [/^plus a 1\.5% card fee of (.+)$/, 'plus des frais de carte de 1,5' + NB + '% de $1'],
+    [/^A 1\.5% credit card processing fee of (.+) is added to your account as its own charge\.$/, 'Des frais de traitement de carte de crédit de 1,5' + NB + '% de $1 sont portés à votre compte séparément.']
+  ];
+  P.forEach(function (p) { if (typeof p[1] === 'string') { var to = p[1]; p[1] = function (m) { return m[0].replace(p[0], to); }; } });
+  Club.i18n.add({ strings: S, patterns: P });
+  /* "Pay in full, or on the time payment plan: …" starts with "Pay", which fr-public's /^Pay (.+)$/ would answer first,
+     so the exact sentence is added once the renewal rules are loaded. */
+  document.addEventListener('DOMContentLoaded', function () {
+    try {
+      var RN = Club.billing && Club.billing.renewal; if (!RN || !Club.store || !document.body.classList.contains('portal')) return;
+      var o = {}, n = RN.schedule(1000, Club.date.today(), 'monthly').length;
+      if (n > 1) o['Pay in full, or on the time payment plan: ' + n + ' payments due on the 15th of each month until August 15.'] = 'Payez en entier, ou avec le plan de paiements échelonnés' + NB + ': ' + n + ' paiements dus le 15 de chaque mois jusqu’au 15 août.';
+      o['Pay in full.'] = 'Payez en entier.';
+      Club.i18n.add({ strings: o });
+    } catch (e) { /* the sentence stays as the shared dictionaries leave it */ }
+  });
+})();

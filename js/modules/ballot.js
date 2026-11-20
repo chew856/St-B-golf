@@ -144,7 +144,7 @@
     return '<button type="button" class="bl-day' + (x.date === sel ? ' is-sel' : '') + '" data-date="' + x.date + '" aria-pressed="' + (x.date === sel) + '">' +
       '<span class="bl-day-k">' + esc(kindWord(x.date)) + '</span>' +
       '<span class="bl-day-d">' + esc(fmt.toDate(x.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })) + '</span>' +
-      '<span class="bl-day-n">' + esc(plural(x.entries.length, 'entry').replace('entrys', 'entries') + ' · ' + plural(x.players, 'player')) + '</span>' +
+      (x.entries.length || x.phase !== 'drawn' ? '<span class="bl-day-n">' + esc(plural(x.entries.length, 'entry').replace('entrys', 'entries') + ' · ' + plural(x.players, 'player')) + '</span>' : '') +
       '<span class="bl-day-l">' + esc(line) + '</span>' + phaseBadge(x.phase) + '</button>';
   }
   function entriesTable(date, list) {

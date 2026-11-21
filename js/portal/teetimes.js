@@ -1498,7 +1498,8 @@
       }
       /** A drawn entry: the tee time it got, or No time. Opens the entry's sheet. */
       function resultRowHTML(e, m, isNew) {
-        const won = e.status === 'won', others = holdersOf(e, m);
+        const won = e.status === 'won';
+        const names = (e.players || []).filter(function (p) { return p.memberId !== m.id; }).map(function (p) { return p.type === 'guest' ? p.name : otherLabel(p); });
         const tp = won ? timeParts(e.drawnTime) : null;
         const pillA = won ? 'Tee time ' + fmt.time(e.drawnTime) : 'No time';
         return '<button type="button" class="tt-row" data-act="bl-row" data-id="' + esc(e.id) + '" aria-label="' + esc(longDate(e.date) + ', ballot entry. ' + pillA + '. Open details') + '">' +
@@ -1507,7 +1508,7 @@
             (won ? '<span class="tt-row-time">' + tp.t + '<small>' + tp.ap + '</small></span><span class="tt-pill is-good">Tee time</span>'
               : '<span class="tt-row-time bl-row-t">' + esc(+e.range >= 720 ? 'Any time' : fmt.time(e.time)) + '</span><span class="tt-pill is-bad">No time</span>') +
             (isNew ? '<span class="tt-pill bl-pill-new">New</span>' : '') + '</span>' +
-            '<span class="tt-row-meta">' + esc('Ballot · ' + e.holes + ' holes · ' + (others.length ? 'With ' + niceList(others) : 'Just you')) + '</span></span>' +
+            '<span class="tt-row-meta"><span>' + esc(e.holes + ' holes') + '</span><span aria-hidden="true"> · </span><span>' + esc(names.length ? 'With ' + niceList(names) : 'Just you') + '</span></span></span>' +
           Club.icon('chevronRight', 'tt-go') + '</button>';
       }
       function ballotHowHTML() {

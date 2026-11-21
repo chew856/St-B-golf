@@ -121,7 +121,7 @@
   let draft = null;
   let lastTab = 'book';
   const PERIODS = [['Morning', 0, 12 * 60], ['Afternoon', 12 * 60, 17 * 60], ['Evening', 17 * 60, 24 * 60]];
-  const POLICY = 'Cancel online up to 24 hours before. Within 24 hours, please call the golf shop. The fee is charged to your account after the lesson.';
+  const POLICY = 'Cancel online up to 24 hours before; after that, call the golf shop. The fee is charged to your account after the lesson.';
 
   function render(view, params, member) {
     const P = pros();

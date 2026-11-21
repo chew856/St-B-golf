@@ -45,12 +45,12 @@ body.portal .p-list.plb-list > li { padding: 0; min-height: 0; display: block; }
 }
 @media (hover: hover) { .plb-row:hover { background: var(--sage-50); } }
 .plb-row:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--forest-700); }
-.plb-pos { font-family: var(--font-title); font-size: var(--fs-card); color: var(--text-3); text-align: center; font-variant-numeric: lining-nums tabular-nums; }
+.plb-pos { font-family: var(--font-title); font-weight: 600; font-size: var(--fs-card); color: var(--text-3); text-align: center; font-variant-numeric: lining-nums tabular-nums; }
 .plb-li:first-child .plb-pos { color: var(--forest-500); font-weight: 600; }
 .plb-mine .plb-li .plb-pos { color: var(--text-3); font-weight: 400; }
 .plb-name { min-width: 0; font-size: 1rem; line-height: 1.35; overflow-wrap: anywhere; }
 .plb-name b { font-weight: 600; }
-.plb-val { font-family: var(--font-title); font-size: var(--fs-section); color: var(--text); font-variant-numeric: lining-nums tabular-nums; white-space: nowrap; }
+.plb-val { font-family: var(--font-title); font-weight: 600; font-size: var(--fs-section); color: var(--text); font-variant-numeric: lining-nums tabular-nums; white-space: nowrap; }
 .plb-go { width: 16px; height: 16px; color: var(--text-3); }
 .plb-li.is-you .plb-row { background: var(--sage-100); box-shadow: inset 3px 0 0 var(--forest-800); }
 .plb-gap { margin: -6px 0; text-align: center; color: var(--text-3); letter-spacing: 0.2em; line-height: 1; }
@@ -67,7 +67,7 @@ body.portal .p-list.plb-list > li { padding: 0; min-height: 0; display: block; }
 .plb-tile { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: 10px 12px; border-left: 1px solid var(--border); }
 .plb-tile:first-child { border-left: 0; }
 .plb-tile-k { font-size: var(--fs-meta); color: var(--text-2); }
-.plb-tile-v { font-family: var(--font-title); font-size: var(--fs-section); color: var(--text); line-height: 1.2; font-variant-numeric: lining-nums tabular-nums; }
+.plb-tile-v { font-family: var(--font-title); font-weight: 600; font-size: var(--fs-section); color: var(--text); line-height: 1.2; font-variant-numeric: lining-nums tabular-nums; }
 .plb-lead { margin: 0; font-size: var(--fs-body); color: var(--text-2); }
 .plb-sh { margin: 4px 0 0; font: 600 var(--fs-body)/1.3 var(--sans); color: var(--text); }
 body.portal .p-list.plb-rounds > li { padding: 0; min-height: 0; display: block; }
@@ -82,7 +82,7 @@ body.portal .p-list.plb-rounds > li { padding: 0; min-height: 0; display: block;
 .plb-r-d { font-size: var(--fs-body); font-weight: 500; }
 .plb-r-s { font-size: var(--fs-meta); color: var(--text-2); overflow-wrap: anywhere; }
 .plb-r-k { display: flex; flex-direction: column; align-items: flex-end; min-width: 2.5rem; }
-.plb-r-kn { font-family: var(--font-title); font-size: var(--fs-card); line-height: 1.2; font-variant-numeric: lining-nums tabular-nums; }
+.plb-r-kn { font-family: var(--font-title); font-weight: 600; font-size: var(--fs-card); line-height: 1.2; font-variant-numeric: lining-nums tabular-nums; }
 .plb-r-kl { font-size: var(--fs-label); color: var(--text-3); }
 .plb-best { padding: 2px 8px; border-radius: 999px; background: var(--forest-800); color: var(--on-dark); font-size: var(--fs-label); font-weight: 500; }
 .plb-quiet { margin: 0; font-size: var(--fs-meta); color: var(--text-3); }

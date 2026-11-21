@@ -538,7 +538,7 @@
       const when = F.toDate(ev.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) + (ev.start ? ' · ' + shortRange(ev) : '');
       const money = !price ? 'Free' : !reg ? F.money(total) : delta > 0 ? F.money(delta) + ' more' : refund ? F.money(refund) + ' back' : 'No change';
       const moneyLine = !price ? 'Free for members and guests.' : !reg ? 'Charged to your member account when you confirm.' : delta > 0 ? 'Added to your member account when you confirm.' : refund ? 'A credit on your member account when you confirm.' : 'Nothing changes on your account.';
-      const terms = !reg ? 'You can cancel online until the event starts' + (price ? ', and what you paid comes back as a credit on your account.' : '.') : delta > 0 ? 'If you remove guests later, their fee comes back as a credit.' : 'Your other spots stay as they are.';
+      const terms = !reg ? 'You can cancel online until it starts' + (price ? '; what you paid comes back as a credit.' : '.') : delta > 0 ? 'If you remove guests later, their fee comes back as a credit.' : 'Your other spots stay as they are.';
       const ok = !price ? (reg ? 'Confirm change' : 'Confirm registration') : !reg ? 'Confirm and pay ' + F.money(total) : delta > 0 ? 'Confirm and pay ' + F.money(delta) : 'Confirm change';
       const content = '<div class="pe-review"><dl class="pe-kv">' +
           '<div><dt>Event</dt><dd>' + esc(ev.title) + '</dd></div><div><dt>When</dt><dd>' + esc(when) + '</dd></div>' +

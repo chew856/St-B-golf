@@ -25,7 +25,7 @@ body .lv-band .lv-band-h { margin: 0; font-family: var(--font-title); font-weigh
 .lv-tcard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
 .lv-tcard.is-open { border-color: var(--forest-500); box-shadow: inset 0 0 0 1px var(--forest-500), var(--shadow-card); }
 .lv-tcard-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.lv-tcard-time { font-family: var(--font-title); font-size: var(--fs-num); line-height: 1.15; color: var(--text); font-variant-numeric: tabular-nums lining-nums; }
+.lv-tcard-time { font-family: var(--font-title); font-weight: 600; font-size: var(--fs-num); line-height: 1.15; color: var(--text); font-variant-numeric: tabular-nums lining-nums; }
 .lv-tcard-who { margin: 0 0 6px; font-size: var(--fs-body); line-height: 1.4; color: var(--text-2); }
 .lv-cta { width: 100%; min-height: 48px; justify-content: center; gap: 8px; }
 .lv-cta-off, .lv-cta-off:disabled { opacity: 1; background: var(--sage-50); color: var(--text-3); border-color: var(--border); cursor: default; }
@@ -68,7 +68,7 @@ body .lv-band .lv-band-h { margin: 0; font-family: var(--font-title); font-weigh
 /* ---------------- Each hole ---------------- */
 .lv-hhead { background: var(--forest-950); color: var(--on-dark); border-radius: var(--radius-card); padding: 12px 18px 14px; }
 .lv-hn { display: flex; align-items: flex-end; gap: 14px; }
-.lv-num { font-family: var(--font-title); font-size: 3.25rem; line-height: 1; font-variant-numeric: lining-nums; color: var(--on-dark); }
+.lv-num { font-family: var(--font-title); font-weight: 600; font-size: 3.25rem; line-height: 1; font-variant-numeric: lining-nums; color: var(--on-dark); }
 .lv-meta { display: flex; flex-direction: column; padding-bottom: 3px; font-size: var(--fs-meta); line-height: 1.45; color: color-mix(in srgb, var(--on-dark) 82%, transparent); font-variant-numeric: tabular-nums; }
 .lv-meta span:first-of-type { color: var(--on-dark); font-weight: 500; }
 .lv-dots { display: flex; gap: 4px; margin-top: 12px; }
@@ -91,7 +91,7 @@ body .lv-band .lv-band-h { margin: 0; font-family: var(--font-title); font-weigh
 .lv-stp-b .icon { width: 20px; height: 20px; stroke-width: 1.8; }
 .lv-stp-b:disabled { opacity: 0.4; cursor: default; }
 @media (hover: hover) { .lv-stp-b:not(:disabled):hover { background: var(--sage-50); } }
-.lv-stp-v { width: 46px; min-height: 44px; padding: 0; border: 0; background: none; font-family: var(--font-title); font-size: var(--fs-num); line-height: 1; text-align: center; color: var(--text); font-variant-numeric: tabular-nums lining-nums; cursor: pointer; touch-action: manipulation; }
+.lv-stp-v { width: 46px; min-height: 44px; padding: 0; border: 0; background: none; font-family: var(--font-title); font-weight: 600; font-size: var(--fs-num); line-height: 1; text-align: center; color: var(--text); font-variant-numeric: tabular-nums lining-nums; cursor: pointer; touch-action: manipulation; }
 .lv-stp-v.is-default { color: var(--text-3); }
 .lv-stp-v.is-under { color: var(--forest-500); }
 .lv-navb { position: sticky; bottom: 0; z-index: 4; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 8px; padding: 8px 0 10px; background: var(--bg); }
@@ -150,13 +150,13 @@ body .lv-band .lv-band-h { margin: 0; font-family: var(--font-title); font-weigh
 .lv-myr-t { font-size: var(--fs-body); font-weight: 500; }
 .lv-myr-s { font-size: var(--fs-meta); color: var(--text-2); }
 .lv-myr-v { flex: none; display: flex; flex-direction: column; align-items: flex-end; }
-.lv-myr-g { font-family: var(--font-title); font-size: var(--fs-section); line-height: 1.1; font-variant-numeric: tabular-nums lining-nums; }
+.lv-myr-g { font-family: var(--font-title); font-weight: 600; font-size: var(--fs-section); line-height: 1.1; font-variant-numeric: tabular-nums lining-nums; }
 .lv-myr-v small { font-size: var(--fs-label); color: var(--text-2); }
 .lv-myr-card { display: flex; flex-direction: column; gap: 12px; }
 .lv-kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr)); gap: 8px; margin: 0; }
 .lv-kv div { padding: 8px 10px; background: var(--sage-50); border-radius: var(--radius-ctl); }
 .lv-kv dt { font-size: var(--fs-label); color: var(--text-2); }
-.lv-kv dd { margin: 0; font-family: var(--font-title); font-size: var(--fs-section); }
+.lv-kv dd { margin: 0; font-family: var(--font-title); font-weight: 600; font-size: var(--fs-section); }
 
 /* ---------------- Portal: the hole buttons stay above the bottom tab bar on phones and tablets ---------------- */
 body.portal .lv-navb { bottom: calc(68px + env(safe-area-inset-bottom)); }

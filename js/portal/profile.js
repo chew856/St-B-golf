@@ -71,7 +71,7 @@
         return '<li><label for="' + id + '" class="pp-comm-text"><span class="pp-comm-l">' + esc(c.label) + '</span><span class="pp-comm-s">' + esc(c.text) + '</span></label>' +
           '<label class="pp-comm-ctl" for="' + id + '"><span class="pp-state" aria-hidden="true">' + (p[c.key] ? 'On' : 'Off') + '</span><span class="toggle pp-toggle"><input type="checkbox" id="' + id + '" data-chan="' + c.key + '"' + (p[c.key] ? ' checked' : '') + '><span></span></span></label></li>';
       }).join('') + '</ul>' +
-      '<p class="pp-note">' + Club.icon('info') + '<span>Changes save as you go. Statements and important account notices are always sent by email.</span></p>';
+      '<p class="pp-note">' + Club.icon('info') + '<span>Saves as you go. Statements and account notices always go by email.</span></p>';
   }
   function prefsForm(m) {
     const pr = m.preferences || {};
@@ -136,7 +136,7 @@
   }
   function privacyBody(id) {
     const p = Portal.friends.privacy(id); const blocked = Portal.friends.blockedBy(id);
-    return '<p class="pp-intro">Your friends always see your upcoming tee times and can join them. Choose what else they can see. Your scores can also appear on the members’ leaderboards; you can turn that off below.</p>' +
+    return '<p class="pp-intro">Friends always see your upcoming tee times and can join them. Choose what else they see.</p>' +
       '<ul class="pp-comm">' + SHARE.map(function (c) {
         const fid = 'pp_s_' + c.key;
         return '<li><label for="' + fid + '" class="pp-comm-text"><span class="pp-comm-l">' + esc(c.label) + '</span><span class="pp-comm-s">' + esc(c.text) + '</span></label>' +
@@ -158,9 +158,9 @@
   function lbBody(m) {
     const on = !m.leaderboardHidden;
     return '<ul class="pp-comm"><li><label for="pp_lb" class="pp-comm-text"><span class="pp-comm-l">Show me on the members\' leaderboards</span>' +
-        '<span class="pp-comm-s">Your name, place and scores on Leaderboards, for other members to see.</span></label>' +
+        '<span class="pp-comm-s">Your name, place and scores, seen by members.</span></label>' +
         '<label class="pp-comm-ctl" for="pp_lb"><span class="pp-state" aria-hidden="true">' + (on ? 'On' : 'Off') + '</span><span class="toggle pp-toggle"><input type="checkbox" id="pp_lb" data-lb-show' + (on ? ' checked' : '') + '><span></span></span></label></li></ul>' +
-      '<p class="pp-note">' + Club.icon('info') + '<span>Changes save as you go. The club\'s staff still see every golfer\'s rounds.</span></p>' +
+      '<p class="pp-note">' + Club.icon('info') + '<span>Saves as you go. Club staff always see every round.</span></p>' +
       '<a class="pp-set pp-lb-open" href="#/leaderboards">' + Club.icon('trophy', 'pp-set-ic') + '<span class="pp-set-main"><span class="pp-set-l">Open Leaderboards</span></span>' + Club.icon('chevronRight', 'pp-set-go') + '</a>';
   }
 

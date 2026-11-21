@@ -6,7 +6,7 @@ body.portal .pt-tab-n { display: inline-flex; align-items: center; justify-conte
 body.portal .pt-h { font-family: var(--sans); font-size: var(--fs-card); font-weight: 500; margin: 0 0 12px; }
 body.portal .to-pizza { background: var(--forest-900); border-radius: var(--radius-card); }
 body.portal .to-pizza .eyebrow { color: var(--on-dark-2); }
-body.portal .to-pizza h3 { color: var(--on-dark); font-family: var(--font-title); font-size: var(--fs-section); }
+body.portal .to-pizza h3 { color: var(--on-dark); font-family: var(--font-title); font-weight: 600; font-size: var(--fs-section); }
 body.portal .to-pizza .to-add { background: var(--on-dark); color: var(--forest-900); border-color: var(--on-dark); }
 body.portal .to-secbtn { border-color: var(--border-strong); background: var(--surface); color: var(--text-2); font-family: var(--sans); min-height: 40px; }
 body.portal .to-sec-head h3 { font-family: var(--sans); font-weight: 500; }
@@ -14,7 +14,7 @@ body.portal .to-item-name { font-weight: 500; }
 body.portal .to-oline-name { font-weight: 500; }
 body.portal .to-day { border-radius: var(--radius-ctl); border-color: var(--border-strong); background: var(--surface); }
 body.portal .to-day.active { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); }
-body.portal .to-day-n { font-family: var(--font-title); }
+body.portal .to-day-n { font-family: var(--font-title); font-weight: 600; }
 body.portal .to-card, body.portal .to-done { border-radius: var(--radius-card); border-color: var(--border); background: var(--surface); box-shadow: var(--shadow-card); }
 body.portal .to-card.is-cancelled, body.portal .to-card.is-picked-up { background: var(--bg); box-shadow: none; }
 body.portal .to-mine-h h2 { font-size: var(--fs-section); }

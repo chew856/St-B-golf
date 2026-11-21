@@ -13,7 +13,7 @@ body.portal .ckf-prog .is-done .ckf-pb, body.portal .ckf-prog .is-done .ckf-pn {
 body.portal .ck-mopt-icon svg { color: var(--forest-800); }
 body.portal .pg-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 16px; }
 body.portal .pg-h { font-family: var(--sans); font-size: var(--fs-card); font-weight: 500; margin: 0 0 12px; }
-body.portal .gp-amt { border-radius: var(--radius-ctl); border-color: var(--border-strong); background: var(--surface); color: var(--text); font-family: var(--font-title); }
+body.portal .gp-amt { border-radius: var(--radius-ctl); border-color: var(--border-strong); background: var(--surface); color: var(--text); font-family: var(--font-title); font-weight: 600; }
 body.portal .gp-amt.active { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); }
 body.portal .gp-amt-other { font-family: var(--sans); }
 body.portal .pg-side .pk-label { display: block; margin-bottom: 8px; }
@@ -52,7 +52,7 @@ body.portal .pg-hist li { display: flex; justify-content: space-between; gap: 12
 body.portal .pg-sheet-acts { display: flex; flex-wrap: wrap; gap: 8px; }
 body.portal .pg-bal { max-width: 560px; }
 body.portal .gp-bal-res { border-radius: var(--radius-ctl); background: var(--sage-50); border-color: var(--border); }
-body.portal .gp-bal-amt { font-family: var(--font-title); }
+body.portal .gp-bal-amt { font-family: var(--font-title); font-weight: 600; }
 @media (min-width: 1024px) {
   body.portal .pg-side { position: sticky; top: 96px; }
 }

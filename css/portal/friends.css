@@ -149,7 +149,7 @@ body.portal .segmented.fr-seg button { flex: 1 1 0; min-height: 44px; }
 .fr-done { align-items: flex-start; }
 .fr-done-ic { width: 40px; height: 40px; border-radius: 50%; background: var(--forest-800); color: var(--on-dark); display: inline-flex; align-items: center; justify-content: center; }
 .fr-done-ic .icon { width: 22px; height: 22px; }
-body.portal .fr-done-h { margin: 0; font-family: var(--font-title); font-size: var(--fs-section); }
+body.portal .fr-done-h { margin: 0; font-family: var(--font-title); font-weight: 600; font-size: var(--fs-section); }
 .fr-done-acts { display: flex; gap: 8px; }
 body.portal .fr-done-acts .btn { flex: 1 1 0; width: auto; }
 

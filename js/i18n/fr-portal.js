@@ -2191,6 +2191,80 @@
     } catch (e) { /* the sentence stays as the shared dictionaries leave it */ }
   });
 
+  /* ---------------- Shorter copy and grouped menus (portal type pass, Nov 21) ---------------- */
+  add({
+    /* Shell: grouped Menu sheet */
+    'Food and drink': 'Restauration',
+    'Club': 'Club',
+    /* Home: Coming up groups */
+    'Tee times': 'Départs',
+    'To do': 'À faire',
+    'By day': 'Par jour',
+    'Nothing booked yet.': 'Rien de réservé pour l’instant.',
+    'Post your score': 'Inscrire votre pointage',
+    'Friends playing': 'Amis qui jouent',
+    'No friends playing this week.': 'Aucun ami ne joue cette semaine.',
+    /* My account */
+    'All used.': 'Entièrement utilisé.',
+    'Not for gratuities or service charges. Not transferable.': 'Ne s’applique pas aux pourboires ni aux frais de service. Non transférable.',
+    'By department': 'Par service',
+    'How did your rounds and meals go?': 'Comment se sont passés vos parties et vos repas?',
+    'Renewed for next season': 'Renouvelé pour la prochaine saison',
+    'Next season': 'Prochaine saison'
+  });
+  pat(/^(.+) expired on (.+)\. The (\d{4}) assessment of (.+) is charged on (.+)\.$/, '$1 a expiré le $2. La cotisation restauration $3 de $4 est facturée le $5.');
+  pat(/^All used\. The (\d{4}) assessment of (.+) is charged on (.+)\.$/, 'Entièrement utilisé. La cotisation restauration $1 de $2 est facturée le $3.');
+  pat(/^Used first for clubhouse food and drink, takeout and the beverage cart\. Expires (.+)\.$/, 'Utilisé d’abord pour les repas et boissons au pavillon, les commandes à emporter et la voiturette-bar. Expire le $1.');
+  pat(/^(.+) is over 30 days old\. Already paid\? Ignore this\.$/, '$1 date de plus de 30 jours. Déjà payé? Ne tenez pas compte de ce message.');
+  pat(/^On your (.+) statement$/, 'Sur votre relevé de $1');
+  pat(/^(\d+) visits? to rate, last 14 days$/, function (m) { return m[1] + ' ' + pl(m[1], 'visite', 'visites') + ' à évaluer, 14 derniers jours'; });
+  pat(/^Pay in full or in (\d+) monthly payments, due the 15th, until August 15\.$/, 'Payez en entier ou en $1 versements mensuels, dus le 15, jusqu’au 15 août.');
+  add({
+    /* Rate your visits, Group outings, Scores */
+    'Only the club team sees your ratings.': 'Seule l’équipe du club voit vos évaluations.',
+    'Your enquiries and their progress show here.': 'Vos demandes et leur suivi s’affichent ici.',
+    'Tell us your group and dates. The club replies with availability and a quote.': 'Indiquez votre groupe et vos dates. Le club vous répondra avec les disponibilités et une soumission.',
+    'From your profile. Change if someone else should be contacted.': 'Tirés de votre profil. Modifiez-les si le club doit joindre quelqu’un d’autre.',
+    'Demo only: not connected to Golf Canada. Scores stay in this app.': 'Démo seulement' + NB + ': non reliée à Golf Canada. Les pointages restent dans cette application.'
+  });
+  pat(/^Visits from the last (\d+) days\. Tap to rate; you can change it within that time\.$/, 'Visites des $1 derniers jours. Touchez pour évaluer; vous pouvez modifier votre note pendant cette période.');
+  pat(/^Rounds, meals and lessons show here for (\d+) days\.$/, 'Les parties, repas et cours s’affichent ici pendant $1 jours.');
+  add({
+    /* Play, Order to the course */
+    'It comes to your hole. Choose from what’s on board.': 'Elle vient à votre trou. Choisissez parmi ce qu’elle transporte.'
+  });
+  pat(/^Open from (.+)$/, 'Ouvert dès $1');
+  pat(/^One box per game \((Stableford points|net score|gross score)\)\. Tap one for the scorecard\.$/, function (m) { return 'Une case par partie (' + ({ 'Stableford points': 'points Stableford', 'net score': 'pointage net', 'gross score': 'pointage brut' })[m[1]] + '). Touchez-en une pour la carte de pointage.'; });
+  pat(/^Today · (1st|10th) tee$/, function (m) { return 'Aujourd’hui · ' + (m[1] === '1st' ? '1er' : '10e') + ' tertre'; });
+  pat(/^(.+?) (has|have) no handicap, so plays? off scratch\. Add an index above\.$/, function (m) {
+    return m[1].replace(/ and /, ' et ') + (m[2] === 'has' ? ' n’a' : ' n’ont') + ' aucun handicap' + NB + ': ' + (m[2] === 'has' ? 'joue' : 'jouent') + ' sans coups reçus. Ajoutez un indice ci-dessus.'; });
+  pat(/^You teed off( on the 10th tee)? at (.+), so probably on hole (\d+)\. Change it if not\.$/, function (m) { return 'Vous êtes parti' + (m[1] ? ' du 10e tertre' : '') + ' à ' + m[2] + ', donc probablement au trou ' + m[3] + '. Modifiez-le au besoin.'; });
+  add({
+    /* Friends' leagues */
+    'A season with friends. League rounds you book or post count.': 'Une saison entre amis. Les parties de ligue que vous réservez ou inscrivez comptent.',
+    'Start one and invite friends. Play when it suits you; standings update as scores come in.': 'Créez-en une et invitez vos amis. Jouez quand cela vous convient; le classement se met à jour au fil des pointages.',
+    'Missed a week? A later extra round counts for it.': 'Semaine manquée? Une partie supplémentaire plus tard compte pour celle-ci.',
+    'Games missing at the end count as that week’s worst score.': 'Les parties manquantes à la fin comptent comme le pire pointage de la semaine.',
+    'Until the end, ranking is by average per game.': 'Jusqu’à la fin, le classement se fait selon la moyenne par partie.'
+  });
+  pat(/^Weeks start on (\S+)\.$/, function (m) { return 'Les semaines commencent le ' + m[1].toLowerCase() + '.'; });
+  add({
+    /* Friends */
+    'Fees are paid at check-in; guests’ fees go on your account. You can leave up to 2 hours before.': 'Les frais se règlent à l’enregistrement; ceux de vos invités vont à votre compte. Vous pouvez vous retirer jusqu’à 2 heures avant.',
+    'Find a member and send a request. Nothing is shared until they accept.': 'Trouvez un membre et envoyez une demande. Rien n’est partagé avant son acceptation.'
+  });
+  add({
+    /* Profile, The club, Events, Lessons */
+    'Friends always see your upcoming tee times and can join them. Choose what else they see.': 'Vos amis voient toujours vos prochains départs et peuvent s’y joindre. Choisissez ce qu’ils voient d’autre.',
+    'Saves as you go. Statements and account notices always go by email.': 'Enregistré au fur et à mesure. Les relevés et avis de compte sont toujours envoyés par courriel.',
+    'Saves as you go. Club staff always see every round.': 'Enregistré au fur et à mesure. Le personnel du club voit toujours toutes les parties.',
+    'Your name, place and scores, seen by members.': 'Votre nom, votre rang et vos pointages, visibles par les membres.',
+    'Name, membership and year joined only. The club office can pass on a message.': 'Nom, catégorie de membre et année d’adhésion seulement. Le bureau du club peut transmettre un message.',
+    'You can cancel online until it starts; what you paid comes back as a credit.': 'Vous pouvez annuler en ligne jusqu’au début; le montant payé vous revient en crédit.',
+    'You can cancel online until it starts.': 'Vous pouvez annuler en ligne jusqu’au début.',
+    'Cancel online up to 24 hours before; after that, call the golf shop. The fee is charged to your account after the lesson.': 'Annulez en ligne jusqu’à 24 heures avant; ensuite, appelez la boutique du pro. Les frais sont portés à votre compte après le cours.'
+  });
+
   /* Most specific first: patterns with more literal text are tried before broad ones such as "(.+) · (.+)", so a broad
      pattern never answers for a sentence a fuller pattern was written for. Stable for equal weights. */
   function weight(re) {   /* literal characters in the pattern (alternatives included); wildcards count for nothing */
@@ -3285,6 +3359,8 @@
   Club.i18n.add({
     strings: {
       'Weekend ballot': 'Tirage de fin de semaine',
+      /* a general pattern elsewhere only half translates this line ("Les samedis, Sundays and..."), so it is set here */
+      'Saturdays, Sundays and holidays are booked by ballot. Weekdays book as usual.': 'Les samedis, dimanches et jours fériés sont attribués par tirage au sort. En semaine, la réservation se fait comme d’habitude.',
       'Open for entry': 'Inscriptions ouvertes',
       'Results': 'Résultats',
       'View your entry': 'Voir votre inscription',

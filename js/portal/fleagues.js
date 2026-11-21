@@ -244,7 +244,7 @@
     } else body = s.rows.map(row).join('');
     const unit = weekly ? 'net score' : lg.format === 'stableford' ? 'Stableford points' : lg.format === 'net' ? 'net score' : 'gross score';
     return '<section class="fl-sec fl-sec-grid"><h2 class="eyebrow fl-eb">Week by week</h2>' +
-      '<p class="fl-legend">Each box is one game and shows the ' + unit + '. Tap a score to see the scorecard.</p>' +
+      '<p class="fl-legend">One box per game (' + unit + '). Tap one for the scorecard.</p>' +
       '<div class="fl-gbox" role="region" aria-label="Week by week scores" tabindex="0"><table class="fl-grid"><caption class="fr-sr">Week by week scores</caption><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div></section>';
   }
   function playerSheet(lg, me, mid) {

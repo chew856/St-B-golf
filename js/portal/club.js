@@ -194,7 +194,7 @@
     const all = S.all('members').filter(function (m) { return m.status !== 'resigned'; })
       .sort(function (a, b) { return a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName); });
     host.innerHTML = '<section class="pc-dirwrap"><div class="pc-dir-head"><label class="pc-search"><span class="pc-search-l">Search</span><span class="pc-search-box">' + Club.icon('search') + '<input class="input" type="search" name="q" placeholder="Search members by name" aria-label="Search members by name" autocomplete="off" value="' + esc(dir.q) + '"></span></label>' +
-      '<p class="pc-privacy">' + Club.icon('info') + '<span>To protect privacy, the directory shows only name, membership and year joined. The club office can pass on a message.</span></p></div><div class="pc-dir"></div></section>';
+      '<p class="pc-privacy">' + Club.icon('info') + '<span>Name, membership and year joined only. The club office can pass on a message.</span></p></div><div class="pc-dir"></div></section>';
     const out = ui.$('.pc-dir', host);
     function draw() {
       const q = dir.q.trim().toLowerCase();

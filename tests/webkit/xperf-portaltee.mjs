@@ -11,7 +11,7 @@ for (const W of [1440, 390]) {
     const date = await p.evaluate(n => Club.date.fromToday(n), d);
     await p.evaluate(dt => { location.hash = '#/tee-times/' + dt; }, date); await p.waitForTimeout(1200);
     const n0 = await p.evaluate(() => Club.store.all('teeTimes').filter(t => t.bookedBy === 'mem_1003' && t.source === 'portal').length);
-    const chip = p.locator('.tt-chip.st-open:not([disabled]):not([aria-disabled=true])').first();
+    const chip = p.locator('.tt-slot.st-open:not([disabled]):not([aria-disabled=true])').first();
     if (!(await chip.count())) continue;
     await chip.scrollIntoViewIfNeeded(); await chip.click(); await p.waitForTimeout(700);
     let clicked = false;

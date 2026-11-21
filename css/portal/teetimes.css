@@ -185,6 +185,7 @@ body.portal .pk-bar.tt-bar .pk-bar-btn:focus-visible { outline: 2px solid var(--
 body.portal .tt-mine-h { margin: 22px 0 2px; font: 600 0.6875rem/1.5 var(--sans); letter-spacing: 0.2em; text-transform: uppercase; color: var(--label); }
 body.portal .tt-mine-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 body.portal .tt-rounds { margin: 0; overflow: visible; }
+body.portal .ps-sheet .tt-rounds { --tt-gut: 20px; margin: 0 20px 8px; }   /* "Upcoming tee times" sheet: the sheet's side padding */
 body.portal .tt-trow { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; column-gap: 14px; align-items: center; padding-top: 14px; padding-bottom: 14px; min-height: 64px; }
 body.portal button.tt-trow { cursor: pointer; }
 body.portal .tt-rounds > .tt-trow:first-child { background-image: none; }
@@ -206,11 +207,12 @@ body.portal .tt-pill.is-good { background: none; color: var(--label); }
 body.portal .tt-mrows { margin-top: 6px; border-bottom: 1px solid var(--border); }
 body.portal .tt-mine .tt-mine-sec + .tt-mrows { margin-top: 6px; }
 body.portal .tt-mrow, body.portal .tt-mrows .co-ttlink { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 48px; padding-top: 12px; padding-bottom: 12px; font-size: 0.96875rem; font-weight: 500; line-height: 1.35; cursor: pointer; }
-body.portal .tt-mrow-l, body.portal .tt-mrows .pk-acc-title { flex: 1 1 auto; min-width: 0; }
-body.portal .tt-mrow-v, body.portal .tt-mrows .co-ttlink-s, body.portal .tt-mrows .pk-acc-sum { flex: 0 1 auto; max-width: 55%; min-width: 0; overflow-wrap: break-word; font-size: 0.84375rem; font-weight: 400; line-height: 1.35; color: var(--tt-muted); text-align: right; font-variant-numeric: tabular-nums; }
+body.portal .tt-mrow-l, body.portal .tt-mrows .pk-acc-title { flex: 0 1 auto; min-width: 0; }
+/* the label keeps to one line where it can; the quiet value takes what is left and wraps */
+body.portal .tt-mrow-v, body.portal .tt-mrows .co-ttlink-s, body.portal .tt-mrows .pk-acc-sum { flex: 1 1 0; min-width: 30%; overflow-wrap: break-word; font-size: 0.84375rem; font-weight: 400; line-height: 1.35; color: var(--tt-muted); text-align: right; font-variant-numeric: tabular-nums; }
 body.portal .tt-mrows .co-ttlink > svg { display: none; }
 body.portal .tt-mrows .co-ttlink > span { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 16px; }
-body.portal .tt-mrows .co-ttlink-t { flex: 1 1 auto; min-width: 0; font-size: 0.96875rem; font-weight: 500; line-height: 1.35; }
+body.portal .tt-mrows .co-ttlink-t { flex: 0 1 auto; min-width: 0; font-size: 0.96875rem; font-weight: 500; line-height: 1.35; }
 body.portal .tt-mrows .pk-acc-text { flex-direction: row; align-items: center; justify-content: space-between; gap: 16px; }
 body.portal .tt-mrows .pk-acc-chev { display: none; }
 body.portal .tt-mrows > .tt-hint { margin: 0; padding: 14px 0; border-top: 1px solid var(--border); color: var(--tt-muted); }

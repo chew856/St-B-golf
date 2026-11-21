@@ -114,8 +114,8 @@ for (const [w, h] of [[390, 844], [1440, 900]]) {
 
   /* Tee times */
   await go('tee-times', 'tee times book'); await shot('teetimes');
-  await tap('.tt-date .dp-field', 'date picker sheet'); await closeAll();
-  if (await tap('.tt-chip:not([disabled]):not(.st-mine):not(.is-wl)', 'tee time selected')) {
+  await tap('.tt-cal', 'date picker sheet'); await closeAll();
+  if (await tap('.tt-slot:not([disabled]):not(.st-mine):not(.is-wl)', 'tee time selected')) {
     await shot('teetimes-bar');
     await tap('.pk-bar.open .pk-bar-btn', 'booking sheet'); await shot('booking');
     await tap('.ps-sheet.open [data-act=add-guest]', 'guest form'); await shot('guest');
@@ -124,7 +124,7 @@ for (const [w, h] of [[390, 844], [1440, 900]]) {
     await tap('.ps-sheet.open [data-act=add-member]', 'add a friend sheet'); await closeTop();
     await closeAll();
   }
-  if (await p.locator('.tt-chip.is-wl').count()) { await tap('.tt-chip.is-wl', 'waitlist sheet'); await closeAll(); }
+  if (await p.locator('.tt-slot.is-wl').count()) { await tap('.tt-slot.is-wl', 'waitlist sheet'); await closeAll(); }
   await go('tee-times/mine', 'my tee times'); await shot('mytt');
   if (await tap('[data-act=detail]', 'tee time detail')) { await shot('ttdetail');
     if (await p.locator('.ps-sheet.open [data-act=d-cancel]').count()) { await tap('.ps-sheet.open [data-act=d-cancel]', 'cancel ask'); }

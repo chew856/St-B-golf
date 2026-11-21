@@ -18,11 +18,17 @@ const state = () => p.evaluate(() => {
   const use = pay && (promo.uses || []).find(u => u.refId === pay.id);
   return { id: tt.id, status: tt.status, n: tt.players.length, pr: pr && pr.price, pay: pay && { status: pay.status, disc: pay.promo.discount }, use: use && { status: use.status, discount: use.discount } };
 });
+/* My tee times lists the next four; later ones are behind "View all upcoming" (redesign, Nov 21) */
+async function openRow(id) {
+  const sel = '.tt-row[data-id="' + id + '"]';
+  if (!(await p.locator(sel).count()) && await p.locator('[data-act=all-up]').count()) { await human(p, '[data-act=all-up]'); await p.waitForTimeout(500); }
+  await human(p, sel);
+}
 async function bookWithPromo(guestCart) {
   await p.goto(B + 'member.html#/tee-times', { waitUntil: 'domcontentloaded' }); await p.waitForTimeout(1500);
   /* book two days ahead: a booking within two hours of play cannot be changed (the portal's rule) */
-  for (let k = 0; k < 2; k++) { await human(p, '.tt-date [data-dp=next]'); await p.waitForTimeout(700); }
-  let chips = p.locator('.tt-chip.st-open:not([disabled]):not(.st-mine):not(.is-wl)'); if (!(await chips.count())) chips = p.locator('.tt-chip:not([disabled]):not(.st-mine):not(.is-wl)');   /* an empty time: a partly booked one joins that group */
+  await human(p, '.tt-day[data-date="' + (await p.evaluate(() => Club.date.fromToday(2))) + '"]'); await p.waitForTimeout(700);   /* the day strip (redesign, Nov 21) */
+  let chips = p.locator('.tt-slot.st-open:not([disabled]):not(.st-mine):not(.is-wl)'); if (!(await chips.count())) chips = p.locator('.tt-slot:not([disabled]):not(.st-mine):not(.is-wl)');   /* an empty time: a partly booked one joins that group */
   await human(p, chips.nth(Math.min(2, await chips.count() - 1)));
   await human(p, '.pk-bar-btn'); await p.waitForTimeout(600);
   await human(p, '.tt-editor [data-act=add-guest]'); await p.waitForTimeout(400);
@@ -40,7 +46,7 @@ try {
   const s0 = await state();
   ok(s0.pr < 0 && s0.pay && s0.pay.status === 'account' && s0.use && s0.use.status === 'used', 'booked with the code', s0);
   await human(p, '.tab[data-tab=mine]'); await p.waitForTimeout(500);
-  await human(p, '.tt-row[data-id="' + s0.id + '"]'); await p.waitForTimeout(500);
+  await openRow(s0.id); await p.waitForTimeout(500);
   await human(p, '.ps-sheet [data-act=d-modify]'); await p.waitForTimeout(600);
   const dueBefore = await text(p, '.tt-editor .tt-due-amt');
   await human(p, '.tt-editor .tt-pl:not(.is-self) [data-act=remove]'); await p.waitForTimeout(400);
@@ -55,7 +61,7 @@ try {
   const s2 = await state();
   ok(s2.pr < 0 && s2.pay.status === 'account', 'a released code can be used again on a new booking', s2);
   await human(p, '.tab[data-tab=mine]'); await p.waitForTimeout(500);
-  await human(p, '.tt-row[data-id="' + s2.id + '"]'); await p.waitForTimeout(500);
+  await openRow(s2.id); await p.waitForTimeout(500);
   await human(p, '.ps-sheet [data-act=d-modify]'); await p.waitForTimeout(600);
   const nine = p.locator('.segmented[data-name=tt-holes-ed] button[data-value="9"]');
   if (await nine.count()) { await human(p, nine); await p.waitForTimeout(400); await human(p, '.ps-sheet [data-act=save]'); await p.waitForTimeout(700); }
@@ -63,7 +69,7 @@ try {
   const expect9 = await p.evaluate(id => { const t = Club.store.find('teeTimes', id); return Math.round(Club.teeRules.greenFee(t.date, t.time, t.holes) * 10) / 100; }, s3.id);
   ok(Math.abs(-s3.pr - expect9) < 0.005 && Math.abs(s3.pay.disc - expect9) < 0.005 && Math.abs(s3.use.discount - expect9) < 0.005, 'nine holes: the discount re-quotes on the line, the record and the use', { s3, expect9 });
   /* 3. cancel: the record is refunded and the use released */
-  await human(p, '.tt-row[data-id="' + s3.id + '"]'); await p.waitForTimeout(500);
+  await openRow(s3.id); await p.waitForTimeout(500);
   await human(p, '.ps-sheet [data-act=d-cancel]'); await p.waitForTimeout(400);
   await human(p, '.ps-sheet [data-act=d-yes]'); await p.waitForTimeout(600);
   const s4 = await state();

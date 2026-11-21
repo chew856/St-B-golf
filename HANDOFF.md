@@ -270,6 +270,17 @@ Owner answers (Nov 20): meeting room charges are separate from the F&B credit; t
 the staff account shows "Duane" (`Club.user` in `js/core/club.js`) until real names are added. Everything still open
 is listed in `QUESTIONS.md`.
 
+## Members' portal redesign (Nov 21, NOT DEPLOYED YET)
+Plan: `REDESIGN-PLAN.md`; approved concept: `shots/redesign-concept-mix.png`. Inter for all text, Bodoni Moda
+(`--font-sig`, `.sig`) only for big times, date numbers, the greeting name, figures and restaurant names; palette tokens
+`--c-ink`, `--c-fairway`, `--c-mist`, `--c-paper`, `--c-rule`, `--c-oak-ink` (`--label`), `--c-brass` (`--accent`) in
+`css/portal-theme.css`; hairlines instead of shadows. Rebuilt so far: navigation (light header; phone tab bar is words:
+Home, Tee times, Dining, Card, More; `#/more` page; top bar from 768px), Home (next-round panel, "This week" list),
+Tee times (starter's-sheet list, pinned Continue bar, text tabs Book / My tee times / Weekend ballot), Membership card
+(dark page, engraved card), Dining (printed menu, hairline lists). Still in the old layout with the new foundations:
+Events, Lessons, Friends, Leaderboards, Scores, My account, Profile, Handbook, The club, Gift cards, Shop, Takeout,
+Group outings; then the public site. Tested in Chromium only; needs Safari.
+
 ## Future: live location on the course
 The owner plans live location for golfers. The tee sheet's "On pace", hole and finish estimate are computed from the
 4h 15m target today (js/modules/teesheet.js starter column); switch them to real positions when live location exists.

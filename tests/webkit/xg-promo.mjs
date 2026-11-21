@@ -29,8 +29,8 @@ for (const [W, lang] of [[1440, 'en'], [390, 'fr'], [390, 'en'], [1440, 'fr']]) 
     const seed = await p.evaluate(() => ({ pc: Club.store.find('bookingAddons', 'addon_pullcart'), v: Club.store.getObj('addonsVersion'), member: Club.addons.active('member').map(a => a.name) }));
     ok(seed.pc.memberOk === true && seed.pc.name === 'Pull cart rental' && seed.v === 2 && seed.member.indexOf('Pull cart rental') >= 0, tag + ': pull cart rental is member-eligible (migration 2)', seed);
     /* 1. choose the first open time */
-    await human(p, (await p.locator('.tt-chip.st-open:not([disabled]):not(.st-mine):not(.is-wl)').count()) ? '.tt-chip.st-open:not([disabled]):not(.st-mine):not(.is-wl)' : '.tt-chip:not([disabled]):not(.st-mine):not(.is-wl)');
-    const when = await p.evaluate(() => ({ date: document.querySelector('.tt-chip.selected') && Club.date.today(), time: document.querySelector('.tt-chip.selected').dataset.time }));
+    await human(p, (await p.locator('.tt-slot.st-open:not([disabled]):not(.st-mine):not(.is-wl)').count()) ? '.tt-slot.st-open:not([disabled]):not(.st-mine):not(.is-wl)' : '.tt-slot:not([disabled]):not(.st-mine):not(.is-wl)');
+    const when = await p.evaluate(() => ({ date: document.querySelector('.tt-slot.selected') && Club.date.today(), time: document.querySelector('.tt-slot.selected').dataset.time }));
     await human(p, '.pk-bar-btn'); await p.waitForTimeout(600);
     ok(await has(p, '.ps-sheet .tt-editor'), tag + ': booking sheet open');
     /* 2. the add-ons: pull cart for me, with the own-cart note */

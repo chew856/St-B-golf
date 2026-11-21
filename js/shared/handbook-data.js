@@ -116,7 +116,7 @@
       '- Weekends - play Saturday, Sunday & Holidays after 10:30 am (subject to availability).\n' +
       '- When a holiday falls on a weekday, that day will be treated as a weekend day.\n' +
       '- 13-day advance booking privileges.\n\n' +
-      'INTERMEDIATE ~ Age 19 to 39 as of August 1st, 2025 (ID required).\n\n' +
+      'INTERMEDIATE ~ Age 19 to 39 as of August 1st, 2027 (ID required).\n\n' +
       '### Social Membership\n' +
       '- 5 golf vouchers included\n' +
       '- Attendance as Member to Opening Mixer held in April and Closing Social in October.\n' +
@@ -133,7 +133,7 @@
       '- When a holiday falls on a weekday, that day will be treated as a weekend day.\n' +
       '- 8-day advance booking privileges.\n\n' +
       '### Junior (JR)\n' +
-      '- Must meet MGA requirements: 18 & under by August 31, 2025.\n' +
+      '- Must meet MGA requirements: 18 & under by August 31, 2027.\n' +
       '- Weekdays - between 10:30am-4:00pm, after 5:30pm.\n' +
       '- Weekends - play Saturday, Sunday & Holidays after 11:00am (subject to availability).\n' +
       '- When a holiday falls on a weekday, that day will be treated as a weekend day.\n' +
@@ -246,6 +246,15 @@
 
   /* ---------------- Seed (once per browser) ---------------- */
   S.seed(COLL, function () { return SEED.map(function (s) { return Object.assign({}, s); }); });
+  /* Owner, Nov 21: the age cut-offs read 2027. A browser that already holds the handbook still has the 2025 dates in
+     any section staff have not edited: bring those up to date once (an edited section is left as staff wrote it). */
+  (function ageDates2027() {
+    S.all(COLL).forEach(function (sec) {
+      const o = SEED_BY_ID[sec.id]; if (!o || typeof sec.body !== 'string' || sec.body === o.body) return;
+      const was = o.body.replace('August 1st, 2027', 'August 1st, 2025').replace('August 31, 2027', 'August 31, 2025');
+      if (was !== o.body && sec.body === was && sec.title === o.title) S.update(COLL, sec.id, { body: o.body });
+    });
+  })();
 
   /* ---------------- Markup ---------------- */
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' }[c]; }); }

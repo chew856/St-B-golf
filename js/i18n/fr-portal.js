@@ -2817,7 +2817,7 @@
       '- Fins de semaine : jeu le samedi, le dimanche et les jours fériés après 10 h 30 (selon la disponibilité).\n' +
       '- Lorsqu’un jour férié tombe en semaine, cette journée est traitée comme un jour de fin de semaine.\n' +
       '- Réservation jusqu’à 13 jours à l’avance.\n\n' +
-      'INTERMÉDIAIRE ~ 19 à 39 ans au 1er août 2025 (pièce d’identité exigée).\n\n' +
+      'INTERMÉDIAIRE ~ 19 à 39 ans au 1er août 2027 (pièce d’identité exigée).\n\n' +
       '### Adhésion sociale\n' +
       '- 5 bons de golf inclus\n' +
       '- Participation, à titre de membre, au cocktail d’ouverture en avril et à la soirée de clôture en octobre.\n' +
@@ -2834,7 +2834,7 @@
       '- Lorsqu’un jour férié tombe en semaine, cette journée est traitée comme un jour de fin de semaine.\n' +
       '- Réservation jusqu’à 8 jours à l’avance.\n\n' +
       '### Junior (JR)\n' +
-      '- Doit satisfaire aux exigences de la MGA : 18 ans ou moins au 31 août 2025.\n' +
+      '- Doit satisfaire aux exigences de la MGA : 18 ans ou moins au 31 août 2027.\n' +
       '- En semaine : entre 10 h 30 et 16 h, après 17 h 30.\n' +
       '- Fins de semaine : jeu le samedi, le dimanche et les jours fériés après 11 h (selon la disponibilité).\n' +
       '- Lorsqu’un jour férié tombe en semaine, cette journée est traitée comme un jour de fin de semaine.\n' +

@@ -692,6 +692,7 @@
     'Membership': 'Adhésion',
     'Shop': 'Boutique',
     'Dress code and hours': 'Code vestimentaire et heures',
+    'No 18-hole times left': 'Plus de départs de 18 trous', 'No 9-hole times left': 'Plus de départs de 9 trous',
     'Soft spikes only.': 'Crampons souples seulement.',
     'Check in at the golf shop 15 minutes before.': 'Présentez-vous à la boutique du pro 15 minutes avant.',
     'Dress code': 'Code vestimentaire',

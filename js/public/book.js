@@ -8,7 +8,7 @@
   /* Booking state survives sign in and route changes within this visit. */
   /* extras: per-booking add-ons { addonId: qty }; each party member keeps its per-player add-ons in adds: [addonId]. */
   const st = { step: 1, date: null, time: null, joinId: null, holes: 18, party: null, extras: {}, confirmed: null, alert: null };
-  function resetFlow() { st.step = 1; st.time = null; st.joinId = null; st.holes = 18; st.party = null; st.extras = {}; st.confirmed = null; st.alert = null; st.held = false; st.notice = null; if (Club.holds) Club.holds.release(); }
+  function resetFlow() { st.step = 1; st.time = null; st.joinId = null; st.party = null; st.extras = {}; st.confirmed = null; st.alert = null; st.held = false; st.notice = null; if (Club.holds) Club.holds.release(); }
   function r2(v) { return Math.round((+v || 0) * 100) / 100; }
 
   /* Public simplified (Nov 21): the home page is a booking start. A title, a row of short links to the other pages and
@@ -163,6 +163,9 @@
         const head = '<div class="pub-times-head"><h3>' + esc(Pub.longDate(d)) + '</h3>' +
           (wx ? '<span class="pub-wx">' + Club.icon(wx.icon) + esc(wx.cond) + ', ' + esc(wx.hi) + '°C' + (wx.rain >= 50 ? ' · ' + esc(wx.rain) + '% rain' : '') + '</span>' : '') + '</div>' +
           (hol ? '<p class="pub-hol-note">' + Club.icon('star') + '<span>' + esc(hol) + ': weekend and holiday times and rates apply.</span></p>' : '');
+        /* 18 or 9 holes is chosen here (owner, Nov 21): it filters the times (a group already out for the other length is
+           hidden) and sets the price shown. */
+        const holesBar = '<div class="pub-holes-pick">' + ui.segmented([{ value: '18', label: '18 holes' }, { value: '9', label: '9 holes' }], String(st.holes), 'pub-holes-day').replace('class="segmented"', 'class="segmented" role="group" aria-label="Holes"') + '</div>';
         let body;
         if (sum.closed) {
           body = ui.empty({ icon: 'course', title: 'The course is closed today', text: Pub.courseStatus().message || '', action: nextDayBtn(d) });
@@ -176,14 +179,16 @@
           sum.pub.forEach(function (s) { let g = bands.find(function (b) { return b.band === s.pub.band; }); if (!g) { g = { band: s.pub.band, label: s.pub.label, rate: s.pub.rate, slots: [] }; bands.push(g); } g.slots.push(s); });
           let idx = 0;
           body = bands.map(function (g) {
-            const shown = g.slots.filter(function (s) { return Pub.bookable(s) || s.state === 'mine'; });
+            const shown = g.slots.filter(function (s) { return (Pub.bookable(s) && (!s.tt || (+s.tt.holes || 18) === st.holes)) || s.state === 'mine'; });
             if (!shown.length) return '';   /* nothing to book at this rate: say nothing */
-            return '<div class="pub-band"><div class="pub-band-head"><span class="pub-band-name">' + esc(g.label) + '</span><span class="pub-band-rate serif">' + fmt.money(g.rate, false) + '<small> per golfer</small></span></div>' +
+            return '<div class="pub-band"><div class="pub-band-head"><span class="pub-band-name">' + esc(g.label) + '</span><span class="pub-band-rate serif">' + fmt.money(rules.greenFee(d, g.slots[0].time, st.holes), false) + '<small> per golfer</small></span></div>' +
               '<div class="pub-chips">' + shown.map(function (s) { return chipHTML(s, idx++); }).join('') + '</div>' +
             '</div>';
           }).join('');
         }
-        el.innerHTML = head + body;
+        if (body === '' && sum.pub.length && sum.avail)
+          body = ui.empty({ icon: 'flag', title: 'No ' + st.holes + '-hole times left', text: '', action: nextDayBtn(d) });
+        el.innerHTML = head + (sum.closed || !sum.pub.length ? '' : holesBar) + body;
       }
       function chipHTML(s, i) {
         const tp = Pub.timeParts(s.time);
@@ -193,6 +198,13 @@
           Club.teeHeads(4 - s.places) +
           '<span class="pub-chip-p">' + esc(sub) + '</span></button>';
       }
+      ui.on(view, 'click', '.segmented[data-name=pub-holes-day] button', function (e, b) {
+        if (+b.dataset.value === st.holes) return;
+        st.holes = +b.dataset.value; st.time = null; st.joinId = null;
+        const p = Pub.me(), el = ui.$('.pub-times', view);
+        drawDay(el, summary(st.date, p ? p.id : null));
+        const nb = ui.$('.segmented[data-name=pub-holes-day] button.active', view); if (nb) nb.focus();
+      });
       ui.on(view, 'click', '.pub-day', function (e, b) {
         if (b.dataset.date === st.date) return;
         st.date = b.dataset.date; st.time = null; st.joinId = null;
@@ -210,7 +222,7 @@
         if (!s || !Pub.bookable(s)) { ui.toast('That tee time is no longer available', 'bad'); paint(); return; }
         ui.$$('.pub-chip.selected', view).forEach(function (x) { x.classList.remove('selected'); });
         b.classList.add('selected');
-        st.time = s.time; st.joinId = s.tt ? s.tt.id : null; st.holes = s.tt ? (+s.tt.holes || 18) : 18;
+        st.time = s.time; st.joinId = s.tt ? s.tt.id : null; if (s.tt) st.holes = +s.tt.holes || 18;
         st.party = null; st.extras = {}; st.alert = null;
         takeHold(s);
         setTimeout(function () { st.step = 2; paint(true); }, 220);
@@ -221,7 +233,7 @@
       function selBar() {
         const tp = Pub.timeParts(st.time); const ps = rules.publicSlot(st.date, st.time);
         /* The rate per golfer, and "Joining a group" when the time already has a group (its places left are on the players list). */
-        return '<div class="pub-sel" data-reveal><div class="pub-sel-when"><span class="pub-sel-time serif">' + tp.t + '<small>' + tp.ap + '</small></span><div><div class="pub-sel-day">' + esc(Pub.longDate(st.date)) + '</div><div class="muted"><span>' + esc(fmt.money(ps.rate, false)) + '</span> <span>per golfer</span>' + (st.joinId ? ' · <span>Joining a group</span>' : '') + '</div></div></div>' +
+        return '<div class="pub-sel" data-reveal><div class="pub-sel-when"><span class="pub-sel-time serif">' + tp.t + '<small>' + tp.ap + '</small></span><div><div class="pub-sel-day">' + esc(Pub.longDate(st.date)) + '</div><div class="muted"><span>' + esc(fmt.money(rules.greenFee(st.date, st.time, st.holes), false)) + '</span> <span>per golfer</span> · <span>' + st.holes + ' holes</span>' + (st.joinId ? ' · <span>Joining a group</span>' : '') + '</div></div></div>' +
           '<button type="button" class="btn btn-ghost btn-sm" data-act="change-time">Change</button></div>';
       }
       function ensureParty(p) {
@@ -260,7 +272,7 @@
             '<ul class="pub-pl-list"></ul>' +
             '<div class="pub-add-wrap"></div>' +
             (noCarts ? '<p class="pub-rule">' + Club.icon('info') + 'No carts today.</p>' : Pub.cartRuleFor(st.date) !== 'Normal' ? '<p class="pub-rule">' + Club.icon('info') + 'Carts are ' + esc(Pub.cartRuleFor(st.date).toLowerCase()) + ' today.</p>' : '') +
-            '<div class="pub-opts"><div class="field"><label>Holes</label>' + (st.joinId ? '<div class="pub-locked">' + st.holes + ' holes <span class="muted">set by the group</span></div>' : ui.segmented([{ value: '18', label: '18 holes' }, { value: '9', label: '9 holes' }], String(st.holes), 'pub-holes')) + '</div>' +
+            '<div class="pub-opts"><div class="field"><label>Holes</label>' + '<div class="pub-locked">' + st.holes + ' holes</div>' + '</div>' +
               (noCarts ? '' : '<div class="pub-cart-note"><span class="label-caps">Cart</span><span>' + esc(fmt.money(Pub.cartFee(st.holes))) + ' per rider</span></div>') + '</div>' +
           '</div></section>' +
           (Pub.addonList().length ? '<section class="panel pub-adds" data-reveal aria-labelledby="pub-adds-h"><div class="panel-head"><h3 id="pub-adds-h">Extras <span class="muted pub-opt-word">(optional)</span></h3><span class="muted pub-adds-sum"></span></div>' +

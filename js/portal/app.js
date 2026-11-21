@@ -115,7 +115,7 @@
     root.innerHTML =
       '<header class="p-header"><div class="p-header-inner">' +
         '<a class="p-brand" href="#/home" aria-label="' + esc(Club.info.name) + ' home">' + crest() + '<span><span class="p-brand-name">' + esc(Club.info.short) + '</span><span class="p-brand-sub">Members</span></span></a>' +
-        '<nav class="p-nav" aria-label="Main">' + list.filter(function (p) { return p.nav !== false; }).map(function (p, i) { return '<a href="#/' + p.id + '" data-page="' + p.id + '" data-ord="' + i + '">' + esc(p.label) + '</a>'; }).join('') +
+        '<nav class="p-nav" aria-label="Main">' + list.filter(function (p) { return p.nav !== false && p.id !== 'account'; })   /* My account is in the name menu (owner, Nov 21) */.map(function (p, i) { return '<a href="#/' + p.id + '" data-page="' + p.id + '" data-ord="' + i + '">' + esc(p.label) + '</a>'; }).join('') +
           '<div class="p-navmore" hidden><button type="button" class="p-navmore-btn" aria-haspopup="true" aria-expanded="false">More' + Club.icon('chevronDown') + '</button><div class="p-navmore-pop" hidden></div></div>' +
           '<span class="p-nav-ink"></span></nav>' +
         /* Language is a setting in Profile now (and on the sign-in page), not a header switch */
@@ -167,7 +167,7 @@
   let fitting = false;
 
   /* Priority menu: when the header is too narrow for every page, pages move into More from the end of the list
-     (MENU order), so Home, My account and Tee times stay in the bar longest. */
+     (MENU order), so Home, Tee times and Play stay in the bar longest. My account is not in the bar: it is in the name menu. */
   function fitNav() {
     const nav = ui.$('.p-nav'), inner = ui.$('.p-header-inner'), more = nav && ui.$('.p-navmore', nav);
     if (!nav || !more || getComputedStyle(nav).display === 'none') return;

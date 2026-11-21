@@ -337,7 +337,8 @@
   }
   function navLinks(p) {
     return '<a href="#/" data-page="book" data-pri="97">Book a tee time</a>' + extraLinks(p) +
-      (p ? '<a href="#/bookings" data-page="bookings" data-pri="95">My bookings</a>' + (Pub.cartNav && Pub.cartNav(p) ? '<a href="#/cart" data-page="cart" data-pri="90">Order to the course</a>' : '') + '<a href="#/account" data-page="account">My account</a>' : '');
+      (p ? '<a href="#/bookings" data-page="bookings" data-pri="95">My bookings</a>' + (Pub.cartNav && Pub.cartNav(p) ? '<a href="#/cart" data-page="cart" data-pri="90">Order to the course</a>' : '') + '<a href="#/account" data-page="account">My account</a>' : '') +
+      '<a href="#/" data-act="know" data-pri="2">Dress code and hours</a>';   /* opens the handbook box (book.js); folds into More first */
   }
   /* Priority menu: when the header is too narrow for every link, links with data-pri move into a More menu, lowest
      first (Members sign in, then added pages, then Order to the course, and only if still needed My bookings and Book a
@@ -421,6 +422,12 @@
   function markActive() {
     ui.$$('.pub-nav a[data-page]').forEach(function (a) { const on = a.dataset.page === currentId; a.classList.toggle('active', on); if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   }
+  /* Header link "Dress code and hours" (also inside More when folded) */
+  document.addEventListener('click', function (e) {
+    const a = e.target.closest && e.target.closest('.pub-nav [data-act=know], .pub-more-pop [data-act=know]');
+    if (!a || !Pub.openKnow) return;
+    e.preventDefault(); const more = ui.$('.pub-more-pop'); if (more) more.hidden = true; Pub.openKnow();
+  });
   function openMenu() {
     const p = me();
     const d = ui.drawer({ eyebrow: Club.info.short, title: p ? 'Hello, ' + p.firstName : 'Public golf',

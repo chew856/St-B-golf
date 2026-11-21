@@ -249,9 +249,8 @@ body.portal .ps-foot .btn svg { flex: none; }
 .tt-times-card .tt-times { margin-top: 0; }
 
 @media (min-width: 768px) {
-  body.portal .p-page .tt-hero { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; }
-  body.portal .p-page .tt-hero h1 { margin: 0; }
-  body.portal .tt-hero .pk-acc { flex: 1 1 26rem; max-width: 38rem; }
+  /* The course status sits under the title, full width, so opening it never squeezes the title (owner, Nov 21) */
+  body.portal .p-page .tt-hero h1 { margin: 0 0 12px; }
   /* Controls: date wide, players and holes beside it */
   .tt-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px 20px; align-items: end; }
   .tt-card .tt-date { grid-column: 1; }

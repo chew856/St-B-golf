@@ -482,4 +482,7 @@ body.public .pub-bk-dlg { margin-top: 0; }
 
 /* Phones and small tablets (owner, Nov 21): the home page's link row moves into the menu (the three lines, top right),
    like an app. The menu button shows below 880px (css/public.css), so the row hides there. */
-@media (max-width: 879px) { body.public .pub-quick { display: none; } }
+body.public .pub-quick { display: none; }   /* owner, Nov 21: the header and its menu already have these links, on every screen */
+body.public .pub-holes-pick { margin: 0 0 var(--s4); }
+body.public .pub-holes-pick .segmented { width: 100%; max-width: 320px; }
+body.public .pub-holes-pick .segmented button { flex: 1; min-height: 44px; }

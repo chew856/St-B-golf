@@ -410,12 +410,16 @@
     }
     function custMatches(q) {
       q = q.trim().toLowerCase(); if (!q) return [];
+      /* A membership card scanned or typed: "STB-M-1003" finds that member alone; a bare member number puts them first.
+         Either way Enter picks them. */
+      const card = Club.members.fromCode(q), isCode = card && /^stb/i.test(q);
       const digits = q.replace(/\D/g, '');
       const hit = function (parts) { return parts.join(' ').toLowerCase().indexOf(q) >= 0; };
       const mem = S.all('members').filter(function (m) { return hit([m.firstName + ' ' + m.lastName, m.lastName + ', ' + m.firstName, '#' + m.memberNo, m.email || '']) || (digits.length >= 3 && String(m.memberNo).indexOf(digits) >= 0); })
-        .sort(function (a, b) { return a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName); }).slice(0, 6)
+        .sort(function (a, b) { return (card ? (b.id === card.id) - (a.id === card.id) : 0) || a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName); })
+        .filter(function (m) { return !isCode || m.id === card.id; }).slice(0, 6)
         .map(function (m) { const tier = Club.members.tier(m); return { kind: 'member', id: m.id, name: m.firstName + ' ' + m.lastName, sub: 'Member #' + m.memberNo + (tier ? ' · ' + tier.name : '') + (m.status && m.status !== 'active' ? ' · ' + m.status.charAt(0).toUpperCase() + m.status.slice(1) : '') }; });
-      const pub = S.all('publicPlayers').filter(function (p) { return hit([(p.firstName || '') + ' ' + (p.lastName || ''), p.email || '']) || (digits.length >= 4 && String(p.phone || '').replace(/\D/g, '').indexOf(digits) >= 0); })
+      const pub = isCode ? [] : S.all('publicPlayers').filter(function (p) { return hit([(p.firstName || '') + ' ' + (p.lastName || ''), p.email || '']) || (digits.length >= 4 && String(p.phone || '').replace(/\D/g, '').indexOf(digits) >= 0); })
         .slice(0, 4).map(function (p) { return { kind: 'public', id: p.id, name: [p.firstName, p.lastName].filter(Boolean).join(' '), sub: 'Public golfer' + (p.email ? ' · ' + p.email : '') }; });
       return mem.concat(pub);
     }

@@ -119,8 +119,11 @@
     function filter(pop, q) {
       q = q.trim().toLowerCase();
       let first = -1, any = false;
+      const os = opts();
       pop.querySelectorAll('.cs-opt').forEach(function (n) {
-        const hit = !q || n.textContent.toLowerCase().indexOf(q) >= 0;
+        /* An option's data-search adds words to match that are not shown (e.g. a member's card code "STB-M-1003"). */
+        const o = os[+n.dataset.i], extra = o && o.getAttribute('data-search') ? ' ' + o.getAttribute('data-search') : '';
+        const hit = !q || (n.textContent + extra).toLowerCase().indexOf(q) >= 0;
         n.hidden = !hit;
         if (hit) { any = true; if (first < 0 && !n.classList.contains('is-off')) first = +n.dataset.i; }
       });

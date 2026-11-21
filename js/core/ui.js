@@ -67,9 +67,20 @@
     /** Which hand a member plays: 'Right-handed', 'Left-handed' or null when not recorded. */
     HANDS: [{ value: 'right', label: 'Right-handed' }, { value: 'left', label: 'Left-handed' }],
     hand: function (m) { const h = m && m.hand; return h === 'left' ? 'Left-handed' : h === 'right' ? 'Right-handed' : null; },
+    /** The code on the digital membership card (QR, js/portal/card.js): "STB-M-1003". Not a secret: it only names the
+        member, as the number on the old plastic card did. */
+    cardCode: function (m) { return m && m.memberNo ? 'STB-M-' + m.memberNo : ''; },
+    /** The member a scanned or typed card code names: "STB-M-1003" (any case, spaces or dashes optional), "#1003" or a
+        bare member number "1003". null when it is not a code or no member has that number. */
+    fromCode: function (text) {
+      const s = String(text == null ? '' : text).trim();
+      const x = /^stb[\s-]*m[\s-]*#?\s*(\d+)$/i.exec(s) || /^#?\s*(\d+)$/.exec(s);
+      if (!x) return null;
+      return Club.store.all('members').find(function (m) { return String(m.memberNo) === x[1]; }) || null;
+    },
     options: function (selectedId) {
       return Club.store.all('members').slice().sort(function (a, b) { return a.lastName.localeCompare(b.lastName); })
-        .map(function (m) { return '<option value="' + m.id + '"' + (m.id === selectedId ? ' selected' : '') + '>' + esc(m.lastName + ', ' + m.firstName) + ' · #' + m.memberNo + '</option>'; }).join('');
+        .map(function (m) { return '<option value="' + m.id + '"' + (m.id === selectedId ? ' selected' : '') + ' data-search="STB-M-' + esc(m.memberNo) + '">' + esc(m.lastName + ', ' + m.firstName) + ' · #' + m.memberNo + '</option>'; }).join('');
     }
   };
   /**

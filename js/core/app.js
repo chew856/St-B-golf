@@ -135,8 +135,11 @@
     let hl = -1;
     function results(q) {
       q = q.toLowerCase().trim(); if (q.length < 2) return [];
-      let out = Club.store.all('members').filter(function (m) { return (m.firstName + ' ' + m.lastName + ' ' + m.memberNo + ' ' + m.email).toLowerCase().indexOf(q) >= 0; }).slice(0, 6)
-        .map(function (m) { return { label: m.firstName + ' ' + m.lastName, sub: 'Member #' + m.memberNo, href: 'members/' + m.id, avatar: true }; });
+      /* A membership card (scanner or typed): "STB-M-1003" or the bare number puts that member first, so Enter opens them. */
+      const card = Club.members.fromCode(q);
+      let out = Club.store.all('members').filter(function (m) { return card ? m.id === card.id : (m.firstName + ' ' + m.lastName + ' ' + m.memberNo + ' ' + m.email).toLowerCase().indexOf(q) >= 0; }).slice(0, 6)
+        .map(function (m) { return { label: m.firstName + ' ' + m.lastName, sub: 'Member #' + m.memberNo + (card ? ' · Membership card' : ''), href: 'members/' + m.id, avatar: true }; });
+      if (card && /^stb/i.test(q)) return out;
       modules.forEach(function (mod) { if (mod.search) { try { out = out.concat((mod.search(q) || []).slice(0, 4)); } catch (e) { console.error(e); } } });
       modules.forEach(function (mod) { if (mod.label.toLowerCase().indexOf(q) >= 0) out.push({ label: mod.label, sub: 'Go to page', href: mod.id, icon: mod.icon }); });
       return out.slice(0, 12);
@@ -148,12 +151,20 @@
         : '<div class="empty" style="padding:24px">No matches for “' + esc(input.value) + '”.</div>';
       box.classList.add('open');
     }
-    input.addEventListener('input', draw);
+    /* A card scanner that sends no Enter after the code: a whole "STB-M-..." code that names a member opens them once
+       the typing stops. */
+    let cardT = null;
+    function openCard(m) { clearTimeout(cardT); box.classList.remove('open'); input.value = ''; input.blur(); Club.app.go('members/' + m.id); }
+    input.addEventListener('input', function () {
+      draw(); clearTimeout(cardT);
+      const v = input.value.trim(), m = /^stb[\s-]*m[\s-]*\d+$/i.test(v) ? Club.members.fromCode(v) : null;
+      if (m) cardT = setTimeout(function () { if (input.value.trim() === v) openCard(m); }, 400);
+    });
     input.addEventListener('focus', draw);
     input.addEventListener('keydown', function (e) {
       const links = ui.$$('a', box);
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); hl = (hl + (e.key === 'ArrowDown' ? 1 : -1) + links.length) % links.length; links.forEach(function (l, i) { l.classList.toggle('hl', i === hl); }); }
-      if (e.key === 'Enter' && links.length) { (links[hl] || links[0]).click(); input.blur(); }
+      if (e.key === 'Enter' && links.length) { clearTimeout(cardT); (links[hl] || links[0]).click(); input.blur(); }
       if (e.key === 'Escape') { input.value = ''; box.classList.remove('open'); input.blur(); }
     });
     box.addEventListener('click', function () { box.classList.remove('open'); input.value = ''; });

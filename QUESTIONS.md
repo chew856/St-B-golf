@@ -3,7 +3,7 @@
 Things the system needs an answer to, which the owner did not know yet. Each one has a placeholder in the system
 until it is answered. Ask the club, then tell Claude the answer.
 
-Last updated: November 20, 2026.
+Last updated: November 21, 2026.
 
 ## Prices and money
 
@@ -32,6 +32,26 @@ Last updated: November 20, 2026.
    Is that what the club does?
 10. **Tee booking hours.** The handbook says tee times can be booked through the Pro Shop "Monday-Sunday 7:00-9:00pm".
     Is that 7:00 AM to 9:00 PM?
+
+## The scorecard (on hold until the club answers)
+
+The system has the club scorecard's Black, Green and Silver yardages, men's par, and the Black or Green stroke index
+(they match the printed card exactly). These parts of the card are not in the system yet:
+
+20. **Combination tees.** The card lists Black/Green (6,214 yards) and Green/Silver (5,799 yards). Should members be
+    able to choose them when they play and post scores?
+21. **Stroke index for each tee.** The card has a separate stroke index for Silver and for each combination tee. Should
+    net scores, Stableford and skins use the index of the tee each player plays?
+22. **What "6/10" means.** Some combination-tee holes show two numbers (for example hole 10: 6/10). The owner's reading
+    is men's / women's, the same way the par row shows "Men's/Women's Par" (hole 10 is a par 4 for men and a par 5 for
+    women, so it ranks easier for women). The card does not say so: please confirm.
+23. **The Green/Silver combination handicap row looks misprinted.** A stroke-index row must use each number from 1 to 18
+    once. That row has 3, 13 and 15 twice each and never has 6, 7, 10 or 17. What is the correct row?
+24. **Women's par and women's stroke index.** Holes 10 and 12 are par 5 and par 4 for women (36/38 = 74). The system does
+    not record which golfers play the women's card. Should each member (and guest) have a "Scorecard: Men's / Women's"
+    setting?
+25. **Course and slope ratings.** Handicaps use placeholder ratings for every tee. The club's official ratings (from
+    Golf Canada) are needed for Black, Green, Silver and the combination tees, men's and women's.
 
 ## People and names
 

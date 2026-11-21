@@ -302,7 +302,7 @@ async function teeTime(lang, w) {
   ok(await p.locator('.hold-timer.is-in').count() === 1, tag + ' countdown after Back');
   await click(p, '.pub-card-panel .ckf-step:not([hidden]) .ckf-next');
   await click(p, '.pub-card-panel .ckf-step:not([hidden]) .pub-paybtn', { wait: 1800 });
-  const conf = await p.evaluate((pid) => { const pays = Club.store.all('publicPayments').filter(x => x.publicPlayerId === pid); const x = pays[pays.length - 1]; return x ? { brand: x.brand, last4: x.last4, rc: Club.receipts ? Club.receipts.all ? Club.receipts.all().some(r => r.refId === x.id || (r.ref && r.ref === x.id)) : true : true, ticket: !!document.querySelector('.pub-ticket') } : null; }, pid);
+  const conf = await p.evaluate((pid) => { const pays = Club.store.all('publicPayments').filter(x => x.publicPlayerId === pid); const x = pays[pays.length - 1]; return x ? { brand: x.brand, last4: x.last4, rc: Club.receipts ? Club.receipts.all ? Club.receipts.all().some(r => r.refId === x.id || (r.ref && r.ref === x.id)) : true : true, ticket: !!document.querySelector('.pub-done') } : null; }, pid);
   ok(conf && conf.ticket && conf.last4 === '4242', tag + ' booking confirmed and paid', conf);
   ok(await p.evaluate((pid) => JSON.stringify((Club.store.find('publicPlayers', pid) || {}).cards || null), pid) === cardsBefore, tag + ' no card written to the golfer');
   ok(await p.locator('.hold-timer').count() === 0 || await p.locator('.hold-timer.is-in').count() === 0, tag + ' countdown gone after booking');

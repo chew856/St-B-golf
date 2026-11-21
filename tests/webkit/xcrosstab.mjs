@@ -36,7 +36,7 @@ for (const W of [1440, 390]) {
     await click(pub, '.pub-card-panel .ckf-step:not([hidden]) .ckf-next');
     await click(pub, '.pub-card-panel .ckf-step:not([hidden]) .pub-paybtn', { wait: 1800 });
     const booked = await pub.evaluate(([pid, d, t]) => { const x = Club.store.all('teeTimes').filter(tt => tt.date === d && tt.time === t && tt.players.some(p => p.publicPlayerId === pid))[0]; return x ? x.id : null; }, [pid, D, time]);
-    ok(!!booked && await pub.locator('.pub-ticket').count() > 0, W + ': public booking confirmed at ' + time, booked);
+    ok(!!booked && await pub.locator('.pub-done').count() > 0, W + ': public booking confirmed at ' + time, booked);
     await staff.bringToFront(); await staff.waitForTimeout(900);
     const seen = await staff.evaluate(([id, t, pid]) => {
       const S = Club.store, tt = S.find('teeTimes', id), pl = S.find('publicPlayers', pid);

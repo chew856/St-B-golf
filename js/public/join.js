@@ -85,7 +85,7 @@
         '<div class="join-hero-copy">' +
           '<div class="eyebrow">Membership at ' + esc(Club.info.short) + '</div>' +
           '<h1>Become a member</h1>' +
-          '<p class="pub-hero-lead serif">' + esc(Club.info.tagline) + '. Choose the category that suits how you play and apply online. The club office reviews every application and will be in touch.</p>' +
+          '<p class="pub-hero-lead serif">Choose a category and apply online.</p>' +
           '<div class="pub-hero-actions"><a class="btn btn-brass" href="#join-cats" data-act="jump">' + Club.icon('members') + '<span>See the categories</span></a>' +
             '<a class="btn pub-btn-night" href="' + Pub.phoneHref() + '">' + Club.icon('phone') + '<span>Call the office</span></a></div>' +
         '</div>' + offerHTML() +

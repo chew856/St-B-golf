@@ -86,13 +86,9 @@
     'club use': 'usage du club',
 
     /* ---------- Home and booking (book.js) ---------- */
-    'Book your tee time 7 days in advance': 'Réservez votre heure de départ 7 jours à l’avance',
-    'Built in 1931, St. Boniface Golf Club is a majestic traditional style course with tree-lined fairways, small sloping greens and the Seine River running the length of our signature 17th. We would love to see you on the first tee.':
-      'Construit en 1931, le St. Boniface Golf Club est un majestueux parcours de style traditionnel, avec des allées bordées d’arbres, de petits verts en pente et la rivière Seine qui longe notre 17e trou emblématique. Nous serions ravis de vous accueillir au premier tertre.',
     'Find a tee time': 'Trouver un départ',
     'Create your account': 'Créer votre compte',
     'Green fees': 'Droits de jeu',
-    'Green fees, tax included': 'Droits de jeu, taxes incluses',
     'Weekday': 'Semaine',
     'Monday to Thursday, 10:30 AM to 3:30 PM': 'Du lundi au jeudi, de 10 h 30 à 15 h 30',
     'Twilight': 'Crépuscule',
@@ -100,24 +96,15 @@
     'Monday to Thursday after 5:30 PM': 'Du lundi au jeudi après 17 h 30',
     'Weekend & holiday': 'Fin de semaine et fériés',
     'Weekends and holidays after 1:00 PM': 'Fins de semaine et jours fériés après 13 h',
-    'Our signature hole': 'Notre trou emblématique',
-    'The par-5 17th': 'Le 17e, une normale 5',
     'Black': 'Noir',
     'Silver': 'Argent',
     'Green': 'Vert',
-    'With the Seine River running along the entire hole and plenty of trees along the right side. Two bunkers await most balls that are heading for the putting surface, while the river is there to catch any errant shots that are heading left. The green is sloped from back to front.':
-      'La rivière Seine longe tout le trou et de nombreux arbres bordent le côté droit. Deux fosses de sable attendent la plupart des balles qui se dirigent vers la surface de jeu, tandis que la rivière guette les coups égarés vers la gauche. Le vert est incliné de l’arrière vers l’avant.',
-    'Before you play': 'Avant de jouer',
     'Good to know': 'Bon à savoir',
     'Dress code.': 'Code vestimentaire.',
     'Our dress code must be adhered to by members and guests.': 'Les membres et les invités doivent respecter notre code vestimentaire.',
     'Soft spikes only,': 'Crampons souples seulement,',
     'on the course and in the clubhouse.': 'sur le parcours et au pavillon.',
     'Check in at the golf shop': 'Présentez-vous à la boutique du pro',
-    'fifteen minutes before your tee time.': 'quinze minutes avant votre heure de départ.',
-    'Change of plans?': 'Changement de plans?',
-    'Stay for a bite.': 'Restez pour une bouchée.',
-    'The Gallery Taphouse & Grill overlooks the 18th hole, with six local beers on tap.': 'Le Gallery Taphouse & Grill surplombe le 18e trou et propose six bières locales en fût.',
     'Tee times': 'Heures de départ',
     'Booking steps': 'Étapes de la réservation',
     'Day and time': 'Jour et heure',
@@ -135,33 +122,21 @@
     'Member play only': 'Réservé aux membres',
     'There are no public tee times on this day.': 'Il n’y a aucune heure de départ publique ce jour-là.',
     'Play has finished for today': 'Le jeu est terminé pour aujourd’hui',
-    'Every public tee time is taken': 'Toutes les heures de départ publiques sont prises',
-    'The last public tee time has gone off. We would be delighted to see you another day.': 'Le dernier départ public est parti. Nous serions ravis de vous voir un autre jour.',
     'per golfer': 'par golfeur',
-    'None open': 'Aucun de libre',
-    'These times have passed.': 'Ces heures sont passées.',
-    'Nothing open at this rate.': 'Rien de libre à ce tarif.',
     'Your booking': 'Votre réservation',
     'That tee time is no longer available': 'Cette heure de départ n’est plus disponible',
     'Joining a group': 'Vous joignez un groupe',
-    'Your own tee time': 'Votre propre départ',
     'Change': 'Modifier',
-    'One quick step': 'Une petite étape',
-    'Create an account or sign in to book': 'Créez un compte ou connectez-vous pour réserver',
     'You already have a round close to this time on the same day.': 'Vous avez déjà une partie proche de cette heure le même jour.',
-    'You are already booked at this time. You can manage it under My bookings.': 'Vous êtes déjà inscrit à cette heure. Vous pouvez gérer cette réservation sous Mes réservations.',
     'Someone may have just booked it. Please choose another time.': 'Quelqu’un vient peut-être de la réserver. Veuillez choisir une autre heure.',
     'Choose another time': 'Choisir une autre heure',
-    'You are joining a group': 'Vous vous joignez à un groupe',
     'Who is playing': 'Qui joue',
     'Your group': 'Votre groupe',
-    'No carts today. The course is walking only.': 'Aucune voiturette aujourd’hui. Le parcours se joue à pied seulement.',
     'Holes': 'Trous',
     'set by the group': 'fixé par le groupe',
     'Power cart': 'Voiturette',
     'Back': 'Retour',
     'Continue to payment': 'Continuer vers le paiement',
-    'You, the account holder': 'Vous, titulaire du compte',
     'Guest full name': 'Nom complet de l’invité',
     'Guest, pays the green fee': 'Invité, paie le droit de jeu',
     'Walking': 'À pied',
@@ -170,10 +145,6 @@
     'Your transport': 'Votre transport',
     'Remove guest': 'Retirer l’invité',
     'Add a guest': 'Ajouter un invité',
-    'Your group is complete with four players.': 'Votre groupe est complet avec quatre joueurs.',
-    'That fills the places left at this time.': 'Cela comble les places restantes à cette heure.',
-    'Total today': 'Total aujourd’hui',
-    'Green fees include tax. You pay online by card when you book.': 'Les droits de jeu incluent les taxes. Vous payez en ligne par carte au moment de réserver.',
     'Please enter your guest’s first and last name.': 'Veuillez entrer le prénom et le nom de votre invité.',
     'Each golfer needs their own name.': 'Chaque golfeur doit avoir son propre nom.',
     'Please complete your guests’ names': 'Veuillez compléter le nom de vos invités',
@@ -182,7 +153,6 @@
     'Pay by card': 'Payer par carte',
     'Secure': 'Sécurisé',
     'Pay with gift card': 'Payer avec la carte-cadeau',
-    'By booking you agree to our dress code and the soft spikes rule. Questions? Call the golf shop at': 'En réservant, vous acceptez notre code vestimentaire et la règle des crampons souples. Des questions? Appelez la boutique du pro au',
     'Edit players': 'Modifier les joueurs',
     'Please check your card details': 'Veuillez vérifier les renseignements de votre carte',
     'Please choose a card': 'Veuillez choisir une carte',
@@ -191,10 +161,8 @@
     'Processing payment': 'Paiement en cours',
     'Your card was declined. Please try another card, or call your card issuer.': 'Votre carte a été refusée. Veuillez essayer une autre carte ou communiquer avec l’émetteur de votre carte.',
     'Your tee time is confirmed': 'Votre heure de départ est confirmée',
-    'We look forward to welcoming you. Please check in at the golf shop fifteen minutes before your tee time, and remember our dress code and soft spikes.': 'Au plaisir de vous accueillir. Veuillez vous présenter à la boutique du pro quinze minutes avant votre heure de départ, et n’oubliez pas notre code vestimentaire et les crampons souples.',
     'Add to calendar': 'Ajouter au calendrier',
     'View receipt': 'Voir le reçu',
-    'Book another tee time': 'Réserver un autre départ',
 
     /* ---------- Sign in / sign up, My bookings, My account (me.js) ---------- */
     'First name *': 'Prénom *',
@@ -304,19 +272,15 @@
     [/^Weekend and holiday mornings, 6:00 AM to 1:00 PM, are (.+) when you play with a member, so ask your member host to book\. Nine holes are 60% of the 18-hole fee\.$/,
       'Les matins de fin de semaine et de jours fériés, de 6 h à 13 h, le tarif est de $1 lorsque vous jouez avec un membre : demandez à votre hôte membre de réserver. Le 9 trous coûte 60 % du tarif de 18 trous.'],
     [/^([\d,]+) yds$/, '$1 vg'],
-    [/^Cancel online up to (\d+) hours before your tee time for a full refund\. After that, please call the golf shop at$/, 'Annulez en ligne jusqu’à $1 heures avant votre heure de départ pour un remboursement complet. Passé ce délai, veuillez appeler la boutique du pro au'],
     /* ---------- booking, step 1 ---------- */
     [/^Public times for the next (\d+) days\. Each golfer pays the green fee\.$/, 'Les heures publiques des $1 prochains jours. Chaque golfeur paie le droit de jeu.'],
     [/^(\d+) times?$/, function (m, n) { return pl(n, 'départ', 'départs'); }],
     [/^(\d+) times? open$/, function (m, n) { return pl(n, 'départ libre', 'départs libres'); }],
     [/^(.+), (Closed|Members|Play over|Fully booked|\d+ times?)$/, function (m, d, l) { return d + ', ' + (/^\d/.test(l) ? pl(parseInt(l, 10), 'départ', 'départs') : T(l)); }],
-    [/^New tee times open each morning\. (.+) opens for booking (tomorrow|soon)\.$/, function (m, d, w) { return 'De nouvelles heures de départ s’ouvrent chaque matin. Les réservations pour le ' + d + ' ouvriront ' + (w === 'tomorrow' ? 'demain' : 'bientôt') + '.'; }],
     [/^See (.+)$/, function (m, d) { var p = d.split(', '); return 'Voir ' + (DAYWORD[p[0]] || p[0]) + (p[1] ? ', ' + p.slice(1).join(', ') : ''); }],
     [/^(.+?), (-?\d+)°C(?: · (\d+)% rain)?$/, function (m, c, t, r) { return T(c) + ', ' + t + ' °C' + (r ? ' · ' + r + ' % de pluie' : ''); }],
     [/^(.+): weekend and holiday times and rates apply\.$/, function (m, h) { return T(h) + ' : les heures et les tarifs de fin de semaine et de jours fériés s’appliquent.'; }],
-    [/^(.*?) ?Tee times from tomorrow are open for booking\.$/, function (m, msg) { return (msg ? T(msg) + ' ' : '') + 'Les heures de départ à partir de demain sont ouvertes aux réservations.'; }],
     [/^(.+?) ?Public tee times are Monday to Thursday 10:30 AM to 3:30 PM, weekdays after 5:30 PM, and weekends and holidays after 1:00 PM\.$/, function (m, r) { return T(r) + ' ' + T('Public tee times are Monday to Thursday 10:30 AM to 3:30 PM, weekdays after 5:30 PM, and weekends and holidays after 1:00 PM.'); }],
-    [/^(.+) is fully booked\. You might like another day, or call the golf shop to ask about cancellations\.$/, 'Le $1 est complet. Essayez un autre jour, ou appelez la boutique du pro pour vous renseigner sur les annulations.'],
     [/^(Weekday|Twilight|Weekend & holiday) (\d.*\$|\$\d.*)$/, function (m, b, r) { return band(b) + ' ' + r; }],
     [/^(\d+) places? left$/, function (m, n) { return pl(n, 'place restante', 'places restantes'); }],
     [/^(\d+) places?$/, function (m, n) { return pl(n, 'place', 'places'); }],
@@ -326,24 +290,18 @@
     }],
     /* ---------- booking, step 2 ---------- */
     [/^(Weekday|Twilight|Weekend & holiday) (.+?) per golfer · (Joining a group|Your own tee time)$/, function (m, b, r, k) { return band(b) + ' ' + r + ' par golfeur · ' + T(k); }],
-    [/^We will keep your (.+) choice while you do\. Your account lets you see, cancel and get receipts for your bookings\.$/, 'Nous gardons votre choix de $1 pendant ce temps. Votre compte vous permet de consulter et d’annuler vos réservations, et d’en obtenir les reçus.'],
-    [/^(\d+) places? left at this time\. The group plays (\d+) holes\.$/, function (m, n, h) { return (+n <= 1 ? 'Il reste 1 place' : 'Il reste ' + n + ' places') + ' à cette heure. Le groupe joue ' + h + ' trous.'; }],
     [/^Carts are (.+) today\.$/, function (m, r) { return 'Voiturettes : ' + T(r.charAt(0).toUpperCase() + r.slice(1)).toLowerCase() + ' aujourd’hui.'; }],
     [/^(\d+) holes$/, '$1 trous'],
     [/^(.+) per rider$/, '$1 par passager'],
     [/^(\d+) of (\d+) places left$/, function (m, a, b) { return a + ' sur ' + b + ' ' + (+b <= 1 ? 'place restante' : 'places restantes'); }],
     [/^(\d+) of (\d+) players$/, '$1 sur $2 joueurs'],
-    [/^Up to (\d+) more golfers?$/, function (m, n) { return 'Jusqu’à ' + pl(n, 'golfeur', 'golfeurs') + ' de plus'; }],
     /* ---------- booking, step 3 and confirmation ---------- */
     [/^(\d+) holes · joining a group$/, '$1 trous · avec un groupe'],
-    [/^Green fees include tax\. Cancel online up to (\d+) hours before your tee time for a full refund\.$/, 'Les droits de jeu incluent les taxes. Annulez en ligne jusqu’à $1 heures avant votre heure de départ pour un remboursement complet.'],
     [/^Expires (\d\d\/\d\d)$/, 'Expire le $1'],
     [/^(.*) · Expires (\d\d\/\d\d)$/, '$1 · Expire le $2'],
     [/^Pay (.+)$/, 'Payer $1'],
     [/^We could not complete your booking\. You have not been charged\. Please call the golf shop at (.+)\.$/, 'Nous n’avons pas pu terminer votre réservation. Aucun montant n’a été porté à votre carte. Veuillez appeler la boutique du pro au $1.'],
     [/^You have joined the (.+) group$/, 'Vous vous êtes joint au groupe de $1'],
-    [/^(\d+) holes · first tee$/, '$1 trous · premier tertre'],
-    [/^Playing with (\d+) other golfers?$/, function (m, n) { return 'Vous jouez avec ' + pl(n, 'autre golfeur', 'autres golfeurs'); }],
     [/^(.+) paid with (.+)$/, function (m, a, c) { return a + ' payé avec ' + T(c); }],
     /* ---------- me.js ---------- */
     [/^Welcome to St\. Boniface, (.+)\. Your account is ready$/, 'Bienvenue à St. Boniface, $1. Votre compte est prêt'],
@@ -354,9 +312,6 @@
       if (!/ ending \d{4}$|^Gift card|^Carte/.test(c)) return null;
       return a + ' · ' + T(c) + (r ? ' · remboursé le ' + r : '');
     }],
-    [/^Within (\d+) hours of your tee time\. To make changes, please call the golf shop at$/, 'Moins de $1 heures avant votre départ. Pour faire des changements, veuillez appeler la boutique du pro au'],
-    [/^Your tee times at St\. Boniface\. Cancel online up to (\d+) hours before you play for a full refund to your card\.$/, 'Vos heures de départ à St. Boniface. Annulez en ligne jusqu’à $1 heures avant de jouer pour un remboursement complet sur votre carte.'],
-    [/^The first tee is waiting\. Public tee times open (\d+) days in advance\.$/, 'Le premier tertre vous attend. Les heures de départ publiques ouvrent $1 jours à l’avance.'],
     [/^Your (.+) tee time on (.+) for (\d+) golfers? will be released(?:, and (.+) will be refunded to your (.+)\.|\.)$/, function (m, t, d, n, a, c) {
       return 'Votre départ de ' + t + ' le ' + d + ' pour ' + pl(n, 'golfeur', 'golfeurs') + ' sera libéré' + (a ? ', et ' + a + ' sera remboursé sur votre ' + T(c) + '.' : '.');
     }],
@@ -707,22 +662,80 @@
 })();
 
 /* ==========================================================================
-   Handbook: the public site's Good to know (js/public/book.js) shows the dress code and hours from the club's 2025
-   Membership Handbook. The dress code text itself and the hours lines are translated in js/i18n/fr-portal.js
-   (block "Handbook", Club.handbookFr, loaded on this page too); these are the words around them.
+   Handbook: the public site's "Dress code and hours" dialog (js/public/book.js) shows the dress code and hours from the
+   club's 2027 Membership Handbook. The dress code text itself and the hours lines are translated in js/i18n/fr-portal.js
+   (block "Handbook", Club.handbookFr, loaded on this page too); this is the fallback line when the handbook is missing.
    ========================================================================== */
 (function () {
   'use strict';
   var portal = document.body ? document.body.classList.contains('portal') : /member\.html/.test(location.pathname);
   if (portal || !window.Club || !Club.i18n || typeof Club.i18n.add !== 'function') return;
-  var NB = ' ';
   Club.i18n.add({ strings: {
-    'Appropriate golf attire is required for all players.': 'Une tenue de golf appropriée est exigée de tous les joueurs.',
-    'Read the dress code': 'Lire le code vestimentaire',
-    'Hide the dress code': 'Masquer le code vestimentaire',
-    'Hours.': 'Heures.',
-    'The Pro Shop is open Monday to Sunday from 6:00 AM, as dictated by business and hours of daylight.': 'La boutique du pro est ouverte du lundi au dimanche dès 6' + NB + 'h, selon l’achalandage et les heures d’ensoleillement.',
-    'See all hours': 'Voir toutes les heures',
-    'Hide the hours': 'Masquer les heures'
+    'Appropriate golf attire is required for all players.': 'Une tenue de golf appropriée est exigée de tous les joueurs.'
   } });
+})();
+
+/* ==========================================================================
+   Public simplified (Nov 21): the public site as a booking platform. Short words on the home page (title and a row of
+   links, "Dress code and hours" in a dialog), the booking steps, the payment summary, the success screen ("You're
+   booked", My booking, Home), My booking (#/bookings/<id>), sign in, and the short page heads of Gift cards, Shop,
+   Takeout and Become a member. Stored values stay English.
+   ========================================================================== */
+(function () {
+  'use strict';
+  var portal = document.body ? document.body.classList.contains('portal') : /member\.html/.test(location.pathname);
+  if (portal || !window.Club || !Club.i18n || typeof Club.i18n.add !== 'function') return;
+  var NB = ' ';
+  function pl(n, one, many) { return n + ' ' + (+n <= 1 ? one : many); }
+  Club.i18n.add({ strings: {
+    /* home */
+    'Membership': 'Adhésion',
+    'Shop': 'Boutique',
+    'Dress code and hours': 'Code vestimentaire et heures',
+    'Soft spikes only.': 'Crampons souples seulement.',
+    'Check in at the golf shop 15 minutes before.': 'Présentez-vous à la boutique du pro 15 minutes avant.',
+    'Dress code': 'Code vestimentaire',
+    'Hours': 'Heures',
+    'No more times today': 'Plus de départs aujourd’hui',
+    /* players */
+    'Sign in or create an account': 'Connectez-vous ou créez un compte',
+    'You are already booked at this time.': 'Vous avez déjà une réservation à cette heure.',
+    'You': 'Vous',
+    'Group full.': 'Groupe complet.',
+    'No more places at this time.': 'Plus de place à cette heure.',
+    'No carts today.': 'Pas de voiturettes aujourd’hui.',
+    'Extras': 'Suppléments',
+    '(optional)': '(facultatif)',
+    'Tax included.': 'Taxes incluses.',
+    /* payment */
+    'Holes': 'Trous',
+    'Players': 'Joueurs',
+    'Carts': 'Voiturettes',
+    'None': 'Aucune',
+    'Dress code and soft spikes apply.': 'Code vestimentaire et crampons souples obligatoires.',
+    /* success */
+    'You’re booked': 'C’est réservé',
+    'My booking': 'Ma réservation',
+    'Home': 'Accueil',
+    /* sign in, My booking */
+    'Forgot your password? Call': 'Mot de passe oublié' + NB + '? Appelez le',
+    'Wrong email or password. Please try again.': 'Courriel ou mot de passe incorrect. Veuillez réessayer.',
+    'Check in at the golf shop 15 minutes before. Dress code and soft spikes apply.': 'Présentez-vous à la boutique du pro 15 minutes avant. Code vestimentaire et crampons souples obligatoires.',
+    'All my bookings': 'Toutes mes réservations',
+    'Time': 'Heure',
+    'Paid': 'Payé',
+    'That booking is not available': 'Cette réservation n’est pas disponible',
+    /* page heads */
+    'Choose a category and apply online.': 'Choisissez une catégorie et faites votre demande en ligne.',
+    'For green fees, the pro shop and the Gallery.': 'Pour les droits de jeu, la boutique du pro et le Gallery.',
+    'Order online, pick up at the golf shop.': 'Commandez en ligne, récupérez à la boutique du pro.',
+    'Order online, pick up at the clubhouse. Friday Night Pizza is Fridays only.': 'Commandez en ligne, récupérez au pavillon. La Friday Night Pizza est offerte le vendredi seulement.'
+  }, patterns: [
+    [/^We’ll hold this time for (\d+) minutes\.$/, 'Nous gardons cette heure pour vous pendant $1 minutes.'],
+    [/^Tax included\. Cancel up to (\d+) hours before for a full refund\.$/, 'Taxes incluses. Annulez jusqu’à $1 heures avant pour un remboursement complet.'],
+    [/^Cancel up to (\d+) hours before for a full refund\.$/, 'Annulez jusqu’à $1 heures avant pour un remboursement complet.'],
+    [/^Less than (\d+) hours away\. To change it, call$/, 'Moins de $1 heures avant le départ. Pour la modifier, appelez le'],
+    [/^(\d+) players?$/, function (m, n) { return pl(n, 'joueur', 'joueurs'); }],
+    [/^Your hold on (.+) has ended\. Please choose a time again\.$/, 'Le délai pour réserver $1 est écoulé. Veuillez choisir une heure de nouveau.']
+  ] });
 })();

@@ -80,7 +80,7 @@
           '<div class="field gp-custom"' + (draft.custom ? '' : ' hidden') + '><label for="gp-custom">Amount in dollars *</label><input class="input" id="gp-custom" name="custom" type="number" inputmode="decimal" min="' + st.min + '" max="' + st.max + '" step="1" value="' + (draft.custom ? esc(draft.amount || '') : '') + '" placeholder="' + st.min + ' to ' + st.max + '"><span class="field-hint">Any whole amount from ' + esc(money(st.min)) + ' to ' + esc(money(st.max)) + '.</span></div>';
       }
       function formHTML() {
-        return '<section class="pub-page-head" data-reveal><div class="eyebrow">Gift cards</div><h1>Give a round at St. Boniface</h1><p class="serif">A gift card for green fees, the pro shop and the Gallery Taphouse &amp; Grill. Choose an amount, add a note, and print it or save it to send.</p></section>' +
+        return '<section class="pub-page-head" data-reveal><h1>Gift cards</h1><p>For green fees, the pro shop and the Gallery.</p></section>' +
           '<div class="gp-grid">' +
             '<form class="gp-form" novalidate data-reveal><div class="gp-flow"></div></form>' +
             '<aside class="gp-side stack"><div class="gp-preview" data-reveal><div class="label-caps">Preview</div><div class="gp-preview-card">' + preview() + '</div></div>' + balanceHTML() + '</aside>' +

@@ -35,7 +35,7 @@
       lastSub = sub;
       const browse = !params[0];
       view.innerHTML = '<section class="pub-page-head sh-head" data-reveal><div class="eyebrow">' + esc(Club.info.short) + ' golf shop</div><h1>Shop online</h1>' +
-        (browse ? '<p class="serif">Golf balls, club apparel and accessories from our golf shop. Order online and pick up at the golf shop.</p>' : '') + '</section><div class="sh-host"></div>';
+        (browse ? '<p>Order online, pick up at the golf shop.</p>' : '') + '</section><div class="sh-host"></div>';
       const stop = SH.mount(ui.$('.sh-host', view), { site: 'public', who: p ? 'pp_' + p.id : 'guest', params: params || [], bar: bar, player: p, account: false, promo: true,
         customer: p ? { publicPlayerId: p.id, name: p.firstName + ' ' + p.lastName, phone: p.phone || '', email: p.email || '' } : null,
         orders: function () { return myOrders(Pub.me()); }, owns: owns,

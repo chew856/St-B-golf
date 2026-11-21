@@ -33,7 +33,7 @@
     render: function (view, params, p) {
       let stopOrder = null;
       view.innerHTML = '<section class="pub-page-head" data-reveal><div class="eyebrow">Gallery Taphouse &amp; Grill</div><h1>Takeout</h1>' +
-        '<p class="serif">Order from the Gallery menu and pick up at the clubhouse. Our Friday Night Pizza is for pickup on Fridays.</p></section>' +
+        '<p>Order online, pick up at the clubhouse. Friday Night Pizza is Fridays only.</p></section>' +
         '<div class="to-mine" aria-live="polite"></div><div class="to-host"></div>';
       const mine = ui.$('.to-mine', view), host = ui.$('.to-host', view);
 

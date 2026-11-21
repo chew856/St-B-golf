@@ -401,3 +401,81 @@ body.public .pfb .vf-icon { background: var(--sage-100); color: var(--forest-800
   body.public .pub-auth .pub-link { display: inline-flex; align-items: center; min-height: 44px; }
   body.public .pub-auth .pub-link { min-width: 44px; justify-content: center; }
 }
+
+/* ==========================================================================
+   Public simplified (Nov 21): a booking platform, not a website. The home page is a title, a row of short links and
+   the booking; the payment summary is the day and time large with a short list; paying ends on a success screen with
+   two buttons (js/public/book.js). My booking is one booking in My bookings (js/public/me.js).
+   ========================================================================== */
+body.public .pub-home-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s3) var(--s4); padding: var(--s2) 0 var(--s4); }
+body.public .pub-home-head h1 { font-size: clamp(1.75rem, 4vw, 2.25rem); margin: 0; line-height: 1.15; }
+body.public .pub-quick { display: flex; flex-wrap: wrap; gap: var(--s2); }
+body.public .pub-quick-a { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border: 1px solid var(--border); border-radius: var(--r-round); background: var(--surface); color: var(--forest-800); font: inherit; font-size: 0.875rem; font-weight: 500; cursor: pointer; text-decoration: none; white-space: nowrap; }
+body.public .pub-quick-a svg { width: 16px; height: 16px; color: var(--forest-500); flex: none; }
+@media (hover: hover) { body.public .pub-quick-a:hover { background: var(--sage-50); border-color: var(--forest-500); text-decoration: none; } }
+body.public .pub-page.is-done .pub-home-head, body.public .pub-page.is-booking .pub-quick { display: none; }
+body.public .pub-book { margin-top: 0; }
+
+/* Times: the price is on the rate's heading, so a time is the time, the players and the places left */
+body.public .pub-chip { min-height: 64px; }
+body.public .pub-band-head { align-items: baseline; }
+body.public .pub-page-head p:not(.serif) { color: var(--text-2); margin: 0; }
+
+/* Players */
+body.public .pub-party .panel-head, body.public .pub-adds .panel-head { align-items: center; }
+body.public .pub-opt-word { font-size: 0.875rem; font-weight: 400; }
+
+/* Payment: the booking summary */
+body.public .pub-sum .panel-body { padding: var(--s5) var(--s5) var(--s4); }
+body.public .pub-sum-day { font-size: 1rem; font-weight: 500; color: var(--text-2); }
+body.public .pub-sum-time { font-family: var(--serif); font-weight: 500; font-size: 3rem; line-height: 1.05; color: var(--text); font-variant-numeric: lining-nums tabular-nums; margin-top: 2px; }
+body.public .pub-sum-time small { font-family: var(--sans); font-size: 1rem; font-weight: 500; margin-left: 6px; color: var(--text-2); }
+body.public .pub-sum-join { font-size: 0.875rem; margin-top: 4px; }
+body.public .pub-sum-kv { margin: var(--s4) 0 0; padding: 0; border-top: 1px solid var(--border); }
+body.public .pub-sum-kv > div { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s4); padding: 10px 0; border-bottom: 1px solid var(--border); }
+body.public .pub-sum-kv dt { color: var(--text-2); font-size: 0.9375rem; }
+body.public .pub-sum-kv dd { margin: 0; color: var(--text); font-weight: 500; text-align: right; font-variant-numeric: tabular-nums; }
+body.public .pub-sum-promo dd { color: var(--forest-800); }
+body.public .pub-sum-total { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s4); padding-top: var(--s3); font-weight: 600; }
+body.public .pub-sum-total .serif { font-family: var(--serif); font-size: 1.75rem; font-weight: 500; line-height: 1; }
+body.public .pub-sum .pub-fees-note { margin-top: var(--s3); }
+body.public .pub-card-panel .panel-head { align-items: center; }
+
+/* After paying: one success screen */
+body.public .pub-done { max-width: 480px; margin: var(--s5) auto var(--s4); padding: var(--s6) var(--s5); text-align: center; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); animation: rise var(--t-med) var(--ease-out) both; }
+body.public .pub-done-check { display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 50%; background: var(--forest-800); color: var(--on-dark); }
+body.public .pub-done-check svg { width: 32px; height: 32px; stroke-width: 2.4; }
+body.public .pub-done-h { font-size: 2rem; margin: var(--s4) 0 var(--s2); }
+body.public .pub-done-line { font-size: 1.0625rem; color: var(--text-2); margin: 0 0 var(--s5); }
+body.public .pub-done-line span { white-space: nowrap; }
+body.public .pub-done-acts { display: grid; gap: var(--s3); }
+body.public .pub-done-btn { min-height: 56px; font-size: 1.0625rem; justify-content: center; width: 100%; }
+
+/* Dress code and hours (dialog) */
+body.public .pub-know-box h3 { font-size: 1rem; font-weight: 600; margin: var(--s4) 0 var(--s2); }
+body.public .pub-know-rules { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s2); }
+body.public .pub-know-rules li { display: flex; gap: var(--s2); align-items: flex-start; }
+body.public .pub-know-rules svg { width: 18px; height: 18px; flex: none; margin-top: 3px; color: var(--forest-500); }
+body.public .pub-know-box .pub-hb-hours { margin: 0; }
+
+/* My booking */
+body.public .pub-bk-tip { display: flex; gap: var(--s2); align-items: flex-start; font-size: 0.8125rem; color: var(--text-2); margin: var(--s2) 0 0; }
+body.public .pub-bk-tip svg { width: 16px; height: 16px; flex: none; margin-top: 3px; color: var(--forest-500); }
+body.public .pub-bk-all { margin: var(--s4) 0 0; }
+body.public .pub-bk-dlg { margin-top: 0; }
+
+@media (max-width: 768px) {
+  body.public .pub-home-head { padding: var(--s1) 0 var(--s3); gap: var(--s3); }
+  body.public .pub-home-head h1 { font-size: 1.625rem; width: 100%; }
+  body.public .pub-quick { gap: 6px; }
+  body.public .pub-quick-a { padding: 0 12px; font-size: 0.8125rem; }
+  body.public .pub-sum .panel-body { padding: var(--s4); }
+  body.public .pub-sum-time { font-size: 2.5rem; }
+  body.public .pub-done { margin-top: var(--s3); padding: var(--s6) var(--s4) var(--s5); }
+  body.public .pub-bk.is-focus .pub-bk-acts { flex-wrap: wrap; gap: var(--s2); }
+  body.public .pub-bk.is-focus .pub-bk-acts .btn { flex: 1 1 calc(50% - var(--s2)); min-height: 44px; }
+  body.public .pub-bk-tip { font-size: 0.75rem; }
+}
+@media (max-width: 480px) {
+  body.public .pub-quick-a svg { display: none; }
+}

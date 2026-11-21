@@ -44,14 +44,13 @@
                 heardField() +
                 '<label class="check pub-optin"><input type="checkbox" name="marketingOptIn"> ' + OPTIN_TEXT + '</label>' +
                 '<button type="submit" class="btn btn-primary pub-auth-btn">' + Club.icon('check') + '<span>Create my account</span></button>' +
-                '<p class="pub-fine">Already have an account? <button type="button" class="pub-link" data-mode="signin">Sign in</button></p>' +
               '</form>'
             : '<form class="pub-auth-form" novalidate data-mode="signin">' +
                 '<div class="field"><label for="pf-semail">Email *</label><input class="input" id="pf-semail" name="email" type="email" autocomplete="email" inputmode="email" maxlength="120"></div>' +
                 pwField('password', 'Password', 'current-password') +
                 '<div class="pub-alert" role="alert" hidden></div>' +
                 '<button type="submit" class="btn btn-primary pub-auth-btn">' + Club.icon('key') + '<span>Sign in</span></button>' +
-                '<p class="pub-fine">Forgotten your password? Please call the golf shop at <a href="' + Pub.phoneHref() + '">' + esc(Club.info.phone) + '</a> and we will help you back in. New here? <button type="button" class="pub-link" data-mode="signup">Create an account</button></p>' +
+                '<p class="pub-fine">Forgot your password? Call <a href="' + Pub.phoneHref() + '">' + esc(Club.info.phone) + '</a>.</p>' +
               '</form>') +
         '</div>';
       const form = ui.$('form', el);
@@ -91,7 +90,7 @@
       if (!ok) { Pub.focusFirstErr(form); return; }
       const p = Pub.byEmail(email);
       if (!p || !Pub.checkPassword(pw, p.password)) {
-        al.innerHTML = Club.icon('alert') + '<div><p>That email and password do not match an account. Please try again, or create an account if you are new.</p></div>';
+        al.innerHTML = Club.icon('alert') + '<div><p>Wrong email or password. Please try again.</p></div>';
         al.hidden = false; al.classList.remove('shake'); void al.offsetWidth; al.classList.add('shake');
         ui.$('[name=password]', form).value = ''; ui.$('[name=password]', form).focus();
         return;
@@ -107,11 +106,9 @@
     return function (view) {
       if (Pub.me()) { location.replace('#/' + (Pub.afterAuth ? Pub.afterAuth.replace(/^#\//, '') : 'bookings')); return; }
       view.innerHTML = '<div class="pub-auth-page">' +
-        '<section class="pub-auth-intro" data-reveal>' + Club.logo('pub-crest lg') +
-          '<div class="eyebrow">Public golf at ' + esc(Club.info.short) + '</div>' +
-          '<h1>' + (mode === 'signup' ? 'Create your account' : 'Welcome back') + '</h1>' +
-          '<p class="serif">' + (mode === 'signup' ? 'An account lets you book and pay for tee times online, keep your receipts and cancel when plans change.' : 'Sign in to book a tee time, see your bookings and manage your account.') + '</p>' +
-          '<p class="pub-auth-members">Are you a member? <a href="member.html">Members sign in here</a>.</p>' +
+        '<section class="pub-auth-intro" data-reveal>' +
+          '<h1>' + (mode === 'signup' ? 'Create your account' : 'Sign in') + '</h1>' +
+          '<p class="pub-auth-members">Members, <a href="member.html">sign in here</a>.</p>' +
         '</section>' +
         '<section class="panel pub-auth-panel" data-reveal><div class="panel-body"></div></section></div>';
       Pub.authForm(ui.$('.pub-auth-panel .panel-body', view), mode, function () {
@@ -153,12 +150,13 @@
     if (s === 'checked-in') return ui.badge('Checked in', 'good');
     return ui.badge('Confirmed', 'brass');
   }
-  function cardHTML(b) {
+  /** One booking. focus: the My booking view (#/bookings/<id>), which adds the check-in and dress code line. */
+  function cardHTML(b, focus) {
     const tt = b.tt; const dt = fmt.toDate(tt.date); const tp = Pub.timeParts(tt.time);
     const others = (tt.players || []).length - b.mine.length;
     const names = b.mine.map(function (x) { return x.name; });
     const adds = Club.addons ? Club.addons.summary([].concat.apply([], b.mine.map(function (x) { return x.addons || []; }))) : '';
-    return '<article class="panel pub-bk" data-id="' + esc(tt.id) + '" data-reveal>' +
+    return '<article class="panel pub-bk' + (focus ? ' is-focus' : '') + '" data-id="' + esc(tt.id) + '" data-reveal>' +
       '<div class="pub-bk-date"><span class="pub-bk-wk">' + esc(fmt.weekday(tt.date)) + '</span><span class="pub-bk-n serif">' + dt.getDate() + '</span><span class="pub-bk-mo">' + esc(dt.toLocaleDateString('en-CA', { month: 'short' }).replace('.', '')) + '</span></div>' +
       '<div class="pub-bk-main">' +
         '<div class="pub-bk-top"><span class="pub-bk-time serif">' + tp.t + '<small>' + tp.ap + '</small></span>' + statusBadge(b) + '</div>' +
@@ -168,12 +166,13 @@
         (b.pay ? '<div class="pub-bk-pay">' + Pub.markChip(b.pay.brand, 14) + /* Separate text nodes, so the page translator reads "Gift card ending 7KQ2 and Visa ending 4242" on its own. */
           '<span>' + esc(fmt.money(b.pay.amount)) + ' · <span>' + esc(Pub.paidWith(b.pay)) + '</span>' + (b.pay.status === 'refunded' ? '<span> · refunded ' + esc(fmt.dateShort(b.pay.refundedOn || b.pay.date)) + '</span>' : '') + '</span></div>' : '') +
         (b.pay && b.pay.promo ? '<div class="pub-bk-adds pub-bk-promo">' + Club.icon('tag') + '<span>' + esc('Promo code ' + b.pay.promo.code + ', ' + fmt.money(b.pay.promo.discount) + ' off') + '</span></div>' : '') +
-        (b.upcoming && !b.refundable && tt.status === 'booked' ? '<p class="pub-bk-lock">' + Club.icon('clock') + '<span>Within ' + Pub.REFUND_HOURS + ' hours of your tee time. To make changes, please call the golf shop at <a href="' + Pub.phoneHref() + '">' + esc(Club.info.phone) + '</a>.</span></p>' : '') +
+        (b.upcoming && !b.refundable && tt.status === 'booked' ? '<p class="pub-bk-lock">' + Club.icon('clock') + '<span>' + esc('Less than ' + Pub.REFUND_HOURS + ' hours away. To change it, call') + ' <a href="' + Pub.phoneHref() + '">' + esc(Club.info.phone) + '</a>.</span></p>' : '') +
+        (focus && b.upcoming ? '<p class="pub-bk-tip">' + Club.icon('info') + '<span>Check in at the golf shop 15 minutes before. Dress code and soft spikes apply.</span></p>' : '') +
       '</div>' +
       '<div class="pub-bk-acts">' +
         (Pub.playButton ? Pub.playButton(tt) : '') +   /* Play, the live scorecard, on a booking today (js/public/play.js) */
         (b.refundable ? '<button type="button" class="btn btn-sm btn-danger" data-act="cancel" data-id="' + esc(tt.id) + '">' + Club.icon('close') + '<span>Cancel and refund</span></button>' : '') +
-        (b.upcoming ? '<button type="button" class="btn btn-sm" data-act="ics" data-id="' + esc(tt.id) + '">' + Club.icon('calendar') + '<span>Calendar</span></button>' : '') +
+        (b.upcoming ? '<button type="button" class="btn btn-sm" data-act="ics" data-id="' + esc(tt.id) + '">' + Club.icon('calendar') + '<span>' + (focus ? 'Add to calendar' : 'Calendar') + '</span></button>' : '') +
         (b.pay ? '<button type="button" class="btn btn-sm btn-ghost" data-act="receipt" data-id="' + esc(b.pay.id) + '">' + Club.icon('billing') + '<span>Receipt</span></button>' : '') +
         (b.pay && b.pay.status === 'refunded' && Club.receipts ? '<button type="button" class="btn btn-sm btn-ghost" data-act="refund-receipt" data-id="' + esc(b.pay.id) + '">' + Club.icon('billing') + '<span>Refund receipt</span></button>' : '') +
       '</div>' +
@@ -186,17 +185,26 @@
       function draw() {
         p = Pub.me(); if (!p) return;
         const all = myBookings(p);
+        /* #/bookings/<tee time id>: that one booking (the "My booking" button after paying). */
+        const one = params[0] ? all.find(function (b) { return b.tt.id === params[0]; }) : null;
+        if (one) {
+          view.innerHTML = '<section class="pub-page-head" data-reveal><h1>My booking</h1></section>' +
+            '<div class="pub-bk-list pub-bk-one">' + cardHTML(one, true) + '</div>' +
+            '<p class="pub-bk-all"><a class="btn btn-ghost" href="#/bookings">' + Club.icon('chevronLeft') + '<span>All my bookings</span></a></p>';
+          ui.animateIn(view);
+          return;
+        }
         const up = all.filter(function (b) { return b.upcoming; }).sort(function (a, b) { return (a.tt.date + a.tt.time).localeCompare(b.tt.date + b.tt.time); });
         const past = all.filter(function (b) { return !b.upcoming; }).sort(function (a, b) { return (b.tt.date + b.tt.time).localeCompare(a.tt.date + a.tt.time); });
         view.innerHTML =
-          '<section class="pub-page-head" data-reveal><div class="eyebrow">Hello, ' + esc(p.firstName) + '</div><h1>My bookings</h1><p class="serif">Your tee times at ' + esc(Club.info.short) + '. Cancel online up to ' + Pub.REFUND_HOURS + ' hours before you play for a full refund to your card.</p></section>' +
+          '<section class="pub-page-head" data-reveal><h1>My bookings</h1><p>' + esc('Cancel up to ' + Pub.REFUND_HOURS + ' hours before for a full refund.') + '</p></section>' +
           (Pub.waitlist ? Pub.waitlist.noticesHTML(p) : '') +
           '<section class="pub-sec"><div class="pub-sec-head"><h2>Upcoming</h2><a class="btn btn-primary btn-sm" href="#/">' + Club.icon('plus') + '<span>Book a tee time</span></a></div>' +
-            (up.length ? '<div class="pub-bk-list">' + up.map(cardHTML).join('') + '</div>' : '<div class="panel" data-reveal>' + ui.empty({ icon: 'flag', title: 'No upcoming tee times', text: 'The first tee is waiting. Public tee times open ' + Club.teeRules.PUBLIC_ADVANCE_DAYS + ' days in advance.', action: '<a class="btn btn-primary" href="#/">Find a tee time</a>' }) + '</div>') +
+            (up.length ? '<div class="pub-bk-list">' + up.map(cardHTML).join('') + '</div>' : '<div class="panel" data-reveal>' + ui.empty({ icon: 'flag', title: 'No upcoming tee times', action: '<a class="btn btn-primary" href="#/">Book a tee time</a>' }) + '</div>') +
           '</section>' +
           (Pub.waitlist ? Pub.waitlist.listHTML(p) : '') +
           '<section class="pub-sec"><div class="pub-sec-head"><h2>Past and cancelled</h2></div>' +
-            (past.length ? '<div class="pub-bk-list">' + past.map(cardHTML).join('') + '</div>' : '<div class="panel" data-reveal>' + ui.empty({ icon: 'trophy', title: 'Nothing here yet', text: 'Rounds you have played and bookings you have cancelled will be kept here with their receipts.' }) + '</div>') +
+            (past.length ? '<div class="pub-bk-list">' + past.map(cardHTML).join('') + '</div>' : '<div class="panel" data-reveal>' + ui.empty({ icon: 'trophy', title: 'Nothing here yet' }) + '</div>') +
           '</section>';
         ui.animateIn(view);
       }
@@ -236,6 +244,20 @@
       draw();
     }
   });
+
+  /** The booking just paid for, when no account is signed in (signed out in another tab before "My booking"): its
+      details in a dialog. Only the payment the success screen named, and only its own players. */
+  Pub.bookingDetails = function (ttId, payId) {
+    const pay = S.find('publicPayments', payId), tt = S.find('teeTimes', ttId);
+    if (!pay || !tt || pay.teeTimeId !== tt.id) { ui.toast('That booking is not available', 'bad'); return; }
+    const mine = (tt.players || []).filter(function (x) { return x.publicPlayerId === pay.publicPlayerId; });
+    const row = function (k, v) { return '<div><dt>' + esc(k) + '</dt><dd>' + esc(v) + '</dd></div>'; };
+    ui.modal({ title: 'My booking', body: '<dl class="pub-sum-kv pub-bk-dlg">' +
+      row('Date', Pub.longDate(tt.date)) + row('Time', fmt.time(tt.time)) + row('Holes', String(tt.holes)) +
+      row('Players', mine.map(function (x) { return x.name; }).join(', ') || String(pay.players || 1)) + row('Paid', fmt.money(pay.amount)) + '</dl>' +
+      '<p class="pub-fine">Check in at the golf shop 15 minutes before. Dress code and soft spikes apply.</p>',
+      actions: [{ label: 'Close', kind: 'primary' }] });
+  };
 
   /** Where a refund goes: '$66.00 will be refunded to your Visa ending 4242', or the gift card and card parts. '' when nothing was paid. */
   function refundText(pay) {

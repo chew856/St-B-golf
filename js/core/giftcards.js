@@ -392,7 +392,7 @@
         (o.account ? '<p class="ck-acct-note">' + Club.icon('billing') + '<span>Added to your member account and shown on your next statement.</span></p>' : '') +
         '<div class="ck-card"' + (method === 'card' ? '' : ' hidden') + '>' +
           '<div class="' + cls.newc + ' ck-new"><div class="ck-cc"></div>' +
-            '<p class="field-hint">We keep only the card brand and the last four digits, for your receipt. Never the full number or the security code.</p>' +
+            (o.quiet ? '' : '<p class="field-hint">We keep only the card brand and the last four digits, for your receipt. Never the full number or the security code.</p>') +   /* quiet: the public booking, kept short */
             '<p class="field-hint">Demonstration site: try Visa 4242 4242 4242 4242 with any future expiry.</p>' +
           '</div></div>' +
       '</div>' +

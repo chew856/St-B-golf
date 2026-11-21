@@ -394,10 +394,9 @@
       '<footer class="pub-footer"><div class="pub-footer-inner">' +
         '<div class="flourish">' + Club.logo('pub-crest sm') + '</div>' +
         '<p class="serif pub-footer-name">' + esc(Club.info.name) + '</p>' +
-        '<p class="pub-footer-est">Established ' + esc(Club.info.est) + '</p>' +
+        /* Public simplified (Nov 21): a booking site, so no founding year or social links; the address, phone and members' link stay. */
         '<p>' + esc(Club.info.address) + ' · <a href="' + phoneHref() + '">' + esc(Club.info.phone) + '</a></p>' +
-        '<p class="pub-social">' + (Club.info.social || []).map(function (l) { return '<a href="' + esc(l.url) + '" target="_blank" rel="noopener">' + esc(l.label) + '</a>'; }).join(' · ') + '</p>' +
-        '<p class="pub-footer-members">Members, <a href="member.html">sign in here</a> to book in the members’ portal.</p>' +
+        '<p class="pub-footer-members"><a href="member.html">Members sign in here</a></p>' +
         (Club.info.landAcknowledgement ? '<p class="pub-land">' + esc(Club.info.landAcknowledgement) + '</p>' : '') +
         (Club.i18n ? '<div class="pub-footer-lang" hidden>' + Club.i18n.switchRow('', Club.icon('globe')) + '</div>' : '') +
       '</div></footer>';

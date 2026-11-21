@@ -156,7 +156,7 @@
             '<footer class="hb-foot">' +
               '<p>' + esc(H.META.title) + '. The information in this handbook is general in nature and subject to the by-laws of the club.</p>' +
               '<p><a class="p-link" href="' + pdf + '" target="_blank" rel="noopener">' + Club.icon('download') + '<span>Download the PDF</span></a></p>' +
-              (H.french() ? '<p class="hb-fr-note" data-i18n-skip lang="fr">Ceci est une traduction française du guide des membres de 2025. En cas de divergence, la version anglaise prévaut.</p>' : '') +
+              (H.french() ? '<p class="hb-fr-note" data-i18n-skip lang="fr">Ceci est une traduction française du guide des membres de 2027. En cas de divergence, la version anglaise prévaut.</p>' : '') +
             '</footer>' +
           '</div>' +
         '</div>' +

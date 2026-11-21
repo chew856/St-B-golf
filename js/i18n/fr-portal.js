@@ -2939,7 +2939,7 @@
       'Monday to Friday': 'Du lundi au vendredi', 'Monday to Sunday': 'Du lundi au dimanche', 'Saturday & Sunday': 'Samedi et dimanche', 'Weekends & holidays': 'Fins de semaine et jours fériés',
       '*as dictated by business and hours of daylight. Inclement weather or lack of business during non-peak times may cause a deviation from the hours of operation as published.': SAME_NOTE,
       '*Last Call as dictated by business & hours of daylight. Inclement weather or lack of business during non-peak times may cause a deviation from the hours of operation as published.': GALLERY_NOTE,
-      'From the club’s 2025 Membership Handbook.': 'Selon le guide des membres 2025 du club.',
+      'From the club’s 2027 Membership Handbook.': 'Selon le guide des membres 2027 du club.',
       'Read the handbook': 'Lire le guide',
       'Office · Pro Shop · Gallery · Beer Cart': 'Bureau · Boutique du pro · Gallery · Voiturette-bar'
     },
@@ -2961,12 +2961,12 @@
       'Club policies, rules and procedures for the golf course and clubhouse.': 'Politiques, règlements et procédures du club pour le terrain de golf et le pavillon.',
       'Search the handbook': 'Chercher dans le guide',
       'Download the PDF': 'Télécharger le PDF (en anglais)',
-      '2025 Membership Handbook': 'Guide des membres 2025',
+      '2027 Membership Handbook': 'Guide des membres 2027',
       'Contents': 'Table des matières',
       '1 section matches': '1 section correspond',
       'Nothing found': 'Aucun résultat',
       'The handbook is not available': 'Le guide n’est pas disponible',
-      '2025 Membership Handbook. The information in this handbook is general in nature and subject to the by-laws of the club.': nb('Guide des membres 2025. Les renseignements de ce guide sont de nature générale et sujets aux règlements administratifs du club.'),
+      '2027 Membership Handbook. The information in this handbook is general in nature and subject to the by-laws of the club.': nb('Guide des membres 2027. Les renseignements de ce guide sont de nature générale et sujets aux règlements administratifs du club.'),
       'Read the full dress code': 'Lire le code vestimentaire complet',
       'Appropriate golf attire is required for all players. It is expected that members will advise their guests of our dress requirements.': 'Une tenue de golf appropriée est exigée de tous les joueurs. Les membres sont tenus d’informer leurs invités de nos exigences vestimentaires.'
     },

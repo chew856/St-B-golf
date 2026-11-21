@@ -31,8 +31,8 @@
 
   const COLL = 'handbook';
   const META = {
-    title: '2025 Membership Handbook',
-    year: 2025,
+    title: '2027 Membership Handbook',   /* owner, Nov 21: labelled 2027 (the text is the club's 2025 PDF) */
+    year: 2027,
     issued: '2025-04-19',   /* the date on the club's PDF */
     pdfUrl: 'https://s3.amazonaws.com/data.gallusgolf.com/files/1790/0f5bafd83c104da8b23e005a6d8e8cee.pdf'
   };

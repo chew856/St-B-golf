@@ -44,8 +44,8 @@
             '<span class="field-hint">' + esc(HINT) + '</span></div>' +
           '<div class="hbx-prev-wrap"><div class="label-caps">Preview</div><div class="hb-text hbx-prev" aria-live="polite"></div></div>' +
         '</div>' +
-        (orig ? '<p class="span-2 hbx-orig muted">' + (state(sec).label === 'Edited' ? 'This section was changed from the 2025 handbook, so French readers see it in English. ' : 'French readers see the club’s translation of this section. Saving a change shows it to them in English until it is translated. ') +
-          '<button type="button" class="btn btn-ghost btn-sm" data-action="hbx-orig">Put back the 2025 text</button></p>'
+        (orig ? '<p class="span-2 hbx-orig muted">' + (state(sec).label === 'Edited' ? 'This section was changed from the 2027 handbook, so French readers see it in English. ' : 'French readers see the club’s translation of this section. Saving a change shows it to them in English until it is translated. ') +
+          '<button type="button" class="btn btn-ghost btn-sm" data-action="hbx-orig">Put back the original text</button></p>'
           : '<p class="span-2 hbx-orig muted">A section added here shows in English to French readers.</p>') +
         '</form>',
       actions: [
@@ -77,7 +77,7 @@
     form.addEventListener('submit', function (e) { e.preventDefault(); });
     U.on(form, 'click', '[data-action=hbx-orig]', function () {
       form.title.value = orig.title; form.body.value = orig.body; preview();
-      U.toast('The 2025 text is in the form. Save to keep it.');
+      U.toast('The original text is in the form. Save to keep it.');
     });
     return m;
   }
@@ -100,8 +100,8 @@
       .then(function (yes) { if (yes) run(function () { S.remove(H.COLL, sec.id); }, sec.title + ' deleted', sec.title + ' restored'); });
   }
   function restore() {
-    U.confirm({ title: 'Restore the 2025 handbook?', text: 'Every section goes back to the club’s 2025 text and order. Sections added here are removed and deleted ones come back. You can undo this right after.', confirmLabel: 'Restore the 2025 handbook' })
-      .then(function (yes) { if (yes) run(function () { H.restore(); }, 'The 2025 handbook is restored', 'Your handbook edits are back'); });
+    U.confirm({ title: 'Restore the 2027 handbook?', text: 'Every section goes back to the club’s original text and order. Sections added here are removed and deleted ones come back. You can undo this right after.', confirmLabel: 'Restore the 2025 handbook' })
+      .then(function (yes) { if (yes) run(function () { H.restore(); }, 'The 2027 handbook is restored', 'Your handbook edits are back'); });
   }
 
   /* ---------------- Tab ---------------- */
@@ -117,11 +117,11 @@
         '<section class="panel hbx-head" data-reveal><div class="panel-head"><div><div class="eyebrow">Membership handbook</div><h3>' + esc(H.META.title) + '</h3></div>' +
           (asIs ? U.badge('As published', 'good') : U.badge('Edited here', 'brass')) + '</div><div class="panel-body">' +
           '<p class="ink-2 hbx-lead">Members read this in the portal under Handbook; the public site shows its dress code. ' + secs.length + ' sections' + (changes ? ' (' + esc(changes) + ')' : '') + '. Last updated ' + esc(longDate(H.lastUpdated())) + '.</p>' +
-          '<p class="muted hbx-fr">' + Club.icon('info') + '<span>Edit in English. French readers see the club’s translation of each 2025 section. A section you change or add shows to them in English until it is translated.</span></p>' +
+          '<p class="muted hbx-fr">' + Club.icon('info') + '<span>Edit in English. French readers see the club’s translation of each original section. A section you change or add shows to them in English until it is translated.</span></p>' +
           '<div class="hbx-actions">' + U.btn('Add section', { kind: 'primary', icon: 'plus', action: 'hbx-add' }) +
             '<a class="btn btn-ghost" href="member.html#/handbook" target="_blank" rel="noopener">' + Club.icon('eye') + '<span>View in the portal</span></a>' +
             '<a class="btn btn-ghost" href="' + esc(H.META.pdfUrl) + '" target="_blank" rel="noopener">' + Club.icon('download') + '<span>Download the PDF</span></a>' +
-            (asIs ? '' : U.btn('Restore the 2025 handbook', { kind: 'ghost', icon: 'refresh', action: 'hbx-restore' })) +
+            (asIs ? '' : U.btn('Restore the 2027 handbook', { kind: 'ghost', icon: 'refresh', action: 'hbx-restore' })) +
           '</div></div></section>' +
         (groups.length ? groups.map(function (g) {
           return '<section class="panel hbx-group" data-reveal><div class="panel-head"><div><h3>' + esc(g.name) + '</h3></div><span class="muted hbx-n">' + g.secs.length + ' ' + (g.secs.length === 1 ? 'section' : 'sections') + '</span></div>' +
@@ -137,7 +137,7 @@
                   '<button type="button" class="btn btn-ghost btn-sm hbx-ic hbx-del" data-action="hbx-del" data-id="' + esc(s.id) + '" title="Delete" aria-label="Delete ' + esc(s.title) + '">' + Club.icon('trash') + '</button>' +
                 '</span></li>';
             }).join('') + '</ul></div></section>';
-        }).join('') : '<section class="panel">' + U.empty({ icon: 'box', title: 'The handbook is empty', text: 'Add a section, or restore the 2025 handbook.' }) + '</section>') +
+        }).join('') : '<section class="panel">' + U.empty({ icon: 'box', title: 'The handbook is empty', text: 'Add a section, or restore the 2027 handbook.' }) + '</section>') +
         '</div>';
       U.animateIn(panel);
     }

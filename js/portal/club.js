@@ -238,7 +238,7 @@
               const v = l[1] === Club.info.phone ? '<a href="' + esc(main.href) + '">' + esc(l[1]) + '</a>' : '<span>' + esc(l[1]) + '</span>' + (l[2] ? '<span aria-hidden="true">' + l[2] + '</span>' : '');
               return '<p class="pc-hour-line"><span>' + esc(l[0]) + '</span> · ' + v + '</p>'; }).join('') + (h.note ? '<p class="pc-hour-note">' + telLine(h.note) + '</p>' : '') + '</div></li>';
           }).join('') + '</ul>' +
-          (Club.handbook ? '<p class="pc-hour-src">From the club’s 2025 Membership Handbook. <a class="p-link" href="#/handbook/hours">Read the handbook</a></p>' : '') }) +
+          (Club.handbook ? '<p class="pc-hour-src">From the club’s 2027 Membership Handbook. <a class="p-link" href="#/handbook/hours">Read the handbook</a></p>' : '') }) +
         Portal.accordion({ id: 'pc-people', icon: 'phone', title: 'Who to contact', summary: people.length ? people.length + ' people, by phone' : 'Call the club office',
           body: people.length ? '<ul class="pc-rows pc-people">' + people.map(function (x) {
             const s = x.s; const ph = phoneOf(s.phone);

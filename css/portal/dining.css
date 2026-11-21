@@ -108,6 +108,28 @@ body.portal .pd-show-all { margin-top: 4px; }
 .pd-menu-secs { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); overflow: hidden; }
 body.portal .pd-menu-secs .pk-acc { border: 0; border-radius: 0; box-shadow: none; margin: 0; background: transparent; }
 body.portal .pd-menu-secs .pk-acc + .pk-acc { border-top: 1px solid var(--border); margin-top: 0; }
+/* Dining diet filter (Nov 21): chips over the menu, a count, "Clear filters", and the empty state */
+.pd-diet { margin: 0 0 12px; }
+body.portal .pd-diet > .pk-label { display: block; margin-bottom: 6px; }
+.pd-diet-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.pd-diet-chip {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px; cursor: pointer;
+  border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface); color: var(--text);
+  font: 500 0.9375rem/1.2 var(--sans); white-space: nowrap; -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--t-ui) var(--ease-ui), border-color var(--t-ui) var(--ease-ui), color var(--t-ui) var(--ease-ui);
+}
+@media (hover: hover) { .pd-diet-chip:hover { border-color: var(--forest-500); } }
+.pd-diet-chip:focus-visible { outline: none; box-shadow: var(--focus); }
+.pd-diet-chip.on { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); }
+.pd-diet-tick { width: 16px; height: 16px; flex: none; display: none; }
+.pd-diet-chip.on .pd-diet-tick { display: block; }
+.pd-diet-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 2px 12px; min-height: 40px; margin-top: 4px; font-size: 0.875rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.pd-diet-n { font-weight: 500; color: var(--text); }
+.pd-diet-saved { color: var(--text-3); }
+.pd-diet-saved[hidden], body.portal .pd-diet-clear[hidden] { display: none; }
+body.portal .pd-diet-clear { min-height: 40px; font-size: 0.875rem; }
+.pd-diet-empty { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
+body.portal .pd-diet-empty .empty .btn { min-height: 44px; }
 
 /* ==========================================================================
    Tablet and desktop. Phones (<768) keep the Pass 3 layout above unchanged.

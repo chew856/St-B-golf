@@ -33,6 +33,28 @@
     return out;
   }
   const DIET_LABEL = { GF: 'Gluten free', V: 'Vegetarian', VG: 'Vegan' };
+  /* Dining diet filter (Nov 21). The menu's own markings only (menuItems.dietary: V, VG, GF); a vegan dish counts as
+     vegetarian. The member's choice is kept in members.preferences.diet as English labels, the same list Profile >
+     Preferences edits (js/portal/profile.js). Any other code that turns up in the data gets its own chip. */
+  const DIET_FILTERS = [
+    { label: 'Vegetarian', codes: ['V', 'VG'] },
+    { label: 'Vegan', codes: ['VG'] },
+    { label: 'Gluten free', codes: ['GF'] }
+  ];
+  function dietFilters(items) {
+    const seen = {}; const out = DIET_FILTERS.slice();
+    DIET_FILTERS.forEach(function (f) { f.codes.forEach(function (c) { seen[c] = 1; }); });
+    items.forEach(function (i) { (i.dietary || []).forEach(function (c) { if (!seen[c]) { seen[c] = 1; out.push({ label: DIET_LABEL[c] || c, codes: [c] }); } }); });
+    return out;
+  }
+  /** A dish's markings in one order everywhere (Vegetarian, Vegan, Gluten free, then any other code). */
+  function dietOrder(codes) { const o = ['V', 'VG', 'GF']; return codes.slice().sort(function (a, b) { return (o.indexOf(a) + 1 || 99) - (o.indexOf(b) + 1 || 99); }); }
+  function dietMatches(item, chosen, filters) {
+    return chosen.every(function (label) {
+      const f = filters.find(function (x) { return x.label === label; });
+      return !f || (item.dietary || []).some(function (c) { return f.codes.indexOf(c) >= 0; });
+    });
+  }
   const STATUS = { confirmed: ['Confirmed', 'good'], seated: ['Seated', 'info'], completed: ['Dined', 'outline'], cancelled: ['Cancelled', 'bad'], 'no-show': ['Not attended', 'warn'] };
 
   /* ---------------- Portal presentation of the rooms ---------------- */
@@ -545,6 +567,45 @@
 
     /* ---------- Menus: venue select, sections as accordions ---------- */
     function venueKnown(id) { return VENUES.some(function (v) { return v.id === id; }); }
+    /* Dining diet filter (Nov 21): the member's saved choice (members.preferences.diet, English labels) */
+    function memberDiet() {
+      const m = S.find('members', member.id) || member; const d = (m.preferences || {}).diet;
+      return Array.isArray(d) ? d.filter(function (x) { return typeof x === 'string'; }) : [];
+    }
+    function setMemberDiet(list) {
+      const m = S.find('members', member.id); if (!m) return;
+      const order = DIET_FILTERS.map(function (f) { return f.label; });
+      const clean = list.filter(function (x, i) { return list.indexOf(x) === i; }).sort(function (a, b) { return (order.indexOf(a) + 1 || 99) - (order.indexOf(b) + 1 || 99); });
+      S.update('members', m.id, { preferences: Object.assign({}, m.preferences || {}, { diet: clean }) });
+    }
+    /** The sections and dishes under the chips, for the member's chosen markings. */
+    function drawMenuList(panel, items, filters) {
+      panel._menuItems = items; panel._menuFilters = filters;
+      const known = filters.map(function (f) { return f.label; });
+      const chosen = memberDiet().filter(function (l) { return known.indexOf(l) >= 0; });
+      const on = chosen.length > 0;
+      const shown = items.filter(function (i) { return dietMatches(i, chosen, filters); });
+      U.$$('[data-diet]', panel).forEach(function (b) { const p = chosen.indexOf(b.dataset.diet) >= 0; b.classList.toggle('on', p); b.setAttribute('aria-pressed', String(p)); });
+      const n = U.$('.pd-diet-n', panel); if (n) n.textContent = shown.length + (shown.length === 1 ? ' dish' : ' dishes');
+      const saved = U.$('.pd-diet-saved', panel); if (saved) saved.hidden = !on;
+      const clr = U.$('.pd-diet-clear', panel); if (clr) clr.hidden = !on || !shown.length;
+      const secs = sectionsOf(shown);
+      const want = MEAL_SECTION[mealNow()];
+      const openSec = secs.indexOf(want) >= 0 ? want : secs[0];
+      U.$('.pd-menu-list', panel).innerHTML = !items.length ? U.empty({ icon: 'chef', title: 'The menu is being updated', text: 'Please ask your server about today’s specials.' })
+        : !shown.length ? '<div class="pd-diet-empty">' + U.empty({ icon: 'chef', title: 'No dishes match these filters', text: 'Try fewer filters, or ask your server what the kitchen can do.', action: '<button type="button" class="btn" data-action="diet-clear">Clear filters</button>' }) + '</div>'
+        : '<div class="pd-menu-secs">' + secs.map(function (sec) {
+          const list = shown.filter(function (i) { return i.section === sec; });
+          const open = on || sec === openSec; const fold = !on && sec === openSec;
+          const from = Math.min.apply(null, list.map(function (i) { return +i.price || 0; }));
+          return Portal.accordion({ id: 'pd-m-' + sec.replace(/[^a-z]/gi, ''), title: sec, summary: list.length + (list.length === 1 ? ' item' : ' items') + ' · from ' + menuPrice(from), open: open,
+            body: '<ul class="pd-dishes">' + list.map(function (i, k) {
+              return '<li class="pd-dish"' + (fold && k >= 6 ? ' hidden data-more' : '') + '><div class="pd-dish-row"><span class="pd-dish-name">' + esc(i.name) + '</span><span class="pd-dish-price">' + esc(menuPrice(i.price)) + '</span></div>' +
+                (i.description ? '<p class="pd-dish-desc">' + esc(i.description) + '</p>' : '') +
+                ((i.dietary || []).length ? '<div class="pd-dish-tags">' + dietOrder(i.dietary).map(function (t) { return '<span class="pd-tag">' + esc(DIET_LABEL[t] || t) + '</span>'; }).join('') + '</div>' : '') + '</li>';
+            }).join('') + '</ul>' + (fold && list.length > 6 ? '<button type="button" class="p-link pd-show-all" data-action="show-all">Show all (' + list.length + ')</button>' : '') });
+        }).join('') + '</div>';
+    }
     function drawMenus(panel) {
       const all = S.all('menuItems').filter(function (i) { return i.available !== false; });
       const specific = BOOKABLE.filter(function (x) { return all.some(function (i) { return i.venue === x.id; }); });
@@ -552,23 +613,30 @@
       const items = all.filter(function (i) { return !i.venue || i.venue === 'All' || i.venue === menuVenue || !venueKnown(i.venue); });
       const v = venueDef(menuVenue);
       const gallery = !specific.length || v.id === 'Gallery Taphouse & Grill';
-      const secs = sectionsOf(items);
-      const want = MEAL_SECTION[mealNow()];
-      const openSec = secs.indexOf(want) >= 0 ? want : secs[0];
+      const filters = dietFilters(items);
       panel.innerHTML = '<div class="pd-menu-sel"></div>' +
         '<p class="pd-menu-note">' + (gallery && v.id !== 'Gallery Taphouse & Grill' ? 'The ' + esc(v.id) + ' serves the Gallery kitchen menu. ' : '') + 'Breakfast until 2:00 PM · pizza night every Friday.</p>' +
-        (items.length ? '<div class="pd-menu-secs">' + secs.map(function (sec) {
-          const list = items.filter(function (i) { return i.section === sec; });
-          const from = Math.min.apply(null, list.map(function (i) { return +i.price || 0; }));
-          return Portal.accordion({ id: 'pd-m-' + sec.replace(/[^a-z]/gi, ''), title: sec, summary: list.length + (list.length === 1 ? ' item' : ' items') + ' · from ' + menuPrice(from), open: sec === openSec,
-            body: '<ul class="pd-dishes">' + list.map(function (i, k) {
-              return '<li class="pd-dish"' + (sec === openSec && k >= 6 ? ' hidden data-more' : '') + '><div class="pd-dish-row"><span class="pd-dish-name">' + esc(i.name) + '</span><span class="pd-dish-price">' + esc(menuPrice(i.price)) + '</span></div>' +
-                (i.description ? '<p class="pd-dish-desc">' + esc(i.description) + '</p>' : '') +
-                ((i.dietary || []).length ? '<div class="pd-dish-tags">' + i.dietary.map(function (t) { return '<span class="pd-tag">' + esc(DIET_LABEL[t] || t) + '</span>'; }).join('') + '</div>' : '') + '</li>';
-            }).join('') + '</ul>' + (sec === openSec && list.length > 6 ? '<button type="button" class="p-link pd-show-all" data-action="show-all">Show all (' + list.length + ')</button>' : '') });
-        }).join('') + '</div>' : U.empty({ icon: 'chef', title: 'The menu is being updated', text: 'Please ask your server about today’s specials.' })) +
+        (items.length ? '<div class="pd-diet" role="group" aria-labelledby="pd-diet-l"><span class="pk-label" id="pd-diet-l">Dietary</span><div class="pd-diet-chips">' + filters.map(function (f) {
+          return '<button type="button" class="pd-diet-chip" data-diet="' + esc(f.label) + '" aria-pressed="false">' + Club.icon('check', 'pd-diet-tick') + '<span>' + esc(f.label) + '</span></button>';
+        }).join('') + '</div><div class="pd-diet-meta"><span class="pd-diet-n" aria-live="polite"></span><span class="pd-diet-saved" hidden>Saved to your preferences</span>' +
+          '<button type="button" class="p-link pd-diet-clear" data-action="diet-clear" hidden>Clear filters</button></div></div>' : '') +
+        '<div class="pd-menu-list"></div>' +
         '<p class="pd-menu-foot">Tell your server about any allergies. Prices in CAD, plus tax.</p>';
-      if (!panel.dataset.menuWired) { panel.dataset.menuWired = '1'; U.on(panel, 'click', '[data-action=show-all]', function (e, btn) { U.$$('[data-more]', btn.parentElement).forEach(function (li) { li.hidden = false; }); btn.remove(); }); }
+      drawMenuList(panel, items, filters);
+      if (!panel.dataset.menuWired) {
+        panel.dataset.menuWired = '1';
+        U.on(panel, 'click', '[data-action=show-all]', function (e, btn) { U.$$('[data-more]', btn.parentElement).forEach(function (li) { li.hidden = false; }); btn.remove(); });
+        /* Diet chips: toggle, remember on the member's preferences, redraw the list only (the chips keep focus) */
+        U.on(panel, 'click', '[data-diet]', function (e, btn) {
+          const label = btn.dataset.diet; const cur = memberDiet();
+          setMemberDiet(cur.indexOf(label) >= 0 ? cur.filter(function (x) { return x !== label; }) : cur.concat([label]));
+          drawMenuList(panel, panel._menuItems, panel._menuFilters);
+        });
+        U.on(panel, 'click', '[data-action=diet-clear]', function () {
+          setMemberDiet([]); drawMenuList(panel, panel._menuItems, panel._menuFilters);
+          const first = U.$('[data-diet]', panel); if (first) first.focus();
+        });
+      }
       Portal.selectField(U.$('.pd-menu-sel', panel), { title: 'Show the menu for', icon: 'chef', value: menuVenue,
         rows: BOOKABLE.map(function (x) { return { value: x.id, label: x.id }; }),
         onChange: function (val) { menuVenue = val; draft.menuVenue = val; drawMenus(panel); } });

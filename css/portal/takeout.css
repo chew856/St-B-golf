@@ -2,11 +2,11 @@
 @import url("../public/takeout.css");
 
 body.portal .pt-tabs .tab { position: relative; }
-body.portal .pt-tab-n { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; margin-left: 6px; padding: 0 6px; border-radius: 999px; background: var(--forest-800); color: var(--on-dark); font-size: 0.75rem; font-weight: 500; }
-body.portal .pt-h { font-family: var(--sans); font-size: 1.0625rem; font-weight: 500; margin: 0 0 12px; }
+body.portal .pt-tab-n { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; margin-left: 6px; padding: 0 6px; border-radius: 999px; background: var(--forest-800); color: var(--on-dark); font-size: var(--fs-label); font-weight: 500; }
+body.portal .pt-h { font-family: var(--sans); font-size: var(--fs-card); font-weight: 500; margin: 0 0 12px; }
 body.portal .to-pizza { background: var(--forest-900); border-radius: var(--radius-card); }
 body.portal .to-pizza .eyebrow { color: var(--on-dark-2); }
-body.portal .to-pizza h3 { color: var(--on-dark); font-family: var(--serif); font-size: 1.375rem; }
+body.portal .to-pizza h3 { color: var(--on-dark); font-family: var(--font-title); font-size: var(--fs-section); }
 body.portal .to-pizza .to-add { background: var(--on-dark); color: var(--forest-900); border-color: var(--on-dark); }
 body.portal .to-secbtn { border-color: var(--border-strong); background: var(--surface); color: var(--text-2); font-family: var(--sans); min-height: 40px; }
 body.portal .to-sec-head h3 { font-family: var(--sans); font-weight: 500; }
@@ -14,10 +14,10 @@ body.portal .to-item-name { font-weight: 500; }
 body.portal .to-oline-name { font-weight: 500; }
 body.portal .to-day { border-radius: var(--radius-ctl); border-color: var(--border-strong); background: var(--surface); }
 body.portal .to-day.active { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); }
-body.portal .to-day-n { font-family: var(--serif); }
+body.portal .to-day-n { font-family: var(--font-title); }
 body.portal .to-card, body.portal .to-done { border-radius: var(--radius-card); border-color: var(--border); background: var(--surface); box-shadow: var(--shadow-card); }
 body.portal .to-card.is-cancelled, body.portal .to-card.is-picked-up { background: var(--bg); box-shadow: none; }
-body.portal .to-mine-h h2 { font-size: 1.375rem; }
+body.portal .to-mine-h h2 { font-size: var(--fs-section); }
 body.portal .to-step { border-radius: var(--radius-ctl); border-color: var(--border-strong); background: var(--surface); }
 body.portal .to-step button { width: 40px; height: 40px; color: var(--forest-800); }
 @media (min-width: 880px) {

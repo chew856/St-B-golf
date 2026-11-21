@@ -34,7 +34,28 @@
     return { id: parts[0] || 'home', params: parts.slice(1) };
   }
   function shown(p) { try { return !(p.hidden && p.hidden()); } catch (e) { return true; } }
-  function sorted() { return pages.slice().sort(function (a, b) { return a.order - b.order; }).filter(shown); }
+  /* Menu order, most important first (owner, Nov 21): the header links, the tab bar (pages with tab: true, first 4)
+     and the account menu follow it. A page not listed here falls in after these, by its own `order`. */
+  const MENU = ['home', 'account', 'tee-times', 'play', 'dining', 'events', 'lessons', 'friends', 'scores', 'leaderboards',
+    'handbook', 'club', 'gifts', 'shop', 'takeout', 'cart', 'outings', 'feedback', 'profile'];
+  function rank(p) { const i = MENU.indexOf(p.id); return i < 0 ? 1000 + p.order : i; }
+  function sorted() { return pages.slice().sort(function (a, b) { return rank(a) - rank(b); }).filter(shown); }
+  /* The phone Menu sheet in labelled groups, Account first. Pages in no group go under Club. */
+  const SHEET = [
+    { label: 'Account', ids: ['account', 'profile'] },
+    { label: 'Golf', ids: ['tee-times', 'play', 'scores', 'lessons', 'leaderboards', 'outings'] },
+    { label: 'Food and drink', ids: ['dining', 'takeout', 'cart'] },
+    { label: 'Club', ids: ['events', 'friends', 'handbook', 'club', 'gifts', 'shop', 'feedback'] }
+  ];
+  function sheetHTML(list) {
+    const placed = {}; SHEET.forEach(function (g) { g.ids.forEach(function (id) { placed[id] = 1; }); });
+    const link = function (p) { return '<a href="#/' + p.id + '">' + Club.icon(p.icon || 'flag') + '<span>' + esc(p.label) + '</span>' + Club.icon('chevronRight') + '</a>'; };
+    return SHEET.map(function (g, gi) {
+      const ps = g.ids.map(function (id) { return list.find(function (p) { return p.id === id; }); }).filter(Boolean)
+        .concat(gi === SHEET.length - 1 ? list.filter(function (p) { return !placed[p.id] && p.id !== 'home'; }) : []);
+      return ps.length ? '<div class="p-more-group"><p class="p-more-h">' + esc(g.label) + '</p>' + ps.map(link).join('') + '</div>' : '';
+    }).join('');
+  }
   function menuKey() { return sorted().map(function (p) { return p.id; }).join(); }
 
   /* ---------------- Sign in ---------------- */
@@ -102,8 +123,8 @@
           '<button class="p-me-btn" type="button" aria-haspopup="true" aria-expanded="false">' + ui.avatar(m.firstName + ' ' + m.lastName, 'sm') + '<span class="p-me-name">' + esc(m.firstName) + '</span>' + Club.icon('chevronDown') + '</button>' +
           '<div class="p-me-menu" role="menu">' +
             '<div class="p-me-head"><div class="person-name">' + esc(m.firstName + ' ' + m.lastName) + '</div><div class="person-sub">Member #' + esc(m.memberNo) + '</div></div>' +
-            '<a href="#/profile" role="menuitem">' + Club.icon('user') + 'My profile</a>' +
             '<a href="#/account" role="menuitem">' + Club.icon('billing') + 'My account</a>' +
+            '<a href="#/profile" role="menuitem">' + Club.icon('user') + 'My profile</a>' +
             '<button type="button" data-action="signout" role="menuitem">' + Club.icon('logout') + 'Sign out</button>' +
           '</div>' +
         '</div>' +
@@ -122,7 +143,7 @@
     ui.on(root, 'click', '.p-me-menu a', function () { me.classList.remove('open'); });
     ui.on(root, 'click', '[data-action=signout]', function () { ui.confirm({ title: 'Sign out?', text: 'You can sign back in any time with your member number.', confirmLabel: 'Sign out' }).then(function (ok) { if (ok) Portal.signOut(); }); });
     ui.$('.p-more-btn', root).addEventListener('click', function () {
-      const d = ui.drawer({ title: 'Menu', eyebrow: Club.info.short, body: '<div class="p-more-list">' + list.map(function (p) { return '<a href="#/' + p.id + '">' + Club.icon(p.icon || 'flag') + '<span>' + esc(p.label) + '</span>' + Club.icon('chevronRight') + '</a>'; }).join('') + '<button type="button" data-action="signout">' + Club.icon('logout') + '<span>Sign out</span></button></div>' });
+      const d = ui.drawer({ title: 'Menu', eyebrow: Club.info.short, body: '<div class="p-more-list">' + sheetHTML(list) + '<div class="p-more-group"><button type="button" data-action="signout">' + Club.icon('logout') + '<span>Sign out</span></button></div></div>' });
       ui.on(d.body, 'click', 'a', function () { d.close(); });
       ui.on(d.body, 'click', '[data-action=signout]', function () { d.close(); Portal.signOut(); });
     });
@@ -146,7 +167,7 @@
   let fitting = false;
 
   /* Priority menu: when the header is too narrow for every page, pages move into More from the end of the list
-     (the latest added first), so Home, Tee times and Dining stay in the bar longest. */
+     (MENU order), so Home, My account and Tee times stay in the bar longest. */
   function fitNav() {
     const nav = ui.$('.p-nav'), inner = ui.$('.p-header-inner'), more = nav && ui.$('.p-navmore', nav);
     if (!nav || !more || getComputedStyle(nav).display === 'none') return;

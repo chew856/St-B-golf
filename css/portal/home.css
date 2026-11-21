@@ -6,14 +6,14 @@
 .hm-hero { position: relative; overflow: hidden; background: var(--forest-950); color: var(--on-dark); border-radius: 16px; padding: 14px 18px; margin-bottom: 14px; }
 .hm-mark { position: absolute; right: -18px; bottom: -22px; width: 150px; opacity: 0.06; pointer-events: none; color: var(--on-dark); }
 .hm-mark .stb-logo, .hm-mark svg, .hm-mark img { display: block; width: 100%; height: auto; color: var(--on-dark); }
-.hm-hero-date { position: relative; margin: 0 0 4px; font-size: 0.75rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--on-dark-2); }
-body.portal .hm-hello { position: relative; margin: 0; font-family: var(--serif); font-weight: 500; font-size: 1.75rem; line-height: 1.2; color: var(--on-dark); }
+.hm-hero-date { position: relative; margin: 0 0 4px; font-size: var(--fs-label); font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--on-dark-2); }
+body.portal .hm-hello { position: relative; margin: 0; font-family: var(--font-title); font-weight: 600; font-size: var(--fs-page); letter-spacing: -0.02em; line-height: 1.2; color: var(--on-dark); }
 .hm-hero-row { position: relative; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr)); gap: 12px; margin-top: 10px; padding-top: 10px; border-top: 1px solid color-mix(in srgb, var(--on-dark) 15%, transparent); }
 .hm-hero-col { display: flex; align-items: flex-start; gap: 8px; min-width: 0; }
 .hm-hero-col > .icon { width: 20px; height: 20px; flex: none; color: var(--on-dark-2); margin-top: 1px; }
 .hm-hero-col > div { min-width: 0; }
-.hm-hero-main { margin: 0; font-size: 0.9375rem; font-weight: 500; line-height: 1.35; color: var(--on-dark); font-variant-numeric: tabular-nums; }
-.hm-hero-sub { margin: 2px 0 0; font-size: 0.8125rem; line-height: 1.4; color: var(--on-dark-2); font-variant-numeric: tabular-nums; }
+.hm-hero-main { margin: 0; font-size: var(--fs-body); font-weight: 500; line-height: 1.35; color: var(--on-dark); font-variant-numeric: tabular-nums; }
+.hm-hero-sub { margin: 2px 0 0; font-size: var(--fs-meta); line-height: 1.4; color: var(--on-dark-2); font-variant-numeric: tabular-nums; }
 
 /* ---------------- Quick actions: one row of 4 quiet tiles ---------------- */
 .hm-actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 0; }
@@ -22,43 +22,48 @@ body.portal .hm-hello { position: relative; margin: 0; font-family: var(--serif)
 .hm-action-ic { width: 44px; height: 44px; border-radius: 50%; background: var(--sage-100); color: var(--forest-800); display: inline-flex; align-items: center; justify-content: center; flex: none; transition: background-color var(--t-ui) var(--ease-ui); }
 @media (hover: hover) { .hm-action:hover .hm-action-ic { background: var(--sage-200); } }
 .hm-action-ic .icon { width: 22px; height: 22px; }
-.hm-action-l { font-size: 0.8125rem; font-weight: 500; line-height: 1.3; color: var(--text); overflow-wrap: normal; hyphens: none; }
+.hm-action-l { font-size: var(--fs-meta); font-weight: 500; line-height: 1.3; color: var(--text); overflow-wrap: normal; hyphens: none; }
 
 /* ---------------- Sections (one mobile column at every width) ---------------- */
-.hm-section { margin-top: 12px; }
-.hm-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+.hm-section { margin-top: 28px; }
+.hm-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
 .hm-head h2 { margin: 0; }
-.hm-quiet { margin: 0; font-size: 0.9375rem; color: var(--text-2); }
+.hm-head .p-link { font-size: var(--fs-body); }
+.hm-quiet { margin: 0; font-size: var(--fs-body); color: var(--text-2); }
 
-/* ---------------- Coming up: next 3, compact rows ---------------- */
+/* ---------------- Coming up: one labelled group per kind (tee times, lessons, dining, events, to do) ---------------- */
+.hm-groups { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.hm-group { min-width: 0; }
+.hm-g-head { display: flex; align-items: center; gap: 8px; min-height: 32px; margin: 0 0 6px 2px; }
+.hm-g-ic { width: 24px; height: 24px; flex: none; border-radius: 7px; background: var(--sage-100); color: var(--forest-800); display: inline-flex; align-items: center; justify-content: center; }
+.hm-g-ic .icon { width: 15px; height: 15px; }
+body.portal .hm-g-t { margin: 0; flex: 1 1 auto; min-width: 0; font-family: var(--sans); font-size: var(--fs-label); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-2); line-height: 1.3; }
+body.portal .hm-g-more { min-height: 32px; font-size: var(--fs-meta); margin: -6px 0; padding: 6px 0; position: relative; }
+body.portal .hm-g-more::before { content: ""; position: absolute; inset: -6px -8px; }   /* 44px tap area */
 body.portal .p-list.hm-list > li, body.portal .p-list.hm-nlist > li { padding: 0; min-height: 0; display: block; }
-.hm-row { display: flex; align-items: center; gap: 14px; min-height: 54px; padding: 5px 12px 5px 16px; color: var(--text); text-decoration: none; }
+.hm-row { display: flex; align-items: center; gap: 14px; min-height: 64px; padding: 10px 12px 10px 12px; color: var(--text); text-decoration: none; }
 @media (hover: hover) { .hm-row:hover, .hm-n:hover { background: var(--sage-50); text-decoration: none; } }
-.hm-row-when { flex: none; width: 5rem; display: flex; flex-direction: column; }
-.hm-row-day { font-size: 0.8125rem; color: var(--forest-500); font-weight: 500; line-height: 1.35; }
-.hm-row-time { font-size: 0.9375rem; font-weight: 500; color: var(--text); white-space: nowrap; font-variant-numeric: tabular-nums; line-height: 1.35; }
-.hm-row-body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-.hm-row-title { font-size: 1rem; font-weight: 500; line-height: 1.35; color: var(--text); }
-.hm-row-title .badge { margin-left: 4px; vertical-align: 1px; }
-.hm-row-sub { font-size: 0.875rem; line-height: 1.35; color: var(--text-2); }
+/* Date block: weekday over day number; today is filled */
+.hm-date { flex: none; width: 44px; height: 44px; border-radius: 10px; background: var(--sage-50); border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05; }
+.hm-date-w { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--forest-500); }
+.hm-date-n { font-size: var(--fs-card); font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums lining-nums; }
+.hm-date.is-today { background: var(--forest-800); border-color: var(--forest-800); }
+.hm-date.is-today .hm-date-w, .hm-date.is-today .hm-date-n { color: var(--on-dark); }
+.hm-row-body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.hm-row-title { font-size: var(--fs-body); font-weight: 600; line-height: 1.35; color: var(--text); }
+.hm-row-title .badge, .hm-row-title .gc-pill { margin-left: 4px; vertical-align: 1px; }
+.hm-row-sub { font-size: var(--fs-meta); line-height: 1.4; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.hm-row .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .hm-row-go { width: 18px; height: 18px; flex: none; color: var(--text-3); }
-/* Narrow card or large text: day and time sit above the title */
-.hm-list { container-type: inline-size; }
-@container (max-width: 19rem) {
-  .hm-row { flex-wrap: wrap; row-gap: 2px; }
-  .hm-row-when { width: auto; flex: 1 1 calc(100% - 48px); flex-direction: row; gap: 8px; }
-  .hm-row-go { margin-left: auto; }
-  .hm-row-body { flex-basis: 100%; }
-}
 .hm-empty { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 16px; }
-.hm-empty p { margin: 0 0 12px; font-size: 0.9375rem; color: var(--text-2); }
+.hm-empty p { margin: 0 0 12px; font-size: var(--fs-body); color: var(--text-2); }
 
 /* ---------------- Account and handicap tiles ---------------- */
-.hm-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr)); gap: 12px; margin-top: 12px; }
+.hm-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr)); gap: 12px; margin-top: 28px; }
 .hm-tile { position: relative; display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: 10px 32px 10px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); color: var(--text); text-decoration: none; }
 @media (hover: hover) { .hm-tile:hover { background: var(--sage-50); text-decoration: none; } }
-.hm-tile-l, .hm-tile-c { font-size: 0.8125rem; line-height: 1.4; color: var(--text-2); }
-.hm-tile-v { font-family: var(--serif); font-weight: 500; font-size: 1.625rem; line-height: 1.25; color: var(--text); font-variant-numeric: tabular-nums lining-nums; white-space: nowrap; }
+.hm-tile-l, .hm-tile-c { font-size: var(--fs-meta); line-height: 1.4; color: var(--text-2); }
+.hm-tile-v { font-family: var(--font-title); font-weight: 600; font-size: var(--fs-num); line-height: 1.25; color: var(--text); font-variant-numeric: tabular-nums lining-nums; white-space: nowrap; }
 .hm-tiles .hm-tile:last-child:not(:first-child) .hm-tile-v { display: inline-block; }
 .hm-hcp-line { display: flex; align-items: flex-end; gap: 10px; }
 .hm-spark { display: block; flex: 1 1 auto; min-width: 0; height: 32px; margin-bottom: 4px; }
@@ -67,14 +72,14 @@ body.portal .p-list.hm-list > li, body.portal .p-list.hm-nlist > li { padding: 0
 
 /* ---------------- Club notices: one-line rows ---------------- */
 .hm-n { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 6px 12px 6px 16px; color: var(--text); text-decoration: none; }
-.hm-n-title { flex: 1 1 auto; min-width: 0; font-size: 0.9375rem; font-weight: 500; line-height: 1.35; }
-.hm-n-when { flex: none; font-size: 0.8125rem; color: var(--text-3); white-space: nowrap; }
+.hm-n-title { flex: 1 1 auto; min-width: 0; font-size: var(--fs-body); font-weight: 500; line-height: 1.35; }
+.hm-n-when { flex: none; font-size: var(--fs-meta); color: var(--text-3); white-space: nowrap; }
 
 /* ---------------- Friends playing: two rows (row styles from friends.css) ---------------- */
 body.portal .p-list.fr-golf.hm-frlist > li { min-height: 48px; padding-top: 4px; padding-bottom: 4px; }
 body.portal .hm-fr-head { margin-bottom: 0; }
 body.portal .hm-fr-head .p-link { margin: -6px 0; }
-body.portal .hm-fr-head h2.eyebrow { margin: 0 0 0 4px; font-family: var(--sans); font-size: 0.75rem; line-height: 1.4; }
+body.portal .hm-fr-head h2.eyebrow { margin: 0 0 0 4px; font-family: var(--sans); font-size: var(--fs-label); line-height: 1.4; }
 
 /* ==========================================================================
    Tablet (>= 768) and desktop (>= 1024). Phones keep the single column above.
@@ -100,7 +105,7 @@ body.portal .hm-fr-head h2.eyebrow { margin: 0 0 0 4px; font-family: var(--sans)
   /* Quick actions sit beside the greeting as a quiet 2x2 panel */
   .hm-actions { align-self: stretch; max-width: none; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: center; gap: 1rem 0.5rem; padding: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-card); }
   .hm-action-ic { width: 3rem; height: 3rem; }
-  .hm-action-l { font-size: 0.875rem; }
-  .hm-row { min-height: 3.75rem; padding: 0.5rem 1rem 0.5rem 1.25rem; gap: 1.25rem; }
-  .hm-row-when { width: 6.5rem; }
+  .hm-action-l { font-size: var(--fs-meta); }
+  .hm-row { padding: 0.625rem 1rem; }
+  .hm-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem 1.25rem; }
 }

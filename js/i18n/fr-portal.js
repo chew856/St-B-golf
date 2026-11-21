@@ -3252,3 +3252,53 @@
     ]
   });
 })();
+
+/* ---------------- Dining diet filter (Nov 21) ----------------
+   Dining > Menus chips (js/portal/dining.js) and Profile > Preferences > Dietary preferences (js/portal/profile.js).
+   The chip and dish labels Vegetarian, Vegan and Gluten free are in the Dining block above; stored values stay English. */
+(function () {
+  if (!window.Club || !Club.i18n || typeof Club.i18n.add !== 'function') return;
+  if (!(document.body ? document.body.classList.contains('portal') : /member\.html/.test(location.pathname))) return;
+  Club.i18n.add({
+    strings: {
+      'Dietary': 'Régime alimentaire',
+      'Saved to your preferences': 'Enregistré dans vos préférences',
+      'Clear filters': 'Effacer les filtres',
+      'No dishes match these filters': 'Aucun plat ne correspond à ces filtres',
+      'Try fewer filters, or ask your server what the kitchen can do.': 'Essayez avec moins de filtres, ou demandez à votre serveur ce que la cuisine peut faire.',
+      'Dietary preferences': 'Préférences alimentaires',
+      'The dining menus open showing only these dishes.': 'Les menus du restaurant s’ouvrent en affichant seulement ces plats.'
+    },
+    patterns: [
+      [/^(\d+) dish(?:es)?$/, function (m) { return m[1] + ' ' + (+m[1] <= 1 ? 'plat' : 'plats'); }]
+    ]
+  });
+})();
+
+/* ---------------- Tee times sections (Nov 21) ----------------
+   Tee times in three sections, Book first: Book · My tee times · Weekend ballot (js/portal/teetimes.js). The ballot's
+   own words are in the Weekend ballot block above; the section name is shortened here so it fits the phone's card. */
+(function () {
+  if (!window.Club || !Club.i18n || typeof Club.i18n.add !== 'function') return;
+  if (!(document.body ? document.body.classList.contains('portal') : /member\.html/.test(location.pathname))) return;
+  function pl(n, one, many) { return (+n === 1 || +n === 0 ? one : many); }
+  Club.i18n.add({
+    strings: {
+      'Weekend ballot': 'Tirage de fin de semaine',
+      'Open for entry': 'Inscriptions ouvertes',
+      'Results': 'Résultats',
+      'View your entry': 'Voir votre inscription',
+      'Ballot entry is for golfing members.': 'L’inscription au tirage est réservée aux membres golfeurs.',
+      'No ballot is open right now.': 'Aucun tirage n’est ouvert pour le moment.',
+      'No ballot right now': 'Aucun tirage pour le moment'
+    },
+    patterns: [
+      [/^(\d+) new results?$/, function (m) { return m[1] + ' ' + pl(m[1], 'nouveau résultat', 'nouveaux résultats'); }],
+      [/^Weekend ballot, (\d+) new results?$/, function (m) { return 'Tirage de fin de semaine, ' + m[1] + ' ' + pl(m[1], 'nouveau résultat', 'nouveaux résultats'); }],
+      [/^Weekend ballot, (\d+) entr(?:y|ies)$/, function (m) { return 'Tirage de fin de semaine, ' + m[1] + ' ' + pl(m[1], 'inscription', 'inscriptions'); }],
+      [/^Draw on (.+?) at (.+?)\. You can change or withdraw your entry until then\.$/, function (m) { return 'Tirage le ' + m[1] + ' à ' + m[2] + '. Vous pouvez modifier ou retirer votre inscription d’ici là.'; }],
+      [/^(.+) at (.+), (On course|Checked in|Confirmed), from the ballot\. Open details$/, function (m) {
+        return m[1] + ' à ' + m[2] + ', ' + Club.i18n.t(m[3]) + ', attribué par tirage. Ouvrir les détails'; }]
+    ]
+  });
+})();

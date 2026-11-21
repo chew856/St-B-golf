@@ -3,16 +3,16 @@
    Club.feedback.cardHTML (js/core/feedback.js); css/public/feedback.css styles the same card on the public site.
    Tokens from css/portal-theme.css only.
    ========================================================================== */
-body.portal .vf-back { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; margin-bottom: 4px; font-size: 0.9375rem; font-weight: 500; color: var(--forest-800); text-decoration: none; }
+body.portal .vf-back { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; margin-bottom: 4px; font-size: var(--fs-body); font-weight: 500; color: var(--forest-800); text-decoration: none; }
 body.portal .vf-back svg { width: 18px; height: 18px; }
 body.portal .p-page .vf-hero { margin-bottom: 16px; }
 body.portal .p-page .vf-hero h1 { font-size: 1.875rem; line-height: 1.2; margin: 0 0 6px; }
 body.portal .p-page .vf-hero p { display: block; overflow: visible; max-width: 60ch; margin: 0; line-height: 1.45; }
 
 .vf-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; margin-bottom: 12px; }
-.vf-count { margin: 0; font-size: 0.875rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.vf-count { margin: 0; font-size: var(--fs-meta); color: var(--text-2); font-variant-numeric: tabular-nums; }
 .vf-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: start; }
-.vf-fine { margin: 16px 0 0; font-size: 0.8125rem; line-height: 1.45; color: var(--text-3); max-width: 60ch; }
+.vf-fine { margin: 16px 0 0; font-size: var(--fs-meta); line-height: 1.45; color: var(--text-3); max-width: 60ch; }
 
 /* ---------- The card ---------- */
 body.portal .vf-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 14px 16px 16px; }
@@ -20,26 +20,26 @@ body.portal .vf-card { background: var(--surface); border: 1px solid var(--borde
 .vf-icon { width: 36px; height: 36px; flex: none; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--sage-50); color: var(--forest-500); }
 .vf-icon svg { width: 20px; height: 20px; }
 .vf-what { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
-.vf-when { font-size: 0.8125rem; color: var(--text-3); }
+.vf-when { font-size: var(--fs-meta); color: var(--text-3); }
 body.portal .vf-card .vf-title { margin: 1px 0 0; font-family: var(--sans); font-size: 1rem; font-weight: 500; line-height: 1.35; color: var(--text); overflow-wrap: anywhere; }
-.vf-sub { font-size: 0.875rem; color: var(--text-2); overflow-wrap: anywhere; }
-.vf-tag { flex: none; display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px 2px 6px; border-radius: 999px; background: var(--sage-100); color: var(--forest-800); font-size: 0.8125rem; font-weight: 500; }
+.vf-sub { font-size: var(--fs-meta); color: var(--text-2); overflow-wrap: anywhere; }
+.vf-tag { flex: none; display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px 2px 6px; border-radius: 999px; background: var(--sage-100); color: var(--forest-800); font-size: var(--fs-meta); font-weight: 500; }
 .vf-tag svg { width: 14px; height: 14px; }
-.vf-q { margin: 14px 0 8px; font-size: 0.9375rem; font-weight: 500; color: var(--text); }
+.vf-q { margin: 14px 0 8px; font-size: var(--fs-body); font-weight: 500; color: var(--text); }
 
 /* One tap: five equal buttons, the chosen one filled, the ones below it tinted */
 .vf-scale { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
-body.portal .vf-n { min-height: 48px; padding: 0; border: 1px solid var(--border-strong); border-radius: var(--radius-ctl); background: var(--surface); color: var(--text); font: 500 1.0625rem/1 var(--sans); font-variant-numeric: tabular-nums; cursor: pointer; transition: background var(--t-ui) var(--ease-ui), border-color var(--t-ui) var(--ease-ui), color var(--t-ui) var(--ease-ui); }
+body.portal .vf-n { min-height: 48px; padding: 0; border: 1px solid var(--border-strong); border-radius: var(--radius-ctl); background: var(--surface); color: var(--text); font: 500 var(--fs-card)/1 var(--sans); font-variant-numeric: tabular-nums; cursor: pointer; transition: background var(--t-ui) var(--ease-ui), border-color var(--t-ui) var(--ease-ui), color var(--t-ui) var(--ease-ui); }
 @media (hover: hover) { body.portal .vf-n:hover { border-color: var(--forest-500); background: var(--sage-50); } }
 body.portal .vf-n:focus-visible { outline: 2px solid var(--forest-700); outline-offset: 2px; }
 body.portal .vf-n.is-below { background: var(--sage-100); border-color: var(--sage-200); color: var(--forest-800); }
 body.portal .vf-n.is-on { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); }
-.vf-ends { display: flex; justify-content: space-between; margin-top: 4px; font-size: 0.8125rem; color: var(--text-3); }
-.vf-status { margin: 8px 0 0; font-size: 0.875rem; line-height: 1.45; color: var(--forest-800); }
+.vf-ends { display: flex; justify-content: space-between; margin-top: 4px; font-size: var(--fs-meta); color: var(--text-3); }
+.vf-status { margin: 8px 0 0; font-size: var(--fs-meta); line-height: 1.45; color: var(--forest-800); }
 .vf-status:empty { display: none; }
 
 .vf-comment { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
-.vf-cl { display: block; margin-bottom: 6px; font-size: 0.875rem; font-weight: 500; color: var(--text-2); }
+.vf-cl { display: block; margin-bottom: 6px; font-size: var(--fs-meta); font-weight: 500; color: var(--text-2); }
 .vf-cl span { font-weight: 400; color: var(--text-3); }
 body.portal .vf-ta { width: 100%; min-height: 72px; resize: vertical; padding: 10px 12px; line-height: 1.4; }
 .vf-cacts { display: flex; justify-content: flex-end; margin-top: 8px; }

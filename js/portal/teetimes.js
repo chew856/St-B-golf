@@ -918,7 +918,7 @@
       if (BL()) BL().runDue();   /* a ballot draw whose time has passed runs now (once; js/shared/ballot-data.js) */
       const cs = courseStatus(); const st = settings();
       const td = today();
-      const startTab = params[0] === 'mine' ? 'mine' : 'book';
+      const startTab = params[0] === 'mine' || params[0] === 'ballot' ? params[0] : 'book';
       const wantDate = /^\d{4}-\d{2}-\d{2}$/.test(params[0] || '') && params[0] >= td && stripDays(me).indexOf(params[0]) >= 0 ? params[0] : null;
       let uidN = 0, pastShown = 10, dp = null;
       /* #/tee-times/<date>/<HH:MM>/<players>: a waitlist notice's Book link selects that time. */
@@ -958,39 +958,72 @@
           '<h1>Tee times</h1>' +
           Portal.accordion({ id: 'tt-status', icon: 'course', title: statusTitle, body: statusBody }) +
         '</section>' +
-        '<div class="wl-host"></div>' +
-        '<div class="bl-host"></div>' +
         '<div class="tt-tabs"></div>';
 
+      /* ---- Three sections, Book first (owner, Nov 21): Book · My tee times · Weekend ballot.
+         #/tee-times, #/tee-times/mine and #/tee-times/ballot; a date (#/tee-times/<date>) opens Book on that day. ---- */
+      const SECS = [
+        { id: 'book', label: 'Book', icon: 'flag', render: renderBook },
+        { id: 'mine', label: 'My tee times', icon: 'calendar', render: renderMine },
+        { id: 'ballot', label: 'Weekend ballot', icon: 'ball', render: renderBallot }
+      ];
       const tabsHost = ui.$('.tt-tabs', view);
-      const tabs = ui.tabs(tabsHost, [
-        { id: 'book', label: 'Book', render: renderBook },
-        { id: 'mine', label: 'My tee times', render: renderMine }
-      ], startTab, function (id) {
-        /* A link to a date (a waitlist notice) keeps the date in the address on first render, so a background redraw
-           (new weather) shows the same day; the time is dropped once it has been selected. */
-        const keep = id === 'book' && !tabsHost.dataset.ready && wantDate && state.date ? '/' + state.date : '';
-        try { history.replaceState(null, '', '#/tee-times' + (id === 'mine' ? '/mine' : keep)); } catch (e) { /* file:// */ }
-        tabsHost.dataset.ready = '1';
+      tabsHost.innerHTML = '<div class="tt-secs" role="tablist" aria-label="Tee times">' + SECS.map(function (x) {
+        return '<button type="button" class="tab tt-sec" role="tab" id="tt-sec-' + x.id + '" data-tab="' + x.id + '" aria-controls="tt-sec-panel" aria-selected="false" tabindex="-1">' +
+          '<span class="tt-sec-ic" aria-hidden="true">' + Club.icon(x.icon) + '</span><span class="tt-sec-l">' + esc(x.label) + '</span><span class="tt-sec-n" aria-hidden="true" hidden></span></button>';
+      }).join('') + '</div><div class="wl-host"></div><div class="tab-host"></div>';
+      let secNow = null;
+      const tabs = {
+        activate: function (id) {
+          const sec = SECS.find(function (x) { return x.id === id; }) || SECS[0];
+          secNow = sec.id;
+          ui.$$('.tt-sec', tabsHost).forEach(function (b) { const on = b.dataset.tab === sec.id; b.classList.toggle('active', on); b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
+          if (sec.id !== 'book') Portal.actionBar.hide();
+          const host = ui.$('.tab-host', tabsHost); host.innerHTML = '';
+          const panel = document.createElement('div');
+          panel.className = 'tab-panel tt-sec-panel'; panel.id = 'tt-sec-panel'; panel.setAttribute('role', 'tabpanel'); panel.setAttribute('aria-labelledby', 'tt-sec-' + sec.id);
+          host.appendChild(panel); sec.render(panel); ui.animateIn(panel);
+          /* A link to a date (a waitlist notice) keeps the date in the address on first render, so a background redraw
+             (new weather) shows the same day; the time is dropped once it has been selected. */
+          const keep = sec.id === 'book' && !tabsHost.dataset.ready && wantDate && state.date ? '/' + state.date : '';
+          try { history.replaceState(null, '', '#/tee-times' + (sec.id === 'book' ? keep : '/' + sec.id)); } catch (e) { /* file:// */ }
+          tabsHost.dataset.ready = '1';
+          refreshTabCount();
+        },
+        current: function () { return secNow; }
+      };
+      ui.on(tabsHost, 'click', '.tt-sec', function (e, b) { if (b.dataset.tab !== secNow) tabs.activate(b.dataset.tab); });
+      ui.$('.tt-secs', tabsHost).addEventListener('keydown', function (e) {
+        const ids = SECS.map(function (x) { return x.id; }), i = ids.indexOf(secNow);
+        const k = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: ids.length - 1 }[e.key]; if (k == null) return;
+        e.preventDefault(); const id = ids[(k + ids.length) % ids.length];
+        tabs.activate(id); const b = ui.$('.tt-sec[data-tab=' + id + ']', tabsHost); if (b) b.focus();
       });
-      refreshTabCount();
+      tabs.activate(startTab);
       paintWl();
-      paintBallot();
       if (Portal.waitlist) Portal.waitlist.wire(view, me, function () { paintWl(); rerenderMine(); refreshBook(false); });
       const offHolds = Club.holds ? Club.holds.subscribe(function () { if (!document.body.classList.contains('ps-open')) refreshBook(false); }) : null;
 
-      /* Waitlist notices (a spot opened) sit above the tabs, js/portal/waitlist.js. */
+      /* Waitlist notices (a spot opened) sit under the sections, js/portal/waitlist.js. */
       function paintWl() { const h = ui.$('.wl-host', view); if (h) h.innerHTML = Portal.waitlist ? Portal.waitlist.noticesHTML(Portal.member() || me) : ''; }
       function openWl(o) {
         if (!Portal.waitlist) return;
         Portal.waitlist.open(Portal.member() || me, Object.assign({ date: state.date, players: state.players }, o), function () { paintWl(); refreshBook(false); });
       }
 
+      /** The counts on the sections: upcoming tee times; on the ballot, new results (marked) or else open entries. */
+      function setCount(id, n, aria, isNew) {
+        const b = ui.$('.tt-sec[data-tab=' + id + ']', tabsHost); if (!b) return;
+        const c = ui.$('.tt-sec-n', b);
+        c.textContent = n ? String(n) : ''; c.hidden = !n; c.classList.toggle('is-new', !!isNew);
+        b.setAttribute('aria-label', aria);
+      }
       function refreshTabCount() {
-        const b = ui.$('.tab[data-tab=mine]', tabsHost); if (!b) return;
-        const n = upcoming(me).length;
-        b.textContent = 'My tee times' + (n ? ' (' + n + ')' : '');
-        b.setAttribute('aria-label', 'My tee times' + (n ? ', ' + plural(n, 'upcoming booking') : ''));
+        const m = Portal.member() || me;
+        const n = upcoming(m).length;
+        setCount('mine', n, 'My tee times' + (n ? ', ' + plural(n, 'upcoming booking') : ''));
+        const nw = noticeList(m).length, op = openEntries(m).length;
+        setCount('ballot', nw || op, 'Weekend ballot' + (nw ? ', ' + plural(nw, 'new result') : op ? ', ' + (op === 1 ? '1 entry' : op + ' entries') : ''), !!nw);
       }
 
       /* ======================= Book ======================= */
@@ -1110,7 +1143,7 @@
 
       function renderTimes(el, sum, days, sums) {
         const d = state.date;
-        if (sum.locked && sum.locked.ballot) { el.innerHTML = ballotPanelHTML(d, sum.locked); return; }
+        if (sum.locked && sum.locked.ballot) { el.innerHTML = ballotBookHTML(d, sum.locked); return; }
         if (sum.locked) { el.innerHTML = '<div class="tt-state">' + ui.empty({ icon: 'calendar', title: 'Opens on ' + longDate(sum.locked.opensOn), text: sum.locked.reason }) + '</div>'; return; }
         if (sum.closed) { el.innerHTML = '<div class="tt-state">' + ui.empty({ icon: 'course', title: 'The course is closed today', text: (courseStatus().message || 'There is no play today.') + ' You can still book from tomorrow.', action: nextDayBtn(days, sums, d, null) }) + '</div>'; return; }
         const counts = {}; PERIODS.forEach(function (p) { counts[p.id] = fitCount(sum, p.id); });
@@ -1132,7 +1165,6 @@
           chips = '<div class="tt-chips">' + parts.map(function (x) { return Array.isArray(x) ? runHTML(x) : chipHTML(x); }).join('') + '</div>';
         }
         el.innerHTML =
-          ballotResultHTML(d) +
           (state.notice ? '<p class="hold-ended" role="status">' + Club.icon('clock') + '<span>' + esc(state.notice) + '</span></p>' : '') +
           '<div class="segmented tt-periods" role="group" aria-label="Time of day">' + PERIODS.map(function (x) {
             const on = x.id === p.id;
@@ -1389,9 +1421,10 @@
       ui.on(view, 'click', '[data-act=go-mine]', function () { tabs.activate('mine'); });
 
       /* ======================= Weekend ballot (Club.ballot) =======================
-         A ballot day before its draw shows the ballot instead of times: enter (preferred time, how far either side,
-         holes, players up to 4), change or withdraw until the draw. After the draw the day books as usual, with the
-         result on top. Results also show above the tabs until the member closes them. */
+         Its own section (owner, Nov 21): the days open for entry (enter with a preferred time, how far either side,
+         holes and players up to 4; change or withdraw until the draw), the results, and how the ballot works.
+         On Book, a ballot day before its draw shows one compact card with Enter the ballot instead of times; after the
+         draw the day books as usual. New results are a badge on the section and one line inside it. */
       const RANGES = [
         { value: '30', label: 'Up to 30 minutes either way' },
         { value: '60', label: 'Up to 1 hour either way' },
@@ -1418,73 +1451,106 @@
             : '<p class="tt-hint">Only the member who entered can change or withdraw this entry.</p>') : '') +
         '</div>';
       }
-      function ballotPanelHTML(d, lock) {
-        const m = Portal.member() || me, s = BL().schedule(d);
-        const e = BL().entryFor(m.id, d);
-        if (lock.ballot === 'before') {
-          return '<div class="tt-state">' + ui.empty({ icon: 'calendar', title: 'Ballot opens on ' + longDate(s.opensOn), text: 'Weekend and holiday tee times start with a ballot. You can enter from ' + longDate(s.opensOn) + ' until the draw on ' + drawWhen(d) + '.' }) + '</div>';
-        }
-        if (lock.ballot === 'due') return '<div class="tt-state">' + ui.empty({ icon: 'clock', title: 'The draw is being made', text: lock.reason }) + '</div>';
-        const stand = standingOf(m.id);
-        return '<div class="bl-panel">' +
-          '<div class="bl-head"><span class="bl-ic" aria-hidden="true">' + Club.icon('flag') + '</span><div class="bl-head-t">' +
-            '<p class="bl-eyebrow">' + esc(ballotKind(d)) + '</p>' +
-            '<h3 class="bl-title">' + esc(e ? 'You’re in the ballot for ' + longDate(d) : 'Enter the ballot for ' + longDate(d)) + '</h3>' +
-            '<p class="bl-draw">' + Club.icon('clock') + '<span>Draw on <span>' + esc(drawWhen(d)) + '</span></span></p></div></div>' +
-          (e ? entryCardHTML(e, m, { actions: true })
-            : (stand.ok ? '<p class="bl-lead">Choose a preferred time, how flexible you are and who you play with. The draw gives each entry the open time closest to its choice.</p>' +
-                '<button type="button" class="btn btn-primary tt-full bl-enter" data-act="bl-enter">Enter the ballot</button>'
-              : '<p class="tt-hint tt-rule">' + Club.icon('alert') + '<span>' + esc(stand.reason) + '</span></p>')) +
-          Portal.accordion({ id: 'bl-how', icon: 'info', title: 'How the ballot works', summary: 'Entries open 15 days ahead',
-            body: '<ul class="tt-bullets">' +
-              '<li>Saturdays, Sundays and holidays are booked by ballot. Weekdays book as usual.</li>' +
-              '<li>Enter from 15 days before until the draw at 12:00 PM, 13 days before. A Saturday is drawn on the Sunday, a Sunday on the Monday.</li>' +
-              '<li>Entries are drawn in a random order that anyone can check. Each gets the open time closest to its preferred time, inside its range and the play times of everyone in the group.</li>' +
-              '<li>You can change or withdraw your entry until the draw. One entry per member a day.</li>' +
-              '<li>After the draw, times still open can be booked online or by calling the golf shop.</li>' +
-            '</ul>' }) +
+      /** Book, a ballot day before its draw: one compact card (Enter the ballot, or the member's entry). */
+      function ballotBookHTML(d, lock) {
+        const m = Portal.member() || me, s = BL().schedule(d), e = BL().entryFor(m.id, d);
+        const sub = lock.ballot === 'before' ? 'Ballot opens on ' + longDate(s.opensOn) : lock.ballot === 'due' ? 'The draw is being made' : 'Draw on ' + drawWhen(d);
+        const act = e ? '<button type="button" class="btn" data-act="go-ballot">View your entry</button>'
+          : lock.ballot === 'open' && !ballotWhyNot(m) ? '<button type="button" class="btn btn-primary bl-enter" data-act="bl-enter" data-date="' + d + '">Enter the ballot</button>' : '';
+        return '<div class="bl-book">' +
+          '<span class="bl-ic" aria-hidden="true">' + Club.icon('ball') + '</span>' +
+          '<div class="bl-book-t"><p class="bl-book-h">' + esc(e ? 'You’re in the ballot' : ballotKind(d)) + '</p>' +
+            '<p class="bl-book-s">' + (e ? '<span>' + esc(prefWords(e)) + '</span><span aria-hidden="true"> · </span>' : '') + '<span>' + esc(sub) + '</span></p></div>' +
+          (act ? '<div class="bl-book-acts">' + act + '</div>' : '') +
         '</div>';
       }
-      /** After the draw: one line above the times about the member's entry for this day. */
-      function ballotResultHTML(d) {
-        if (!BL() || !BL().isBallotDay(d)) return '';
-        const m = Portal.member() || me, e = BL().entryFor(m.id, d);
-        if (!e || (e.status !== 'won' && e.status !== 'missed')) return '';
-        return '<p class="bl-result ' + (e.status === 'won' ? 'is-won' : 'is-missed') + '">' + Club.icon(e.status === 'won' ? 'check' : 'info') + '<span>' + esc(e.status === 'won'
-          ? 'The ballot gave your group ' + fmt.time(e.drawnTime) + '.'
-          : 'Your ballot entry did not get a time. Any time still open below can be booked.') + '</span></p>';
+      /** '' when the member may enter a ballot, else the reason (one short line). */
+      function ballotWhyNot(m) {
+        if (!canGolf(m)) return 'Ballot entry is for golfing members.';
+        if (m.status === 'suspended') return 'Your golf privileges are paused';
+        const st = standingOf(m.id); return st.ok ? '' : st.reason;
       }
 
-      /* ---- Results above the tabs (until closed) ---- */
+      /* ---- The Weekend ballot section ---- */
+      /** Unseen results (won or missed) from today on: the badge on the section. */
       function noticeList(m) {
         if (!BL()) return [];
         return BL().forMember(m.id).filter(function (e) { return e.date >= td && (e.status === 'won' || e.status === 'missed') && !BL().isSeen(e, m.id); });
       }
-      function paintBallot() {
-        const h = ui.$('.bl-host', view); if (!h) return;
-        const m = Portal.member() || me, list = noticeList(m);
-        h.innerHTML = list.length ? '<section class="bl-notices" aria-label="Ballot results">' + list.map(function (e) {
-          const won = e.status === 'won';
-          return '<article class="bl-note' + (won ? ' is-won' : '') + '" role="status">' +
-            '<span class="bl-note-ic" aria-hidden="true">' + Club.icon(won ? 'check' : 'bell') + '</span>' +
-            '<div class="bl-note-main"><p class="bl-note-k">Ballot result</p>' +
-              '<p class="bl-note-t">' + esc(won ? longDate(e.date) + ' at ' + fmt.time(e.drawnTime) : 'No tee time on ' + longDate(e.date)) + '</p>' +
-              '<p class="bl-note-s">' + esc(won ? 'The draw gave your group this tee time. It is in My tee times.' : 'The times you asked for went to entries drawn earlier. Times still open can be booked now.') + '</p></div>' +
-            '<div class="bl-note-acts">' + (won ? '<button type="button" class="btn btn-primary btn-sm" data-act="bl-see" data-tt="' + esc(e.teeTimeId || '') + '">See tee time</button>'
-              : '<button type="button" class="btn btn-primary btn-sm" data-act="pick-day-book" data-date="' + esc(e.date) + '">See open times</button>') +
-              '<button type="button" class="p-link" data-act="bl-seen" data-id="' + esc(e.id) + '">Got it</button></div>' +
-          '</article>';
-        }).join('') + '</section>' : '';
+      /** Entries waiting for their draw. */
+      function openEntries(m) { return BL() ? BL().forMember(m.id).filter(function (e) { return e.date >= td && e.status === 'entered'; }) : []; }
+      function dateBlock(d) {
+        return '<span class="tt-row-date" aria-hidden="true"><span class="tt-rd-wk">' + esc(fmt.weekday(d)) + '</span><span class="tt-rd-n">' + fmt.toDate(d).getDate() + '</span></span>';
       }
-      ui.on(view, 'click', '[data-act=bl-seen]', function (e, b) { BL().seen(b.dataset.id, (Portal.member() || me).id); paintBallot(); });
-      ui.on(view, 'click', '[data-act=bl-see]', function (e, b) { tabs.activate('mine'); if (b.dataset.tt && S.find('teeTimes', b.dataset.tt)) openDetail(b.dataset.tt); });
-      ui.on(view, 'click', '[data-act=pick-day-book]', function (e, b) {
-        tabs.activate('book');
-        if (b.dataset.date) setDate(b.dataset.date);
-      });
+      /** A ballot day open for entry (or being drawn): the member's entry, or Enter the ballot. */
+      function dayCardHTML(x, m, can) {
+        const d = x.date, e = BL().entryFor(m.id, d), due = x.phase === 'due';
+        return '<article class="bl-day">' +
+          '<div class="bl-day-top">' + dateBlock(d) + '<div class="bl-day-t"><h3 class="bl-day-h">' + esc(longDate(d)) + '</h3>' +
+            '<p class="bl-draw">' + Club.icon('clock') + '<span>' + (due ? esc('The draw is being made') : 'Draw on <span>' + esc(drawWhen(d)) + '</span>') + '</span></p></div></div>' +
+          (e ? entryCardHTML(e, m, { actions: !due }) : due || !can ? '' : '<button type="button" class="btn btn-primary tt-full bl-enter" data-act="bl-enter" data-date="' + d + '">Enter the ballot</button>') +
+        '</article>';
+      }
+      /** The next ballot day that is not open yet. */
+      function soonCardHTML(x) {
+        return '<article class="bl-day is-soon"><div class="bl-day-top">' + dateBlock(x.date) + '<div class="bl-day-t"><h3 class="bl-day-h">' + esc(longDate(x.date)) + '</h3>' +
+          '<p class="bl-draw">' + Club.icon('calendar') + '<span>' + esc('Ballot opens on ' + longDate(x.schedule.opensOn)) + '</span></p></div></div></article>';
+      }
+      /** A drawn entry: the tee time it got, or No time. Opens the entry's sheet. */
+      function resultRowHTML(e, m, isNew) {
+        const won = e.status === 'won', others = holdersOf(e, m);
+        const tp = won ? timeParts(e.drawnTime) : null;
+        const pillA = won ? 'Tee time ' + fmt.time(e.drawnTime) : 'No time';
+        return '<button type="button" class="tt-row" data-act="bl-row" data-id="' + esc(e.id) + '" aria-label="' + esc(longDate(e.date) + ', ballot entry. ' + pillA + '. Open details') + '">' +
+          dateBlock(e.date) +
+          '<span class="tt-row-main"><span class="tt-row-top">' +
+            (won ? '<span class="tt-row-time">' + tp.t + '<small>' + tp.ap + '</small></span><span class="tt-pill is-good">Tee time</span>'
+              : '<span class="tt-row-time bl-row-t">' + esc(+e.range >= 720 ? 'Any time' : fmt.time(e.time)) + '</span><span class="tt-pill is-bad">No time</span>') +
+            (isNew ? '<span class="tt-pill bl-pill-new">New</span>' : '') + '</span>' +
+            '<span class="tt-row-meta">' + esc('Ballot · ' + e.holes + ' holes · ' + (others.length ? 'With ' + niceList(others) : 'Just you')) + '</span></span>' +
+          Club.icon('chevronRight', 'tt-go') + '</button>';
+      }
+      function ballotHowHTML() {
+        return Portal.accordion({ id: 'bl-how', icon: 'info', title: 'How the ballot works', summary: 'Entries open 15 days ahead',
+          body: '<ul class="tt-bullets">' +
+            '<li>Saturdays, Sundays and holidays are booked by ballot. Weekdays book as usual.</li>' +
+            '<li>Enter from 15 days before until the draw at 12:00 PM, 13 days before. A Saturday is drawn on the Sunday, a Sunday on the Monday.</li>' +
+            '<li>Entries are drawn in a random order that anyone can check. Each gets the open time closest to its preferred time, inside its range and the play times of everyone in the group.</li>' +
+            '<li>You can change or withdraw your entry until the draw. One entry per member a day.</li>' +
+            '<li>After the draw, times still open can be booked online or by calling the golf shop.</li>' +
+          '</ul>' });
+      }
+      function renderBallot(panel) {
+        const m = Portal.member() || me;
+        if (!BL()) { panel.innerHTML = '<div class="panel tt-empty">' + ui.empty({ icon: 'ball', title: 'No ballot right now' }) + '</div>'; return; }
+        const fresh = noticeList(m), isNew = {}; fresh.forEach(function (e) { isNew[e.id] = 1; });
+        const why = ballotWhyNot(m);
+        const cal = BL().upcoming(td, BL().OPEN_DAYS + 8);
+        const open = cal.filter(function (x) { return x.phase === 'open' || x.phase === 'due'; });
+        const next = cal.find(function (x) { return x.phase === 'before'; });
+        const results = BL().forMember(m.id).filter(function (e) { return e.date >= td && (e.status === 'won' || e.status === 'missed'); })
+          .sort(function (a, b) { return a.date.localeCompare(b.date); });
+        panel.innerHTML = '<div class="bl-sec">' +
+          '<p class="bl-sec-lead">Saturdays, Sundays and holidays are booked by ballot. Weekdays book as usual.</p>' +
+          (fresh.length ? '<p class="bl-new" role="status">' + Club.icon('bell') + '<span>' + esc(plural(fresh.length, 'new result')) + '</span></p>' : '') +
+          (results.length ? '<section class="bl-block" aria-labelledby="bl-res-h"><h2 class="tt-mine-h" id="bl-res-h">Results</h2>' +
+            '<div class="p-list tt-rounds">' + results.map(function (e) { return resultRowHTML(e, m, !!isNew[e.id]); }).join('') + '</div></section>' : '') +
+          '<section class="bl-block" aria-labelledby="bl-open-h"><h2 class="tt-mine-h" id="bl-open-h">Open for entry</h2>' +
+            (why ? '<p class="tt-hint tt-rule bl-standing" role="note">' + Club.icon('alert') + '<span>' + esc(why) + '</span></p>' : '') +
+            (open.length || next ? '<div class="bl-days">' + open.map(function (x) { return dayCardHTML(x, m, !why); }).join('') + (next ? soonCardHTML(next) : '') + '</div>'
+              : '<p class="tt-hint">No ballot is open right now.</p>') +
+          '</section>' +
+          ballotHowHTML() +
+        '</div>';
+        /* Seen once the section has shown them: the badge goes back to the count of open entries. */
+        if (fresh.length) { fresh.forEach(function (e) { BL().seen(e.id, m.id); }); refreshTabCount(); }
+      }
+      ui.on(view, 'click', '[data-act=go-ballot]', function () { tabs.activate('ballot'); });
+      /** After an entry is made, changed or withdrawn: Book's card, the open section and the counts. */
+      function afterBallot() { refreshBook(false); rerenderMine(); }
 
       /* ---- Enter or change: one sheet ---- */
-      ui.on(view, 'click', '[data-act=bl-enter]', function () { openBallot(state.date, null); });
+      ui.on(view, 'click', '[data-act=bl-enter]', function (e, b) { openBallot(b.dataset.date || state.date, null); });
       ui.on(view, 'click', '[data-act=bl-edit]', function (e, b) { const en = BL().entry(b.dataset.id); if (en) openBallot(en.date, en); });
       ui.on(view, 'click', '[data-act=bl-withdraw]', function (e, b) { askWithdraw(b.dataset.id); });
       /** Preferred times: every half hour of the day, those outside the member's play times greyed out. */
@@ -1499,7 +1565,7 @@
       }
       function openBallot(d, cur) {
         const m = Portal.member() || me;
-        if (!BL() || BL().phase(d) !== 'open') { ui.toast('The ballot for this day is closed', 'bad'); refreshBook(false); return; }
+        if (!BL() || BL().phase(d) !== 'open') { ui.toast('The ballot for this day is closed', 'bad'); afterBallot(); return; }
         if (cur && cur.memberId !== m.id) return;
         const stand = standingOf(m.id); if (!stand.ok) { ui.toast(stand.reason, 'bad'); return; }
         const rows = prefRows(m, d);
@@ -1544,15 +1610,15 @@
           Portal.prefs.set('tt.players', Math.max(1, Math.min(4, model.players.length)));
           Portal.prefs.set('tt.holes', model.holes);
           ui.toast(cur ? 'Your ballot entry has been updated' : 'You’re in the ballot for ' + shortDay(d));
-          if (cur) { sh.close(); refreshBook(false); rerenderMine(); return; }
+          if (cur) { sh.close(); afterBallot(); return; }
           sh.setContent('<div class="tt-done" role="status"><span class="tt-done-ok">' + Club.icon('check') + '</span>' +
             '<h3 class="tt-done-h">You’re in the ballot</h3>' +
             '<p class="tt-done-d">' + esc(longDate(d)) + ' · ' + esc(prefWords(res.doc)) + '</p>' +
-            '<p class="tt-done-p">' + esc('Draw on ' + drawWhen(d) + '. The result shows here and in My tee times. You can change or withdraw your entry until then.') + '</p></div>');
+            '<p class="tt-done-p">' + esc('Draw on ' + drawWhen(d) + '. You can change or withdraw your entry until then.') + '</p></div>');
           sh.setFooter('<button type="button" class="btn btn-primary tt-full" data-act="bl-done">Done</button>');
           ui.$('[data-act=bl-done]', sh.foot).addEventListener('click', function () { sh.close(); });
           ui.$('[data-act=bl-done]', sh.foot).focus();
-          refreshBook(false); refreshTabCount();
+          afterBallot();
         });
       }
       function askWithdraw(id) {
@@ -1568,25 +1634,9 @@
           sh.close();
           if (!r.ok) { ui.toast(r.reason, 'bad'); }
           else ui.toast('Your ballot entry has been withdrawn');
-          refreshBook(false); rerenderMine();
+          afterBallot();
         });
         ui.$('[data-act=bl-keep]', sh.foot).focus();
-      }
-      /** My tee times: the member's ballot entries from today on. */
-      function ballotMineHTML(m) {
-        if (!BL()) return '';
-        /* Won entries stay in the list too (owner, Nov 20), marked with the tee time the draw gave */
-        const list = BL().forMember(m.id).filter(function (e) { return e.date >= td && e.status !== 'withdrawn'; });
-        if (!list.length) return '';
-        return '<section class="tt-mine-sec bl-mine"><h2 class="tt-mine-h">Ballot entries</h2><div class="p-list tt-rounds">' + list.map(function (e) {
-          const dt = fmt.toDate(e.date);
-          const pill = e.status === 'entered' ? 'Draw ' + shortDay(BL().schedule(e.date).drawOn) : e.status === 'won' ? 'Tee time ' + fmt.time(e.drawnTime) : 'No time';
-          return '<button type="button" class="tt-row" data-act="bl-row" data-id="' + esc(e.id) + '" aria-label="' + esc(longDate(e.date) + ', ballot entry. ' + pill + '. Open details') + '">' +
-            '<span class="tt-row-date" aria-hidden="true"><span class="tt-rd-wk">' + esc(fmt.weekday(e.date)) + '</span><span class="tt-rd-n">' + dt.getDate() + '</span></span>' +
-            '<span class="tt-row-main"><span class="tt-row-top"><span class="tt-row-time bl-row-t">' + esc(+e.range >= 720 ? 'Any time' : fmt.time(e.time)) + '</span><span class="tt-pill' + (e.status === 'missed' ? ' is-bad' : e.status === 'won' ? ' is-good' : '') + '">' + esc(pill) + '</span></span>' +
-              '<span class="tt-row-meta">' + esc('Ballot · ' + e.holes + ' holes · ' + (holdersOf(e, m).length ? 'With ' + niceList(holdersOf(e, m)) : 'Just you')) + '</span></span>' +
-            Club.icon('chevronRight', 'tt-go') + '</button>';
-        }).join('') + '</div></section>';
       }
       ui.on(view, 'click', '[data-act=bl-row]', function (e, b) {
         const m = Portal.member() || me, en = BL().entry(b.dataset.id); if (!en) return;
@@ -1617,7 +1667,6 @@
               (up.length > 5 ? '<button type="button" class="tt-all-row" data-act="all-up">View all upcoming (' + up.length + ')' + Club.icon('chevronRight', 'tt-go') + '</button>' : '') + '</div>' :
               '<div class="panel tt-empty">' + ui.empty({ icon: 'flag', title: 'No tee times booked', text: canGolf(m) ? windowLine(m) : 'When a golfing member adds you to their tee time, it will show up here.', action: canGolf(m) && m.status !== 'suspended' ? ui.btn('Book a tee time', { kind: 'primary', action: 'go-book-empty' }) : '' }) + '</div>') +
           '</section>' +
-          ballotMineHTML(m) +
           (Portal.waitlist ? Portal.waitlist.listHTML(m) : '') +
           '<section class="tt-mine-sec">' +
             (pa.length ? Portal.accordion({ id: 'tt-past', icon: 'trophy', title: 'Past rounds', summary: plural(played, 'round') + ' played', body: pastBody(pa, m) })
@@ -1628,15 +1677,20 @@
         return '<ul class="tt-past-list">' + pa.slice(0, pastShown).map(function (tt) { return pastHTML(tt, m); }).join('') + '</ul>' +
           (pa.length > pastShown ? '<button type="button" class="p-link" data-act="more-past">Show more</button>' : '');
       }
+      /** A tee time the weekend ballot gave (made by the draw, or a won entry pointing at it). */
+      function fromBallot(tt) {
+        return tt.source === 'ballot' || !!tt.ballotEntryId || (!!BL() && S.where('ballotEntries', function (e) { return e.status === 'won' && e.teeTimeId === tt.id; }).length > 0);
+      }
       function rowHTML(tt, m) {
         const dt = fmt.toDate(tt.date); const tp = timeParts(tt.time);
         const mgr = managerOf(tt) === m.id;
         const me1 = (tt.players || []).find(function (p) { return p.memberId === m.id; }) || {};
         const status = tt.status === 'on-course' ? 'On course' : tt.status === 'checked-in' ? 'Checked in' : 'Confirmed';
         const others = (tt.players || []).filter(function (p) { return p.memberId !== m.id; });
-        return '<button type="button" class="tt-row" data-act="detail" data-id="' + esc(tt.id) + '" aria-label="' + esc(longDate(tt.date) + ' at ' + fmt.time(tt.time) + ', ' + status + '. Open details') + '">' +
+        return '<button type="button" class="tt-row" data-act="detail" data-id="' + esc(tt.id) + '" aria-label="' + esc(longDate(tt.date) + ' at ' + fmt.time(tt.time) + ', ' + status + (fromBallot(tt) ? ', from the ballot' : '') + '. Open details') + '">' +
           '<span class="tt-row-date" aria-hidden="true"><span class="tt-rd-wk">' + esc(fmt.weekday(tt.date)) + '</span><span class="tt-rd-n">' + dt.getDate() + '</span></span>' +
-          '<span class="tt-row-main"><span class="tt-row-top"><span class="tt-row-time">' + tp.t + '<small>' + tp.ap + '</small></span><span class="tt-pill">' + status + '</span></span>' +
+          '<span class="tt-row-main"><span class="tt-row-top"><span class="tt-row-time">' + tp.t + '<small>' + tp.ap + '</small></span><span class="tt-pill">' + status + '</span>' +
+            (fromBallot(tt) ? '<span class="tt-pill bl-pill">Ballot</span>' : '') + '</span>' +   /* a tee time the weekend ballot gave */
             '<span class="tt-row-meta">' + tt.holes + ' holes · ' + (me1.cart ? 'Cart' : 'Walking') + ' · ' + (others.length ? 'With ' + esc(niceList(others.map(function (p) { return otherLabel(p); }))) : 'Just you') + '</span></span>' +
           Club.icon('chevronRight', 'tt-go') + '</button>';
       }
@@ -1660,10 +1714,12 @@
       });
       ui.on(view, 'click', '[data-act=detail]', function (e, b) { if (!b.closest('.ps-sheet')) openDetail(b.dataset.id); });
 
+      /** Redraw My tee times or Weekend ballot when it is the section showing (Book redraws through refreshBook). */
       function rerenderMine() {
         refreshTabCount();
-        const p = ui.$('.tab-panel', tabsHost);
-        if (p && ui.$('.tt-mine-sec', p)) renderMine(p);
+        const p = ui.$('.tab-panel', tabsHost); if (!p) return;
+        if (secNow === 'mine') renderMine(p);
+        else if (secNow === 'ballot') renderBallot(p);
       }
       function guard(tt) {
         const fresh = tt && S.find('teeTimes', tt.id);

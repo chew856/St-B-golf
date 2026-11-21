@@ -121,11 +121,11 @@
     const mine = all.filter(function (lg) { return invited.indexOf(lg.id) < 0; });
     const live = mine.filter(function (lg) { const st = FL.status(lg); return st === 'forming' || st === 'waiting' || st === 'active'; });
     const past = mine.filter(function (lg) { return live.indexOf(lg) < 0; });
-    let h = '<div class="fl-list-head"><div><h2 class="fr-h">Leagues</h2><p class="fl-intro">Play a season with your friends. Rounds you book or post for the league count toward it.</p></div>' +
+    let h = '<div class="fl-list-head"><div><h2 class="fr-h">Leagues</h2><p class="fl-intro">A season with friends. League rounds you book or post count.</p></div>' +
       '<a class="btn btn-primary fl-start" href="#/friends/leagues/new">' + Club.icon('plus') + '<span>Start a league</span></a></div>';
     h += invitesHTML(me);
     if (!live.length && !past.length) {
-      h += '<div class="fr-empty fl-empty">' + ui.empty({ icon: 'trophy', title: 'No leagues yet', text: 'Start a league and invite your friends. Everyone plays their rounds when it suits them, and the standings update as scores are posted.' }) + '</div>';
+      h += '<div class="fr-empty fl-empty">' + ui.empty({ icon: 'trophy', title: 'No leagues yet', text: 'Start one and invite friends. Play when it suits you; standings update as scores come in.' }) + '</div>';
       return h;
     }
     if (live.length) h += '<section class="fr-block"><h2 class="eyebrow fl-eb">Your leagues</h2><ul class="p-list fl-rows">' + live.map(function (lg) { return leagueRowHTML(lg, me); }).join('') + '</ul></section>';
@@ -174,7 +174,7 @@
       kv('Games', (lg.perWeek === 1 ? '1 game' : lg.perWeek + ' games') + ' a week, ' + lg.holes + ' holes') +
       kv('Players', lg.mode === 'teams' ? 'Teams of ' + lg.teamSize : 'Individual') +
       kv('Organiser', fullName(lg.createdBy)) +
-      '</dl><p class="fl-note">Each week starts on a ' + fmt.toDate(lg.start).toLocaleDateString('en-US', { weekday: 'long' }) + '. Missed a week? Play an extra round later and it counts for the week you missed. Games still missing at the end count as the worst score of that week. Until the end, players are ranked on their average per game.</p>';
+      '</dl><ul class="fl-note fl-rules"><li>' + esc('Weeks start on ' + fmt.toDate(lg.start).toLocaleDateString('en-US', { weekday: 'long' }) + '.') + '</li><li>Missed a week? A later extra round counts for it.</li><li>Games missing at the end count as that week’s worst score.</li><li>Until the end, ranking is by average per game.</li></ul>';
   }
 
   /** Standings tables and the week by week grid. */

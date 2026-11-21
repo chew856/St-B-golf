@@ -68,7 +68,7 @@
       act = '<a class="btn lv-cta" href="' + esc(href) + '">' + Club.icon('scorecard') + '<span>See the scorecard</span></a><p class="lv-card-note">Round complete</p>';
     } else if (w.open) {
       act = '<a class="btn btn-primary lv-cta" href="' + esc(href) + '">' + Club.icon('flag') + '<span>Play: start the scorecard</span></a>' +
-        '<p class="lv-card-note">' + esc('Open from ' + fmt.time(w.opensAt) + ', 5 minutes before your tee time') + '</p>';
+        '<p class="lv-card-note">' + esc('Open from ' + fmt.time(w.opensAt)) + '</p>';
     } else {
       act = '<button type="button" class="btn lv-cta lv-cta-off" disabled aria-disabled="true" data-opens="' + esc(w.opensAt) + '">' + esc('Play opens at ' + fmt.time(w.opensAt)) + '</button>';
     }
@@ -199,7 +199,7 @@
       if (d.scoring !== 'net') return '';
       const none = players.filter(function (p) { return idxOf(p, d) == null; }).map(function (p) { return p.name.split(' ')[0]; });
       if (!none.length) return 'Strokes come from each player’s handicap and the stroke index of each hole.';
-      return (none.length === 1 ? none[0] + ' has no handicap on file, so plays off scratch (no strokes).' : none.slice(0, -1).join(', ') + ' and ' + none[none.length - 1] + ' have no handicap on file, so play off scratch (no strokes).') + ' A handicap index can be added above.';
+      return (none.length === 1 ? none[0] + ' has no handicap, so plays off scratch.' : none.slice(0, -1).join(', ') + ' and ' + none[none.length - 1] + ' have no handicap, so play off scratch.') + ' Add an index above.';
     }
     function teamsOk(players, d) {
       if (d.game !== 'bestball') return true;

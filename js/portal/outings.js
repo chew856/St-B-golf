@@ -170,7 +170,7 @@
       '<div class="po-main">' +
         '<section class="po-mine" data-reveal><div class="p-section-head"><h2>My enquiries</h2></div>' +
           (list.length ? '<ul class="p-list po-enqs">' + list.map(enquiryRow).join('') + '</ul>'
-            : '<div class="po-empty"><p>Enquiries you send are kept here, and you can follow them as the club takes them forward.</p><a class="p-link" href="#/outings/enquire">Send an enquiry</a></div>') +
+            : '<div class="po-empty"><p>Your enquiries and their progress show here.</p><a class="p-link" href="#/outings/enquire">Send an enquiry</a></div>') +
         '</section>' +
         '<section class="po-pkgs-sec"><div class="p-section-head"><h2>Packages</h2></div><div class="po-pkgs" tabindex="0" role="region" aria-label="Packages">' + pkgs().map(pkgCard).join('') + '</div>' +
           '<p class="po-fine">All pricing is surcharge inclusive. From the club’s 2026 tournament package.</p></section>' +
@@ -271,7 +271,7 @@
       return '<button type="button" role="radio" class="po-choice' + (on ? ' active' : '') + '" aria-checked="' + on + '" data-pkg="' + esc(id) + '"><span class="po-choice-dot" aria-hidden="true"></span><span class="po-choice-main"><span class="po-choice-t">' + esc(title) + '</span><span class="po-choice-s">' + [].concat(sub).map(function (x) { return '<span>' + esc(x) + '</span>'; }).join(' · ') + '</span></span></button>';
     };
     view.innerHTML = '<a class="po-back" href="#/outings">' + Club.icon('chevronLeft') + '<span>Group outings</span></a>' +
-      '<section class="p-hero po-hero" data-reveal><h1>Plan a group outing</h1><p>Tell us about your group and the dates you have in mind. The club will be in touch about availability and a quote.</p></section>' +
+      '<section class="p-hero po-hero" data-reveal><h1>Plan a group outing</h1><p>Tell us your group and dates. The club replies with availability and a quote.</p></section>' +
       '<div class="p-cols po-cols"><form class="po-form" novalidate>' +
         '<section class="po-card"><h2 class="po-h">Your group</h2><div class="form-grid">' +
           '<div class="field span-2"><label for="po-org">Organisation or group name *</label><input class="input" id="po-org" name="organization" maxlength="80" autocomplete="organization" value="' + esc(draft.organization) + '" placeholder="Company, charity, club or group"></div>' +
@@ -291,7 +291,7 @@
           '<div class="field span-2"><label for="po-name">Contact name *</label><input class="input" id="po-name" name="contactName" maxlength="60" autocomplete="name" value="' + esc(draft.contactName) + '"></div>' +
           '<div class="field"><label for="po-email">Email *</label><input class="input" id="po-email" name="email" type="email" maxlength="120" autocomplete="email" value="' + esc(draft.email) + '"></div>' +
           '<div class="field"><label for="po-phone">Phone</label><input class="input" id="po-phone" name="phone" type="tel" inputmode="tel" maxlength="24" autocomplete="tel-national" value="' + esc(draft.phone) + '" placeholder="(204) 555-0123"></div>' +
-        '</div><p class="field-hint">From your member profile. Change them here if the club should reach someone else.</p></section>' +
+        '</div><p class="field-hint">From your profile. Change if someone else should be contacted.</p></section>' +
         '<section class="po-card"><h2 class="po-h">Food and notes</h2>' +
           '<div class="field"><label for="po-notes">Food, drinks and anything else (optional)</label><textarea class="textarea" id="po-notes" name="notes" maxlength="1000" rows="4" placeholder="Meal ideas, prizes, hole sponsors, contests, special requests">' + esc(draft.notes) + '</textarea><span class="field-hint">The food and beverage add-ons and the buffet are listed on the Group outings page.</span></div></section>' +
         '<div class="po-send-row"><button type="submit" class="btn btn-primary po-send">' + Club.icon('send') + '<span>Send enquiry</span></button></div>' +

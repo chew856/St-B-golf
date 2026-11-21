@@ -19,6 +19,10 @@ Last updated: November 21, 2026.
 5. **Twilight green fee.** The public twilight rate ($45) is a placeholder; the club website does not publish it.
 6. **Payment processor.** Card on file, Apple Pay and Google Pay wait until the club chooses a processor.
 
+7b. **Dietary markings on the menu.** Members can filter the menus by Vegetarian, Vegan and Gluten free, but the club's
+   menu marks only 7 of 64 dishes (6 vegetarian; the Fruit Cup is vegan and gluten free). Which other dishes qualify?
+   Staff can mark them in Dining > Menu (edit a dish).
+
 ## Golf rules
 
 7. **Social members' golf vouchers.** Social members get 5 golf vouchers a season. The handbook does not say when they

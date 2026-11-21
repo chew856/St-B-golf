@@ -84,8 +84,24 @@
       '<input type="hidden" name="cart" value="' + esc(cart) + '">' +
       '<input type="hidden" name="dining" value="' + esc(diningPref(pr.dining)) + '">' +
       '<div class="pp-dining"></div>' +
+      dietField(pr) +
       ui.field({ label: 'Dietary and service notes', name: 'notes', type: 'textarea', value: pr.notes, placeholder: 'For example: no shellfish, likes the patio' }) +
       '</form>';
+  }
+  /* ---------------- Dining diet filter (Nov 21) ----------------
+     members.preferences.diet: English labels, the default filter on Dining > Menus (js/portal/dining.js, which also
+     saves it when the member taps a chip there). The chips reuse the Menus chip style (css/portal/dining.css). */
+  const DIET_PREFS = ['Vegetarian', 'Vegan', 'Gluten free'];
+  function dietOf(pr) { const d = (pr || {}).diet; return Array.isArray(d) ? DIET_PREFS.filter(function (x) { return d.indexOf(x) >= 0; }) : []; }
+  function dietField(pr) {
+    const on = dietOf(pr);
+    return '<div class="field pp-diet"><span class="pp-label" id="pp-diet-l">Dietary preferences</span>' +
+      '<div class="pd-diet-chips" role="group" aria-labelledby="pp-diet-l">' + DIET_PREFS.map(function (d) {
+        const p = on.indexOf(d) >= 0;
+        return '<button type="button" class="pd-diet-chip' + (p ? ' on' : '') + '" data-diet-pref="' + esc(d) + '" aria-pressed="' + p + '">' + Club.icon('check', 'pd-diet-tick') + '<span>' + esc(d) + '</span></button>';
+      }).join('') + '</div>' +
+      '<input type="hidden" name="diet" value="' + esc(on.join(',')) + '">' +
+      '<span class="field-hint">The dining menus open showing only these dishes.</span></div>';
   }
   /* French decimals on the chart's axis ("2,5"): the shared chart writes them with a point */
   function frAxis(svg) { return Club.i18n && Club.i18n.lang && Club.i18n.lang() === 'fr' ? svg.replace(/(<text[^>]*>-?\d+)\.(\d+<\/text>)/g, '$1,$2') : svg; }
@@ -169,7 +185,7 @@
     const v = ui.formData(form);
     if (v.notes && v.notes.length > 300) { setErr(form, 'notes', 'Please keep notes under 300 characters. The club office is happy to take longer requests.'); const f = ui.$('.invalid', form); if (f) f.focus(); return false; }
     const cur = fresh(m.id);
-    const prefs = Object.assign({}, cur.preferences || {}, { cart: CART_PREFS.indexOf(v.cart) >= 0 ? v.cart : ((cur.preferences || {}).cart || 'Cart'), dining: diningPref(v.dining), notes: v.notes || '' });
+    const prefs = Object.assign({}, cur.preferences || {}, { cart: CART_PREFS.indexOf(v.cart) >= 0 ? v.cart : ((cur.preferences || {}).cart || 'Cart'), dining: diningPref(v.dining), notes: v.notes || '', diet: dietOf({ diet: String(v.diet || '').split(',') }) });
     S.update('members', m.id, { preferences: prefs });
     ui.toast('Your details have been updated');
     return true;
@@ -233,6 +249,12 @@
         ui.on(sh.body, 'click', '[data-cart]', function (ev, btn) {
           ui.$$('[data-cart]', sh.body).forEach(function (x) { const on = x === btn; x.classList.toggle('active', on); x.setAttribute('aria-checked', on); });
           form.elements.cart.value = btn.dataset.cart;
+        });
+        /* Dining diet filter (Nov 21): chips toggle; saved with the rest on "Save preferences" */
+        ui.on(sh.body, 'click', '[data-diet-pref]', function (ev, btn) {
+          const p = btn.getAttribute('aria-pressed') !== 'true';
+          btn.classList.toggle('on', p); btn.setAttribute('aria-pressed', String(p));
+          form.elements.diet.value = ui.$$('[data-diet-pref][aria-pressed="true"]', sh.body).map(function (x) { return x.dataset.dietPref; }).join(',');
         });
         ui.on(sh.body, 'submit', 'form', function (ev, f) { ev.preventDefault(); if (savePrefs(fresh(id), f)) sh.close(); });
       } else if (go === 'privacy') {

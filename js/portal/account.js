@@ -86,16 +86,16 @@
       note = f.status === 'ended' ? 'The ' + (f.year + 1) + ' assessment of ' + fmt.money(f.amount) + ' is charged on ' + fmt.date(f.next) + '.' : 'It is charged at the start of the season, ' + fmt.date(f.start) + '.';
     } else if (f.status === 'ended') {
       head = '<p class="pa-fb-line">' + f.year + ' F&amp;B credit: ' + money(f.used) + ' used of ' + money(f.assessed) + '</p>';
-      note = (f.expired > 0.005 ? fmt.money(f.expired) + ' was left on ' + fmt.date(f.end) + ' and has expired. ' : 'You used all of it. ') + 'The ' + (f.year + 1) + ' assessment of ' + fmt.money(f.amount) + ' is charged on ' + fmt.date(f.next) + '.';
+      note = (f.expired > 0.005 ? fmt.money(f.expired) + ' expired on ' + fmt.date(f.end) + '. ' : 'All used. ') + 'The ' + (f.year + 1) + ' assessment of ' + fmt.money(f.amount) + ' is charged on ' + fmt.date(f.next) + '.';
     } else {
       head = '<p class="pa-fb-line">F&amp;B credit: ' + money(f.left) + ' left of ' + money(f.assessed) + ', until ' + esc(fmt.dateShort(f.end)) + '</p>';
-      note = 'Food and drink in the clubhouse, takeout and the beverage cart are paid from it first. Anything left after ' + fmt.date(f.end) + ' expires.';
+      note = 'Used first for clubhouse food and drink, takeout and the beverage cart. Expires ' + fmt.date(f.end) + '.';
     }
-    const body = head +
+    const body = (f.assessed ? '' : head) +
       '<div class="pa-fb-figs"><div><span class="pa-fig-l">Credit used</span><span class="pa-fb-val">' + money(f.used) + '</span></div><div class="right"><span class="pa-fig-l">' + (f.status === 'ended' ? 'Credit expired' : 'Credit left') + '</span><span class="pa-fb-val muted">' + money(f.status === 'ended' ? f.expired : f.left) + '</span></div></div>' +
       '<div class="bar pa-fb-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(pct) + '" aria-label="F&amp;B credit used"><span style="width:' + Math.max(f.used ? 2 : 0, pct) + '%"></span></div>' +
       '<p class="pa-fb-note">' + esc(note) + '</p>' +
-      '<p class="pa-fine">Gratuities and service charges are not paid from the credit. It cannot be transferred.</p>' +
+      '<p class="pa-fine">Not for gratuities or service charges. Not transferable.</p>' +
       (f.status === 'open' && f.left > 0.005 ? '<a class="p-link" href="#/dining">Reserve a table' + Club.icon('chevronRight') + '</a>' : '');
     return '<section class="panel pa-fb" data-reveal><div class="panel-head"><div><h3>Food and beverage credit</h3><div class="pa-head-sub">' + f.year + ' season, ' + esc(Club.season ? Club.season.dayLabel() : '') + '</div></div>' + Club.icon('dining', 'pa-head-icon') + '</div><div class="panel-body">' + body + '</div></section>';
   }
@@ -136,7 +136,7 @@
     let dueLine, dueSub;
     if (bal <= 0.005) { dueLine = bal < -0.005 ? 'In credit' : 'Settled'; dueSub = bal < -0.005 ? money(-bal) + ' will go toward your next charges' : 'Nothing is due. Thank you.'; }
     else if (open.some(function (s) { return owedOn(s, m) > 0.005; })) { const s = open.find(function (s) { return owedOn(s, m) > 0.005; }); dueLine = s.dueOn ? fmt.date(s.dueOn) : 'On receipt'; dueSub = (s.status === 'overdue' ? 'Past due · ' : '') + monthLabel(s.period) + ' statement'; }
-    else { dueLine = 'Next statement'; dueSub = 'New charges will be on your ' + monthName(key) + ' statement'; }
+    else { dueLine = 'Next statement'; dueSub = 'On your ' + monthName(key) + ' statement'; }
 
     view.innerHTML = hero(m, 'My account', 'Your balance, statements and payments in one place.') + subnav('') +
       '<div class="pa-ovwrap"><div class="grid pa-ov">' +
@@ -144,7 +144,7 @@
           '<div class="eyebrow">Your account</div><div class="pa-bal-h">Current balance</div>' +
           '<div class="pa-bal-val"><span data-count="' + Math.abs(bal) + '" data-prefix="' + (bal < -0.005 ? '-$' : '$') + '" data-decimals="2">' + esc(fmt.money(0)) + '</span></div>' +
           standingNote(m) +
-          (aging.pastDue > 0.005 && bal > 0.005 ? '<p class="pa-past">' + Club.icon('info') + '<span>' + money(Math.min(aging.pastDue, bal)) + ' is more than 30 days old. If you have already paid, you can ignore this.</span></p>' : '') +
+          (aging.pastDue > 0.005 && bal > 0.005 ? '<p class="pa-past">' + Club.icon('info') + '<span>' + money(Math.min(aging.pastDue, bal)) + ' is over 30 days old. Already paid? Ignore this.</span></p>' : '') +
           '<dl class="pa-facts"><div><dt>Payment due</dt><dd>' + esc(dueLine) + '</dd><dd class="muted">' + dueSub + '</dd></div>' +
           '<div><dt>Last payment</dt><dd>' + (last ? money(last.amount) : 'None yet') + '</dd><dd class="muted">' + (last ? esc(fmt.date(last.date)) + ' · ' + esc(payMethod(last)) : 'Your payments will appear here') + '</dd></div>' +
           '<div><dt>Latest statement</dt><dd>' + (latest ? '<a href="#/account/statement/' + esc(latest.id) + '">' + esc(monthLabel(latest.period)) + '</a>' : 'None issued') + '</dd><dd>' + (latest ? statusLabel(latest) : '<span class="muted">Statements are issued monthly</span>') + '</dd></div></dl>' +
@@ -168,13 +168,13 @@
     const top = ys.deps.filter(function (d) { return d.net > 0; }).sort(function (a, b) { return b.net - a.net; }).slice(0, 3);
     const toRate = Club.feedback ? Club.feedback.visits({ memberId: m.id }).filter(function (v) { return !v.fb; }).length : 0;
     return '<div class="grid pa-ov3">' + renewCard(m) +
-      '<section class="panel pa-ys-card" data-reveal><div class="panel-head"><div><h3>' + YEAR + ' season summary</h3><div class="pa-head-sub">Your spending by department, ready to print</div></div>' + Club.icon('reports', 'pa-head-icon') + '</div><div class="panel-body">' +
+      '<section class="panel pa-ys-card" data-reveal><div class="panel-head"><div><h3>' + YEAR + ' season summary</h3><div class="pa-head-sub">By department</div></div>' + Club.icon('reports', 'pa-head-icon') + '</div><div class="panel-body">' +
         (ys.items ? '<div class="pa-rn-fig"><span class="pa-fig-l">Season total so far</span><span class="pa-rn-val">' + money(ys.total) + '</span></div>' +
           '<ul class="pa-ys-mini">' + top.map(function (d) { return '<li><span class="pa-ys-dot" style="--cat:' + CAT_COLOR[d.c] + '"></span><span>' + esc(d.c) + '</span><span class="num">' + money(d.net) + '</span></li>'; }).join('') + '</ul>'
           : '<p class="pa-rn-line">Nothing has been charged to your account in ' + YEAR + ' yet.</p>') +
         '<a class="p-link" href="#/account/summary">View and download' + Club.icon('chevronRight') + '</a></div></section>' +
       '<a class="pa-linkrow" href="#/feedback" data-reveal><span class="pa-st-icon">' + Club.icon('star') + '</span><span class="pa-st-main"><span class="pa-st-period">Rate your visits</span><span class="pa-row-sub">' +
-        esc(toRate ? toRate + (toRate === 1 ? ' visit' : ' visits') + ' from the last 14 days to rate' : 'Tell us how your rounds and meals went') + '</span></span>' + Club.icon('chevronRight', 'pa-chev') + '</a>' +
+        esc(toRate ? toRate + (toRate === 1 ? ' visit' : ' visits') + ' to rate, last 14 days' : 'How did your rounds and meals go?') + '</span></span>' + Club.icon('chevronRight', 'pa-chev') + '</a>' +
     '</div>';
   }
 
@@ -214,11 +214,11 @@
     } else {
       const sched = RN.schedule(t.annualDues, today(), 'monthly');
       body = '<div class="pa-rn-fig"><span class="pa-fig-l">' + esc(t.name) + ' dues for ' + RN.SEASON + '</span><span class="pa-rn-val">' + money(t.annualDues) + '</span></div>' +
-        '<p class="pa-rn-line">Pay in full' + (sched.length > 1 ? ', or on the time payment plan: ' + esc(sched.length) + ' payments due on the 15th of each month until August 15' : '') + '.</p>' +
+        '<p class="pa-rn-line">Pay in full' + (sched.length > 1 ? ' or in ' + esc(sched.length) + ' monthly payments, due the 15th, until August 15' : '') + '.</p>' +
         '<p class="pa-fine pa-rn-demo">Placeholder amount in this demo.</p>' +
         '<a class="btn btn-primary pa-rn-go" href="#/account/renew">' + Club.icon('crest') + '<span>Renew for ' + RN.SEASON + '</span></a>';
     }
-    return '<section class="panel pa-rn-card" data-reveal><div class="panel-head"><div><h3>' + RN.SEASON + ' membership</h3><div class="pa-head-sub">' + (r ? 'You are renewed for next season' : 'Renewal for next season') + '</div></div>' + Club.icon('crest', 'pa-head-icon') + '</div><div class="panel-body">' + body + '</div></section>';
+    return '<section class="panel pa-rn-card" data-reveal><div class="panel-head"><div><h3>' + RN.SEASON + ' membership</h3><div class="pa-head-sub">' + (r ? 'Renewed for next season' : 'Next season') + '</div></div>' + Club.icon('crest', 'pa-head-icon') + '</div><div class="panel-body">' + body + '</div></section>';
   }
   function schedRows(sched, r, m) {
     const RN = renewApi(), ps = r && r.plan === 'monthly' && RN && RN.status ? RN.status(r) : null;

@@ -24,14 +24,14 @@
         if (!kinds.some(function (s) { return s[0] === show; })) show = 'all';
         const list = all.filter(function (v) { return show === 'all' || v.kind === show; });
         view.innerHTML = '<a class="vf-back" href="#/account">' + Club.icon('chevronLeft') + '<span>My account</span></a>' +
-          '<section class="p-hero vf-hero" data-reveal><h1>Rate your visits</h1><p>How did it go? One tap is enough, and a comment is up to you. Your visits from the last ' + F.WINDOW_DAYS + ' days are here, and you can change a rating any time until then.</p></section>' +
+          '<section class="p-hero vf-hero" data-reveal><h1>Rate your visits</h1><p>Visits from the last ' + F.WINDOW_DAYS + ' days. Tap to rate; you can change it within that time.</p></section>' +
           (all.length
             ? '<div class="vf-bar" data-reveal>' + (kinds.length > 2 ? '<div class="segmented vf-seg" role="group" aria-label="Show">' + kinds.map(function (s) {
                 return '<button type="button" data-show="' + s[0] + '" class="' + (s[0] === show ? 'active' : '') + '" aria-pressed="' + (s[0] === show) + '">' + esc(s[1]) + '</button>';
               }).join('') + '</div>' : '') + '<p class="vf-count" aria-live="polite">' + esc(countLine(all)) + '</p></div>' +
               '<div class="vf-list">' + list.map(function (v) { return F.cardHTML(v); }).join('') + '</div>'
-            : '<section class="panel" data-reveal>' + ui.empty({ icon: 'star', title: 'Nothing to rate right now', text: 'After a round, a meal or a lesson, your visit shows here for ' + F.WINDOW_DAYS + ' days so you can tell us how it went.' }) + '</section>') +
-          '<p class="vf-fine">Your ratings go to the club team to help improve the course, the dining room and lessons. They are not shown to other members.</p>';
+            : '<section class="panel" data-reveal>' + ui.empty({ icon: 'star', title: 'Nothing to rate right now', text: 'Rounds, meals and lessons show here for ' + F.WINDOW_DAYS + ' days.' }) + '</section>') +
+          '<p class="vf-fine">Only the club team sees your ratings.</p>';
       }
       draw();
       F.wire(view, who, function () { const c = ui.$('.vf-count', view); if (c) c.textContent = countLine(F.visits(who)); });

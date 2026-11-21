@@ -20,8 +20,38 @@ body.portal .tt-hero .pk-acc-title { font-size: 0.9375rem; line-height: 1.35; }
 body.portal .p-page .tt-cond-note, .tt-cond-note { margin: 10px 0 0; font-size: 0.875rem; line-height: 1.5; color: var(--text-2); }
 .tt-cond-k { color: var(--text); font-weight: 500; }
 
-/* ---------------- Tabs ---------------- */
-.tt-tabs .tabs { margin-bottom: 16px; }
+/* ---------------- Three sections: Book · My tee times · Weekend ballot (owner, Nov 21) ----------------
+   Three equal cards; the one showing is filled. Phones: icon over the label, the count in the corner.
+   From 640px: one row each, the count after the label. The buttons keep .tab for older tests: reset its theme here. */
+body.portal .tt-secs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0 0 16px; }
+body.portal .tt-secs .tt-sec {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  min-width: 0; min-height: 72px; padding: 10px 6px; margin: 0;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card);
+  font-family: var(--sans); font-size: 0.875rem; font-weight: 500; line-height: 1.25; letter-spacing: normal; text-transform: none; text-align: center;
+  color: var(--text-2); white-space: normal; hyphens: none; overflow-wrap: normal; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: background var(--t-ui) var(--ease-ui), border-color var(--t-ui) var(--ease-ui), color var(--t-ui) var(--ease-ui);
+}
+body.portal .tt-secs .tt-sec::before { content: none; }
+body.portal .tt-secs .tt-sec:focus-visible { outline: none; box-shadow: var(--focus); }
+@media (hover: hover) { body.portal .tt-secs .tt-sec:not(.active):hover { background: var(--sage-50); border-color: var(--forest-500); color: var(--text); } }
+body.portal .tt-secs .tt-sec.active { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); }
+.tt-sec-ic { display: inline-flex; color: var(--forest-500); }
+.tt-sec-ic svg { width: 20px; height: 20px; }
+body.portal .tt-sec.active .tt-sec-ic { color: var(--on-dark); }
+.tt-sec-l { min-width: 0; text-wrap: balance; }
+.tt-sec-n {
+  position: absolute; top: 6px; right: 6px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px;
+  background: var(--sage-100); color: var(--forest-800); font-size: 0.75rem; font-weight: 600; line-height: 22px; text-align: center; font-variant-numeric: tabular-nums;
+}
+.tt-sec-n[hidden] { display: none; }
+body.portal .tt-sec.active .tt-sec-n { background: var(--on-dark); color: var(--forest-800); }
+body.portal .tt-sec .tt-sec-n.is-new { background: var(--warn); color: var(--on-dark); }   /* new ballot results */
+@media (min-width: 640px) {
+  body.portal .tt-secs { gap: 12px; margin-bottom: 20px; }
+  body.portal .tt-secs .tt-sec { flex-direction: row; gap: 10px; min-height: 56px; padding: 10px 16px; font-size: 0.9375rem; }
+  .tt-sec-n { position: static; }
+}
 
 /* ---------------- Booking card ---------------- */
 .tt-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 16px; }

@@ -46,8 +46,22 @@ body.portal {
   --t-ui: 180ms;
 
   /* ---------- Type ---------- */
-  --serif: "Lora", "Newsreader", Georgia, serif;
+  /* One plain sans everywhere (owner, Nov 21: no serif titles; Traccr-like). --serif and --font-display are kept as
+     aliases so older rules in any stylesheet follow it. */
   --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-title: var(--sans);
+  --serif: var(--font-title);
+  /* Type scale: one size per role. Page title, section title, card title, body, meta and label, plus display
+     numbers (balances, times, scores). Weights: titles 600, UI 500, text 400. */
+  --fs-page: 1.75rem;      /* 28: page and hero titles (h1) */
+  --fs-section: 1.25rem;   /* 20: section titles (h2) */
+  --fs-card: 1.0625rem;    /* 17: card and row titles (h3) */
+  --fs-body: 0.9375rem;    /* 15: text and buttons */
+  --fs-meta: 0.8125rem;    /* 13: muted meta lines, hints, table text */
+  --fs-label: 0.75rem;     /* 12: small caps labels */
+  --fs-num: 1.5rem;        /* 24: numbers on cards */
+  --fs-num-lg: 2rem;       /* 32: the one big number on a page */
+  --fw-title: 600;
 
   /* ---------- Membership Handbook page (js/portal/handbook.js): the printed handbook's look ---------- */
   --font-handbook: "Khand", "Arial Narrow", sans-serif;   /* the handbook's tall condensed headings */
@@ -80,7 +94,7 @@ body.portal {
   --slate: var(--forest-500);  --slate-tint: var(--sage-50);
   --c1: var(--forest-800); --c2: var(--forest-500); --c3: #8FA596; --c4: var(--forest-700); --c5: var(--sage-200); --c6: var(--danger);
   --r-control: var(--radius-ctl); --r-panel: var(--radius-card);
-  --font-display: var(--serif);
+  --font-display: var(--font-title);
   --font-body: var(--sans);
   --fs-11: 0.75rem; --fs-12: 0.8125rem; --fs-13: 0.875rem; --fs-15: 1rem; --fs-18: 1.0625rem;
   --fs-24: 1.375rem; --fs-32: 1.375rem; --fs-44: 1.875rem; --fs-56: 1.875rem;
@@ -95,20 +109,19 @@ body.portal {
 }
 
 /* ---------- Type roles ---------- */
-body.portal h1, body.portal h2 { font-family: var(--serif); font-weight: 500; color: var(--text); letter-spacing: -0.005em; text-transform: none; }
-body.portal h1 { font-size: 1.875rem; line-height: 1.2; }
-body.portal h2 { font-size: 1.375rem; line-height: 1.27; }
-body.portal h3, body.portal h4 { font-family: var(--sans); font-weight: 500; color: var(--text); letter-spacing: normal; text-transform: none; }
-body.portal h3 { font-size: 1.0625rem; line-height: 1.4; }
-body.portal h4 { font-size: 1rem; }
-body.portal strong, body.portal b, body.portal th { font-weight: 500; }
-body.portal .serif { font-family: var(--sans); font-style: normal; }          /* serif is reserved for titles and display numbers */
+body.portal h1, body.portal h2, body.portal h3, body.portal h4 { font-family: var(--font-title); font-weight: var(--fw-title); color: var(--text); text-transform: none; }
+body.portal h1 { font-size: var(--fs-page); line-height: 1.2; letter-spacing: -0.02em; }
+body.portal h2 { font-size: var(--fs-section); line-height: 1.3; letter-spacing: -0.01em; }
+body.portal h3 { font-size: var(--fs-card); line-height: 1.35; letter-spacing: -0.005em; }
+body.portal h4 { font-size: 1rem; line-height: 1.4; letter-spacing: normal; }
+body.portal strong, body.portal b, body.portal th { font-weight: 600; }
+body.portal .serif { font-family: var(--sans); font-style: normal; }
 body.portal em, body.portal i { font-style: normal; }
 body.portal .muted, body.portal .ink-2 { color: var(--text-2); }
-body.portal small, body.portal .person-sub, body.portal .field-hint, body.portal .stat-meta { font-size: 0.875rem; color: var(--text-2); }
+body.portal small, body.portal .person-sub, body.portal .field-hint, body.portal .stat-meta { font-size: var(--fs-meta); color: var(--text-2); line-height: 1.45; }
 body.portal .num, body.portal time, body.portal td, body.portal .stat-value { font-variant-numeric: tabular-nums lining-nums; }
 /* Eyebrow: the one refined accent per section */
-body.portal .eyebrow, body.portal .label-caps { font-family: var(--sans); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--forest-500); }
+body.portal .eyebrow, body.portal .label-caps { font-family: var(--sans); font-size: var(--fs-label); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--forest-500); }
 /* Everything else is sentence case with normal spacing */
 body.portal .btn, body.portal .tab, body.portal .segmented button, body.portal .badge, body.portal .field label,
 body.portal .p-nav a, body.portal .p-tabbar a, body.portal .p-tabbar button, body.portal .table th { text-transform: none; letter-spacing: normal; }
@@ -123,7 +136,7 @@ body.portal a, body.portal button, body.portal .btn { transition: background-col
 /* ---------- Surfaces: soft cards with a hairline and a whisper of shadow ---------- */
 body.portal .panel, body.portal .stats { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
 body.portal .panel-head { border-bottom: 1px solid var(--border); padding: 16px; }
-body.portal .panel-head h3 { font-size: 1.0625rem; font-weight: 500; }
+body.portal .panel-head h3 { font-size: var(--fs-card); font-weight: var(--fw-title); }
 body.portal .panel-body { padding: 16px; }
 body.portal .panel.dark { background: var(--forest-950); color: var(--on-dark); border-color: var(--forest-950); }
 body.portal .panel.dark h2, body.portal .panel.dark h3 { color: var(--on-dark); }
@@ -131,7 +144,7 @@ body.portal .panel.dark .muted, body.portal .panel.dark .eyebrow { color: var(--
 body.portal .p-hero::before { display: none; }
 body.portal .divider, body.portal .divider.brass { background: var(--border); }
 body.portal .stat { border-color: var(--border); }
-body.portal .stat-value { font-family: var(--serif); font-weight: 500; font-size: 1.625rem; color: var(--text); }
+body.portal .stat-value { font-family: var(--font-title); font-weight: var(--fw-title); font-size: var(--fs-num); color: var(--text); letter-spacing: -0.01em; }
 
 /* Inset grouped list: one card, rows separated by hairlines (pages opt in with .p-list) */
 body.portal .p-list { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); list-style: none; margin: 0; padding: 0; overflow: hidden; }
@@ -192,7 +205,7 @@ body.portal .badge.bad { background: var(--danger-bg); color: var(--danger); }
 body.portal .badge.plain, body.portal .badge.outline { background: var(--surface); color: var(--text-2); border: 1px solid var(--border); }
 
 /* ---------- Avatars ---------- */
-body.portal .avatar { background: var(--forest-800); color: var(--on-dark); border: 0; font-family: var(--serif); font-weight: 500; min-width: 32px; }
+body.portal .avatar { background: var(--forest-800); color: var(--on-dark); border: 0; font-family: var(--sans); font-weight: 600; min-width: 32px; }
 body.portal .avatar.sm { width: 32px; height: 32px; font-size: 0.8125rem; }
 body.portal .avatar.light { background: var(--sage-100); color: var(--forest-800); }
 
@@ -200,8 +213,8 @@ body.portal .avatar.light { background: var(--sage-100); color: var(--forest-800
 body.portal .table { font-size: 0.9375rem; }
 body.portal .table th { font-size: 0.8125rem; font-weight: 500; color: var(--text-2); background: transparent; border-color: var(--border); }
 body.portal .table td { border-color: var(--border); }
-body.portal .empty h4 { font-family: var(--serif); font-weight: 500; font-size: 1.25rem; }
-body.portal .empty p { font-size: 0.9375rem; color: var(--text-2); }
+body.portal .empty h4 { font-family: var(--font-title); font-weight: var(--fw-title); font-size: var(--fs-card); }
+body.portal .empty p { font-size: var(--fs-body); color: var(--text-2); }
 body.portal .empty svg { color: var(--forest-500); }
 
 /* ---------- Icons: 1.5px stroke ---------- */
@@ -211,7 +224,7 @@ body.portal svg.icon { stroke-width: 1.5; }
 body.portal .overlay { background: var(--forest-scrim); z-index: 140; }   /* confirm dialogs sit above kit sheets */
 body.portal .modal, body.portal .drawer { background: var(--surface); border-top: 0; border-radius: var(--radius-card); box-shadow: var(--shadow-sheet); }
 body.portal .drawer { border-left: 1px solid var(--border); border-radius: 0; }
-body.portal .modal-head h3, body.portal .drawer .modal-head h3 { font-family: var(--serif); font-size: 1.375rem; font-weight: 500; }
+body.portal .modal-head h3, body.portal .drawer .modal-head h3 { font-family: var(--font-title); font-size: var(--fs-section); font-weight: var(--fw-title); }
 body.portal .modal-foot { background: var(--surface); border-top: 1px solid var(--border); }
 body.portal .toast { background: var(--forest-950); color: var(--on-dark); border-left: 0; border-radius: var(--radius-ctl); font-size: 0.9375rem; }
 body.portal .toast svg { color: var(--on-dark); }
@@ -223,12 +236,12 @@ body.portal .toast svg { color: var(--on-dark); }
   body.portal .modal::before { content: ""; display: block; width: 36px; height: 4px; border-radius: 2px; background: var(--border-strong); margin: 8px auto 0; flex: none; }
 }
 
-/* ---------- Header: forest, serif name, MEMBERS eyebrow, 36px avatar ---------- */
+/* ---------- Header: forest, club name, MEMBERS eyebrow, 36px avatar ---------- */
 body.portal .p-header { background: var(--forest-950); border-bottom: 0; padding-top: env(safe-area-inset-top); }
 body.portal .p-header-inner { height: auto; min-height: 56px; padding-top: 6px; padding-bottom: 6px; }
 body.portal .p-brand { color: var(--on-dark); min-width: 0; flex: 1 1 auto; }
 body.portal .p-brand > span { min-width: 0; }
-body.portal .p-brand-name { font-family: var(--serif); font-weight: 500; font-size: 1.25rem; line-height: 1.1; color: var(--on-dark); white-space: normal; letter-spacing: normal; }
+body.portal .p-brand-name { font-family: var(--font-title); font-weight: 600; font-size: 1.125rem; letter-spacing: -0.01em; line-height: 1.1; color: var(--on-dark); white-space: normal; letter-spacing: normal; }
 body.portal .p-brand-sub { font-family: var(--sans); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--on-dark-2); margin-top: 3px; }
 body.portal .p-crest.stb-logo { color: var(--on-dark); height: 30px; }
 body.portal .p-nav a { font-size: 0.875rem; font-weight: 500; color: var(--on-dark-2); text-transform: none; letter-spacing: normal; }
@@ -248,6 +261,10 @@ body.portal .p-me-menu svg { color: var(--forest-500); width: 20px; height: 20px
 /* ---------- More menu ---------- */
 body.portal .p-more-list a, body.portal .p-more-list button { font-size: 1rem; min-height: 52px; color: var(--text); border-color: var(--border); }
 body.portal .p-more-list svg { width: 20px; height: 20px; color: var(--forest-500); }
+/* Grouped: Account, Golf, Food and drink, Club, then Sign out */
+body.portal .p-more-group + .p-more-group { margin-top: 20px; }
+body.portal .p-more-h { margin: 0 0 2px; font-size: var(--fs-label); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-2); }
+body.portal .p-more-group > :last-child { border-bottom: 0; }
 
 /* ---------- Footer: compact, so it never costs a third of a screen ---------- */
 body.portal .p-footer { padding: 16px 20px 20px; margin-top: 8px; line-height: 1.45; text-align: center; }
@@ -278,7 +295,7 @@ body.portal .toasts { bottom: calc(80px + env(safe-area-inset-bottom)); }
 /* ---------- Sign in ---------- */
 body.portal.signed-out { background: var(--forest-950); }
 body.portal .p-signin-card { border-top: 0; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-signin); }
-body.portal .p-signin h1 { font-family: var(--serif); font-size: 1.875rem; font-weight: 500; }
+body.portal .p-signin h1 { font-family: var(--font-title); font-size: var(--fs-page); font-weight: var(--fw-title); }
 body.portal .p-signin-sub { color: var(--text-2); font-size: 0.9375rem; }
 body.portal .p-demo-btn { min-height: 60px; border: 1px solid var(--border); border-radius: var(--radius-ctl); background: var(--surface); }
 @media (hover: hover) { body.portal .p-demo-btn:hover { background: var(--sage-50); border-color: var(--border-strong); } }
@@ -290,10 +307,10 @@ body.portal .p-page { padding: 20px 20px 32px; }
 @media (min-width: 769px) { body.portal .p-page { padding: 32px 24px 48px; } }
 body.portal .p-hero { background: transparent; color: var(--text); padding: 0; margin-bottom: 24px; border-radius: 0; border: 0; overflow: visible; }
 body.portal .p-hero h1, body.portal .p-hero h2 { color: var(--text); }
-body.portal .p-hero p { color: var(--text-2); font-size: 0.9375rem; }
-body.portal .p-section { margin-top: 28px; }
+body.portal .p-hero p { color: var(--text-2); font-size: var(--fs-body); }
+body.portal .p-section { margin-top: 32px; }
 body.portal .p-section-head { margin-bottom: 12px; align-items: baseline; }
-body.portal .p-section-head h2 { font-size: 1.375rem; }
+body.portal .p-section-head h2 { font-size: var(--fs-section); }
 
 /* ---------- Large text sizes: layouts hold and text wraps ---------- */
 body.portal dl, body.portal dl > div, body.portal dd, body.portal dt { min-width: 0; overflow-wrap: break-word; }
@@ -342,7 +359,7 @@ body.portal .p-cols > * { min-width: 0; }
   body.portal.has-bar .toasts { bottom: 96px; }
   body.portal .p-cols { grid-template-columns: minmax(0, 1.6fr) minmax(320px, 1fr); gap: 32px; }
   body.portal .p-cols.is-even { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  body.portal h1 { font-size: 2.125rem; }
+  body.portal { --fs-page: 2rem; }
 }
 @media (min-width: 1440px) {
   body.portal .p-page, body.portal .p-header-inner, body.portal .p-footer, body.portal .pk-bar { max-width: 1320px; }

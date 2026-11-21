@@ -396,7 +396,7 @@
       '<p class="fr-join-sub">' + esc(teeLabel(tt) + ' · ' + tt.holes + ' holes · ' + spotsText(tt)) + '</p>' +
       '<div class="fr-editor"></div>' +
       (ask ? '<p class="fr-quiet">' + Club.icon('info') + '<span>' + esc(firstOf(ownerId)) + ' approves requests to join. Nothing is booked until then.</span></p>' : '') +
-      '<p class="fr-quiet">' + Club.icon('info') + '<span>Fees are settled at check-in, as for any tee time. Your guests’ fees go on your account. You can leave up to 2 hours before you play.</span></p>' +
+      '<p class="fr-quiet">' + Club.icon('info') + '<span>Fees are paid at check-in; guests’ fees go on your account. You can leave up to 2 hours before.</span></p>' +
       '<div class="fr-join-err" role="alert" hidden></div></div>',
       footer: '<button type="button" class="btn btn-primary" data-fr="confirm-join">' + (ask ? 'Send request' : 'Confirm') + '</button>' });
     const ed = T.editor(ui.$('.fr-editor', sh.body), model, { me: mem, date: tt.date, time: tt.time, excludeId: tt.id, uid: 'fj' + tt.id, league: !ask,
@@ -616,7 +616,7 @@
       const on = o[0] === x.view; return '<button type="button" data-golf-view="' + o[0] + '" aria-pressed="' + on + '"' + (on ? ' class="active"' : '') + '>' + o[1] + '</button>';
     }).join('') + '</div>' : '';
     let body;
-    if (!x.all.length) body = '<p class="fr-quiet">' + (friendsOf(me).length ? 'None of your friends has a tee time booked this week.' : 'Add friends to see when they are playing.') + '</p>';
+    if (!x.all.length) body = '<p class="fr-quiet">' + (friendsOf(me).length ? 'No friends playing this week.' : 'Add friends to see when they are playing.') + '</p>';
     else if (!list.length) body = '<p class="fr-quiet fr-none">No open spots with friends this week. <button type="button" class="p-link" data-golf-view="all">See all (' + x.all.length + ')</button></p>';
     else body = golfingHTML(me, list, GOLF_LIMIT);
     return '<section class="fr-golfing" aria-labelledby="fr-golf-h"><div class="fr-side-head"><h2 class="fr-h" id="fr-golf-h">Friends golfing</h2>' +
@@ -627,7 +627,7 @@
     const fs = friendsOf(me);
     const list = query.trim() ? searchResults(me) :
       (fs.length ? '<ul class="p-list fr-list">' + fs.map(function (id) { return friendRow(me, id, wide() && id === selected); }).join('') + '</ul>'
-        : '<div class="fr-empty">' + ui.empty({ icon: 'members', title: 'No friends yet', text: 'Search for a member and send a friend request. Nothing is shared until they accept.' }) + '</div>');
+        : '<div class="fr-empty">' + ui.empty({ icon: 'members', title: 'No friends yet', text: 'Find a member and send a request. Nothing is shared until they accept.' }) + '</div>');
     const friendsBlock = '<section class="fr-mine" aria-labelledby="fr-mine-h"><h2 class="fr-h" id="fr-mine-h">Your friends</h2><label class="fr-search"><span class="fr-search-l">Find a member</span><span class="fr-search-box">' + Club.icon('search') +
         '<input class="input" type="search" name="q" placeholder="Search by name" autocomplete="off" value="' + esc(query) + '"></span></label>' +
         '<div class="fr-list-wrap" aria-live="polite">' + list + '</div></section>';

@@ -169,7 +169,7 @@
     /** Call the cart: the choice above the menu, for golfers without an open order. */
     function callHTML() {
       return '<section class="co-call" aria-labelledby="co-call-h"><span class="co-call-ic" aria-hidden="true">' + Club.icon('cart') + '</span>' +
-        '<div class="co-call-main"><h2 id="co-call-h" class="co-call-t">Call the cart to you</h2><p class="co-call-s">The cart comes to your hole and you choose from what’s on board.</p></div>' +
+        '<div class="co-call-main"><h2 id="co-call-h" class="co-call-t">Call the cart to you</h2><p class="co-call-s">It comes to your hole. Choose from what’s on board.</p></div>' +
         '<button type="button" class="btn btn-primary co-call-btn" data-act="call">Call the cart</button></section>';
     }
     function statusHTML() {
@@ -316,7 +316,7 @@
     }
     /** "You teed off at 8:00 AM, so you’re probably on hole 4 by now." (the time the estimate counts from) */
     function teeHint(tt, hole) {
-      return 'You teed off' + (cart.startTeeOf(tt) === 10 ? ' on the 10th tee' : '') + ' at ' + fmt.time(cart.teedOffAt(tt)) + ', so you’re probably on hole ' + hole + ' by now. Change it if you’re elsewhere.';
+      return 'You teed off' + (cart.startTeeOf(tt) === 10 ? ' on the 10th tee' : '') + ' at ' + fmt.time(cart.teedOffAt(tt)) + ', so probably on hole ' + hole + '. Change it if not.';
     }
     function clearErr() { ui.$$('.co-where .field-error', view).forEach(function (n) { n.remove(); }); }
 

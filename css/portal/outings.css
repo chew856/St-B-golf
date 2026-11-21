@@ -6,19 +6,19 @@ body.portal .po-hero-acts .btn { min-height: 48px; }
 body.portal .po-hero-acts .btn svg { width: 18px; height: 18px; }
 body.portal .po-main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; }
 body.portal .po-main > * { min-width: 0; }
-body.portal .po-fine { font-size: 0.8125rem; color: var(--text-3); margin: 12px 0 0; }
-body.portal .po-p { margin: 0 0 12px; color: var(--text-2); font-size: 0.9375rem; }
+body.portal .po-fine { font-size: var(--fs-meta); color: var(--text-3); margin: 12px 0 0; }
+body.portal .po-p { margin: 0 0 12px; color: var(--text-2); font-size: var(--fs-body); }
 body.portal .po-muted { color: var(--text-3); }
 
 /* My enquiries */
 body.portal .po-empty { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 16px; }
-body.portal .po-empty p { margin: 0 0 4px; color: var(--text-2); font-size: 0.9375rem; }
+body.portal .po-empty p { margin: 0 0 4px; color: var(--text-2); font-size: var(--fs-body); }
 body.portal .p-list.po-enqs > li { padding: 0; }
 body.portal .po-enq { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 10px 16px; background: none; border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
 @media (hover: hover) { body.portal .po-enq:hover { background: var(--sage-50); } }
 body.portal .po-enq-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 body.portal .po-enq-t { font-weight: 500; color: var(--text); overflow-wrap: anywhere; }
-body.portal .po-enq-s { font-size: 0.8125rem; color: var(--text-3); }
+body.portal .po-enq-s { font-size: var(--fs-meta); color: var(--text-3); }
 body.portal .po-enq .badge { flex: none; }
 body.portal .po-enq-go { width: 18px; height: 18px; flex: none; color: var(--text-3); }
 body.portal .po-status { white-space: nowrap; }
@@ -26,38 +26,38 @@ body.portal .po-status { white-space: nowrap; }
 /* Packages */
 body.portal .po-pkgs { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 body.portal .po-pkg { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 16px; display: flex; flex-direction: column; min-width: 0; }
-body.portal .po-pkg-head h3 { font-family: var(--serif); font-weight: 500; font-size: 1.25rem; margin: 2px 0 0; color: var(--text); }
+body.portal .po-pkg-head h3 { font-family: var(--font-title); font-weight: 600; font-size: var(--fs-section); margin: 2px 0 0; color: var(--text); }
 body.portal .po-price { display: flex; align-items: baseline; gap: 6px; margin: 8px 0 10px; }
-body.portal .po-price-n { font-family: var(--serif); font-weight: 500; font-size: 1.75rem; color: var(--forest-800); font-variant-numeric: tabular-nums; }
-body.portal .po-price-u { font-size: 0.875rem; color: var(--text-3); }
-body.portal .po-pkg-fmt, body.portal .po-pkg-when { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 6px; font-size: 0.9375rem; color: var(--text-2); }
+body.portal .po-price-n { font-family: var(--font-title); font-weight: 600; font-size: var(--fs-num); color: var(--forest-800); font-variant-numeric: tabular-nums; }
+body.portal .po-price-u { font-size: var(--fs-meta); color: var(--text-3); }
+body.portal .po-pkg-fmt, body.portal .po-pkg-when { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 6px; font-size: var(--fs-body); color: var(--text-2); }
 body.portal .po-pkg-fmt svg, body.portal .po-pkg-when svg { width: 18px; height: 18px; flex: none; margin-top: 1px; color: var(--forest-500); }
 body.portal .po-incl { list-style: none; margin: 8px 0 14px; padding: 10px 0 0; border-top: 1px solid var(--border); display: grid; gap: 6px; }
-body.portal .po-incl li { display: flex; align-items: flex-start; gap: 8px; font-size: 0.9375rem; color: var(--text); }
+body.portal .po-incl li { display: flex; align-items: flex-start; gap: 8px; font-size: var(--fs-body); color: var(--text); }
 body.portal .po-incl svg { width: 16px; height: 16px; flex: none; margin-top: 3px; color: var(--forest-800); }
 body.portal .po-pkg-go { margin-top: auto; justify-content: center; min-height: 44px; }
 
 /* Good to know: accordions */
 body.portal .po-accs { display: grid; gap: 8px; }
-body.portal .po-acc-h { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 14px 0 6px; font: 500 0.8125rem/1.3 var(--sans); color: var(--text-3); text-transform: uppercase; letter-spacing: 0.04em; }
+body.portal .po-acc-h { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 14px 0 6px; font: 500 var(--fs-meta)/1.3 var(--sans); color: var(--text-3); text-transform: uppercase; letter-spacing: 0.04em; }
 body.portal .po-acc-h:first-child { margin-top: 0; }
 body.portal .po-acc-n { text-transform: none; letter-spacing: normal; font-weight: 400; }
 body.portal .po-rows { list-style: none; margin: 0; padding: 0; }
 body.portal .po-rows li { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--border); }
 body.portal .po-rows li:first-child { border-top: 0; }
 body.portal .po-row-main { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-body.portal .po-row-t { color: var(--text); font-size: 0.9375rem; }
-body.portal .po-row-s { color: var(--text-3); font-size: 0.8125rem; }
+body.portal .po-row-t { color: var(--text); font-size: var(--fs-body); }
+body.portal .po-row-s { color: var(--text-3); font-size: var(--fs-meta); }
 body.portal .po-row-p { flex: none; text-align: right; font-variant-numeric: tabular-nums; color: var(--text); }
-body.portal .po-row-p small { display: block; font-size: 0.75rem; color: var(--text-3); }
+body.portal .po-row-p small { display: block; font-size: var(--fs-label); color: var(--text-3); }
 body.portal .po-terms { margin: 0; display: grid; gap: 12px; }
 body.portal .po-terms dt { font-weight: 500; color: var(--text); margin-bottom: 2px; }
-body.portal .po-terms dd { margin: 0; color: var(--text-2); font-size: 0.9375rem; }
+body.portal .po-terms dd { margin: 0; color: var(--text-2); font-size: var(--fs-body); }
 body.portal .po-people { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
 body.portal .po-people li { display: flex; gap: 12px; align-items: flex-start; }
 body.portal .po-person { min-width: 0; display: flex; flex-direction: column; }
 body.portal .po-person-n { font-weight: 500; color: var(--text); }
-body.portal .po-person-r { font-size: 0.875rem; color: var(--text-3); }
+body.portal .po-person-r { font-size: var(--fs-meta); color: var(--text-3); }
 body.portal .po-person-links { display: flex; flex-wrap: wrap; column-gap: 16px; }
 body.portal .po-person-links .p-link { overflow-wrap: anywhere; }
 body.portal .po-person-links svg { width: 16px; height: 16px; flex: none; }
@@ -67,7 +67,7 @@ body.portal .po-back { display: inline-flex; align-items: center; gap: 4px; min-
 body.portal .po-back svg { width: 18px; height: 18px; }
 body.portal .po-form > * + * { margin-top: 16px; }
 body.portal .po-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 16px; min-width: 0; }
-body.portal .po-h { font-family: var(--sans); font-size: 1.0625rem; font-weight: 500; margin: 0 0 12px; color: var(--text); }
+body.portal .po-h { font-family: var(--sans); font-size: var(--fs-card); font-weight: 500; margin: 0 0 12px; color: var(--text); }
 body.portal .po-card > .field-hint { display: block; margin-top: 8px; }
 body.portal .po-dates { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 body.portal .po-date { min-width: 0; }
@@ -75,7 +75,7 @@ body.portal .po-date .dp-label { display: block; }
 body.portal .po-date .field-error { display: block; margin-top: 6px; }
 body.portal .po-date.po-invalid .dp-field { border-color: var(--danger); }
 body.portal .po-dp-empty .dp-field-text { color: var(--text-3); }
-body.portal .po-clear { min-height: 40px; font-size: 0.875rem; }
+body.portal .po-clear { min-height: 40px; font-size: var(--fs-meta); }
 body.portal .po-date-hint { margin-top: 10px; }
 body.portal .po-choices { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 body.portal .po-choices.po-invalid .po-choice { border-color: var(--danger); }
@@ -86,12 +86,12 @@ body.portal .po-choice-dot { width: 20px; height: 20px; flex: none; border-radiu
 body.portal .po-choice.active .po-choice-dot { border-color: var(--forest-800); box-shadow: inset 0 0 0 4px var(--surface); background: var(--forest-800); }
 body.portal .po-choice-main { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 body.portal .po-choice-t { font-weight: 500; }
-body.portal .po-choice-s { font-size: 0.8125rem; color: var(--text-3); }
+body.portal .po-choice-s { font-size: var(--fs-meta); color: var(--text-3); }
 body.portal .po-fmt { margin-top: 16px; }
 body.portal .po-fmt .pk-label { display: block; margin-bottom: 6px; }
 body.portal .po-seg { display: flex; width: 100%; }
 body.portal .po-seg button { flex: 1 1 0; min-width: 0; white-space: normal; line-height: 1.2; padding: 6px 8px; }
-body.portal .po-note { display: flex; gap: 10px; align-items: flex-start; margin-top: 14px; padding: 12px 14px; border-radius: var(--radius-ctl); background: var(--sage-50); border: 1px solid var(--border); color: var(--text-2); font-size: 0.875rem; }
+body.portal .po-note { display: flex; gap: 10px; align-items: flex-start; margin-top: 14px; padding: 12px 14px; border-radius: var(--radius-ctl); background: var(--sage-50); border: 1px solid var(--border); color: var(--text-2); font-size: var(--fs-meta); }
 body.portal .po-note svg { width: 18px; height: 18px; flex: none; color: var(--warn); margin-top: 1px; }
 body.portal .po-note ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
 body.portal .po-form textarea { min-height: 112px; }
@@ -101,17 +101,17 @@ body.portal .po-send svg { width: 18px; height: 18px; }
 /* Summary (beside the form on desktop, after it on phones) and the enquiry sheet */
 body.portal .po-kv { margin: 0; display: grid; gap: 10px; }
 body.portal .po-kv > div { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr); gap: 12px; align-items: baseline; }
-body.portal .po-kv dt { font-size: 0.875rem; color: var(--text-3); }
+body.portal .po-kv dt { font-size: var(--fs-meta); color: var(--text-3); }
 body.portal .po-kv dd { margin: 0; color: var(--text); overflow-wrap: anywhere; }
 body.portal .po-kv .po-kv-wide { grid-template-columns: minmax(0, 1fr); gap: 2px; }
 body.portal .po-est { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 2px; }
-body.portal .po-est-l { font-size: 0.875rem; color: var(--text-3); }
-body.portal .po-est-n { font-family: var(--serif); font-weight: 500; font-size: 1.5rem; color: var(--forest-800); font-variant-numeric: tabular-nums; }
-body.portal .po-est-s { font-size: 0.8125rem; color: var(--text-2); }
+body.portal .po-est-l { font-size: var(--fs-meta); color: var(--text-3); }
+body.portal .po-est-n { font-family: var(--font-title); font-weight: 600; font-size: var(--fs-num); color: var(--forest-800); font-variant-numeric: tabular-nums; }
+body.portal .po-est-s { font-size: var(--fs-meta); color: var(--text-2); }
 body.portal .po-sheet-top { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; margin-bottom: 14px; }
 body.portal .po-sheet-top p { margin: 0; color: var(--text-2); }
 body.portal .po-steps { list-style: none; margin: 0 0 16px; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
-body.portal .po-steps li { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 0.8125rem; color: var(--text-3); text-align: center; }
+body.portal .po-steps li { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: var(--fs-meta); color: var(--text-3); text-align: center; }
 body.portal .po-steps li::before { content: ""; position: absolute; top: 11px; right: 50%; width: 100%; height: 2px; background: var(--border); z-index: 0; }
 body.portal .po-steps li:first-child::before { display: none; }
 body.portal .po-steps li.done::before, body.portal .po-steps li.current::before { background: var(--forest-800); }
@@ -123,7 +123,7 @@ body.portal .po-steps li.done, body.portal .po-steps li.current { color: var(--t
 body.portal .po-sheet-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
 body.portal .po-sheet-acts .btn { flex: 1 1 auto; justify-content: center; min-height: 48px; }
 body.portal .po-withdraw { color: var(--danger); border-color: var(--border-strong); }
-body.portal .po-confirm h3 { font-family: var(--sans); font-weight: 500; font-size: 1.0625rem; margin: 0 0 8px; }
+body.portal .po-confirm h3 { font-family: var(--sans); font-weight: 500; font-size: var(--fs-card); margin: 0 0 8px; }
 body.portal .po-confirm p { margin: 0; color: var(--text-2); }
 
 /* Confirmation */

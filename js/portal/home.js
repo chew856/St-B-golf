@@ -1,5 +1,5 @@
-/* Portal: Home. Greeting card, quick actions, what's coming up,
-   account snapshot, handicap, club notices and the next club event. */
+/* Portal: Home. Greeting card, quick actions, what's coming up (grouped: tee times, lessons, dining, events, to do),
+   friends playing, account snapshot, handicap and club notices. */
 (function () {
   const S = Club.store, ui = Club.ui, esc = ui.esc, fmt = Club.fmt;
   const PACE = (Club.teeRules && Club.teeRules.PACE) || { 18: 234, 9: 117 };   /* handbook: 13 minutes a hole */
@@ -86,10 +86,9 @@
   }
 
   /* ---------------- Pieces ---------------- */
-  /* Phones show the next 3; desktop has room for more beside the side column. */
+  /* Coming up shows the next one of each kind on phones and the next three on wide screens; "All n" opens the page. */
   const WIDE = window.matchMedia && window.matchMedia('(min-width: 1024px)').matches;
-  /* Phones show the next 3, or 2 when the Friends playing rows are on Home too (keeps Home within 1.5 screens). */
-  function first(m) { return WIDE ? 6 : (Portal.friends && Portal.friends.friendsOf(m.id).length ? 2 : 3); }
+  function perGroup() { return WIDE ? 3 : 1; }
 
 
   function heroHTML(m) {
@@ -127,12 +126,23 @@
     }).join('') + (Portal.cartAction ? Portal.cartAction(Portal.member()) : '') + '</nav>';
   }
 
+  /* ---------------- Coming up: one labelled group per kind, each with its own rows ---------------- */
+  const GROUPS = [
+    { kind: 'Tee time', label: 'Tee times', icon: 'flag', href: '#/tee-times/mine' },
+    { kind: 'Lesson', label: 'Lessons', icon: 'lesson', href: '#/lessons' },
+    { kind: 'Dining', label: 'Dining', icon: 'dining', href: '#/dining' },
+    { kind: 'Event', label: 'Events', icon: 'events', href: '#/events' },
+    { kind: 'Other', label: 'To do', icon: 'scorecard', href: '' }
+  ];
   function rowTitle(it) { return (String(it.title).toLowerCase().indexOf(it.kind.toLowerCase()) >= 0 ? '' : it.kind + ' · ') + it.title; }
+  /* One row layout everywhere: date block, title, one meta line (time first), chevron. The row is the action. */
   function rowHTML(it) {
+    const dt = fmt.toDate(it.date), isToday = it.date === today();
     return '<li><a class="hm-row" href="' + it.href + '">' +
-      '<span class="hm-row-when"><span class="hm-row-day">' + esc(shortDay(it.date)) + '</span><time class="hm-row-time">' + esc(fmt.time(it.time)) + '</time></span>' +
-      '<span class="hm-row-body"><span class="hm-row-title">' + esc(rowTitle(it)) + (it.live ? ' <span class="badge">On the course</span>' : '') + '</span>' +
-        '<span class="hm-row-sub">' + esc(it.sub) + '</span></span>' + Club.icon('chevronRight', 'hm-row-go') + '</a></li>';
+      '<span class="hm-date' + (isToday ? ' is-today' : '') + '" aria-hidden="true"><span class="hm-date-w">' + esc(dt.toLocaleDateString('en-US', { weekday: 'short' })) + '</span><span class="hm-date-n">' + dt.getDate() + '</span></span>' +
+      '<span class="hm-row-body"><span class="hm-row-title">' + esc(it.title) + (it.live ? ' <span class="badge">On the course</span>' : '') + (it.badge || '') + '</span>' +
+        '<span class="hm-row-sub"><span class="sr-only">' + esc(shortDay(it.date)) + ' </span>' + (isToday ? '<span>Today</span> · ' : '') + (it.time ? '<time>' + esc(fmt.time(it.time)) + '</time>' : '') + (it.sub ? (it.time ? ' · ' : '') + '<span>' + esc(it.sub) + '</span>' : '') + '</span></span>' +
+      Club.icon('chevronRight', 'hm-row-go') + '</a></li>';
   }
   function shortDay(d) {
     const td = today();
@@ -140,19 +150,25 @@
     if (d === Club.date.addDays(td, 1)) return 'Tomorrow';
     return fmt.toDate(d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   }
-  function upcomingHTML(all, FIRST, extra) {
+  function upcomingHTML(all, per) {
     let body;
     if (!all.length) {
-      body = '<div class="hm-empty"><p>Nothing booked yet. Your tee times, tables, lessons and events will appear here.</p>' +
+      body = '<div class="hm-empty"><p>Nothing booked yet.</p>' +
         '<a class="btn btn-sm" href="#/tee-times">' + Club.icon('flag') + '<span>Book a tee time</span></a></div>';
     } else {
-      body = '<ul class="p-list hm-list">' + all.slice(0, FIRST).map(rowHTML).join('') + '</ul>';
+      body = '<div class="hm-groups">' + GROUPS.map(function (g) {
+        const items = all.filter(function (it) { return it.kind === g.kind; }); if (!items.length) return '';
+        const more = items.length > per && g.href ? '<a class="p-link hm-g-more" href="' + g.href + '">View all (' + items.length + ')</a>' : '';
+        return '<div class="hm-group" data-kind="' + esc(g.kind) + '"><div class="hm-g-head"><span class="hm-g-ic" aria-hidden="true">' + Club.icon(g.icon) + '</span><h3 class="hm-g-t">' + esc(g.label) + '</h3>' + more + '</div>' +
+          '<ul class="p-list hm-list">' + items.slice(0, per).map(rowHTML).join('') + '</ul></div>';
+      }).join('') + '</div>';
     }
-    const more = all.length > FIRST ? '<button type="button" class="p-link" data-act="all-up" aria-haspopup="dialog">View all (' + all.length + ')</button>' : '';
-    return '<section class="hm-section hm-upcoming" aria-labelledby="hm-up-h"><div class="hm-head"><h2 id="hm-up-h">Coming up</h2>' + more + '</div>' + body + (extra || '') + '</section>';
+    const dated = all.filter(function (it) { return it.kind !== 'Other'; });
+    const more = dated.length > 3 ? '<button type="button" class="p-link" data-act="all-up" aria-haspopup="dialog">By day</button>' : '';
+    return '<section class="hm-section hm-upcoming" aria-labelledby="hm-up-h"><div class="hm-head"><h2 id="hm-up-h">Coming up</h2>' + more + '</div>' + body + '</section>';
   }
   function openAll(all) {
-    Portal.openSheet({ title: 'Coming up', size: 'full', rows: all.map(function (it) {
+    Portal.openSheet({ title: 'Coming up', size: 'full', rows: all.filter(function (it) { return it.kind !== 'Other'; }).map(function (it) {
       return { value: it.date + it.time + it.title, group: dayLabel(it.date), label: fmt.time(it.time) + ' · ' + rowTitle(it), sub: it.sub, href: it.href };
     }) });
   }
@@ -197,9 +213,9 @@
     /* Requests to join this member's tee times come first, with Approve and Decline. */
     const reqs = F.joinInbox ? F.joinInbox(m.id) : [];
     const rows = reqs.slice(0, 2).map(function (r) { return F.requestRowHTML(m.id, r); }).concat(list.slice(0, Math.max(0, 2 - reqs.length)).map(function (g) { return F.rowHTML(m.id, g); }));
-    return '<section class="hm-section hm-friends" aria-labelledby="hm-fr-h"><div class="hm-head hm-fr-head"><h2 id="hm-fr-h" class="eyebrow">Friends playing this week</h2><a class="p-link" href="#/friends">View all' + (list.length > 2 ? ' (' + list.length + ')' : '') + '</a></div>' +
+    return '<section class="hm-section hm-friends" aria-labelledby="hm-fr-h"><div class="hm-head hm-fr-head"><h2 id="hm-fr-h">Friends playing</h2><a class="p-link" href="#/friends">View all' + (list.length > 2 ? ' (' + list.length + ')' : '') + '</a></div>' +
       (rows.length ? '<ul class="p-list fr-golf hm-frlist">' + rows.join('') + '</ul>'
-        : '<p class="hm-quiet">No friends have a tee time booked this week.</p>') + '</section>';
+        : '<p class="hm-quiet">No friends playing this week.</p>') + '</section>';
   }
 
   /* ---------------- Page ---------------- */
@@ -208,12 +224,13 @@
     render: function (view, params, member) {
       const m = Portal.member() || member;
       const all = upcomingFor(m);
-      /* A round to post (score posting demo, js/portal/scores.js) takes one Coming up row on phones, keeping Home within 1.5 screens. */
-      const post = Portal.scores ? Portal.scores.homePrompt(m) : '';
+      /* A round to post (score posting demo, js/portal/scores.js) is the "To do" group of Coming up. */
+      const post = Portal.scores && Portal.scores.homeItem ? Portal.scores.homeItem(m) : null;
+      if (post) all.push(Object.assign({ kind: 'Other' }, post));
       /* Today's tee time with its Play button (live scorecard, js/portal/play.js) sits under the greeting. */
       /* A spot opened for the member's waitlist (js/portal/waitlist.js): a notice above everything else. */
       const wl = function () { return Portal.waitlist ? Portal.waitlist.noticesHTML(Portal.member() || m) : ''; };
-      view.innerHTML = '<div class="wl-host">' + wl() + '</div><div class="hm-layout">' + heroHTML(m) + (Portal.play ? Portal.play.homeCard(m) : '') + actionsHTML() + upcomingHTML(all, first(m) - (post && !WIDE && all.length > 1 ? 1 : 0), post) + friendsHTML(m) + tilesHTML(m) + noticesHTML(m) + '</div>';
+      view.innerHTML = '<div class="wl-host">' + wl() + '</div><div class="hm-layout">' + heroHTML(m) + (Portal.play ? Portal.play.homeCard(m) : '') + actionsHTML() + upcomingHTML(all, perGroup()) + friendsHTML(m) + tilesHTML(m) + noticesHTML(m) + '</div>';
       if (Portal.waitlist) Portal.waitlist.wire(view, m, function () { ui.$('.wl-host', view).innerHTML = wl(); });
       ui.on(view, 'click', '[data-act=all-up]', function () { openAll(all); });
       if (Portal.cartHoleCheck) Portal.cartHoleCheck(view, m);

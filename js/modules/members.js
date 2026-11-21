@@ -542,7 +542,7 @@
               handicap: v.handicap == null ? null : Math.round(v.handicap * 10) / 10, ghin: v.ghin || null, locker: v.locker || null,
               hand: v.hand === 'left' || v.hand === 'right' ? v.hand : null,
               spouse: v.spouse || null, children: v.children || 0,
-              preferences: { cart: v.cart, dining: v.dining, notes: v.prefNotes || '' },
+              preferences: Object.assign({}, d.preferences || {}, { cart: v.cart, dining: v.dining, notes: v.prefNotes || '' }),   /* keeps what the portal adds, e.g. diet */
               tags: v.tags ? v.tags.split(',').map(function (s) { return s.trim(); }).filter(Boolean) : []
             };
             if (isNew) {

@@ -2,17 +2,17 @@
    Portal: Friends leagues (fl-). Styles for js/portal/fleagues.js. Tokens only; loaded before portal-theme.css,
    so rules that meet portal-theme rules start with body.portal. Phone first; tablet and desktop at the end.
    ========================================================================== */
-body.portal .fl-eb { margin: 0 0 8px 4px; font-family: var(--sans); font-size: 0.75rem; line-height: 1.4; }
-.fl-intro { margin: 2px 0 0; font-size: 0.875rem; color: var(--text-2); }
-.fl-note { margin: 10px 0 0; font-size: 0.8125rem; line-height: 1.5; color: var(--text-2); }
-.fl-hint { margin: 6px 0 0; font-size: 0.8125rem; line-height: 1.45; color: var(--text-3); }
-.fl-legend { margin: 8px 4px 0; font-size: 0.8125rem; line-height: 1.45; color: var(--text-3); }
+body.portal .fl-eb { margin: 0 0 8px 4px; font-family: var(--sans); font-size: var(--fs-label); line-height: 1.4; }
+.fl-intro { margin: 2px 0 0; font-size: var(--fs-meta); color: var(--text-2); }
+.fl-note { margin: 10px 0 0; font-size: var(--fs-meta); line-height: 1.5; color: var(--text-2); }
+.fl-hint { margin: 6px 0 0; font-size: var(--fs-meta); line-height: 1.45; color: var(--text-3); }
+.fl-legend { margin: 8px 4px 0; font-size: var(--fs-meta); line-height: 1.45; color: var(--text-3); }
 .fl-card { padding: 14px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
 .fl-sec { margin-top: 22px; min-width: 0; }
-.fl-you { display: inline-block; margin-left: 4px; padding: 0 7px; border-radius: 999px; background: var(--sage-100); color: var(--forest-800); font: 500 0.75rem/1.6 var(--sans); vertical-align: 1px; }
+.fl-you { display: inline-block; margin-left: 4px; padding: 0 7px; border-radius: 999px; background: var(--sage-100); color: var(--forest-800); font: 500 var(--fs-label)/1.6 var(--sans); vertical-align: 1px; }
 
 /* Status pill */
-.fl-pill { flex: none; display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 999px; background: var(--sage-100); color: var(--forest-800); font: 500 0.75rem/1.5 var(--sans); white-space: nowrap; }
+.fl-pill { flex: none; display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 999px; background: var(--sage-100); color: var(--forest-800); font: 500 var(--fs-label)/1.5 var(--sans); white-space: nowrap; }
 .fl-pill-forming, .fl-pill-waiting { background: var(--sage-50); color: var(--warn); box-shadow: inset 0 0 0 1px var(--border); }
 .fl-pill-complete { background: var(--forest-800); color: var(--on-dark); }
 .fl-pill-cancelled { background: var(--sage-50); color: var(--text-3); box-shadow: inset 0 0 0 1px var(--border); }
@@ -30,7 +30,7 @@ body.portal .p-list.fl-rows > li { padding: 0; display: block; min-height: 0; }
 .fl-row-ic .icon { width: 20px; height: 20px; }
 .fl-row-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
 .fl-row-name { font-size: 1rem; font-weight: 500; line-height: 1.35; }
-.fl-row-sub { font-size: 0.8125rem; line-height: 1.4; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.fl-row-sub { font-size: var(--fs-meta); line-height: 1.4; color: var(--text-2); font-variant-numeric: tabular-nums; }
 .fl-row-me { color: var(--forest-800); font-weight: 500; }
 .fl-empty .empty { padding: 28px 20px; }
 
@@ -38,9 +38,9 @@ body.portal .p-list.fl-rows > li { padding: 0; display: block; min-height: 0; }
 .fl-invites { margin-bottom: 24px; }
 body.portal .p-list.fl-invs > li { flex-wrap: wrap; align-items: flex-start; gap: 6px 12px; padding: 12px 16px; }
 .fl-inv-main { flex: 1 1 14rem; min-width: 0; display: flex; flex-direction: column; }
-.fl-inv-t { font-size: 0.9375rem; font-weight: 500; line-height: 1.4; }
-.fl-inv-s { font-size: 0.8125rem; color: var(--text-2); line-height: 1.4; }
-body.portal .fl-inv-more { align-self: flex-start; min-height: 40px; font-size: 0.875rem; }
+.fl-inv-t { font-size: var(--fs-body); font-weight: 500; line-height: 1.4; }
+.fl-inv-s { font-size: var(--fs-meta); color: var(--text-2); line-height: 1.4; }
+body.portal .fl-inv-more { align-self: flex-start; min-height: 40px; font-size: var(--fs-meta); }
 .fl-inv-act { flex: none; display: flex; gap: 8px; align-items: center; margin-left: auto; padding-top: 2px; }
 
 /* ---------------- League page ---------------- */
@@ -48,24 +48,24 @@ body.portal .fl-back { margin: -8px 0 4px; }
 .fl-title { margin-bottom: 6px; }
 body.portal .fl-title .eyebrow { margin: 0; }
 body.portal .fl-title h1 { margin: 2px 0 6px; overflow-wrap: anywhere; }
-.fl-sub { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; margin: 0; font-size: 0.875rem; color: var(--text-2); }
-.fl-sub2 { margin: 4px 0 0; font-size: 0.8125rem; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.fl-sub { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; margin: 0; font-size: var(--fs-meta); color: var(--text-2); }
+.fl-sub2 { margin: 4px 0 0; font-size: var(--fs-meta); color: var(--text-3); font-variant-numeric: tabular-nums; }
 .fl-banner { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: 16px; padding: 12px 14px; background: var(--sage-50); border: 1px solid var(--border); border-radius: var(--radius-card); }
-.fl-banner p { flex: 1 1 16rem; margin: 0; font-size: 0.875rem; line-height: 1.5; color: var(--text); }
+.fl-banner p { flex: 1 1 16rem; margin: 0; font-size: var(--fs-meta); line-height: 1.5; color: var(--text); }
 .fl-banner-acts { display: flex; gap: 8px; margin-left: auto; }
 .fl-banner.is-quiet p { color: var(--text-2); }
 .fl-probs { list-style: none; margin: 0; padding: 4px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
-.fl-probs li { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; font-size: 0.9375rem; }
+.fl-probs li { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; font-size: var(--fs-body); }
 .fl-probs li + li { border-top: 1px solid var(--border); }
 .fl-probs .icon { width: 18px; height: 18px; flex: none; margin-top: 2px; color: var(--warn); }
-.fl-ok { display: flex; gap: 10px; align-items: center; margin: 0; padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); font-size: 0.9375rem; font-weight: 500; color: var(--forest-800); }
+.fl-ok { display: flex; gap: 10px; align-items: center; margin: 0; padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); font-size: var(--fs-body); font-weight: 500; color: var(--forest-800); }
 .fl-ok .icon { width: 20px; height: 20px; flex: none; }
 
 /* Players while the league forms */
 body.portal .p-list.fl-people > li { min-height: 56px; gap: 12px; padding: 8px 12px 8px 16px; }
 .fl-person-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
-.fl-person-name { font-size: 0.9375rem; font-weight: 500; line-height: 1.35; }
-.fl-person-sub { font-size: 0.8125rem; color: var(--text-2); }
+.fl-person-name { font-size: var(--fs-body); font-weight: 500; line-height: 1.35; }
+.fl-person-sub { font-size: var(--fs-meta); color: var(--text-2); }
 .fl-person.is-off .fl-person-name { color: var(--text-3); text-decoration: line-through; text-decoration-color: var(--border-strong); }
 .fl-person.is-open .fl-person-name { color: var(--text-3); font-weight: 400; }
 .fl-slot-ic { flex: none; width: 32px; height: 32px; border-radius: 50%; border: 1px dashed var(--border-strong); color: var(--text-3); display: inline-flex; align-items: center; justify-content: center; }
@@ -74,30 +74,30 @@ body.portal .fl-remove { flex: none; color: var(--danger); text-decoration-color
 body.portal .fl-invite-btn { margin-top: 10px; }
 .fl-team + .fl-team { margin-top: 14px; }
 .fl-team-h { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 0 4px 6px; font: 500 1rem/1.35 var(--sans); color: var(--text); }
-.fl-team-n { font-size: 0.8125rem; font-weight: 400; color: var(--text-2); white-space: nowrap; }
+.fl-team-n { font-size: var(--fs-meta); font-weight: 400; color: var(--text-2); white-space: nowrap; }
 .fl-kv { margin: 0; display: grid; gap: 10px; }
 .fl-kv > div { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: 10px; }
-.fl-kv dt { font-size: 0.8125rem; color: var(--text-2); padding-top: 1px; }
-.fl-kv dd { margin: 0; font-size: 0.9375rem; font-weight: 500; overflow-wrap: anywhere; }
+.fl-kv dt { font-size: var(--fs-meta); color: var(--text-2); padding-top: 1px; }
+.fl-kv dd { margin: 0; font-size: var(--fs-body); font-weight: 500; overflow-wrap: anywhere; }
 .fl-kv > .fl-kv-note { display: block; margin-top: -6px; }
-.fl-kv > .fl-kv-note dd { font-size: 0.8125rem; font-weight: 400; color: var(--text-2); padding-left: calc(6.5rem + 10px); }
+.fl-kv > .fl-kv-note dd { font-size: var(--fs-meta); font-weight: 400; color: var(--text-2); padding-left: calc(6.5rem + 10px); }
 .fl-danger { padding-top: 4px; }
 
 /* Standings tables */
 .fl-tbox { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); overflow-x: auto; }
-.fl-table { width: 100%; border-collapse: collapse; font-size: 0.9375rem; font-variant-numeric: tabular-nums; }
+.fl-table { width: 100%; border-collapse: collapse; font-size: var(--fs-body); font-variant-numeric: tabular-nums; }
 .fl-table th, .fl-table td { padding: 10px 8px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: middle; }
 .fl-table tbody tr:last-child > * { border-bottom: 0; }
-.fl-table thead th { padding-top: 8px; padding-bottom: 8px; font-size: 0.75rem; font-weight: 500; color: var(--text-2); white-space: nowrap; }
+.fl-table thead th { padding-top: 8px; padding-bottom: 8px; font-size: var(--fs-label); font-weight: 500; color: var(--text-2); white-space: nowrap; }
 .fl-table th:first-child, .fl-table td:first-child { padding-left: 14px; }
 .fl-table th:last-child, .fl-table td:last-child { padding-right: 14px; }
 .fl-pos { width: 2.5rem; font-weight: 500; color: var(--text-2); white-space: nowrap; }
 .fl-num { text-align: right !important; white-space: nowrap; }
 .fl-strong { font-weight: 600; color: var(--text); }
-.fl-games { color: var(--text-2); font-size: 0.8125rem; }
+.fl-games { color: var(--text-2); font-size: var(--fs-meta); }
 .fl-who { font-weight: 400; min-width: 0; }
 .fl-who-n { display: block; font-weight: 500; line-height: 1.3; }
-.fl-who-s { display: block; font-size: 0.8125rem; color: var(--text-2); line-height: 1.35; }
+.fl-who-s { display: block; font-size: var(--fs-meta); color: var(--text-2); line-height: 1.35; }
 .fl-who-btn { display: block; width: 100%; min-height: 40px; padding: 0; background: none; border: 0; font: inherit; color: var(--text); text-align: left; cursor: pointer; }
 .fl-who-btn:focus-visible { outline: 2px solid var(--forest-800); outline-offset: 2px; border-radius: 4px; }
 .fl-prow { cursor: pointer; }
@@ -108,10 +108,10 @@ body.portal .fl-invite-btn { margin-top: 10px; }
 /* Week by week grid: scrolls inside its own box */
 .fl-gbox { position: relative; overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); overscroll-behavior-x: contain; }
 .fl-gbox:focus-visible { outline: 2px solid var(--forest-800); outline-offset: 2px; }
-.fl-grid { border-collapse: separate; border-spacing: 0; min-width: 100%; font-size: 0.875rem; font-variant-numeric: tabular-nums; }
+.fl-grid { border-collapse: separate; border-spacing: 0; min-width: 100%; font-size: var(--fs-meta); font-variant-numeric: tabular-nums; }
 .fl-grid th, .fl-grid td { padding: 6px; border-bottom: 1px solid var(--border); text-align: center; vertical-align: top; white-space: nowrap; }
 .fl-grid tbody tr:last-child > * { border-bottom: 0; }
-.fl-grid thead th { padding: 8px 6px; font-size: 0.75rem; font-weight: 500; color: var(--text-2); vertical-align: bottom; }
+.fl-grid thead th { padding: 8px 6px; font-size: var(--fs-label); font-weight: 500; color: var(--text-2); vertical-align: bottom; }
 .fl-grid thead .fl-wk span { display: block; }
 .fl-wk-d { font-weight: 400; color: var(--text-3); }
 .fl-grid .fl-stick { position: sticky; left: 0; z-index: 1; min-width: 7.5rem; max-width: 9.5rem; padding-left: 14px; text-align: left; vertical-align: middle; background: var(--surface); border-right: 1px solid var(--border); white-space: normal; }
@@ -120,11 +120,11 @@ body.portal .fl-invite-btn { margin-top: 10px; }
 .fl-grid .fl-num { vertical-align: middle; padding-right: 14px; padding-left: 10px; font-weight: 600; }
 .fl-grid .fl-wk.is-now { background: var(--sage-50); }
 .fl-grid thead .fl-wk.is-now { color: var(--forest-800); box-shadow: inset 0 -2px 0 var(--forest-800); }
-.fl-team-row th { padding: 8px 14px 6px; text-align: left; font: 500 0.8125rem/1.3 var(--sans); color: var(--forest-800); background: var(--sage-100); }
+.fl-team-row th { padding: 8px 14px 6px; text-align: left; font: 500 var(--fs-meta)/1.3 var(--sans); color: var(--forest-800); background: var(--sage-100); }
 .fl-stick-in { position: sticky; left: 14px; }
 .fl-cells { display: flex; flex-direction: column; gap: 4px; align-items: stretch; }
 .fl-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 4.25rem; min-height: 44px; padding: 3px 6px; border-radius: 8px; border: 1px solid transparent; background: none; font: inherit; color: var(--text); line-height: 1.2; }
-.fl-v { font-size: 0.9375rem; font-weight: 600; }
+.fl-v { font-size: var(--fs-body); font-weight: 600; }
 .fl-d { font-size: 0.6875rem; color: var(--text-3); }
 button.fl-cell { cursor: pointer; background: var(--surface); border-color: var(--border); }
 @media (hover: hover) { button.fl-cell:hover { border-color: var(--forest-500); background: var(--sage-50); } }
@@ -142,10 +142,10 @@ button.fl-cell:focus-visible { outline: 2px solid var(--forest-800); outline-off
 .fl-flow { max-width: 40rem; }
 body.portal .fl-flow-h { margin: 0 0 12px; }
 .fl-steps { display: flex; gap: 6px; list-style: none; margin: 0 0 18px; padding: 0; }
-.fl-steps li { flex: 1 1 0; display: flex; align-items: center; gap: 8px; min-width: 0; padding-bottom: 8px; border-bottom: 2px solid var(--border); font-size: 0.875rem; color: var(--text-3); }
+.fl-steps li { flex: 1 1 0; display: flex; align-items: center; gap: 8px; min-width: 0; padding-bottom: 8px; border-bottom: 2px solid var(--border); font-size: var(--fs-meta); color: var(--text-3); }
 .fl-steps li.is-now { border-color: var(--forest-800); color: var(--text); font-weight: 500; }
 .fl-steps li.is-done { border-color: var(--forest-500); color: var(--text-2); }
-.fl-step-n { flex: none; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--sage-100); color: var(--forest-800); font-size: 0.75rem; font-weight: 600; }
+.fl-step-n { flex: none; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--sage-100); color: var(--forest-800); font-size: var(--fs-label); font-weight: 600; }
 .fl-steps li.is-now .fl-step-n { background: var(--forest-800); color: var(--on-dark); }
 .fl-step-n .icon { width: 14px; height: 14px; }
 .fl-step-l { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -156,7 +156,7 @@ body.portal .fl-q .input { width: 100%; font-size: 1rem; }
 body.portal .fl-season { margin-top: -10px; color: var(--text-2); }
 body.portal .segmented.fl-seg { display: flex; width: 100%; }
 body.portal .segmented.fl-seg button { flex: 1 1 0; min-height: 44px; }
-.fl-err { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 16px; padding: 12px 14px; border-radius: var(--radius-ctl); background: var(--sage-50); border: 1px solid var(--danger); color: var(--danger); font-size: 0.9375rem; font-weight: 500; }
+.fl-err { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 16px; padding: 12px 14px; border-radius: var(--radius-ctl); background: var(--sage-50); border: 1px solid var(--danger); color: var(--danger); font-size: var(--fs-body); font-weight: 500; }
 .fl-err[hidden] { display: none; }
 .fl-err .icon { width: 20px; height: 20px; flex: none; margin-top: 1px; }
 .fl-err p { margin: 0; }
@@ -169,8 +169,8 @@ body.portal .segmented.fl-seg button { flex: 1 1 0; min-height: 44px; }
 .fl-opt[aria-checked="true"] { border-color: var(--forest-800); box-shadow: inset 0 0 0 1px var(--forest-800); background: var(--sage-50); }
 .fl-opt:focus-visible { outline: 2px solid var(--forest-800); outline-offset: 2px; }
 .fl-opt-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.fl-opt-l { font-size: 0.9375rem; font-weight: 500; }
-.fl-opt-s { font-size: 0.8125rem; color: var(--text-2); line-height: 1.4; }
+.fl-opt-l { font-size: var(--fs-body); font-weight: 500; }
+.fl-opt-s { font-size: var(--fs-meta); color: var(--text-2); line-height: 1.4; }
 .fl-radio { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border-strong); }
 .fl-opt[aria-checked="true"] .fl-radio { border: 6px solid var(--forest-800); }
 
@@ -181,8 +181,8 @@ body.portal .p-list.fl-picks > li { padding: 0; display: block; min-height: 0; }
 .fl-pick:focus-visible { outline: 2px solid var(--forest-800); outline-offset: -2px; }
 .fl-pick.is-fixed { cursor: default; }
 .fl-pick-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
-.fl-pick-l { font-size: 0.9375rem; font-weight: 500; line-height: 1.35; }
-.fl-pick-s { font-size: 0.8125rem; color: var(--text-2); }
+.fl-pick-l { font-size: var(--fs-body); font-weight: 500; line-height: 1.35; }
+.fl-pick-s { font-size: var(--fs-meta); color: var(--text-2); }
 .fl-check { flex: none; width: 24px; height: 24px; border-radius: 6px; border: 2px solid var(--border-strong); display: inline-flex; align-items: center; justify-content: center; color: transparent; }
 .fl-check .icon { width: 16px; height: 16px; }
 .fl-check.is-on { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); }
@@ -198,18 +198,18 @@ body.portal .fl-tcard-head .input { flex: 1 1 auto; min-width: 0; font-size: 1re
 .fl-slots { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .fl-slot { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 4px 4px 4px 10px; border-radius: var(--radius-ctl); background: var(--sage-50); }
 .fl-slot.is-open { padding: 0; background: none; }
-.fl-slot-add { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 52px; border: 1px dashed var(--border-strong); border-radius: var(--radius-ctl); background: none; font: 500 0.9375rem/1.3 var(--sans); color: var(--forest-800); cursor: pointer; }
+.fl-slot-add { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 52px; border: 1px dashed var(--border-strong); border-radius: var(--radius-ctl); background: none; font: 500 var(--fs-body)/1.3 var(--sans); color: var(--forest-800); cursor: pointer; }
 @media (hover: hover) { .fl-slot-add:hover { background: var(--sage-50); border-color: var(--forest-500); } }
 .fl-slot-add .icon { width: 18px; height: 18px; }
 body.portal .fl-slot-x { flex: none; width: 44px; min-width: 44px; min-height: 44px; border-color: transparent; background: none; }
 body.portal .fl-addteam { align-self: flex-start; }
 
 /* Review */
-body.portal .fl-rev-h { margin: 0 0 12px; font-size: 1.375rem; overflow-wrap: anywhere; }
+body.portal .fl-rev-h { margin: 0 0 12px; font-size: var(--fs-section); overflow-wrap: anywhere; }
 body.portal .fl-card .fl-eb { margin: 18px 0 6px; }
 .fl-rev-team + .fl-rev-team { margin-top: 8px; }
-.fl-rev-th { margin: 0; font-size: 0.9375rem; font-weight: 600; }
-.fl-rev-tp { margin: 0; font-size: 0.9375rem; color: var(--text-2); }
+.fl-rev-th { margin: 0; font-size: var(--fs-body); font-weight: 600; }
+.fl-rev-tp { margin: 0; font-size: var(--fs-body); color: var(--text-2); }
 
 /* ==========================================================================
    Tablet and desktop
@@ -228,11 +228,15 @@ body.portal .fl-card .fl-eb { margin: 18px 0 6px; }
 }
 
 /* Phones: the total sits under the average instead of in its own column */
-.fl-tot-sub { display: block; font-size: 0.75rem; font-weight: 400; color: var(--text-2); }
+.fl-tot-sub { display: block; font-size: var(--fs-label); font-weight: 400; color: var(--text-2); }
 .fl-col-tot { display: none; }
 @media (min-width: 600px) {
   .fl-tot-sub { display: none; }
   .fl-col-tot { display: table-cell; }
 }
 .fl-row-st { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; margin-top: 4px; }
-.fl-row-st .fl-row-me { font-size: 0.8125rem; line-height: 1.4; }
+.fl-row-st .fl-row-me { font-size: var(--fs-meta); line-height: 1.4; }
+
+/* League rules as a short list instead of a paragraph */
+body.portal .fl-rules { margin: 12px 0 0; padding-left: 1.1rem; display: grid; gap: 4px; }
+body.portal .fl-rules li { padding-left: 2px; }

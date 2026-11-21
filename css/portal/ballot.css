@@ -1,22 +1,48 @@
 /* Members' portal: the weekend and holiday ballot on Tee times (js/portal/teetimes.js, Club.ballot in
-   js/shared/ballot-data.js). Portal tokens only (css/portal-theme.css). */
+   js/shared/ballot-data.js). Portal tokens only (css/portal-theme.css).
+   Since Nov 21 the ballot has its own section (Tee times: Book · My tee times · Weekend ballot); Book keeps one
+   compact card on a ballot day before its draw. */
 
-/* ---------- Ballot panel: shown instead of times on a ballot day before its draw ---------- */
-body.portal .bl-panel { display: grid; gap: 14px; }
-body.portal .bl-head { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: start; }
-body.portal .bl-ic { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 999px; background: var(--sage-100); color: var(--forest-800); }
+body.portal .bl-ic { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 999px; background: var(--sage-100); color: var(--forest-800); }
 body.portal .bl-ic svg { width: 20px; height: 20px; }
-body.portal .bl-head-t { min-width: 0; }
-body.portal .bl-eyebrow { margin: 0; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--forest-500); }
-body.portal .bl-title { margin: 2px 0 0; font-family: var(--serif); font-size: 1.1875rem; font-weight: 500; line-height: 1.3; color: var(--text); overflow-wrap: break-word; }
-body.portal .bl-draw { display: flex; align-items: flex-start; gap: 6px; margin: 6px 0 0; font-size: 0.875rem; line-height: 1.4; color: var(--text-2); }
+body.portal .bl-draw { display: flex; align-items: flex-start; gap: 6px; margin: 4px 0 0; font-size: 0.875rem; line-height: 1.4; color: var(--text-2); }
 body.portal .bl-draw svg { flex: none; width: 16px; height: 16px; margin-top: 1px; color: var(--forest-500); }
-body.portal .bl-lead { margin: 0; font-size: 0.9375rem; line-height: 1.5; color: var(--text-2); }
 body.portal .bl-enter { min-height: 48px; }
-body.portal .bl-panel .pk-acc { box-shadow: none; background: var(--sage-50); border-color: transparent; }
-body.portal .bl-panel .pk-acc-body { border-top-color: var(--border); }
 body.portal .bl-standing { display: flex; gap: 8px; align-items: flex-start; margin: 0 0 12px; padding: 10px 12px; border-radius: var(--radius-ctl); background: var(--danger-bg); color: var(--danger); }
 body.portal .bl-standing svg { flex: none; width: 18px; height: 18px; margin-top: 1px; }
+
+/* ---------- Book: a ballot day before its draw, one compact card ---------- */
+body.portal .bl-book { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: center; padding: 14px; border-radius: var(--radius-ctl); background: var(--sage-50); }
+body.portal .bl-book-t { min-width: 0; }
+body.portal .bl-book-t p { margin: 0; }
+body.portal .bl-book-h { font-size: 1rem; font-weight: 600; line-height: 1.3; color: var(--text); }
+body.portal .bl-book-s { margin-top: 2px !important; font-size: 0.875rem; line-height: 1.4; color: var(--text-2); overflow-wrap: break-word; }
+body.portal .bl-book-acts { grid-column: 1 / -1; display: flex; }
+body.portal .bl-book-acts .btn { flex: 1 1 auto; min-height: 44px; }
+@media (min-width: 640px) {
+  body.portal .bl-book { grid-template-columns: auto minmax(0, 1fr) auto; }
+  body.portal .bl-book-acts { grid-column: auto; }
+}
+
+/* ---------- The Weekend ballot section ---------- */
+body.portal .bl-sec { display: grid; gap: 20px; }
+body.portal .bl-sec-lead { margin: 0; font-size: 0.9375rem; line-height: 1.5; color: var(--text-2); }
+body.portal .bl-new { display: flex; align-items: center; gap: 8px; margin: 0; padding: 10px 12px; border-radius: var(--radius-ctl); background: var(--sage-100); color: var(--text); font-size: 0.9375rem; font-weight: 500; }
+body.portal .bl-new svg { flex: none; width: 18px; height: 18px; color: var(--warn); }
+body.portal .bl-block { min-width: 0; }
+body.portal .bl-sec .tt-rounds { display: block; }   /* results: one row each, full width */
+body.portal .bl-sec .tt-rounds .tt-row { border-right: 0; }
+body.portal .bl-sec .tt-rounds .tt-row:last-child { border-bottom: 0; }
+body.portal .bl-days { display: grid; gap: 12px; }
+@media (min-width: 768px) { body.portal .bl-days { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
+body.portal .bl-day { display: grid; gap: 14px; min-width: 0; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
+body.portal .bl-day.is-soon { background: var(--sage-50); border-color: transparent; box-shadow: none; }
+body.portal .bl-day-top { display: flex; align-items: center; gap: 12px; min-width: 0; }
+body.portal .bl-day-t { min-width: 0; }
+body.portal .bl-day-h { margin: 0; font-family: var(--sans); font-size: 1rem; font-weight: 600; line-height: 1.3; color: var(--text); overflow-wrap: break-word; }
+body.portal .bl-day .bl-entry { padding: 12px 0 0; border: 0; border-top: 1px solid var(--border); border-radius: 0; background: none; }
+body.portal .bl-pill-new { background: var(--warn); color: var(--on-dark); }
+body.portal .bl-sec > .pk-acc { margin: 0; }
 
 /* ---------- An entry ---------- */
 body.portal .bl-entry { display: grid; gap: 10px; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius-ctl); background: var(--surface); }
@@ -28,31 +54,6 @@ body.portal .bl-dl dt { font-size: 0.875rem; color: var(--text-2); }
 body.portal .bl-dl dd { margin: 0; font-size: 0.9375rem; color: var(--text); overflow-wrap: break-word; }
 body.portal .bl-acts { display: flex; flex-wrap: wrap; gap: 8px; }
 body.portal .bl-acts .btn { flex: 1 1 10rem; min-height: 44px; }
-
-/* ---------- After the draw: the member's result above the times ---------- */
-body.portal .bl-result { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 12px; padding: 10px 12px; border-radius: var(--radius-ctl); background: var(--sage-50); color: var(--text-2); font-size: 0.875rem; line-height: 1.45; }
-body.portal .bl-result svg { flex: none; width: 18px; height: 18px; margin-top: 1px; color: var(--forest-500); }
-body.portal .bl-result.is-won { background: var(--sage-100); color: var(--text); }
-
-/* ---------- Results above the tabs ---------- */
-body.portal .bl-host:empty { display: none; }
-body.portal .bl-notices { display: grid; gap: 12px; margin: 0 0 16px; }
-body.portal .bl-note { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 12px; align-items: start; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--forest-500); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
-body.portal .bl-note.is-won { border-left-color: var(--forest-800); }
-body.portal .bl-note-ic { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 999px; background: var(--sage-100); color: var(--forest-800); }
-body.portal .bl-note-ic svg { width: 18px; height: 18px; }
-body.portal .bl-note-main { min-width: 0; }
-body.portal .bl-note-main p { margin: 0; }
-body.portal .bl-note-k { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--forest-500); }
-body.portal .bl-note-t { margin-top: 2px !important; font-family: var(--serif); font-size: 1.125rem; line-height: 1.3; color: var(--text); overflow-wrap: break-word; }
-body.portal .bl-note-s { margin-top: 2px !important; font-size: 0.875rem; line-height: 1.45; color: var(--text-2); overflow-wrap: break-word; }
-body.portal .bl-note-acts { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
-body.portal .bl-note-acts .btn { min-height: 44px; }
-body.portal .bl-note-acts .p-link { min-height: 44px; }
-@media (min-width: 640px) {
-  body.portal .bl-note { grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; }
-  body.portal .bl-note-acts { grid-column: auto; justify-content: flex-end; }
-}
 
 /* ---------- Enter / change sheet ---------- */
 body.portal .bl-sheet { display: grid; gap: 14px; }
@@ -66,5 +67,5 @@ body.portal .bl-sheet .tt-holes-row { margin: 0; }
 body.portal .tt-guest-lim { display: flex; gap: 6px; align-items: flex-start; }
 body.portal .tt-guest-lim svg { flex: none; width: 16px; height: 16px; margin-top: 2px; color: var(--forest-500); }
 
-/* ---------- My tee times ---------- */
-body.portal .bl-row-t { font-family: var(--serif); }
+/* ---------- My tee times: a tee time the ballot gave carries a "Ballot" tag ---------- */
+body.portal .bl-pill { background: var(--sage-50); color: var(--forest-500); box-shadow: inset 0 0 0 1px var(--border); }

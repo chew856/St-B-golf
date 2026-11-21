@@ -18,7 +18,7 @@
   const S = Club.store, ui = Club.ui, fmt = Club.fmt, esc = ui.esc;
   const DONE_AFTER = { 18: 200, 9: 100 };   /* minutes after the tee time before a checked-in or on-course round can be posted */
   const RECENT_DAYS = 7;                    /* Home prompts for rounds this recent */
-  const BANNER = 'Demo only. This app is not yet connected to Golf Canada. Scores are saved in this demo, not your Golf Canada record.';
+  const BANNER = 'Demo only: not connected to Golf Canada. Scores stay in this app.';
 
   /* ---------------- Course data and WHS maths: Club.whs (js/core/whs.js), shared with the live scorecard ---------------- */
   const W = Club.whs;
@@ -639,6 +639,13 @@
       '<span class="gc-home-s">' + esc(t.holes + ' holes' + (list.length > 1 ? ' · ' + (list.length - 1) + ' more to post' : '')) + ' ' + demoPill() + '</span></span>' +
       Club.icon('chevronRight', 'gc-go') + '</a>';
   }
+  /* The same prompt as a Coming up row on Home ("To do" group): date, title, one meta line. */
+  function homeItem(m) {
+    if (!m || !isGolfer(m)) return null;
+    const list = toPost(m, RECENT_DAYS); if (!list.length) return null;
+    const t = list[0];
+    return { date: t.date, time: t.time, title: 'Post your score', badge: ' ' + demoPill(), sub: t.holes + ' holes' + (list.length > 1 ? ' · ' + (list.length - 1) + ' more to post' : ''), href: '#/scores/post/' + encodeURIComponent(t.id) };
+  }
   function pastCell(tt, m) {
     const p = postFor(m.id, tt.id);
     if (p) return '<span class="tt-pill">Posted ' + p.gross + '</span>';
@@ -650,6 +657,7 @@
   }
 
   Portal.scores = {
+    homeItem: homeItem,
     DEMO_RATINGS: DEMO_RATINGS,
     calc: { courseHandicap: courseHandicap, strokesPerHole: strokesPerHole, ndbCaps: ndbCaps, adjustedOf: adjustedOf, differential: differential, estimate: estimate, holesFor: holesFor },
     demoPosts: demoPosts, postsOf: postsOf, postFor: postFor, teeLabel: teeLabel, diffText: diffText, openPost: openPost, estimateFor: estimateFor, canPost: canPost, toPost: toPost,

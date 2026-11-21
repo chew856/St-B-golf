@@ -166,7 +166,7 @@ body.public .toast svg { color: var(--on-dark); }
    ========================================================================== */
 
 /* ---------- Header: forest bar, serif name, PUBLIC GOLF eyebrow, sentence-case links ---------- */
-body.public .pub-header { background: var(--forest-950); border-bottom: 0; }
+body.public .pub-header { background: var(--forest-950); border-bottom: 0; padding-top: env(safe-area-inset-top); }   /* home-screen app: clear the notch */
 body.public .pub-header .pub-crest.stb-logo { color: var(--on-dark); height: 30px; }
 body.public .pub-crest.stb-logo.sm, body.public .pub-crest.stb-logo.lg { color: var(--forest-500); }
 body.public .pub-brand-name { font-family: var(--serif); font-weight: 500; font-size: 1.25rem; line-height: 1.1; letter-spacing: normal; color: var(--on-dark); }

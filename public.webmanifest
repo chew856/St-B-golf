@@ -1,0 +1,30 @@
+{
+  "name": "St. Boniface Golf",
+  "short_name": "St.B Golf",
+  "description": "Book a public tee time at St. Boniface Golf Club",
+  "id": "public.html",
+  "start_url": "public.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F2F4F1",
+  "theme_color": "#101E17",
+  "lang": "en-CA",
+  "icons": [
+    {
+      "src": "assets/app/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/app/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/app/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

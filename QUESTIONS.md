@@ -81,3 +81,11 @@ The system has the club scorecard's Black, Green and Silver yardages, men's par,
     setting?
 25. **Course and slope ratings.** Handicaps use placeholder ratings for every tee. The club's official ratings (from
     Golf Canada) are needed for Black, Green, Silver and the combination tees, men's and women's.
+
+## Ideas waiting for the club
+
+26. **Check in from your phone.** A "Check in" button in the members' portal (and for public golfers) that appears about
+    15 minutes before the tee time. Tapping it tells the golf shop the player has arrived and marks the group checked in
+    on the staff tee sheet. Does the club want members to check themselves in, or should check-in stay at the golf shop
+    counter (for example to collect guest fees and cart fees first)? Should it only work when the phone is at the club
+    (location check)?

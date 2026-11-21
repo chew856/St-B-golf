@@ -923,6 +923,7 @@
       const startTab = params[0] === 'mine' || params[0] === 'ballot' ? params[0] : 'book';
       const wantDate = /^\d{4}-\d{2}-\d{2}$/.test(params[0] || '') && params[0] >= td && stripDays(me).indexOf(params[0]) >= 0 ? params[0] : null;
       let uidN = 0, pastShown = 10, dp = null;
+      let memo = { own: {}, friends: null };   /* look-ups the list repeats for every row, kept for one redraw of Book */
       /* #/tee-times/<date>/<HH:MM>/<players>: a waitlist notice's Book link selects that time. */
       let wantTime = wantDate && /^\d{2}:\d{2}$/.test(params[1] || '') ? params[1] : null;
 
@@ -1176,6 +1177,7 @@
       /** Re-render the day strip, the slim row, the rules line and the times for the current state. */
       function refreshBook() {
         if (!ui.$('.tt-card', view)) return;
+        memo = { own: {}, friends: null };
         const m = Portal.member() || me;
         const A = allSums(m); const sum = A.sums[state.date]; const pd = pickerDays(A.days, A.sums);
         if (dp) dp.update({ days: pd, value: state.date });
@@ -1253,7 +1255,12 @@
       /** A tee time that is full for this group but could open up: a booked group, or too few places left. */
       function wlSlot(s, d) {
         if (!Portal.waitlist || !((s.state === 'full' && !!s.tt && s.tt.status === 'booked') || (bookable(s) && s.places < state.players))) return false;
-        return !clashFor((Portal.member() || me).id, d || state.date, s.time, null);   /* not a time beside one of their own rounds */
+        return !clashFor((Portal.member() || me).id, d || state.date, s.time, null, ownOn(d || state.date));   /* not a time beside one of their own rounds */
+      }
+      /** The member's own rounds on a day (kept for one redraw: every row asks). */
+      function ownOn(d) {
+        if (!memo.own[d]) { const id = (Portal.member() || me).id; memo.own[d] = S.where('teeTimes', function (x) { return x.date === d && x.status !== 'cancelled' && isIn(x, id); }); }
+        return memo.own[d];
       }
       /** Days the member can book that are full for their group: one line under the times with Notify me. */
       function wlDaysHTML(days, sums) {
@@ -1277,7 +1284,7 @@
       /** The member's friends in a group they may see, by first name: "George and Alex". */
       function friendsIn(tt, m) {
         if (!tt || !Portal.friends || !Portal.friends.friendsOf) return '';
-        const fs = Portal.friends.friendsOf(m.id);
+        const fs = memo.friends || (memo.friends = Portal.friends.friendsOf(m.id));
         return niceList((tt.players || []).filter(function (p) { return p.memberId && fs.indexOf(p.memberId) >= 0; })
           .map(function (p) { const f = Club.members.get(p.memberId); return f ? f.firstName : ''; }).filter(Boolean));
       }

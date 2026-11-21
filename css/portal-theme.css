@@ -17,9 +17,9 @@
 
 body.portal {
   /* ---------- The redesign palette (Nov 21) ---------- */
-  --c-ink: #12201A;       /* Ink: text, the deepest green (header, tab bar) */
-  --c-fairway: #1D3528;   /* Fairway: dark panels, primary buttons, the membership card */
-  --c-mist: #E9ECE4;      /* Mist: the page */
+  --c-ink: #12201A;       /* Ink: text, primary buttons, the deepest green */
+  --c-fairway: #1D3528;   /* Fairway: dark panels (Home's next round), the membership card */
+  --c-mist: #E9ECE4;      /* Mist: the page, the top bar and the tab bar (member.html theme-color and the manifest match it) */
   --c-paper: #F4F5F0;     /* Paper: raised surfaces (panels, cards, sheets) */
   --c-rule: #C9CEC1;      /* Rule: hairlines */
   --c-oak: #7E8558;       /* Oak: marks and large type only (3.3:1 on Mist) */
@@ -316,7 +316,7 @@ body.portal .p-more-end .p-more-row { border-top: 0; color: var(--text-2); }
 body.portal .p-footer { padding: 16px 20px 20px; margin-top: 8px; line-height: 1.45; text-align: center; }
 body.portal .p-footer p { margin: 0 0 4px; }
 body.portal .p-footer .serif { margin-bottom: 2px; }
-body.portal .p-footer .p-land { font-size: 0.8125rem; color: var(--text-3); margin-top: 8px; }
+body.portal .p-footer .p-land { font-size: 0.8125rem; color: var(--text-3); margin: 8px auto 0; }
 body.portal .p-footer .p-social { margin-top: 2px; }
 body.portal .p-footer { color: var(--text-2); font-size: 0.875rem; border-color: var(--border); }
 body.portal .p-footer .serif { font-family: var(--sans); font-size: 1rem; font-weight: 500; color: var(--text); }
@@ -360,9 +360,10 @@ body.portal .p-page .row > *, body.portal .p-page [class*="-row"] > *, body.port
 
 /* ==========================================================================
    Responsive frame: phone, tablet, desktop, large screens and projectors.
-   Phone (<768): one column, bottom nav. Tablet (768-1023): wider column, bottom nav.
-   Desktop (>=1024): top nav in the header, no bottom nav, multi-column pages (pages
-   use .p-cols / their own grids). Large (>=1800): everything scales up via rem.
+   Phone (<768): one column, the word tab bar at the bottom, a top row of crest and avatar.
+   Tablet (768-1023): the top bar with the page words (full width), a 760px column.
+   Desktop (>=1024): the top bar, multi-column pages (pages use .p-cols / their own grids).
+   Large (>=1800): everything scales up via rem.
    ========================================================================== */
 body.portal .p-page { width: 100%; margin-left: auto; margin-right: auto; }
 body.portal .p-header-inner, body.portal .p-footer { margin-left: auto; margin-right: auto; }

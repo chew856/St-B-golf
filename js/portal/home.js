@@ -123,7 +123,9 @@
     ];
     return '<nav class="hm-actions" aria-label="Quick actions">' + items.map(function (a) {
       return '<a class="hm-action" href="' + a.href + '" aria-label="' + esc(a.aria) + '"><span class="hm-action-ic">' + Club.icon(a.icon) + '</span><span class="hm-action-l">' + esc(a.label) + '</span></a>';
-    }).join('') + (Portal.cartAction ? Portal.cartAction(Portal.member()) : '') + '</nav>';
+    }).join('') + (Portal.cartAction ? Portal.cartAction(Portal.member()) : '') +
+      /* The digital membership card (js/portal/card.js): a full-width row under the tiles */
+      '<a class="hm-action mc-action" href="#/card"><span class="hm-action-ic">' + Club.icon('idcard') + '</span><span class="hm-action-l">Membership card</span>' + Club.icon('chevronRight') + '</a></nav>';
   }
 
   /* ---------------- Coming up: one labelled group per kind, each with its own rows ---------------- */

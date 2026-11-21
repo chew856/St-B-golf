@@ -402,7 +402,7 @@
         inner = '<div class="ps-cust-chip">' + U.person(name, sub) + '<button type="button" class="btn btn-ghost btn-icon btn-sm" data-cust-clear aria-label="Remove ' + esc(name) + ' as the customer" title="Remove customer">' + Club.icon('close') + '</button></div>' +
           (warn ? '<div class="ps-member-warn">' + U.badge(d.status === 'suspended' ? 'Suspended' : 'Resigned', 'bad') + ' <span>Charging privileges are not available.</span></div>' : '');
       } else {
-        inner = '<div class="ps-cust-wrap">' + Club.icon('search') + '<input class="input" id="ps-cust" name="customer" type="search" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="ps-cust-list" placeholder="Search members and public golfers"></div>' +
+        inner = '<div class="ps-cust-wrap">' + Club.icon('search') + '<input class="input" id="ps-cust" name="customer" type="search" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="ps-cust-list" placeholder="Search members and public golfers">' + (Club.cardScan ? Club.cardScan.button('ps-cust-scan') : '') + '</div>' +
           '<ul class="ps-cust-list" id="ps-cust-list" role="listbox" aria-label="Matching customers" hidden></ul>';
       }
       return '<div class="field ps-cust"><label for="ps-cust">' + (acct ? 'Member to charge' : 'Customer <span class="muted">(optional)</span>') + '</label>' + inner +
@@ -507,6 +507,7 @@
     U.on(panel, 'focusout', '#ps-cust', function () { setTimeout(function () { const i = U.$('#ps-cust', tk); if (i && document.activeElement !== i) custList(false); }, 120); });
     U.on(panel, 'pointerdown', '.ps-cust-opt', function (e) { e.preventDefault(); });
     U.on(panel, 'click', '.ps-cust-opt', function (e, o) { custPick(o.dataset.kind, o.dataset.id); });
+    U.on(panel, 'click', '[data-card-scan]', function () { Club.cardScan.open(function (m) { custPick('member', m.id); }); });
     U.on(panel, 'click', '[data-cust-clear]', function () { state.cust = null; drawTicket(); const i = U.$('#ps-cust', tk); if (i) i.focus(); });
     U.on(panel, 'change', '#ps-staff', function (e, s) { state.staffId = s.value; pref('staffId', s.value); s.classList.remove('invalid'); U.$$('.field-error', tk).forEach(function (x) { if (x.previousElementSibling === s) x.remove(); }); });
     U.on(panel, 'input', '#ps-cash', function (e, i) { state.cash = i.value; i.classList.remove('invalid'); U.$('.ps-change', tk).innerHTML = changeHTML(ticketTotals().total); });

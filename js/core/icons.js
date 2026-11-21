@@ -70,6 +70,8 @@
     whistle: '<circle cx="9" cy="14" r="5.5"/><path d="M13 10l7-3.5V11l-5.5 1"/><circle cx="9" cy="14" r="1.5"/>',
     arrowUp: '<path d="M12 19V5M6.5 10.5L12 5l5.5 5.5"/>',
     arrowDown: '<path d="M12 5v14M6.5 13.5L12 19l5.5-5.5"/>',
+    idcard: '<rect x="3" y="5.5" width="18" height="13" rx="1.5"/><circle cx="8.5" cy="11" r="2"/><path d="M5.5 16c.4-1.6 1.6-2.4 3-2.4s2.6.8 3 2.4M14 10h4M14 13.5h3"/>',
+    scan: '<path d="M4 8.5V5.5a1.5 1.5 0 0 1 1.5-1.5h3M15.5 4h3A1.5 1.5 0 0 1 20 5.5v3M20 15.5v3a1.5 1.5 0 0 1-1.5 1.5h-3M8.5 20h-3A1.5 1.5 0 0 1 4 18.5v-3"/><path d="M8 8h3v3H8zM13 13h3v3h-3zM13 8h3M8 16h3"/>',
     grip: '<circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/>'
   };
 

@@ -1,0 +1,17 @@
+/* Staff: "Scan card" camera button and dialog (js/core/cardscan.js). Shown only where the browser reads QR codes
+   (BarcodeDetector); Safari never sees it. Tokens only. */
+.search.has-scan input { padding-right: 44px; }
+.search .search-scan { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; min-height: 0; padding: 0; color: var(--text-2); }
+.search .search-scan svg { position: static; width: 18px; height: 18px; color: currentColor; }
+.ps-cust-wrap .ps-cust-scan { flex: none; margin-left: 6px; }
+.ps-cust-wrap .ps-cust-scan svg { width: 18px; height: 18px; }
+
+.cscan { position: relative; width: min(100%, 22rem); aspect-ratio: 1; margin: 0 auto; overflow: hidden; border-radius: var(--radius-card); background: var(--forest-950); }
+.cscan-video { display: block; width: 100%; height: 100%; object-fit: cover; }
+.cscan-frame { position: absolute; inset: 18%; border: 2px solid var(--on-dark); border-radius: var(--radius-ctl); box-shadow: 0 0 0 999px var(--on-dark-a15); pointer-events: none; }
+.cscan-msg { margin: 12px 0 0; text-align: center; color: var(--text-2); }
+
+@media (pointer: coarse) {
+  .search .search-scan { width: 40px; height: 40px; }
+  .ps-cust-wrap .ps-cust-scan { min-width: 44px; min-height: 44px; }
+}

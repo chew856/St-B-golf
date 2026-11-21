@@ -36,13 +36,13 @@
   function shown(p) { try { return !(p.hidden && p.hidden()); } catch (e) { return true; } }
   /* Menu order, most important first (owner, Nov 21): the header links, the tab bar (pages with tab: true, first 4)
      and the account menu follow it. A page not listed here falls in after these, by its own `order`. */
-  const MENU = ['home', 'account', 'tee-times', 'play', 'dining', 'events', 'lessons', 'friends', 'scores', 'leaderboards',
+  const MENU = ['home', 'account', 'card', 'tee-times', 'play', 'dining', 'events', 'lessons', 'friends', 'scores', 'leaderboards',
     'handbook', 'club', 'gifts', 'shop', 'takeout', 'cart', 'outings', 'feedback', 'profile'];
   function rank(p) { const i = MENU.indexOf(p.id); return i < 0 ? 1000 + p.order : i; }
   function sorted() { return pages.slice().sort(function (a, b) { return rank(a) - rank(b); }).filter(shown); }
   /* The phone Menu sheet in labelled groups, Account first. Pages in no group go under Club. */
   const SHEET = [
-    { label: 'Account', ids: ['account', 'profile'] },
+    { label: 'Account', ids: ['account', 'card', 'profile'] },
     { label: 'Golf', ids: ['tee-times', 'play', 'scores', 'lessons', 'leaderboards', 'outings'] },
     { label: 'Food and drink', ids: ['dining', 'takeout', 'cart'] },
     { label: 'Club', ids: ['events', 'friends', 'handbook', 'club', 'gifts', 'shop', 'feedback'] }
@@ -124,6 +124,7 @@
           '<div class="p-me-menu" role="menu">' +
             '<div class="p-me-head"><div class="person-name">' + esc(m.firstName + ' ' + m.lastName) + '</div><div class="person-sub">Member #' + esc(m.memberNo) + '</div></div>' +
             '<a href="#/account" role="menuitem">' + Club.icon('billing') + 'My account</a>' +
+            '<a href="#/card" role="menuitem">' + Club.icon('idcard') + 'Membership card</a>' +
             '<a href="#/profile" role="menuitem">' + Club.icon('user') + 'My profile</a>' +
             '<button type="button" data-action="signout" role="menuitem">' + Club.icon('logout') + 'Sign out</button>' +
           '</div>' +

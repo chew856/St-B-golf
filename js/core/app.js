@@ -123,7 +123,7 @@
       '<button type="button" class="btn btn-ghost btn-icon sb-toggle" aria-controls="sidebar">' + SB_ICON + '</button>' +
       '<div class="topbar-date">' + esc(Club.fmt.dateLong(new Date())) + '</div>' +
       '<div class="topbar-spacer"></div>' +
-      '<div class="search">' + Club.icon('search') + '<input type="search" placeholder="Search members, bookings, items" aria-label="Search"><div class="search-results" role="listbox"></div></div>' +
+      '<div class="search">' + Club.icon('search') + '<input type="search" placeholder="Search members, bookings, items" aria-label="Search">' + (Club.cardScan ? Club.cardScan.button('search-scan') : '') + '<div class="search-results" role="listbox"></div></div>' +
       '<div class="weather-chip" id="weather-chip" title="' + esc(w.cond) + '">' + Club.icon(w.icon) + '<span><strong>' + Club.weather.nowTemp + '°</strong> ' + esc(w.cond) + ' · Wind ' + w.wind + ' km/h</span></div>' +
       '<div class="user-chip">' + ui.avatar((Club.user.firstName + ' ' + Club.user.lastName).trim(), 'sm', true) + '<span class="user-name">' + esc((Club.user.firstName + ' ' + Club.user.lastName).trim()) + '<br><span class="muted" style="font-size:11px">' + esc(Club.user.role) + '</span></span></div>';
     ui.$('.menu-toggle', tb).addEventListener('click', function () { document.querySelector('.app').classList.toggle('nav-open'); });
@@ -168,6 +168,8 @@
       if (e.key === 'Escape') { input.value = ''; box.classList.remove('open'); input.blur(); }
     });
     box.addEventListener('click', function () { box.classList.remove('open'); input.value = ''; });
+    const scanBtn = ui.$('[data-card-scan]', tb);
+    if (scanBtn) { tb.querySelector('.search').classList.add('has-scan'); scanBtn.addEventListener('click', function () { Club.cardScan.open(openCard); }); }
     document.addEventListener('mousedown', function (e) { if (!e.target.closest('.search')) box.classList.remove('open'); });
     document.addEventListener('keydown', function (e) { if (e.key === '/' && !/input|textarea|select/i.test(document.activeElement.tagName)) { e.preventDefault(); input.focus(); } });
   }

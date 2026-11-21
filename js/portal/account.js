@@ -149,7 +149,8 @@
           '<div><dt>Last payment</dt><dd>' + (last ? money(last.amount) : 'None yet') + '</dd><dd class="muted">' + (last ? esc(fmt.date(last.date)) + ' · ' + esc(payMethod(last)) : 'Your payments will appear here') + '</dd></div>' +
           '<div><dt>Latest statement</dt><dd>' + (latest ? '<a href="#/account/statement/' + esc(latest.id) + '">' + esc(monthLabel(latest.period)) + '</a>' : 'None issued') + '</dd><dd>' + (latest ? statusLabel(latest) : '<span class="muted">Statements are issued monthly</span>') + '</dd></div></dl>' +
           '<div class="pa-bal-actions">' + (bal > 0.005 ? '<a class="btn btn-primary" href="#/account/pay">' + Club.icon('card') + '<span>Make a payment</span></a>' : '') +
-          (latest ? '<a class="btn" href="#/account/statement/' + esc(latest.id) + '">' + Club.icon('billing') + '<span>View statement</span></a>' : '') + '</div>' +
+          (latest ? '<a class="btn" href="#/account/statement/' + esc(latest.id) + '">' + Club.icon('billing') + '<span>View statement</span></a>' : '') +
+          '<a class="btn" href="#/card">' + Club.icon('idcard') + '<span>Membership card</span></a></div>' +
         '</div></section>' +
         '<div class="pa-month" data-reveal>' + Portal.accordion({ id: 'pa-month', icon: 'billing', title: 'This month · ' + fmt.money0(monthTotal) + ' to date', summary: monthLabel(key) + ' · by department',
           body: byCat.length ? Club.charts.donut({ items: byCat, size: 140, money: true, center: { value: fmt.money0(monthTotal), label: 'To date' } })

@@ -1,111 +1,101 @@
 /* ==========================================================================
-   Portal: Home (hm-), v2. Tokens only; loaded before portal-theme.css.
+   Portal: Home (hm-), v3 (owner-approved redesign, Nov 21). Tokens only; loaded before portal-theme.css.
+   One thing big: the next round on a dark Fairway panel. Everything else is plain: a greeting, hairline lists and
+   two serif figures. No boxes inside boxes, no shadows. Inter throughout; the serif (--font-sig) only for the first
+   name, the big time, the date numbers and the balance and handicap figures.
    ========================================================================== */
+.hm { display: grid; grid-template-columns: minmax(0, 1fr); }
+.hm-main, .hm-side { min-width: 0; }
 
-/* ---------------- Greeting hero ---------------- */
-.hm-hero { position: relative; overflow: hidden; background: var(--forest-800); color: var(--on-dark); border-radius: var(--radius-card); padding: 14px 18px; margin-bottom: 14px; }
-.hm-mark { position: absolute; right: -18px; bottom: -22px; width: 150px; opacity: 0.06; pointer-events: none; color: var(--on-dark); }
-.hm-mark .stb-logo, .hm-mark svg, .hm-mark img { display: block; width: 100%; height: auto; color: var(--on-dark); }
-.hm-hero-date { position: relative; margin: 0 0 4px; font-size: var(--fs-label); font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--on-dark-2); }
-body.portal .hm-hello { position: relative; margin: 0; font-family: var(--font-title); font-weight: 600; font-size: var(--fs-page); letter-spacing: -0.02em; line-height: 1.2; color: var(--on-dark); }
-.hm-hero-row { position: relative; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr)); gap: 12px; margin-top: 10px; padding-top: 10px; border-top: 1px solid color-mix(in srgb, var(--on-dark) 15%, transparent); }
-.hm-hero-col { display: flex; align-items: flex-start; gap: 8px; min-width: 0; }
-.hm-hero-col > .icon { width: 20px; height: 20px; flex: none; color: var(--on-dark-2); margin-top: 1px; }
-.hm-hero-col > div { min-width: 0; }
-.hm-hero-main { margin: 0; font-size: var(--fs-body); font-weight: 500; line-height: 1.35; color: var(--on-dark); font-variant-numeric: tabular-nums; }
-.hm-hero-sub { margin: 2px 0 0; font-size: var(--fs-meta); line-height: 1.4; color: var(--on-dark-2); font-variant-numeric: tabular-nums; }
+/* ---------------- Greeting ---------------- */
+.hm-greet { margin: 0 0 26px; }
+body.portal .hm-hello { margin: 12px 0 4px; font-family: var(--sans); font-weight: 500; font-size: 2.125rem; line-height: 1.08; letter-spacing: -0.025em; color: var(--text); }
+body.portal .hm-hello-name { display: block; font-family: var(--font-sig); font-style: italic; font-weight: 400; font-size: 2.375rem; line-height: 1.1; letter-spacing: -0.01em; }
+body.portal .hm-today { margin: 0; font-size: 0.875rem; line-height: 1.5; color: var(--text-3); font-variant-numeric: tabular-nums; }
 
-/* ---------------- Quick actions: one row of 4 quiet tiles ---------------- */
-.hm-actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 0; }
-.hm-action { display: flex; flex-direction: column; align-items: center; gap: 6px; min-height: 44px; padding: 4px 0; border-radius: var(--radius-ctl); color: var(--text); text-align: center; text-decoration: none; }
-@media (hover: hover) { .hm-action:hover { text-decoration: none; } }
-.hm-action-ic { width: 44px; height: 44px; border-radius: 50%; background: var(--sage-100); color: var(--forest-800); display: inline-flex; align-items: center; justify-content: center; flex: none; transition: background-color var(--t-ui) var(--ease-ui); }
-@media (hover: hover) { .hm-action:hover .hm-action-ic { background: var(--sage-200); } }
-.hm-action-ic .icon { width: 22px; height: 22px; }
-.hm-action-l { font-size: var(--fs-meta); font-weight: 500; line-height: 1.3; color: var(--text); overflow-wrap: normal; hyphens: none; }
+/* ---------------- Your next round: the one dark panel ---------------- */
+.hm-next { --hm-time: clamp(4rem, 22vw, 5.375rem); background: var(--c-fairway); color: var(--on-dark); border-radius: var(--radius-card); padding: 22px 22px 20px; }
+body.portal .hm-next-eb { margin: 0; font-size: 0.6875rem; font-weight: 600; line-height: 1.5; letter-spacing: 0.22em; text-transform: uppercase; color: var(--c-oak-soft); }
+body.portal .hm-next-time { margin: 12px 0 6px; font-family: var(--font-sig); font-weight: 400; font-size: var(--hm-time); line-height: 0.9; letter-spacing: -0.03em; font-variant-numeric: lining-nums; color: var(--on-dark); white-space: nowrap; }
+body.portal .hm-next-time small { margin-left: 6px; font-family: var(--sans); font-size: 0.9375rem; font-weight: 600; letter-spacing: 0.12em; color: var(--c-oak-soft); vertical-align: calc(var(--hm-time) * 0.535); }
+body.portal .hm-next-none { margin: 14px 0 2px; font-size: 1.75rem; font-weight: 500; line-height: 1.15; letter-spacing: -0.025em; color: var(--on-dark); }
+body.portal .hm-next-meta { margin: 0; font-size: 0.875rem; line-height: 1.5; color: var(--on-dark-3); }
+.hm-next-rule { height: 1px; margin: 16px 0 14px; background: var(--on-dark-rule); }
+.hm-next-acts { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px 16px; min-height: 44px; }
+body.portal .hm-next-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 18px; border-radius: 3px; background: var(--c-mist); color: var(--c-ink); font-size: 0.875rem; font-weight: 600; line-height: 1.2; text-decoration: none; }
+@media (hover: hover) { body.portal .hm-next-btn:hover { background: var(--c-paper); text-decoration: none; } }
+body.portal .hm-next-link { display: inline-flex; align-items: center; min-height: 44px; margin-left: auto; color: var(--on-dark); font-size: 0.875rem; text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 5px; }
+@media (hover: hover) { body.portal .hm-next-link:hover { text-decoration-color: var(--on-dark); } }
+/* "Scorecard opens 2:40 PM": quiet text until the window opens (also carries .lv-cta-off for js/portal/play.js) */
+body.portal .hm-next .hm-next-opens { padding: 0; border: 0; background: none; color: var(--on-dark-3); font-size: 0.875rem; line-height: 1.4; }
+body.portal .hm-next :focus-visible { outline-color: var(--on-dark); }
 
-/* ---------------- Sections (one mobile column at every width) ---------------- */
-.hm-section { margin-top: 28px; }
-.hm-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
-.hm-head h2 { margin: 0; }
-.hm-head .p-link { font-size: var(--fs-body); }
-.hm-quiet { margin: 0; font-size: var(--fs-body); color: var(--text-2); }
+/* The cart on the course (Portal.cartAction, js/portal/cart.js), as one plain row under the panel */
+body.portal .hm-cart .hm-action { display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 16px; min-height: 48px; padding: 12px 0; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; background: none; color: var(--text); text-align: left; text-decoration: none; }
+body.portal .hm-cart .hm-action-ic { display: none; }
+body.portal .hm-cart .hm-action-l { font-size: 0.96875rem; font-weight: 500; line-height: 1.35; }
+body.portal .hm-cart .co-action-s { display: block; max-width: none; margin-left: auto; font-size: 0.84375rem; color: var(--text-3); text-align: right; }
 
-/* ---------------- Coming up: one labelled group per kind (tee times, lessons, dining, events, to do) ---------------- */
-.hm-groups { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
-.hm-group { min-width: 0; }
-.hm-g-head { display: flex; align-items: center; gap: 8px; min-height: 32px; margin: 0 0 6px 2px; }
-.hm-g-ic { width: 24px; height: 24px; flex: none; border-radius: var(--radius-ctl); background: var(--sage-100); color: var(--forest-800); display: inline-flex; align-items: center; justify-content: center; }
-.hm-g-ic .icon { width: 15px; height: 15px; }
-body.portal .hm-g-t { margin: 0; flex: 1 1 auto; min-width: 0; font-family: var(--sans); font-size: var(--fs-label); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-2); line-height: 1.3; }
-body.portal .hm-g-more { min-height: 32px; font-size: var(--fs-meta); margin: -6px 0; padding: 6px 0; position: relative; }
-body.portal .hm-g-more::before { content: ""; position: absolute; inset: -6px -8px; }   /* 44px tap area */
-body.portal .p-list.hm-list > li, body.portal .p-list.hm-nlist > li { padding: 0; min-height: 0; display: block; }
-.hm-row { display: flex; align-items: center; gap: 14px; min-height: 64px; padding: 10px 12px 10px 12px; color: var(--text); text-decoration: none; }
-@media (hover: hover) { .hm-row:hover, .hm-n:hover { background: var(--sage-50); text-decoration: none; } }
-/* Date block: weekday over day number; today is filled */
-.hm-date { flex: none; width: 44px; height: 44px; border-radius: var(--radius-card); background: var(--sage-50); border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05; }
-.hm-date-w { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--forest-500); }
-.hm-date-n { font-size: var(--fs-card); font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums lining-nums; }
-.hm-date.is-today { background: var(--forest-800); border-color: var(--forest-800); }
-.hm-date.is-today .hm-date-w, .hm-date.is-today .hm-date-n { color: var(--on-dark); }
-.hm-row-body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.hm-row-title { font-size: var(--fs-body); font-weight: 600; line-height: 1.35; color: var(--text); }
-.hm-row-title .badge, .hm-row-title .gc-pill { margin-left: 4px; vertical-align: 1px; }
-.hm-row-sub { font-size: var(--fs-meta); line-height: 1.4; color: var(--text-2); font-variant-numeric: tabular-nums; }
-.hm-row .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.hm-row-go { width: 18px; height: 18px; flex: none; color: var(--text-3); }
-.hm-empty { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 16px; }
-.hm-empty p { margin: 0 0 12px; font-size: var(--fs-body); color: var(--text-2); }
+/* ---------------- Sections ---------------- */
+.hm-sec { margin-top: 30px; }
+body.portal .hm-h { margin: 0 0 10px; font-family: var(--sans); font-size: 1.375rem; font-weight: 500; line-height: 1.3; letter-spacing: -0.02em; color: var(--text); }
+body.portal .hm-quiet { margin: 0; padding: 12px 0; border-top: 1px solid var(--border); font-size: 0.9375rem; color: var(--text-2); }
+.hm-rows { list-style: none; margin: 0; padding: 0; }
+.hm-rows > li { border-top: 1px solid var(--border); }
+/* "View all": a last row, the count on the right */
+body.portal .hm-all { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; min-height: 48px; padding: 12px 0; border: 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); border-radius: 0; background: none; color: var(--text); font: 500 0.96875rem/1.35 var(--sans); text-align: left; text-decoration: none; cursor: pointer; }
+body.portal .hm-all-n { font-size: 0.84375rem; font-weight: 400; color: var(--text-3); font-variant-numeric: tabular-nums; }
+@media (hover: hover) { body.portal .hm-all:hover > span:first-child, body.portal .hm-item:hover .hm-item-t, body.portal .hm-n:hover .hm-n-title { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 4px; } }
 
-/* ---------------- Account and handicap tiles ---------------- */
-.hm-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr)); gap: 12px; margin-top: 28px; }
-.hm-tile { position: relative; display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: 10px 32px 10px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); color: var(--text); text-decoration: none; }
-@media (hover: hover) { .hm-tile:hover { background: var(--sage-50); text-decoration: none; } }
-.hm-tile-l, .hm-tile-c { font-size: var(--fs-meta); line-height: 1.4; color: var(--text-2); }
-.hm-tile-v { font-family: var(--font-title); font-weight: 600; font-size: var(--fs-num); line-height: 1.25; color: var(--text); font-variant-numeric: tabular-nums lining-nums; white-space: nowrap; }
-.hm-tiles .hm-tile:last-child:not(:first-child) .hm-tile-v { display: inline-block; }
-.hm-hcp-line { display: flex; align-items: flex-end; gap: 10px; }
-.hm-spark { display: block; flex: 1 1 auto; min-width: 0; height: 32px; margin-bottom: 4px; }
-.hm-spark .chart { width: 100% !important; max-width: 120px; height: 32px !important; }
-.hm-tile-go { position: absolute; right: 10px; top: 14px; width: 18px; height: 18px; color: var(--text-3); }
+/* ---------------- This week: date block, title, one meta line, the category word ---------------- */
+body.portal .hm-item { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; align-items: center; gap: 14px; min-height: 48px; padding: 14px 0; color: var(--text); text-decoration: none; }
+.hm-d { display: block; text-align: center; }
+body.portal .hm-d small { display: block; margin-bottom: 4px; font-family: var(--sans); font-size: 0.6875rem; font-weight: 600; line-height: 1.2; letter-spacing: 0.18em; margin-right: -0.18em; text-transform: uppercase; color: var(--label); }
+body.portal .hm-d-n { display: block; font-family: var(--font-sig); font-weight: 400; font-size: 1.625rem; line-height: 1; letter-spacing: -0.01em; font-variant-numeric: lining-nums; color: var(--text); }
+.hm-item-b { display: block; min-width: 0; }
+body.portal .hm-item-t { display: block; font-size: 0.96875rem; font-weight: 500; line-height: 1.35; color: var(--text); }
+.hm-item-t .badge, .hm-item-t .gc-pill { margin-left: 4px; vertical-align: 1px; }
+body.portal .hm-item-m { display: block; margin-top: 2px; font-size: 0.8125rem; line-height: 1.4; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.hm-item .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+body.portal .hm-k { font-size: 0.6875rem; font-weight: 600; line-height: 1.2; letter-spacing: 0.14em; text-transform: uppercase; color: var(--label); white-space: nowrap; }
 
-/* ---------------- Club notices: one-line rows ---------------- */
-.hm-n { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 6px 12px 6px 16px; color: var(--text); text-decoration: none; }
-.hm-n-title { flex: 1 1 auto; min-width: 0; font-size: var(--fs-body); font-weight: 500; line-height: 1.35; }
-.hm-n-when { flex: none; font-size: var(--fs-meta); color: var(--text-3); white-space: nowrap; }
+/* ---------------- Friends playing: rows from js/portal/friends.js; Join, Approve and Decline as words ---------------- */
+body.portal .hm-frlist > li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 14px; min-height: 48px; padding: 8px 0; }
+body.portal .hm-frlist > li[hidden] { display: none; }
+body.portal .hm-frlist .fr-g-main { flex: 1 1 9rem; }
+body.portal .hm-frlist .fr-g-who { font-size: 0.96875rem; font-weight: 500; line-height: 1.35; }
+body.portal .hm-frlist .fr-g-sub { font-size: 0.8125rem; color: var(--text-3); }
+body.portal .hm-frlist .fr-g-act { flex: 0 1 auto; max-width: none; margin-left: auto; gap: 16px; flex-wrap: nowrap; }
+body.portal .hm-frlist .btn, body.portal .hm-frlist .p-link { min-width: 0; min-height: 44px; padding: 0; border: 0; border-radius: 0; background: none; color: var(--text); font-size: 0.875rem; font-weight: 600; letter-spacing: 0.01em; text-decoration: none; white-space: nowrap; }
+body.portal .hm-frlist .p-link { font-weight: 500; color: var(--text-2); }
+@media (hover: hover) { body.portal .hm-frlist .btn:hover, body.portal .hm-frlist .p-link:hover { background: none; text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 4px; } }
 
-/* ---------------- Friends playing: two rows (row styles from friends.css) ---------------- */
-body.portal .p-list.fr-golf.hm-frlist > li { min-height: 48px; padding-top: 4px; padding-bottom: 4px; }
-body.portal .hm-fr-head { margin-bottom: 0; }
-body.portal .hm-fr-head .p-link { margin: -6px 0; }
-body.portal .hm-fr-head h2.eyebrow { margin: 0 0 0 4px; font-family: var(--sans); font-size: var(--fs-label); line-height: 1.4; }
+/* ---------------- Account: two serif figures under spaced capitals ---------------- */
+.hm-figs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
+body.portal .hm-fig { display: block; min-height: 48px; color: var(--text); text-decoration: none; }
+body.portal .hm-fig-l { display: block; font-size: 0.6875rem; font-weight: 600; line-height: 1.4; letter-spacing: 0.18em; text-transform: uppercase; color: var(--label); }
+body.portal .hm-fig-v { display: block; margin-top: 6px; font-family: var(--font-sig); font-weight: 400; font-size: 1.875rem; line-height: 1.15; font-variant-numeric: lining-nums; color: var(--text); white-space: nowrap; }
+body.portal .hm-fig-c { display: block; margin-top: 2px; font-size: 0.8125rem; color: var(--text-3); }
+@media (hover: hover) { body.portal .hm-fig:hover .hm-fig-l { color: var(--text); } }
+
+/* ---------------- Club notices: plain rows, the date on the right ---------------- */
+body.portal .hm-n { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 48px; padding: 12px 0; color: var(--text); text-decoration: none; }
+body.portal .hm-n-title { min-width: 0; font-size: 0.96875rem; font-weight: 500; line-height: 1.35; }
+body.portal .hm-n-when { flex: none; font-size: 0.84375rem; color: var(--text-3); white-space: nowrap; }
 
 /* ==========================================================================
-   Tablet (>= 768) and desktop (>= 1024). Phones keep the single column above.
+   Tablet and wider: two columns, as on the approved iPad screen. Left: greeting, next round, This week.
+   Right: Friends playing, Account, Club notices.
    ========================================================================== */
 @media (min-width: 768px) {
-  .hm-layout { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-areas: "hero hero" "act act" "up up" "friends friends" "tiles notices"; gap: 1.5rem 1.25rem; align-items: start; }
-  .hm-hero { grid-area: hero; margin: 0; padding: 1.5rem 1.75rem; }
-  .hm-actions { grid-area: act; max-width: 32rem; }
-  .hm-upcoming { grid-area: up; }
-  .hm-tiles { grid-area: tiles; }
-  .hm-notices { grid-area: notices; }
-  .hm-friends { grid-area: friends; }
-  .hm-layout > .hm-section, .hm-layout > .hm-tiles { margin-top: 0; }
-  .hm-mark { width: 12rem; }
-  .hm-hero-row { max-width: 40rem; }
-  .hm-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hm { grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr); column-gap: 46px; align-items: start; }
+  body.portal .hm-hello { margin-top: 0; }
+  .hm-side { padding-top: 34px; }
+  .hm-side > .hm-sec { margin-top: 34px; }
+  .hm-side > .hm-sec:first-child { margin-top: 0; }
+  .hm-next { --hm-time: 5.375rem; }
 }
 @media (min-width: 1024px) {
-  .hm-layout { grid-template-columns: minmax(0, 1fr) minmax(20rem, 24rem); grid-template-areas: "hero act" "up tiles" "up friends" "up notices"; grid-template-rows: auto auto auto 1fr; gap: 1.5rem 2rem; }
-  .hm-hero { align-self: stretch; padding: 1.75rem 2rem; }
-  body.portal .hm-hello { font-size: 2rem; }
-  .hm-mark { width: 14rem; right: -1rem; bottom: -1.5rem; }
-  /* Quick actions sit beside the greeting as a quiet 2x2 panel */
-  .hm-actions { align-self: stretch; max-width: none; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: center; gap: 1rem 0.5rem; padding: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
-  .hm-action-ic { width: 3rem; height: 3rem; }
-  .hm-action-l { font-size: var(--fs-meta); }
-  .hm-row { padding: 0.625rem 1rem; }
-  .hm-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem 1.25rem; }
+  .hm { column-gap: 72px; }
+  .hm-next { padding: 26px 28px 24px; }
 }

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Members' portal theme v3 (member.html only). Loaded last.
+   Members' portal theme v3 (member.html only). Loaded after the page stylesheets it restyles.
 
    "Inter with a touch of serif" (owner-approved redesign, Nov 21; REDESIGN-PLAN.md step 1): the club's deep greens on
    a soft Mist page, Paper for raised surfaces, hairline Rules instead of shadows, small spaced capitals in Oak, and
@@ -25,6 +25,7 @@ body.portal {
   --c-oak: #7E8558;       /* Oak: marks and large type only (3.3:1 on Mist) */
   --c-oak-ink: #5F6542;   /* darker oak: 11 to 12px spaced capital labels (5.1:1 on Mist) */
   --c-brass: #A8864E;     /* Brass: the single accent, "you are here" marks only, never text */
+  --c-oak-soft: #B9BE95;  /* pale oak: spaced capitals on Fairway and Ink panels (6.7:1 on Fairway) */
   --accent: var(--c-brass);
   --label: var(--c-oak-ink);
 
@@ -48,6 +49,8 @@ body.portal {
   --text-3: #59635B;
   --on-dark: #F3F6F2;
   --on-dark-2: rgba(243, 246, 242, 0.72);
+  --on-dark-3: #CDD2C4;                     /* quiet text on Fairway (8.4:1) */
+  --on-dark-rule: rgba(233, 236, 228, 0.18);   /* hairlines on Fairway and Ink */
   --danger: #9B2C2C;
   --warn: #7A5010;
 
@@ -75,8 +78,8 @@ body.portal {
   --font-sig: "Bodoni Moda", Georgia, "Times New Roman", serif;
   /* Type scale: one size per role. Page title, section title, card title, body, meta and label, plus display
      numbers (balances, times, scores). Weights: titles 600, UI 500, text 400. */
-  --fs-page: 1.75rem;      /* 28: page and hero titles (h1) */
-  --fs-section: 1.25rem;   /* 20: section titles (h2) */
+  --fs-page: 2.125rem;     /* 34: page titles (h1) */
+  --fs-section: 1.375rem;  /* 22: section titles (h2) */
   --fs-card: 1.0625rem;    /* 17: card and row titles (h3) */
   --fs-body: 0.9375rem;    /* 15: text and buttons */
   --fs-meta: 0.8125rem;    /* 13: muted meta lines, hints, table text */
@@ -121,6 +124,8 @@ body.portal {
   --fs-11: 0.75rem; --fs-12: 0.8125rem; --fs-13: 0.875rem; --fs-15: 1rem; --fs-18: 1.0625rem;
   --fs-24: 1.375rem; --fs-32: 1.375rem; --fs-44: 1.875rem; --fs-56: 1.875rem;
 
+  /* Bodoni Moda at its text cut (the approved boards): without this, big sizes switch to the hairline display cut */
+  font-optical-sizing: none;
   background: var(--bg);
   color: var(--text);
   font-family: var(--sans);
@@ -132,8 +137,8 @@ body.portal {
 
 /* ---------- Type roles ---------- */
 body.portal h1, body.portal h2, body.portal h3, body.portal h4 { font-family: var(--font-title); font-weight: var(--fw-title); color: var(--text); text-transform: none; }
-body.portal h1 { font-size: var(--fs-page); line-height: 1.2; letter-spacing: -0.02em; }
-body.portal h2 { font-size: var(--fs-section); line-height: 1.3; letter-spacing: -0.01em; }
+body.portal h1 { font-size: var(--fs-page); font-weight: 500; line-height: 1.12; letter-spacing: -0.025em; }
+body.portal h2 { font-size: var(--fs-section); font-weight: 500; line-height: 1.3; letter-spacing: -0.02em; }
 body.portal h3 { font-size: var(--fs-card); line-height: 1.35; letter-spacing: -0.005em; }
 body.portal h4 { font-size: 1rem; line-height: 1.4; letter-spacing: normal; }
 body.portal strong, body.portal b, body.portal th { font-weight: 600; }
@@ -146,7 +151,7 @@ body.portal .num, body.portal time, body.portal td, body.portal .stat-value { fo
 body.portal .eyebrow, body.portal .label-caps { font-family: var(--sans); font-size: var(--fs-label); font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--label); }
 /* Everything else is sentence case with normal spacing */
 body.portal .btn, body.portal .tab, body.portal .segmented button, body.portal .badge, body.portal .field label,
-body.portal .p-nav a, body.portal .p-tabbar a, body.portal .p-tabbar button, body.portal .table th { text-transform: none; letter-spacing: normal; }
+body.portal .table th { text-transform: none; letter-spacing: normal; }
 /* No truncated text: wrap, or the page shows two lines with a "More" link */
 body.portal p, body.portal li, body.portal h1, body.portal h2, body.portal h3, body.portal h4, body.portal .person-name, body.portal .person-sub { white-space: normal; overflow-wrap: break-word; text-overflow: clip; }
 
@@ -168,8 +173,8 @@ body.portal .divider, body.portal .divider.brass { background: var(--border); }
 body.portal .stat { border-color: var(--border); }
 body.portal .stat-value { font-family: var(--font-title); font-weight: var(--fw-title); font-size: var(--fs-num); color: var(--text); letter-spacing: -0.01em; }
 
-/* Inset grouped list: one card, rows separated by hairlines (pages opt in with .p-list) */
-body.portal .p-list { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); list-style: none; margin: 0; padding: 0; overflow: hidden; }
+/* Lists (pages opt in with .p-list): plain rows separated by hairlines. No box, no shadow. */
+body.portal .p-list { background: transparent; border: 0; border-top: 1px solid var(--border); border-radius: 0; box-shadow: none; list-style: none; margin: 0; padding: 0; overflow: hidden; }
 body.portal .p-list > li, body.portal .p-list > a, body.portal .p-list > button { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 10px 16px; border: 0; border-bottom: 1px solid var(--border); color: var(--text); background: transparent; width: 100%; text-align: left; font: inherit; }
 body.portal .p-list > :last-child { border-bottom: 0; }
 body.portal .list > li { border-color: var(--border); }
@@ -178,17 +183,20 @@ body.portal .list > li { border-color: var(--border); }
 body.portal .btn { font-family: var(--sans); font-weight: 500; font-size: 0.9375rem; min-height: 48px; padding: 0 18px; border-radius: var(--radius-ctl); background: var(--surface); color: var(--text); border: 1px solid var(--border-strong); gap: 8px; box-shadow: none; white-space: normal; text-align: center; line-height: 1.25; }
 @media (hover: hover) { body.portal .btn:hover { background: var(--sage-50); border-color: var(--forest-500); text-decoration: none; } }
 body.portal .btn svg { width: 20px; height: 20px; }
-body.portal .btn-primary, body.portal .btn-brass { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); font-weight: 600; font-size: 1rem; }
-@media (hover: hover) { body.portal .btn-primary:hover, body.portal .btn-brass:hover { background: var(--forest-700); border-color: var(--forest-700); color: var(--on-dark); } }
+/* Primary: Ink. On a dark panel the button is light (.btn-light, or any .btn-primary inside .p-dark). */
+body.portal .btn-primary, body.portal .btn-brass { background: var(--c-ink); border-color: var(--c-ink); color: var(--on-dark); font-weight: 600; font-size: 0.9375rem; }
+@media (hover: hover) { body.portal .btn-primary:hover, body.portal .btn-brass:hover { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); } }
+body.portal .btn-light, body.portal .p-dark .btn-primary { background: var(--c-mist); border-color: var(--c-mist); color: var(--c-ink); font-weight: 600; border-radius: 3px; }
+@media (hover: hover) { body.portal .btn-light:hover, body.portal .p-dark .btn-primary:hover { background: var(--c-paper); border-color: var(--c-paper); color: var(--c-ink); } }
 body.portal .btn-ghost { background: transparent; border-color: transparent; color: var(--forest-800); }
 @media (hover: hover) { body.portal .btn-ghost:hover { background: var(--sage-50); border-color: transparent; } }
 body.portal .btn-danger { color: var(--danger); border-color: var(--border-strong); background: var(--surface); }
 body.portal .btn-sm { min-height: 40px; font-size: 0.875rem; padding: 0 14px; }
 body.portal .btn-icon, body.portal .btn-icon.btn-sm { width: 44px; min-width: 44px; min-height: 44px; padding: 0; }
 body.portal .btn[disabled], body.portal .btn:disabled { opacity: 1; background: var(--sage-50); color: var(--text-3); border-color: var(--border); }
-/* Quiet text link */
-body.portal .p-link { background: none; border: 0; padding: 0; min-height: 44px; display: inline-flex; align-items: center; gap: 4px; color: var(--forest-800); font: 500 0.9375rem/1.3 var(--sans); cursor: pointer; text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 3px; }
-@media (hover: hover) { body.portal .p-link:hover { text-decoration-color: var(--forest-800); } }
+/* Text link: Ink with a brass underline */
+body.portal .p-link { background: none; border: 0; padding: 0; min-height: 44px; display: inline-flex; align-items: center; gap: 4px; color: var(--text); font: 500 0.9375rem/1.3 var(--sans); cursor: pointer; text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 4px; }
+@media (hover: hover) { body.portal .p-link:hover { text-decoration-color: var(--text); } }
 
 /* ---------- Forms ---------- */
 body.portal .field label { font-size: 0.875rem; font-weight: 500; color: var(--text-2); }
@@ -258,39 +266,54 @@ body.portal .toast svg { color: var(--on-dark); }
   body.portal .modal::before { content: ""; display: block; width: 36px; height: 4px; border-radius: 2px; background: var(--border-strong); margin: 8px auto 0; flex: none; }
 }
 
-/* ---------- Header: forest, club name, MEMBERS eyebrow, 36px avatar ---------- */
-body.portal .p-header { background: var(--forest-950); border-bottom: 0; padding-top: env(safe-area-inset-top); }
-body.portal .p-header-inner { height: auto; min-height: 56px; padding-top: 6px; padding-bottom: 6px; }
-body.portal .p-brand { color: var(--on-dark); min-width: 0; flex: 1 1 auto; }
-body.portal .p-brand > span { min-width: 0; }
-body.portal .p-brand-name { font-family: var(--font-title); font-weight: 600; font-size: 1.125rem; letter-spacing: -0.01em; line-height: 1.1; color: var(--on-dark); white-space: normal; letter-spacing: normal; }
-body.portal .p-brand-sub { font-family: var(--sans); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--on-dark-2); margin-top: 3px; }
-body.portal .p-crest.stb-logo { color: var(--on-dark); height: 30px; }
-body.portal .p-nav a { font-size: 0.875rem; font-weight: 500; color: var(--on-dark-2); text-transform: none; letter-spacing: normal; }
-body.portal .p-nav a.active { color: var(--on-dark); }
-@media (hover: hover) { body.portal .p-nav a:hover { color: var(--on-dark); } }
-body.portal .p-nav-ink { background: var(--accent); height: 2px; }
-body.portal .p-me-btn { border: 0; padding: 0; min-height: 44px; min-width: 44px; gap: 4px; background: none; }
-body.portal .p-me-btn .avatar { width: 36px; height: 36px; font-size: min(0.9375rem, 15px); background: transparent; color: var(--on-dark); box-shadow: inset 0 0 0 1px var(--on-dark-a40); }
-body.portal .p-me-btn svg { color: var(--on-dark-2); width: 16px; height: 16px; }
-body.portal .p-me-name { color: var(--on-dark); font-weight: 500; font-size: 0.9375rem; }
-body.portal .p-me-menu { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card), var(--shadow-drop); width: min(280px, calc(100vw - 24px)); max-width: calc(100vw - 24px); }
+/* ---------- Top bar (Nov 21): light Mist with a hairline, the colour crest, pages as spaced capitals ----------
+   Tablets and computers: sticky, crest + "St. Boniface", the page words with a brass underline on the current one,
+   the initials avatar (account menu) on the right. Phones: only the crest and the avatar, not sticky (see the
+   responsive frame below). Colours come from --nav-* so one page can re-skin the bars (the dark Membership card). */
+body.portal { --nav-bg: var(--bg); --nav-rule: var(--border); --nav-fg: var(--text-3); --nav-fg-on: var(--text); --nav-ring: var(--border-strong); }
+body.portal .p-header { background: var(--nav-bg); color: var(--nav-fg-on); border-bottom: 1px solid var(--nav-rule); padding-top: env(safe-area-inset-top); }
+body.portal .p-header-inner { height: auto; min-height: 64px; padding-top: 0; padding-bottom: 0; gap: 20px; justify-content: flex-start; }
+body.portal .p-brand { color: var(--nav-fg-on); gap: 14px; min-width: 0; min-height: 44px; flex: none; text-decoration: none; }
+body.portal .p-crest-img { height: 34px; width: auto; flex: none; }
+/* The Membership card page turns the bars dark (body.mc-dark, css/portal/card.css): the crest goes light with them */
+body.portal.mc-dark .p-crest-img { filter: brightness(0) invert(1); opacity: 0.92; }
+body.portal .p-brand-name { font-family: var(--sans); font-weight: 500; font-size: 1.0625rem; letter-spacing: -0.01em; line-height: 1.1; color: var(--nav-fg-on); white-space: nowrap; }
+body.portal .p-nav { display: none; position: relative; align-items: center; align-self: stretch; gap: 20px; margin: 0 auto 0 10px; min-width: 0; height: auto; }
+body.portal .p-nav a, body.portal .p-navmore-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 0; border: 0; background: none; cursor: pointer; font: 600 0.6875rem/1 var(--sans); letter-spacing: 0.16em; text-transform: uppercase; color: var(--nav-fg); white-space: nowrap; text-decoration: none; }
+body.portal .p-nav a.active, body.portal .p-navmore-btn[aria-expanded="true"], body.portal .p-navmore.has-active .p-navmore-btn { color: var(--nav-fg-on); }
+@media (hover: hover) { body.portal .p-nav a:hover, body.portal .p-navmore-btn:hover { color: var(--nav-fg-on); text-decoration: none; } }
+body.portal .p-nav-ink { top: calc(50% + 11px); bottom: auto; height: 1.5px; background: var(--accent); }
+/* New in Friends: a small brass dot beside the word (the count stays in its label for screen readers) */
+body.portal .p-nav .fr-badge { width: 6px; min-width: 6px; height: 6px; padding: 0; margin-left: 6px; border-radius: 50%; background: var(--accent); font-size: 0; overflow: hidden; }
+/* The initials avatar opens the account menu */
+body.portal .p-me { margin-left: auto; }
+body.portal .p-me-btn { display: grid; place-items: center; width: 44px; height: 44px; min-height: 44px; margin-right: -4px; padding: 0; border: 0; border-radius: 50%; background: none; }
+body.portal .p-me-btn .avatar { width: 36px; height: 36px; min-width: 36px; background: transparent; color: var(--nav-fg-on); box-shadow: inset 0 0 0 1px var(--nav-ring); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; }
+@media (hover: hover) { body.portal .p-me-btn:hover .avatar { box-shadow: inset 0 0 0 1px var(--nav-fg-on); } }
+body.portal .p-me-menu { top: calc(100% + 6px); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-drop); width: min(264px, calc(100vw - 24px)); max-width: calc(100vw - 24px); overflow: hidden; }
 body.portal .p-me-menu:not(.x) { visibility: hidden; }
 body.portal .p-me.open .p-me-menu { visibility: visible; }
-body.portal .p-me-menu a, body.portal .p-me-menu button { min-height: 48px; font-size: 0.9375rem; color: var(--text); }
-body.portal .p-me-menu svg { color: var(--forest-500); width: 20px; height: 20px; }
+body.portal .p-me-head { padding: 14px 16px; border-bottom: 0; }
+body.portal .p-me-menu a, body.portal .p-me-menu button { min-height: 48px; padding: 0 16px; border-top: 1px solid var(--border); font-size: 0.9375rem; font-weight: 500; color: var(--text); text-decoration: none; }
+@media (hover: hover) { body.portal .p-me-menu a:hover, body.portal .p-me-menu button:hover { background: var(--sage-50); } }
 
-/* ---------- More menu ---------- */
-body.portal .p-more-list a, body.portal .p-more-list button { font-size: 1rem; min-height: 52px; color: var(--text); border-color: var(--border); }
-body.portal .p-more-list svg { width: 20px; height: 20px; color: var(--forest-500); }
-/* Grouped: Account, Golf, Food and drink, Club, then Sign out */
-body.portal .p-more-group + .p-more-group { margin-top: 20px; }
-body.portal .p-more-h { margin: 0 0 2px; font-size: var(--fs-label); font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--label); }
-body.portal .p-more-group > :last-child { border-bottom: 0; }
+/* ---------- More (#/more, js/portal/app.js): every page that is not a tab, as a plain grouped list ---------- */
+body.portal .p-more { max-width: 35rem; }
+body.portal .p-more-title { margin: 6px 0 0; }
+body.portal h2.p-more-h { margin: 22px 0 2px; font-family: var(--sans); font-size: 0.6875rem; font-weight: 600; line-height: 1.6; letter-spacing: 0.2em; text-transform: uppercase; color: var(--label); }
+body.portal .p-more-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; min-height: 48px; padding: 12px 0; border: 0; border-top: 1px solid var(--border); background: none; color: var(--text); font: 500 0.96875rem/1.35 var(--sans); text-align: left; text-decoration: none; cursor: pointer; }
+body.portal .p-more-h + .p-more-row { border-top: 0; }
+@media (hover: hover) { body.portal .p-more-row:hover { text-decoration: none; } body.portal .p-more-row:hover .p-more-l { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 4px; } }
+body.portal .p-more-l { min-width: 0; }
+body.portal .p-more-v { flex: none; max-width: 60%; font-size: 0.84375rem; font-weight: 400; color: var(--text-3); text-align: right; font-variant-numeric: tabular-nums; }
+body.portal .p-more-fig { font-family: var(--font-sig); font-size: 1.125rem; font-weight: 400; color: var(--text); font-variant-numeric: lining-nums; }
+body.portal .p-more-dot { display: inline-block; width: 7px; height: 7px; margin-left: 8px; border-radius: 50%; background: var(--accent); vertical-align: 2px; }
+body.portal .p-more-dot[hidden] { display: none; }
+body.portal .p-more-end { margin-top: 22px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+body.portal .p-more-end .p-more-row { border-top: 0; color: var(--text-2); }
 
 /* ---------- Footer: compact, so it never costs a third of a screen ---------- */
 body.portal .p-footer { padding: 16px 20px 20px; margin-top: 8px; line-height: 1.45; text-align: center; }
-body.portal .p-footer .flourish { display: none; }
 body.portal .p-footer p { margin: 0 0 4px; }
 body.portal .p-footer .serif { margin-bottom: 2px; }
 body.portal .p-footer .p-land { font-size: 0.8125rem; color: var(--text-3); margin-top: 8px; }
@@ -299,18 +322,15 @@ body.portal .p-footer { color: var(--text-2); font-size: 0.875rem; border-color:
 body.portal .p-footer .serif { font-family: var(--sans); font-size: 1rem; font-weight: 500; color: var(--text); }
 body.portal .p-land, body.portal .p-signin-sub { font-style: normal; }
 body.portal .p-footer a { color: var(--forest-800); }
-body.portal .p-footer .flourish::before, body.portal .p-footer .flourish::after { background: var(--border); }
-body.portal .p-crest.stb-logo.sm { color: var(--forest-500); }
 
-/* ---------- Bottom nav: forest bar, ivory bar above the active icon (all widths: one mobile layout) ---------- */
-body.portal .p-tabbar { background: var(--forest-950); border-top: 0; padding: 4px 4px calc(4px + env(safe-area-inset-bottom)); box-shadow: none; }
-body.portal .p-tabbar a, body.portal .p-tabbar button { display: flex; flex-direction: column; align-items: center; justify-content: center; text-decoration: none; border: 0; cursor: pointer; position: relative; flex: 1 1 0; min-width: 0; min-height: 56px; gap: 3px; padding: 8px 2px 6px; font-size: min(0.75rem, 14px); font-weight: 500; color: var(--on-dark-2); background: none; }
-/* Labels cap at 14px and wrap between words at large text sizes, as native tab bars do */
-body.portal .p-tabbar a span, body.portal .p-tabbar button span { display: block; max-width: 100%; text-align: center; line-height: 1.15; white-space: normal; overflow-wrap: normal; word-break: normal; }
-body.portal .p-tabbar svg { width: 22px; height: 22px; padding: 0; background: none; color: inherit; }
-body.portal .p-tabbar a.active { color: var(--on-dark); font-weight: 500; }
-body.portal .p-tabbar a.active svg { background: none; color: var(--on-dark); }
-body.portal .p-tabbar a.active::before { content: ""; position: absolute; top: 0; left: 50%; width: 24px; height: 2px; margin-left: -12px; border-radius: 0 0 2px 2px; background: var(--accent); }
+/* ---------- Tab bar (phones): five words on Mist with a hairline; the current one in Ink with a brass underline ---------- */
+body.portal .p-tabbar { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 45; align-items: stretch; justify-content: space-around; height: calc(64px + env(safe-area-inset-bottom)); padding: 0 6px env(safe-area-inset-bottom); background: var(--nav-bg); border-top: 1px solid var(--nav-rule); box-shadow: none; }
+body.portal .p-tabbar a { flex: 1 1 auto; display: flex; flex-direction: row; align-items: flex-start; justify-content: center; gap: 0; min-width: 44px; min-height: 0; padding: 18px 2px 0; border: 0; background: none; color: var(--nav-fg); font: 600 0.6875rem/1.25 var(--sans); letter-spacing: 0.16em; text-transform: uppercase; text-decoration: none; cursor: pointer; }
+body.portal .p-tabbar a span { display: block; padding-bottom: 6px; border-bottom: 1.5px solid transparent; white-space: nowrap; }
+body.portal .p-tabbar a.active { color: var(--nav-fg-on); }
+body.portal .p-tabbar a.active span { border-bottom-color: var(--accent); }
+/* Something new behind More (Friends): a small brass dot after the word, which stays centred */
+body.portal .p-tabbar .fr-badge.is-dot { position: static; flex: none; width: 5px; min-width: 5px; height: 5px; margin: 4px -9px 0 4px; padding: 0; border-radius: 50%; background: var(--accent); }
 body.portal.signed-in { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
 body.portal .toasts { bottom: calc(80px + env(safe-area-inset-bottom)); }
 
@@ -347,18 +367,29 @@ body.portal .p-page .row > *, body.portal .p-page [class*="-row"] > *, body.port
 body.portal .p-page { width: 100%; margin-left: auto; margin-right: auto; }
 body.portal .p-header-inner, body.portal .p-footer { margin-left: auto; margin-right: auto; }
 /* Shared page grid: main column plus a side column on wide screens */
-/* Phones and tablets: bottom nav; top nav hidden */
-body.portal .p-tabbar { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 45; }
-body.portal .p-nav { display: none; }
-body.portal .p-header-inner { justify-content: space-between; }
-body.portal.signed-in { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
+/* Phones: the tab bar, and a top row that is only the crest and the avatar. The row scrolls away with the page: the
+   header itself takes no height (so sticky bars inside pages measure no header) and the row sits in the page's own
+   top padding. */
+@media (max-width: 767.98px) {
+  body.portal .p-header { position: relative; top: auto; z-index: 41; height: 0; padding: 0; border-bottom: 0; }
+  body.portal .p-header-inner { min-height: 0; height: calc(52px + env(safe-area-inset-top)); padding: calc(8px + env(safe-area-inset-top)) 20px 0; }
+  body.portal .p-main { padding-top: calc(52px + env(safe-area-inset-top)); }
+  body.portal .p-brand { margin-left: -2px; }
+  body.portal .p-brand-name { display: none; }
+  body.portal .p-crest-img { height: 30px; }
+  body.portal .p-page { padding-top: 12px; }
+  /* Home and More sit on the design's 26px gutter */
+  body.portal[data-page="home"] .p-header-inner, body.portal[data-page="more"] .p-header-inner,
+  body.portal[data-page="home"] .p-page, body.portal[data-page="more"] .p-page { padding-left: 26px; padding-right: 26px; }
+}
 body.portal .p-cols { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start; }
 body.portal .p-cols > * { min-width: 0; }
 
 @media (min-width: 768px) {
   body.portal .p-page { max-width: 760px; padding: 28px 28px 40px; }
-  body.portal .p-header-inner, body.portal .p-footer { max-width: 760px; }
-  body.portal .p-tabbar { left: 0; right: 0; margin: 0 auto; max-width: 760px; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+  body.portal .p-footer { max-width: 760px; }
+  /* The top bar runs the full width on tablets (the approved iPad screen), and Home fills it in two columns */
+  body.portal .p-header-inner { max-width: none; padding-left: 36px; padding-right: 36px; }
   body.portal .pk-bar { max-width: 760px; }
   /* sheets become centred dialogs */
   body.portal .ps-sheet { top: 50%; bottom: auto; max-width: 560px; max-height: min(760px, 86vh); max-height: min(760px, 86dvh); border-radius: var(--radius-lg); transform: translateY(-46%) scale(0.98); opacity: 0; transition: transform 180ms var(--ease-ui), opacity 180ms var(--ease-ui); padding-bottom: 0; }
@@ -367,11 +398,14 @@ body.portal .p-cols > * { min-width: 0; }
   body.portal .ps-grab { display: none; }
   body.portal .ps-head { padding-top: 14px; }
 }
+@media (min-width: 768px) and (max-width: 1023.98px) {
+  body.portal[data-page="home"] .p-page { max-width: none; padding: 32px 36px 40px; }
+}
 /* Tablets, including an iPad in split view (owner, Nov 21): the top menu instead of the phone tab bar, from 768px.
    Things that sat above the tab bar drop to the bottom edge. Links that do not fit fold into More (fitNav, app.js). */
 @media (min-width: 768px) {
-  body.portal .p-nav { display: flex; margin: 0 auto 0 16px; gap: 20px; align-self: stretch; min-width: 0; }
-  body.portal .p-nav a { display: inline-flex; align-items: center; font-size: 0.9375rem; white-space: nowrap; }
+  body.portal .p-header { position: sticky; top: 0; z-index: 40; }
+  body.portal .p-nav { display: flex; }
   body.portal .p-tabbar { display: none !important; }
   body.portal.signed-in { padding-bottom: 0; }
   body.portal .pk-bar { bottom: 0; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
@@ -384,11 +418,8 @@ body.portal .p-cols > * { min-width: 0; }
 @media (min-width: 1024px) {
   body.portal .p-page { max-width: 1200px; padding: 32px 32px 56px; }
   body.portal .p-header-inner, body.portal .p-footer { max-width: 1200px; }
-  body.portal .p-header-inner { min-height: 64px; gap: 32px; }
-  body.portal .p-nav { display: flex; margin: 0 auto 0 24px; gap: 28px; align-self: stretch; }
-  body.portal .p-nav a { display: inline-flex; align-items: center; font-size: 0.9375rem; }
-  body.portal .p-tabbar { display: none !important; }
-  body.portal.signed-in { padding-bottom: 0; }
+  body.portal .p-header-inner { min-height: 72px; gap: 24px; padding-left: 32px; padding-right: 32px; }
+  body.portal .p-nav { gap: 26px; margin-left: 14px; }
   body.portal .pk-bar { bottom: 0; max-width: 1200px; border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding: 12px 24px; }
   body.portal.has-bar .p-page { padding-bottom: 120px; }
   body.portal .toasts { bottom: 24px; }
@@ -407,27 +438,12 @@ body.portal .p-cols > * { min-width: 0; }
 /* Header More menu: pages that don't fit the bar (fitNav in js/portal/app.js) */
 body.portal .p-navmore { position: relative; height: 100%; display: flex; align-items: center; }
 body.portal .p-navmore[hidden] { display: none; }
-body.portal .p-navmore-btn { display: inline-flex; align-items: center; gap: 4px; border: 0; background: transparent; padding: 8px 0; color: var(--on-dark-2); font: 500 0.875rem var(--sans); cursor: pointer; white-space: nowrap; }
-body.portal .p-navmore-btn[aria-expanded="true"], body.portal .p-navmore.has-active .p-navmore-btn { color: var(--on-dark); }
-@media (hover: hover) { body.portal .p-navmore-btn:hover { color: var(--on-dark); } }
-body.portal .p-navmore-btn svg { width: 14px; height: 14px; }
-body.portal .p-navmore-pop { position: absolute; top: calc(100% - 8px); right: 0; z-index: 60; min-width: 200px; padding: 6px; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-ctl); box-shadow: var(--shadow-drop); }
+body.portal .p-navmore-pop { position: absolute; top: calc(50% + 22px); right: -12px; z-index: 60; min-width: 220px; padding: 0; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-drop); overflow: hidden; }
 body.portal .p-navmore-pop[hidden] { display: none; }
-body.portal .p-nav .p-navmore-pop a { color: var(--text); padding: 10px 12px; border-radius: 3px; }
+body.portal .p-nav .p-navmore-pop a { min-height: 44px; padding: 0 16px; border-top: 1px solid var(--border); color: var(--text); font: 500 0.9375rem/1.3 var(--sans); letter-spacing: normal; text-transform: none; }
+body.portal .p-nav .p-navmore-pop a:first-child { border-top: 0; }
 @media (hover: hover) { body.portal .p-nav .p-navmore-pop a:hover { background: var(--sage-50); color: var(--text); } }
-body.portal .p-nav .p-navmore-pop a.active { color: var(--forest-800); font-weight: 600; }
-
-/* When the header shows the menu, the brand stays on one line and keeps its width: links that don't fit move into
-   More (fitNav in js/portal/app.js) instead of the brand wrapping onto two lines. */
-@media (min-width: 981px) {
-  body.portal .p-brand { flex: none; }
-  body.portal .p-brand-name { white-space: nowrap; }
-}
-/* The menu links' text sits 7px above the header's middle (room for the underline below), so the language switch and
-   the account button are raised to the same line. */
-@media (min-width: 981px) {
-  body.portal .p-header-inner .p-lang, body.portal .p-header-inner .p-me { transform: translateY(-7px); }
-}
+body.portal .p-nav .p-navmore-pop a.active { font-weight: 600; box-shadow: inset 2px 0 0 var(--accent); }
 
 /* Option and switch labels: a tap with a 1 to 2px drag started a text selection instead of choosing the option
    (Safari). Nothing in these labels needs selecting. */
@@ -442,27 +458,44 @@ body.portal .tab::before, body.portal .pe-tab::before, body.portal .pc-subnav a:
    ========================================================================== */
 /* ---------- Signature serif: Bodoni Moda for big times, dates, the member's name and venue names only ---------- */
 body.portal .sig { font-family: var(--font-sig); font-weight: 400; font-variant-numeric: lining-nums; letter-spacing: -0.01em; }
-/* Home: the greeting's first name, italic (js/portal/home.js) */
-body.portal .hm-hello-name { font-family: var(--font-sig); font-style: italic; font-weight: 400; font-size: 1.08em; letter-spacing: 0; }
 /* Home: the big next tee time (js/portal/play.js, "Today" card) */
 body.portal .lv-tcard-time { font-family: var(--font-sig); font-weight: 400; font-size: 2.25rem; line-height: 1.05; letter-spacing: -0.02em; font-variant-numeric: lining-nums; }
 /* Tee times: the time on each chip; AM/PM stays in Inter */
 body.portal .tt-chip-t { font-family: var(--font-sig); font-weight: 400; font-size: 1.375rem; line-height: 1.1; letter-spacing: -0.01em; font-variant-numeric: lining-nums; }
 body.portal .tt-chip-t small { font-family: var(--sans); font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.06em; margin-left: 3px; }
 /* Date numbers in date blocks: Home Coming up, My tee times, Events, Account activity */
-body.portal .hm-date-n, body.portal .tt-rd-n, body.portal .pe-date-n, body.portal .pa-date-d { font-family: var(--font-sig); font-weight: 400; font-variant-numeric: lining-nums; letter-spacing: -0.01em; }
-body.portal .hm-date-n { font-size: 1.375rem; line-height: 1; }
+body.portal .tt-rd-n, body.portal .pe-date-n, body.portal .pa-date-d { font-family: var(--font-sig); font-weight: 400; font-variant-numeric: lining-nums; letter-spacing: -0.01em; }
 body.portal .tt-rd-n { font-size: 1.5rem; line-height: 1.05; }
 /* Dining > Menus: the venue name on the venue picker */
 body.portal .pd-menu-sel .pk-select-main { font-family: var(--font-sig); font-weight: 400; font-size: 1.375rem; line-height: 1.2; letter-spacing: 0; }
 
 /* ---------- Small spaced capitals in dark oak: section and group labels ---------- */
-body.portal .hm-g-t, body.portal .lv-eb, body.portal .lv-root h2.lv-eb { font-size: var(--fs-label); font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--label); }
-body.portal .hm-hero-date, body.portal .p-brand-sub { letter-spacing: 0.18em; }
-body.portal .hm-date-w { letter-spacing: 0.1em; color: var(--label); }
-body.portal .hm-date.is-today .hm-date-w { color: var(--on-dark); }
+body.portal .lv-eb, body.portal .lv-root h2.lv-eb { font-size: var(--fs-label); font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--label); }
 
 /* ---------- Sheets and steppers: small radii (kit.css is shared with the staff site, so these stay here) ---------- */
 body.portal .ps-sheet { border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
 body.portal .pk-step { border-radius: 3px; }
 @media (min-width: 768px) { body.portal .ps-sheet { border-radius: var(--radius-lg); } }
+
+/* ==========================================================================
+   Redesign step 2 (Nov 21): the shared list language. Any page can use these.
+   .p-h      a section title (22px, medium)
+   .p-caps   a small spaced-capitals label in dark oak
+   .p-rows   a plain list: each child is a row with a hairline above (no box, no shadow)
+   .p-row    a row inside .p-rows: label on the left, a quiet value (.p-row-v) or a serif figure (.p-fig) on the right
+   .p-date   a date block: spaced-capitals weekday (small) over a serif day number
+   .p-dark   a Fairway panel: light text, hairlines and a light primary button
+   .p-link   a text link with a brass underline;  .btn-primary Ink;  .btn-light on dark panels
+   ========================================================================== */
+body.portal .p-h { margin: 0 0 10px; font-family: var(--sans); font-size: var(--fs-section); font-weight: 500; line-height: 1.3; letter-spacing: -0.02em; color: var(--text); }
+body.portal .p-caps { font-family: var(--sans); font-size: 0.6875rem; font-weight: 600; line-height: 1.5; letter-spacing: 0.18em; text-transform: uppercase; color: var(--label); }
+body.portal .p-rows { list-style: none; margin: 0; padding: 0; }
+body.portal .p-rows > * { border-top: 1px solid var(--border); }
+body.portal .p-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 48px; padding: 12px 0; color: var(--text); font: 500 0.96875rem/1.35 var(--sans); text-decoration: none; }
+body.portal .p-row-v { flex: none; font-size: 0.84375rem; font-weight: 400; color: var(--text-3); text-align: right; }
+body.portal .p-fig { font-family: var(--font-sig); font-weight: 400; font-variant-numeric: lining-nums; color: var(--text); }
+body.portal .p-date { flex: none; width: 52px; text-align: center; font-family: var(--font-sig); font-size: 1.625rem; font-weight: 400; line-height: 1; font-variant-numeric: lining-nums; color: var(--text); }
+body.portal .p-date small { display: block; margin-bottom: 4px; font-family: var(--sans); font-size: 0.6875rem; font-weight: 600; line-height: 1.2; letter-spacing: 0.18em; text-transform: uppercase; color: var(--label); }
+body.portal .p-dark { background: var(--c-fairway); color: var(--on-dark); border-radius: var(--radius-card); }
+body.portal .p-dark .p-caps { color: var(--c-oak-soft); }
+body.portal .p-dark .p-link { color: var(--on-dark); }

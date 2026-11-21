@@ -1,57 +1,118 @@
-/* Members' portal: Dining (pass 3). One compact reservation card; sheets for choices and details.
-   v2 look (tokens from css/portal-theme.css only). One mobile layout at every width. */
+/* Members' portal: Dining (pd-), js/portal/dining.js. Tokens from css/portal-theme.css only.
+   Redesign (Nov 21, owner-approved): hairlines and words, no cards.
+   - Title, one quiet "Next" line, then Reserve / My reservations / Menus as words with the brass underline.
+   - Reserve: one column of hairline rows, the label in small capitals on the left, the choice on the right.
+   - My reservations: hairline rows with a date block (weekday in small capitals over the day number).
+   - Menus: set like the printed menu. Centred restaurant name in the signature serif, the meals served in small
+     capitals, the diet filters as words, section headings in small capitals, each dish a name and a plain figure.
+   This file loads before portal-theme.css and kit.css, so rules that restyle their components carry one more class.
+   Contrast (WCAG 2.1, computed): --text on Mist 14.1:1; --text-2 on Mist 6.5:1; --text-3 on Mist 5.2:1;
+   --label on Mist 5.1:1; --on-dark on Ink 15.5:1. Brass (2.8:1 on Mist) is a line colour only. */
 
-/* ---------- Title and the "Next" row ---------- */
-body.portal .p-page .pd-hero { margin-bottom: 12px; }
-body.portal .p-page .pd-hero h1 { font-size: 1.875rem; line-height: 1.2; margin: 0 0 10px; color: var(--text); }
+.pd-vh { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ---------- Title and the quiet "Next" line ---------- */
+body.portal .p-page .pd-hero { margin-bottom: 4px; }
+body.portal .p-page .pd-hero h1 { font-size: 2.125rem; font-weight: 500; line-height: 1.15; letter-spacing: -0.025em; margin: 6px 0 2px; color: var(--text); }
 body.portal .p-page .pd-hero p { display: block; overflow: visible; margin: 0; }
-body.portal .p-page .pd-hero .pd-hero-line { font-size: 0.9375rem; line-height: 1.45; color: var(--text-2); }
-.pd-next { width: 100%; min-height: 52px; display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); color: var(--text); font: 400 0.9375rem/1.35 var(--sans); text-align: left; cursor: pointer; font-variant-numeric: tabular-nums; }
-@media (hover: hover) { .pd-next:hover { border-color: var(--border-strong); } }
-.pd-next > .icon:first-child { width: 20px; height: 20px; color: var(--forest-500); flex: none; }
-.pd-next-text { flex: 1 1 auto; min-width: 0; }
-.pd-next-k { font-weight: 500; }
-.pd-next-go, .pd-row-go { width: 18px; height: 18px; color: var(--text-3); flex: none; }
-.pd-tel { color: var(--forest-800); font-weight: 500; text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 3px; white-space: nowrap; position: relative; font-variant-numeric: tabular-nums; }
+body.portal .p-page .pd-hero .pd-hero-line { padding: 6px 0 10px; font-size: var(--fs-meta); line-height: 1.45; color: var(--text-2); }
+.pd-next { width: 100%; min-height: 44px; display: flex; align-items: center; gap: 6px; padding: 4px 0; background: none; border: 0; color: var(--text-2); font: 400 0.8125rem/1.45 var(--sans); text-align: left; cursor: pointer; font-variant-numeric: tabular-nums; }
+@media (hover: hover) { .pd-next:hover { color: var(--text); } }
+.pd-next-text { flex: 0 1 auto; min-width: 0; }
+.pd-next-k { margin-right: 6px; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--label); }
+.pd-next-go { width: 14px; height: 14px; color: var(--text-3); flex: none; }
+.pd-tel { color: var(--text); font-weight: 500; text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 3px; white-space: nowrap; position: relative; font-variant-numeric: tabular-nums; }
 .pd-tel::after { content: ""; position: absolute; inset: -12px -4px; }
+/* Next: several reservations on the same day, the day and then a hairline row for each */
+body.portal .p-page .pd-hero .pd-next-day-h { padding: 6px 0; font-size: var(--fs-meta); color: var(--text-2); }
+.pd-next-day .pd-next-row { border-top: 1px solid var(--border); justify-content: space-between; color: var(--text); }
+.pd-next-day { margin-bottom: 8px; }
+/* Menus: the restaurant's name is the heading, so the page title steps back (kept for screen readers) */
+body.portal .p-page.pd-on-menus .pd-hero { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-/* ---------- Reserve: one card ---------- */
-.pd-card { display: flex; flex-direction: column; gap: 12px; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); margin-bottom: 12px; }
-.pd-guests { display: flex; align-items: flex-end; justify-content: space-between; gap: 6px 12px; }
-.pd-guests-ctl { flex: none; }
-.pd-guests-note { flex: 0 1 auto; max-width: 11.5rem; margin: 0 0 4px; font-size: 0.8125rem; line-height: 1.4; color: var(--text-3); text-align: right; }
-.pd-meal { display: flex; flex-direction: column; gap: 6px; }
-body.portal .pd-meal .segmented { display: flex; width: 100%; }
-body.portal .pd-meal .segmented button { flex: 1 1 0; min-width: 0; min-height: 40px; }
-.pd-times-head { display: flex; align-items: baseline; justify-content: space-between; gap: 2px 12px; flex-wrap: wrap; margin-bottom: 6px; }
-.pd-times-n { font-size: 0.8125rem; color: var(--text-3); font-variant-numeric: tabular-nums; }
-/* One row of time chips that scrolls sideways (pre-scrolled to the likely time) */
-.pd-chiprow { display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x proximity; margin: 0 -16px; padding: 2px 16px 4px; scrollbar-width: none; overscroll-behavior-x: contain; }
-.pd-chiprow::-webkit-scrollbar { display: none; }
-.pd-chip {
-  flex: none; min-width: 92px; min-height: 52px; padding: 6px 10px; cursor: pointer; scroll-snap-align: center;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  border: 1px solid var(--border); border-radius: var(--radius-ctl); background: var(--surface); color: var(--text);
-  font: 500 1rem/1.25 var(--sans); font-variant-numeric: tabular-nums; white-space: nowrap;
+/* ---------- Reserve / My reservations / Menus: words, a brass underline on the current one ---------- */
+body.portal .pd-tabs .tabs { gap: 22px; margin-bottom: 0; }
+body.portal .pd-tabs .tab { display: inline-flex; align-items: center; gap: 5px; min-height: 44px; padding: 10px 0 12px; font-size: 0.875rem; font-weight: 500; }
+/* Upcoming reservations: a small quiet figure after the word */
+body.portal .pd-tab-n { font-size: 0.6875rem; font-weight: 500; line-height: 1; color: var(--text-2); font-variant-numeric: tabular-nums; }
+
+/* ---------- Small spaced capitals: the labels of this page ---------- */
+body.portal .pd-main .pk-label, body.portal .pd-main .dp-label, body.portal .pd-main .pd-details .field label,
+body.portal .ps-sheet .pd-meal .pk-label, body.portal .ps-sheet .pd-times .pk-label, body.portal .ps-sheet .pd-mod-guests .pk-label,
+body.portal .pd-res-month, .pd-row-k, body.portal .pd-sec-h, .pd-menu-eb, .pd-key-c, body.portal .pd-side .eyebrow, body.portal .pd-side-h h3 {
+  font-family: var(--sans); font-size: 0.6875rem; font-weight: 600; line-height: 1.4; letter-spacing: 0.18em; text-transform: uppercase; color: var(--label);
 }
-@media (hover: hover) { .pd-chip:hover { border-color: var(--forest-500); } }
-.pd-chip.on { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); }
-.pd-chip-s { font-size: 0.8125rem; font-weight: 400; color: var(--text-3); }
-.pd-chip.full { cursor: default; color: var(--text-3); background: var(--sage-50); border-color: var(--border); }
-.pd-svc-note { margin: 6px 0 0; font-size: 0.875rem; color: var(--text-2); }
-.pd-closed { color: var(--text-2); font-size: 0.9375rem; padding: 12px 14px; margin: 0; background: var(--sage-50); border-radius: var(--radius-ctl); }
-.pd-details .field { margin-bottom: 12px; }
-.pd-details .field:last-child { margin-bottom: 0; }
-.pd-occ { margin-bottom: 12px; }
 
-/* ---------- Sheets: details, confirm, done ---------- */
-.pd-kv { margin: 4px 0 12px; }
-.pd-kv > div { display: grid; grid-template-columns: minmax(88px, 32%) minmax(0, 1fr); gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.9375rem; }
-.pd-kv dt { color: var(--text-2); }
+/* ---------- Reserve: one column of hairline rows ---------- */
+.pd-main { min-width: 0; }
+.pd-form { display: flex; flex-direction: column; }
+.pd-f { display: flex; flex-direction: column; justify-content: center; min-height: 60px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.pd-f:empty { display: none; }
+/* Where, and Occasion further down: label left, the choice as plain text right */
+body.portal .pd-main .pk-field { flex-direction: row; align-items: center; justify-content: space-between; gap: 16px; }
+body.portal .pd-main .pk-label, body.portal .pd-main .dp-label { flex: none; }
+body.portal .pd-main .pk-select { width: auto; min-width: 0; flex: 0 1 auto; min-height: 48px; padding: 0; gap: 6px; border: 0; border-radius: 0; background: none; color: var(--text); font-size: 0.96875rem; font-weight: 500; text-align: right; }
+body.portal .pd-main .pk-select-text { align-items: flex-end; }
+body.portal .pd-main .pk-select .pk-chev, body.portal .pd-main .dp-field .dp-chev { width: 16px; height: 16px; color: var(--text-3); }
+/* Date: the day as plain text, then the two steps */
+body.portal .pd-main .dp { flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; }
+body.portal .pd-main .dp-row { flex: 1 1 auto; min-width: 0; justify-content: flex-end; gap: 0; }
+body.portal .pd-main .dp-field { flex: 0 1 auto; min-height: 48px; padding: 0 6px 0 0; gap: 6px; border: 0; border-radius: 0; background: none; font-size: 0.96875rem; font-weight: 500; }
+body.portal .pd-main .dp-field > .icon:first-child { display: none; }
+body.portal .pd-main .dp-step { width: 44px; min-height: 48px; border: 0; border-radius: 0; background: none; color: var(--text); }
+body.portal .pd-main .dp-step:disabled { background: none; color: var(--border-strong); }
+body.portal .pd-main .dp-step:last-child { margin-right: -12px; }
+/* Guests: a hairline stepper */
+body.portal .pd-main .pk-stepper, body.portal .ps-sheet .pd-mod-guests .pk-stepper { flex-direction: row; align-items: center; justify-content: space-between; gap: 16px; }
+body.portal .pd-main .pk-step-row, body.portal .ps-sheet .pd-mod-guests .pk-step-row { align-self: center; gap: 0; padding: 0; background: none; border: 1px solid var(--border); border-radius: 3px; }
+body.portal .pd-main .pk-step, body.portal .ps-sheet .pd-mod-guests .pk-step { border-radius: 0; color: var(--text); font-weight: 400; }
+body.portal .pd-main .pk-step:disabled, body.portal .ps-sheet .pd-mod-guests .pk-step:disabled { color: var(--border-strong); }
+.pd-guests-note { margin: 0 0 6px; font-size: var(--fs-meta); line-height: 1.4; color: var(--text-2); }
+/* Meal: words, a brass underline on the chosen one */
+.pd-meal { display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 4px 16px; }
+.pd-f.pd-meal { flex-direction: row; justify-content: space-between; }
+body.portal .pd-meal .segmented { display: flex; width: auto; gap: 8px; padding: 0; background: none; border-radius: 0; margin-right: -6px; }
+body.portal .pd-meal .segmented button { position: relative; flex: none; min-width: 44px; min-height: 44px; padding: 0 6px; border-radius: 0; background: none; box-shadow: none; font-size: 0.875rem; font-weight: 500; color: var(--text-2); }
+body.portal .pd-meal .segmented button.active { background: none; box-shadow: none; color: var(--text); }
+body.portal .pd-meal .segmented button.active::after { content: ""; position: absolute; left: 6px; right: 6px; bottom: 8px; height: 2px; background: var(--accent); }
+/* Time: the hours and how many are open, then the times as hairline boxes */
+.pd-f.pd-times { padding: 14px 0 16px; }
+.pd-times-head { display: flex; align-items: baseline; justify-content: space-between; gap: 2px 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.pd-times-n { font-size: var(--fs-meta); color: var(--text-2); font-variant-numeric: tabular-nums; }
+.pd-chiprow { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 8px; }
+.pd-chip {
+  min-width: 0; min-height: 48px; padding: 4px 6px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  border: 1px solid var(--border); border-radius: 3px; background: none; color: var(--text);
+  font: 500 0.875rem/1.25 var(--sans); font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+@media (hover: hover) { .pd-chip:hover:not(:disabled) { border-color: var(--text); } }
+.pd-chip.on { background: var(--c-ink); border-color: var(--c-ink); color: var(--on-dark); }
+.pd-chip-s { font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.04em; color: var(--text-3); }
+.pd-chip.full { cursor: default; color: var(--text-3); border-style: dashed; }
+.pd-svc-note { margin: 10px 0 0; font-size: var(--fs-meta); color: var(--text-2); }
+.pd-closed { margin: 0; padding: 4px 0; font-size: 0.875rem; line-height: 1.5; color: var(--text-2); }
+/* Occasion, allergies or requests (and Past visits): a hairline row that opens, not a card */
+body.portal .pd-main .pk-acc, body.portal .pd-past .pk-acc { margin: 0; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; background: none; box-shadow: none; }
+body.portal .pd-main .pk-acc-head, body.portal .pd-past .pk-acc-head { min-height: 60px; padding: 8px 0; background: none; }
+body.portal .pd-main .pk-acc-text, body.portal .pd-past .pk-acc-text { flex-direction: row; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 12px; }
+body.portal .pd-main .pk-acc-title, body.portal .pd-past .pk-acc-title { font-size: 0.96875rem; font-weight: 500; }
+body.portal .pd-main .pk-acc-sum, body.portal .pd-past .pk-acc-sum { font-size: var(--fs-meta); color: var(--text-2); font-variant-numeric: tabular-nums; }
+body.portal .pd-main .pk-acc-chev, body.portal .pd-past .pk-acc-chev { width: 16px; height: 16px; color: var(--text-3); }
+body.portal .pd-main .pk-acc-body, body.portal .pd-past .pk-acc-body { padding: 0 0 16px; border-top: 0; }
+.pd-details .field { margin-bottom: 14px; }
+.pd-details .field:last-child { margin-bottom: 0; }
+body.portal .pd-main .pd-details .field label { display: block; margin-bottom: 6px; }
+.pd-occ { margin-bottom: 14px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 4px 0; }
+
+/* ---------- Sheets: details, confirm, done, change ---------- */
+.pd-kv { margin: 0 0 14px; }
+.pd-kv > div { display: grid; grid-template-columns: minmax(88px, 32%) minmax(0, 1fr); gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 0.9375rem; }
+.pd-kv dt { color: var(--text-2); font-size: var(--fs-meta); line-height: 1.7; }
 .pd-kv dd { margin: 0; font-weight: 500; font-variant-numeric: tabular-nums; }
 .pd-sheet-acts { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 8px; }
 .pd-sheet-acts .btn { flex: 1 1 140px; }
-.pd-sheet-note { font-size: 0.875rem; color: var(--text-2); margin: 0 0 8px; }
+.pd-sheet-note { font-size: var(--fs-meta); line-height: 1.5; color: var(--text-2); margin: 0 0 8px; }
 .pd-sheet-view { margin-bottom: 4px; }
 .pd-sum-err { display: flex; gap: 8px; align-items: flex-start; padding: 12px; margin: 4px 0 8px; background: var(--danger-bg); color: var(--danger); border-radius: var(--radius-ctl); font-size: 0.875rem; font-weight: 500; }
 .pd-sum-err[hidden] { display: none; }
@@ -59,58 +120,88 @@ body.portal .pd-meal .segmented button { flex: 1 1 0; min-width: 0; min-height: 
 .pd-done { padding: 8px 0 4px; }
 .pd-done h3 { margin: 0 0 4px; }
 .pd-done p { margin: 0 0 8px; color: var(--text-2); font-size: 0.9375rem; }
-.pd-confirm-icon { width: 40px; height: 40px; border-radius: 50%; background: var(--sage-100); color: var(--forest-800); display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+.pd-confirm-icon { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border-strong); color: var(--text); display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
 .pd-confirm-icon svg { width: 20px; height: 20px; }
 body.portal .ps-foot .pd-done-x { width: 100%; justify-content: center; margin-top: 4px; }
-.pd-mod-when { font-size: 0.9375rem; color: var(--text-2); margin: 4px 0 12px; }
-.pd-mod-guests, .pd-mod-meal { margin-bottom: 14px; }
-body.portal .pd-mod-meal .segmented { display: flex; width: 100%; margin-top: 6px; }
-body.portal .pd-mod-meal .segmented button { flex: 1 1 0; min-width: 0; }
-.pd-mod-times .pd-chiprow { margin: 6px -20px 0; padding: 2px 20px 4px; }
+.pd-mod-when { font-size: 0.9375rem; color: var(--text-2); margin: 4px 0 6px; }
+.pd-mod-guests, .pd-mod-meal { min-height: 60px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.pd-mod-guests { display: flex; flex-direction: column; justify-content: center; }
+.pd-mod-meal:empty { display: none; }
+.pd-mod-times { padding: 14px 0 6px; }
+.pd-mod-times .pk-label { display: block; margin-bottom: 10px; }
 
-/* ---------- My reservations: compact rows ---------- */
-body.portal .pd-res-list > li { padding: 0; min-height: 0; display: block; }
-.pd-row { width: 100%; min-height: 64px; display: flex; align-items: center; gap: 12px; padding: 8px 16px; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
-@media (hover: hover) { .pd-row:hover { background: var(--sage-50); } }
-.pd-row-all { min-height: 52px; justify-content: space-between; color: var(--forest-800); font-weight: 500; font-size: 0.9375rem; }
-.pd-dblock { flex: none; width: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--sage-50); color: var(--text); border-radius: var(--radius-ctl); padding: 4px 0; font-variant-numeric: tabular-nums lining-nums; }
-.pd-dblock-wd, .pd-dblock-m { font-size: 0.8125rem; color: var(--text-2); line-height: 1.15; }
-.pd-dblock-n { font-family: var(--serif); font-size: 1.25rem; font-weight: 500; line-height: 1.15; }
-.pd-row-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
-.pd-row-t { font-size: 1rem; font-weight: 500; line-height: 1.35; font-variant-numeric: tabular-nums; }
-.pd-row-s { font-size: 0.875rem; color: var(--text-2); }
-.pd-past { margin-top: 12px; }
+/* ---------- My reservations: a month in small capitals, then hairline rows ---------- */
+body.portal .pd-res-month { margin: 22px 0 2px; }
+.pd-res-list { list-style: none; margin: 0; padding: 0; }
+.pd-res-list > li + li { border-top: 1px solid var(--border); }
+.pd-row { width: 100%; min-height: 64px; display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 14px 0; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.pd-dblock { display: flex; flex-direction: column; align-items: center; font-variant-numeric: lining-nums; }
+.pd-dblock-wd { margin: 0 -0.18em 4px 0; font-size: 0.6875rem; font-weight: 600; line-height: 1.2; letter-spacing: 0.18em; text-transform: uppercase; color: var(--label); }
+.pd-dblock-n { font-family: var(--font-sig); font-size: 1.625rem; font-weight: 400; line-height: 1; letter-spacing: -0.01em; color: var(--text); }
+.pd-row-main { min-width: 0; display: flex; flex-direction: column; }
+.pd-row-t { font-size: 0.96875rem; font-weight: 500; line-height: 1.35; font-variant-numeric: tabular-nums; }
+.pd-row-s { margin-top: 2px; font-size: var(--fs-meta); line-height: 1.4; color: var(--text-2); }
+.pd-row-k { letter-spacing: 0.14em; white-space: nowrap; }
+@media (hover: hover) { .pd-row:hover .pd-row-t, .pd-mrow:hover { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 4px; } }
+.pd-mrow { width: 100%; min-height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border: 0; border-top: 1px solid var(--border); background: none; color: var(--text); font: 500 0.96875rem/1.35 var(--sans); text-align: left; cursor: pointer; font-variant-numeric: tabular-nums; }
+.pd-past { border-top: 1px solid var(--border); }
+.pd-up + .pd-past { margin-top: 6px; }
 .pd-past-list { list-style: none; margin: 0; padding: 0; }
-.pd-past-list > li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
-.pd-past-list > li:last-child { border-bottom: 0; }
+.pd-past-list > li { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--border); }
 .pd-past-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
-.pd-past-t { font-size: 0.9375rem; font-weight: 500; }
-.pd-past-s { font-size: 0.8125rem; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.pd-past-t { font-size: 0.96875rem; font-weight: 500; }
+.pd-past-s { font-size: var(--fs-meta); color: var(--text-2); font-variant-numeric: tabular-nums; }
+/* status as a word in small capitals, not a pill */
+body.portal .pd-past .pd-past-list .badge { flex: none; padding: 0; border: 0; border-radius: 0; background: none; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--label); }
+body.portal .pd-past .pd-past-list .badge.bad { color: var(--danger); }
+body.portal .pd-past .pd-past-list .badge.warn { color: var(--warn); }
+/* Nothing yet: plain centred words */
+body.portal .pd-empty .empty, body.portal .pd-menu-empty .empty, body.portal .pd-diet-empty .empty { padding: 36px 0 28px; }
+body.portal .pd-empty .empty svg, body.portal .pd-menu-empty .empty svg, body.portal .pd-diet-empty .empty svg { display: none; }
+body.portal .pd-diet-empty .empty .btn { min-height: 44px; }
 
-/* ---------- Menus ---------- */
-.pd-menu-sel { margin-bottom: 8px; }
-.pd-menu-note { font-size: 0.875rem; color: var(--text-2); margin: 0 0 12px; }
+/* ---------- Menus: the printed menu ---------- */
+.pd-menu { max-width: 34rem; margin: 0 auto; }
+.pd-menu-h { text-align: center; margin: 28px 0 0; padding: 0 28px; }
+body.portal .pd-menu-name { margin: 0; font-size: 1.875rem; line-height: 1.2; letter-spacing: 0; }
+/* The name is the picker: the chevron hangs after the last word without moving the centred name */
+.pd-menu-pick { display: inline; min-height: 44px; padding: 4px 0; border: 0; background: none; color: var(--text); cursor: pointer; text-align: center; font-family: var(--font-sig); font-size: 1.875rem; font-weight: 400; line-height: 1.2; letter-spacing: 0; font-variant-numeric: lining-nums; -webkit-tap-highlight-color: transparent; }
+.pd-menu-chev { display: inline-block; width: 16px; height: 16px; margin: 0 -24px 0 8px; vertical-align: 0.1em; color: var(--text-3); }
+.pd-menu-eb { margin: 8px 0 0; letter-spacing: 0.22em; }
+.pd-menu-eb span:last-child { margin-right: -0.22em; }
+body.portal .pd-menu-note { margin: 8px 0 0; font-size: var(--fs-meta); color: var(--text-2); }
+/* Diet filters: words, a brass underline on the chosen ones (more than one may be on) */
+.pd-diet { margin: 10px 0 0; text-align: center; }
+.pd-diet-words { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 2px; }
+.pd-diet-w { min-width: 44px; min-height: 44px; padding: 0 7px; border: 0; background: none; color: var(--text-2); font: 400 0.8125rem/1.2 var(--sans); white-space: nowrap; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.pd-diet-w span { display: inline-block; padding: 4px 0; border-bottom: 2px solid transparent; transition: border-color var(--t-ui) var(--ease-ui); }
+@media (hover: hover) { .pd-diet-w:hover { color: var(--text); } }
+.pd-diet-w.on { color: var(--text); }
+.pd-diet-w.on span { border-bottom-color: var(--accent); }
+body.portal .pd-diet-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0 6px; min-height: 40px; margin: 0; font-size: 0.75rem; line-height: 1.4; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.pd-diet-saved::before, .pd-diet-clear::before { content: "\00B7"; margin-right: 6px; color: var(--text-2); text-decoration: none; display: inline-block; }
+.pd-diet-saved[hidden], .pd-diet-clear[hidden] { display: none; }
+.pd-diet-clear { display: inline-flex; align-items: center; min-height: 40px; padding: 0; border: 0; background: none; color: var(--text); font: 500 0.75rem/1.4 var(--sans); cursor: pointer; text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 3px; }
+/* Sections and dishes */
+.pd-sec { padding-top: 22px; }
+.pd-sec:first-child { padding-top: 10px; }
+body.portal .pd-sec-h { margin: 0 -0.22em 8px 0; text-align: center; letter-spacing: 0.22em; }
 .pd-dishes { list-style: none; margin: 0; padding: 0; }
-.pd-dish { padding: 8px 0; border-bottom: 1px solid var(--border); }
-.pd-dish:first-child { padding-top: 0; }
-.pd-dish:last-child { border-bottom: 0; padding-bottom: 0; }
-.pd-dish-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-.pd-dish-name { font-size: 1rem; font-weight: 500; color: var(--text); line-height: 1.4; min-width: 0; }
-.pd-dish-price { font-size: 0.9375rem; color: var(--text); font-variant-numeric: tabular-nums; flex: none; }
-.pd-dish-desc { margin: 2px 0 0; font-size: 0.875rem; line-height: 1.45; color: var(--text-2); }
-.pd-dish-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-.pd-tag { display: inline-flex; align-items: center; padding: 1px 8px; border-radius: 999px; background: var(--sage-100); color: var(--forest-800); font-size: 0.8125rem; font-weight: 500; }
-.pd-menu-foot { margin: 14px 0 0; font-size: 0.8125rem; color: var(--text-3); }
-.pd-empty { margin-bottom: 12px; }
-body.portal .pd-show-all { margin-top: 4px; }
-.pd-dish[hidden] { display: none; }
-/* Menu sections: one grouped list (rows split by hairlines), not a stack of cards */
-.pd-menu-secs { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); overflow: hidden; }
-body.portal .pd-menu-secs .pk-acc { border: 0; border-radius: 0; box-shadow: none; margin: 0; background: transparent; }
-body.portal .pd-menu-secs .pk-acc + .pk-acc { border-top: 1px solid var(--border); margin-top: 0; }
-/* Dining diet filter (Nov 21): chips over the menu, a count, "Clear filters", and the empty state */
-.pd-diet { margin: 0 0 12px; }
-body.portal .pd-diet > .pk-label { display: block; margin-bottom: 6px; }
+.pd-dish { padding: 12px 0; border-top: 1px solid var(--border); }
+.pd-dish-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.pd-dish-l { min-width: 0; }
+.pd-dish-name { font-size: 0.96875rem; font-weight: 500; line-height: 1.4; color: var(--text); }
+.pd-dish-marks { position: relative; top: -0.3em; margin-left: 6px; font-size: 0.6875rem; font-weight: 600; line-height: 0; letter-spacing: 0.14em; color: var(--label); vertical-align: baseline; white-space: nowrap; }
+.pd-dish-price { flex: none; font-size: 1.125rem; font-weight: 400; line-height: 1.2; letter-spacing: -0.02em; color: var(--text); font-variant-numeric: tabular-nums lining-nums; }
+body.portal .pd-dish-desc { margin: 3px 0 0; font-size: var(--fs-meta); line-height: 1.4; color: var(--text-2); }
+.pd-menu-foot { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border); text-align: center; }
+body.portal .pd-menu-foot p { margin: 0 0 4px; font-size: var(--fs-meta); line-height: 1.5; color: var(--text-2); }
+body.portal .pd-menu-foot .pd-menu-key { margin-bottom: 10px; }
+.pd-key { white-space: nowrap; }
+.pd-key + .pd-key::before { content: "\00B7"; margin: 0 8px; }
+.pd-key-c { margin-right: 2px; letter-spacing: 0.14em; }
+
+/* Profile > Preferences > Dietary preferences reuses these chips (js/portal/profile.js) */
 .pd-diet-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .pd-diet-chip {
   display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px; cursor: pointer;
@@ -123,67 +214,40 @@ body.portal .pd-diet > .pk-label { display: block; margin-bottom: 6px; }
 .pd-diet-chip.on { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); }
 .pd-diet-tick { width: 16px; height: 16px; flex: none; display: none; }
 .pd-diet-chip.on .pd-diet-tick { display: block; }
-.pd-diet-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 2px 12px; min-height: 40px; margin-top: 4px; font-size: 0.875rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
-.pd-diet-n { font-weight: 500; color: var(--text); }
-.pd-diet-saved { color: var(--text-3); }
-.pd-diet-saved[hidden], body.portal .pd-diet-clear[hidden] { display: none; }
-body.portal .pd-diet-clear { min-height: 40px; font-size: 0.875rem; }
-.pd-diet-empty { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
-body.portal .pd-diet-empty .empty .btn { min-height: 44px; }
 
-/* ==========================================================================
-   Tablet and desktop. Phones (<768) keep the Pass 3 layout above unchanged.
-   ========================================================================== */
+/* ---------- Beside the form on tablets and desktops: the place and a few dishes, in hairlines ---------- */
 .pd-side { display: none; }
-body.portal .pd-cols, body.portal .pd-mine-cols { gap: 0; }
-.pd-side-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 1rem; }
-.pd-side-card + .pd-side-card { margin-top: 0.75rem; }
-body.portal .pd-side-card h2 { font-size: 1.375rem; margin: 0.25rem 0 0.375rem; }
-.pd-side-line { font-size: 0.9375rem; line-height: 1.5; color: var(--text-2); margin: 0 0 0.75rem; max-width: 60ch; }
-.pd-side-meta { list-style: none; margin: 0; padding: 0.625rem 0 0; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.875rem; color: var(--text-2); }
-.pd-side-meta li { display: flex; gap: 0.5rem; align-items: center; }
-.pd-side-meta svg { width: 1.125rem; height: 1.125rem; color: var(--forest-500); flex: none; }
-.pd-side-h { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
-body.portal .pd-side-h h3 { margin: 0; font-size: 1rem; }
-.pd-side-dishes { list-style: none; margin: 0.25rem 0 0; padding: 0; }
-.pd-side-dishes li { display: flex; justify-content: space-between; gap: 0.75rem; padding: 0.5rem 0; border-bottom: 1px solid var(--border); font-size: 0.9375rem; }
-.pd-side-dishes li:last-child { border-bottom: 0; }
+body.portal .p-cols.pd-cols, body.portal .p-cols.pd-mine-cols { gap: 0; }
+.pd-side-sec + .pd-side-sec { margin-top: 28px; }
+body.portal .pd-side .pd-side-name { margin: 6px 0 8px; font-family: var(--font-sig); font-size: 1.5rem; font-weight: 400; line-height: 1.2; letter-spacing: 0; }
+.pd-side-line { font-size: 0.875rem; line-height: 1.55; color: var(--text-2); margin: 0 0 12px; max-width: 60ch; }
+.pd-side-meta { list-style: none; margin: 0; padding: 0; font-size: 0.875rem; color: var(--text); }
+.pd-side-meta li { padding: 11px 0; border-top: 1px solid var(--border); }
+.pd-side-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+body.portal .pd-side-h h3 { margin: 0; }
+body.portal .pd-side-h .p-link { font-size: var(--fs-meta); }
+.pd-side-dishes { list-style: none; margin: 0; padding: 0; }
+.pd-side-dishes li { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 11px 0; border-top: 1px solid var(--border); font-size: 0.9375rem; font-weight: 500; }
+.pd-side-dishes .pd-dish-price { font-size: 1rem; }
 
 @media (min-width: 768px) {
-  .pd-next { max-width: 40rem; }
-  /* the card's controls pair up: Where | Date, Guests | Meal; times span both */
-  .pd-card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem 1.25rem; padding: 1.25rem; align-items: end; }
-  .pd-times { grid-column: 1 / -1; }
-  /* time chips: a wrapping grid instead of a sideways row */
-  .pd-chiprow { display: grid; grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr)); overflow: visible; margin: 0; padding: 0; }
-  .pd-chip { min-width: 0; }
-  .pd-side { display: block; margin-top: 0.75rem; }
-  .pd-mine-cols .pd-past { margin-top: 0.75rem; }
-  .pd-menu-sel { max-width: 26rem; }
+  .pd-side { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; align-items: start; max-width: 44rem; margin-top: 40px; }
+  .pd-side-sec + .pd-side-sec { margin-top: 0; }
+  .pd-menu-h { margin-top: 36px; }
 }
 @media (min-width: 1024px) {
-  body.portal .pd-cols, body.portal .pd-mine-cols { gap: 2rem; }
-  .pd-side { margin-top: 0; position: sticky; top: 5.5rem; }
-  .pd-mine-cols .pd-past { margin-top: 0; }
-  .pd-chiprow { grid-template-columns: repeat(auto-fill, minmax(6.75rem, 1fr)); }
-  /* menus: sections as cards in two columns */
-  .pd-menu-secs { background: transparent; border: 0; box-shadow: none; border-radius: 0; overflow: visible; columns: 2; column-gap: 1.25rem; }
-  body.portal .pd-menu-secs .pk-acc { break-inside: avoid; margin: 0 0 0.75rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
-  body.portal .pd-menu-secs .pk-acc + .pk-acc { border-top: 1px solid var(--border); margin-top: 0; }
-  .pd-menu-note, .pd-menu-foot { max-width: 70ch; }
+  /* Reserve: the form in a readable column, the place beside it */
+  body.portal .p-cols.pd-cols { grid-template-columns: minmax(0, 36rem) minmax(16rem, 22rem); gap: 5rem; justify-content: start; }
+  .pd-side { display: block; margin-top: 22px; position: sticky; top: 5.5rem; }
+  .pd-side-sec + .pd-side-sec { margin-top: 32px; }
+  /* My reservations: upcoming left, past visits right */
+  body.portal .p-cols.pd-mine-cols { grid-template-columns: minmax(0, 36rem) minmax(16rem, 26rem); gap: 5rem; justify-content: start; }
+  .pd-up + .pd-past { margin-top: 22px; border-top: 0; }
+  /* Menus: the printed menu opens into two columns under the centred name */
+  .pd-menu { max-width: 62rem; }
+  .pd-menu-pick, body.portal .pd-menu-name { font-size: 2.375rem; }
+  .pd-menu-chev { width: 18px; height: 18px; margin-right: -28px; margin-left: 10px; }
+  .pd-menu-secs { columns: 2; column-gap: 5rem; }
+  .pd-sec { break-inside: avoid; }
+  .pd-sec:first-child { padding-top: 22px; }
 }
-@media (min-width: 768px) and (max-width: 1023px) {
-  .pd-side { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.75rem; align-items: start; }
-  .pd-side-card + .pd-side-card { margin-top: 0; }
-}
-/* Upcoming reservations count on the My reservations tab (same bubble as the Friends tabs) */
-body.portal .pd-tabs .tab { display: inline-flex; align-items: center; gap: 8px; }
-body.portal .pd-tab-n { min-width: 20px; padding: 0 6px; border-radius: 999px; background: var(--forest-800); color: var(--on-dark); font-size: 0.8125rem; font-weight: 500; line-height: 20px; text-align: center; font-variant-numeric: tabular-nums; }
-/* Next: several reservations on the same day, one card with a row each */
-.pd-next-day { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); overflow: hidden; }
-.pd-next-day-h { display: flex; align-items: center; gap: 10px; margin: 0; padding: 12px 14px 8px; font-size: 0.9375rem; color: var(--text); }
-.pd-next-day-h .icon { width: 20px; height: 20px; color: var(--forest-500); flex: none; }
-.pd-next-day .pd-next-row { border: 0; border-top: 1px solid var(--border); border-radius: 0; box-shadow: none; min-height: 48px; padding-left: 44px; }
-@media (hover: hover) { .pd-next-day .pd-next-row:hover { background: var(--sage-50); } }
-@media (min-width: 768px) { .pd-next-day { max-width: 40rem; } }
-@media (min-width: 768px) { .pd-next-day .pd-next-row { max-width: none; } }

@@ -1,46 +1,87 @@
 /* ==========================================================================
    Portal: Membership card (mc-), js/portal/card.js. Tokens only.
-   The QR code is dark on pure white for scanners in any light: --qr-paper and --qr-ink are set here for it.
+   Redesign (Nov 21, owner-approved): the one ornate element of the portal. The page goes dark while the card is
+   shown (body.mc-dark, set and removed by card.js): a Fairway card with a double brass border on Ink, then a Paper
+   panel with the QR code and the card number.
+   Contrast (WCAG 2.1, computed): --on-dark on Fairway 12.1:1; --mc-brass-ink on Fairway 6.1:1 (Brass itself is
+   3.9:1 there, so it stays a line colour); --on-dark-2 on Fairway 7.1:1, on Ink 8.5:1; --mc-oak-ink on Ink 8.7:1;
+   Ink on Paper 15.4:1 (the QR code and the card number); --text-2 on Paper 7.1:1; --label on Paper 5.6:1;
+   --danger on --danger-bg 6.3:1.
    ========================================================================== */
 body.portal {
-  --qr-paper: #FFFFFF;
-  --qr-ink: var(--forest-950);
+  --qr-paper: var(--c-paper);       /* the QR code's light modules and quiet zone: the Paper panel itself */
+  --qr-ink: var(--c-ink);           /* its dark modules */
+  --mc-page: var(--c-ink);          /* the dark page behind the card */
+  --mc-brass-ink: #C9AD7A;          /* Brass lightened for small capitals on Fairway */
+  --mc-oak-ink: #B9BE95;            /* Oak lightened for the eyebrow on Ink */
+  --mc-rule: var(--on-dark-a12);    /* hairlines on the dark page */
 }
 
-body.portal .mc-hero { margin-bottom: 16px; }
-.mc-wrap { max-width: 24rem; margin: 0 auto; }
+/* ---------------- The dark page: only while #/card is shown ---------------- */
+body.portal.mc-dark { background: var(--mc-page); }
+body.portal.mc-dark .p-main { background: var(--mc-page); color: var(--on-dark); }
+body.portal.mc-dark .p-main :focus-visible { outline-color: var(--on-dark); }
+/* Top row and phone tab bar follow the page, so the card sits in one dark field */
+body.portal.mc-dark .p-header { background: var(--mc-page); border-bottom: 1px solid var(--mc-rule); box-shadow: none; }
+body.portal.mc-dark .p-header :focus-visible, body.portal.mc-dark .p-tabbar :focus-visible, body.portal.mc-dark .p-footer :focus-visible { outline-color: var(--on-dark); }
+body.portal.mc-dark .p-brand, body.portal.mc-dark .p-brand-name, body.portal.mc-dark .p-header .p-crest.stb-logo, body.portal.mc-dark .p-me-name { color: var(--on-dark); }
+body.portal.mc-dark .p-brand-sub, body.portal.mc-dark .p-nav a, body.portal.mc-dark .p-navmore-btn, body.portal.mc-dark .p-me-btn > svg { color: var(--on-dark-2); }
+body.portal.mc-dark .p-nav a.active, body.portal.mc-dark .p-navmore-btn[aria-expanded="true"], body.portal.mc-dark .p-navmore.has-active .p-navmore-btn { color: var(--on-dark); }
+@media (hover: hover) { body.portal.mc-dark .p-nav a:hover, body.portal.mc-dark .p-navmore-btn:hover { color: var(--on-dark); } }
+/* the More menu's own list stays dark on Paper */
+body.portal.mc-dark .p-nav .p-navmore-pop a { color: var(--text); }
+body.portal.mc-dark .p-nav .p-navmore-pop a.active { color: var(--forest-800); }
+body.portal.mc-dark .p-me-btn .avatar { background: transparent; color: var(--on-dark); border-color: var(--on-dark-a40); box-shadow: inset 0 0 0 1px var(--on-dark-a40); }
+body.portal.mc-dark .p-tabbar { background: var(--mc-page); border-top: 1px solid var(--mc-rule); box-shadow: none; }
+body.portal.mc-dark .p-tabbar a, body.portal.mc-dark .p-tabbar button { color: var(--on-dark-2); }
+body.portal.mc-dark .p-tabbar a.active, body.portal.mc-dark .p-tabbar a.active svg { color: var(--on-dark); }
+body.portal.mc-dark .p-footer { background: transparent; color: var(--on-dark-2); border-color: var(--mc-rule); }
+body.portal.mc-dark .p-footer .serif, body.portal.mc-dark .p-footer a { color: var(--on-dark); }
+body.portal.mc-dark .p-footer .p-land, body.portal.mc-dark .p-footer .p-crest.stb-logo.sm { color: var(--on-dark-2); }
 
-/* ---------------- The card ---------------- */
-.mc-card { position: relative; overflow: hidden; padding: 20px; border-radius: var(--radius-lg); background: var(--forest-800); color: var(--on-dark); box-shadow: none; border: 1px solid var(--forest-700); }
-.mc-mark { position: absolute; right: -28px; bottom: -36px; width: 170px; opacity: 0.06; pointer-events: none; color: var(--on-dark); }
-.mc-mark .stb-logo { display: block; width: 100%; height: 150px; color: var(--on-dark); }
+/* ---------------- Page ---------------- */
+.mc-wrap { max-width: 24rem; margin: 0 auto; }
+body.portal .mc-eyebrow { margin: 4px 0 0; font-family: var(--sans); font-size: 0.6875rem; font-weight: 600; line-height: 1.4; letter-spacing: 0.22em; text-transform: uppercase; color: var(--mc-oak-ink); }
+
+/* ---------------- The card: Fairway, a brass border and an inner brass hairline 6px in ---------------- */
+.mc-card { position: relative; overflow: hidden; margin-top: 26px; padding: 24px 22px 22px; border-radius: var(--radius-lg); background: var(--c-fairway); color: var(--on-dark); border: 1px solid var(--accent); border-color: color-mix(in srgb, var(--accent) 55%, transparent); }
+.mc-card::after { content: ""; position: absolute; inset: 6px; border: 1px solid var(--accent); border-color: color-mix(in srgb, var(--accent) 30%, transparent); border-radius: 6px; pointer-events: none; }
+.mc-mark { position: absolute; right: -40px; bottom: -36px; width: 260px; opacity: 0.07; pointer-events: none; color: var(--on-dark); }
+.mc-mark .stb-logo { display: block; width: 100%; height: auto; color: var(--on-dark); }
 .mc-card > :not(.mc-mark) { position: relative; }
 
-.mc-top { display: flex; align-items: center; gap: 12px; min-width: 0; }
-body.portal .mc-top .mc-logo.stb-logo { height: 36px; width: 42px; flex: none; color: var(--on-dark); }
-.mc-club { display: flex; flex-direction: column; min-width: 0; flex: 1; }
-.mc-club-name { font-family: var(--font-title); font-size: var(--fs-card); font-weight: var(--fw-title); line-height: 1.25; color: var(--on-dark); }
-.mc-club-sub { font-size: var(--fs-label); font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--on-dark-2); }
-.mc-season { flex: none; padding: 4px 10px; border: 1px solid var(--on-dark-a30); border-radius: 999px; font-size: var(--fs-label); font-weight: 500; line-height: 1.4; color: var(--on-dark); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.mc-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; min-width: 0; }
+body.portal .mc-top .mc-logo.stb-logo { height: 38px; width: auto; flex: none; color: var(--on-dark); }
+body.portal .mc-season { flex: none; display: flex; flex-direction: column; align-items: flex-end; margin: 0; font-size: 0.6875rem; font-weight: 600; line-height: 1.6; letter-spacing: 0.22em; text-transform: uppercase; text-align: right; color: var(--mc-brass-ink); font-variant-numeric: lining-nums tabular-nums; white-space: nowrap; }
+/* the letter-spacing after the last letter would push the words off the right edge */
+.mc-season span { margin-right: -0.22em; }
 
-.mc-paused { display: flex; gap: 8px; align-items: flex-start; margin: 16px 0 0; padding: 10px 12px; border-radius: var(--radius-ctl); background: var(--danger-bg); color: var(--danger); }
-.mc-paused > .icon { width: 18px; height: 18px; flex: none; margin-top: 1px; }
-.mc-paused p { margin: 0; font-size: var(--fs-meta); line-height: 1.45; color: var(--danger); }
-.mc-paused a { color: var(--danger); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; white-space: nowrap; }
+body.portal .mc-name { margin: 34px 0 4px; font-family: var(--font-sig); font-size: 2rem; font-weight: 400; line-height: 1.1; letter-spacing: 0; font-variant-numeric: lining-nums; color: var(--on-dark); overflow-wrap: anywhere; }
+body.portal .mc-tier { margin: 0; font-size: 0.75rem; font-weight: 600; line-height: 1.5; letter-spacing: 0.22em; text-transform: uppercase; color: var(--mc-brass-ink); }
+.mc-facts { display: flex; flex-wrap: wrap; gap: 10px 28px; margin: 22px 0 0; }
+.mc-facts > div { min-width: 0; }
+.mc-facts dt { font-size: 0.6875rem; font-weight: 600; line-height: 1.4; letter-spacing: 0.18em; text-transform: uppercase; color: var(--on-dark-2); }
+.mc-facts dd { margin: 4px 0 0; font-size: 1.375rem; font-weight: 400; line-height: 1.15; letter-spacing: -0.02em; color: var(--on-dark); font-variant-numeric: tabular-nums lining-nums; overflow-wrap: anywhere; }
 
-.mc-qr { width: min(100%, 17rem); aspect-ratio: 1; margin: 18px auto 0; border-radius: var(--radius-card); overflow: hidden; background: var(--qr-paper); }
+/* ---------------- Charging paused: between the card and the code it concerns ---------------- */
+.mc-paused { display: flex; gap: 10px; align-items: flex-start; margin: 18px 0 0; padding: 14px 18px; border-radius: 6px; background: var(--danger-bg); color: var(--danger); }
+.mc-paused > .icon { width: 18px; height: 18px; flex: none; margin-top: 2px; }
+body.portal .mc-paused p { margin: 0; font-size: var(--fs-meta); line-height: 1.5; color: var(--text); }
+.mc-paused strong { color: var(--danger); font-weight: 600; }
+.mc-paused a { display: inline-block; padding: 6px 0; margin: -6px 0; color: var(--danger); font-weight: 600; text-decoration: underline; text-decoration-color: currentColor; text-underline-offset: 3px; white-space: nowrap; }
+
+/* ---------------- The Paper panel: QR code left, the card number in words right ----------------
+   The code's own 4-module quiet zone is the panel's padding on its three outer sides, so the panel is all Paper
+   and the code always has clear space around it. */
+.mc-qrp { display: grid; grid-template-columns: minmax(0, 54%) minmax(0, 1fr); align-items: center; margin-top: 18px; border-radius: 6px; overflow: hidden; background: var(--qr-paper); color: var(--text); }
+.mc-qr { aspect-ratio: 1; background: var(--qr-paper); }
 .mc-qr-svg { display: block; width: 100%; height: 100%; }
 .mc-qr-bg { fill: var(--qr-paper); }
 .mc-qr-ink { fill: var(--qr-ink); }
-.mc-code { margin: 10px 0 0; text-align: center; font-size: var(--fs-body); font-weight: 500; letter-spacing: 0.08em; color: var(--on-dark-2); font-variant-numeric: tabular-nums; }
-
-body.portal .mc-name { margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--on-dark-a15); font-family: var(--font-sig); font-size: 1.875rem; font-weight: 400; line-height: 1.15; letter-spacing: 0; font-variant-numeric: lining-nums; color: var(--on-dark); overflow-wrap: anywhere; }
-.mc-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(5.5rem, 1fr)); gap: 10px 12px; margin: 10px 0 0; }
-.mc-facts > div { min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; }
-.mc-facts dt { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--on-dark-2); }
-.mc-facts dd { margin: 2px 0 0; font-size: var(--fs-body); font-weight: 500; color: var(--on-dark); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-
-.mc-note { margin: 14px 0 0; text-align: center; font-size: var(--fs-meta); color: var(--text-2); }
+.mc-qrp-text { min-width: 0; padding: 18px 18px 18px 0; }
+body.portal .mc-code-l { margin: 0; font-size: 0.6875rem; font-weight: 600; line-height: 1.4; letter-spacing: 0.18em; text-transform: uppercase; color: var(--label); }
+body.portal .mc-code { margin: 6px 0 10px; font-size: 1.1875rem; font-weight: 400; line-height: 1.2; letter-spacing: 0.02em; color: var(--text); font-variant-numeric: tabular-nums lining-nums; white-space: nowrap; }
+body.portal .mc-note { margin: 0; font-size: var(--fs-meta); line-height: 1.45; color: var(--text-2); text-align: left; }
 
 /* ---------------- Entry point on Home: a full-width row under the quick action tiles ---------------- */
 .hm-action.mc-action { grid-column: 1 / -1; flex-direction: row; justify-content: flex-start; gap: 12px; min-height: 56px; padding: 6px 12px 6px 6px; border: 1px solid var(--border); background: var(--surface); text-align: left; }
@@ -49,8 +90,11 @@ body.portal .mc-name { margin: 16px 0 0; padding-top: 14px; border-top: 1px soli
 .mc-action .hm-action-l { flex: 1; font-size: var(--fs-body); }
 .mc-action > .icon { width: 18px; height: 18px; flex: none; color: var(--text-3); }
 
-@media (min-width: 1024px) {
-  body.portal .mc-hero { margin-bottom: 24px; }
-  .mc-card { padding: 24px; }
-  .mc-qr { width: min(100%, 18rem); }
+/* Narrow phones: the number may wrap under its label instead of pushing the panel wide */
+@media (max-width: 359px) {
+  body.portal .mc-code { font-size: 1rem; }
+  .mc-qrp-text { padding: 14px 14px 14px 0; }
+}
+@media (min-width: 768px) {
+  .mc-wrap { padding-top: 16px; }
 }

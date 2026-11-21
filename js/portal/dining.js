@@ -1,10 +1,16 @@
 /* Members' portal: Dining. Venues, table reservations, my reservations and menus.
    Writes diningReservations exactly as the staff Dining module does (js/modules/dining.js):
    same shape and id prefix, table auto-assigned with the staff table sizes and the 105 minute
-   double-booking window, statuses confirmed / seated / completed / cancelled / no-show. */
+   double-booking window, statuses confirmed / seated / completed / cancelled / no-show.
+   Redesign (Nov 21, owner-approved): the page is set in hairlines and words, no cards. Reserve is one column of
+   hairline rows (label left, choice right); My reservations are hairline rows with a date block; Menus read like the
+   printed menu on the table (centred restaurant name, section headings in small capitals, prices as plain figures,
+   the diet filters as words, every section open). French: the Dining blocks and "Redesign: card and dining (Nov 21)"
+   in js/i18n/fr-portal.js. */
 (function () {
   'use strict';
   const S = Club.store, U = Club.ui, F = Club.fmt, esc = U.esc;
+  const FR = !!(Club.i18n && Club.i18n.lang && Club.i18n.lang() === 'fr');
 
   /* ---------------- Mirrors of the staff module's rules ---------------- */
   const SERVICES = {
@@ -104,7 +110,8 @@
   function venueDef(id) { return VENUES.find(function (v) { return v.id === id; }) || VENUES[0]; }
   function tablesOf(venue) { return (TABLES[venue] || []).map(function (t) { return { id: t[0], seats: t[1] }; }).sort(function (a, b) { return a.seats - b.seats; }); }
   function serviceOf(t) { const m = toMin(t); return m < 11 * 60 ? 'Breakfast' : (m < 16 * 60 + 30 ? 'Lunch' : 'Dinner'); }
-  function menuPrice(v) { return Math.round(v) === v ? F.money(v, false) : F.money(v); }
+  /* Menu prices are set like a printed menu: the figure alone (14, or 8.50), no dollar sign. */
+  function menuPrice(v) { v = +v || 0; const t = Math.round(v) === v ? String(v) : v.toFixed(2); return FR ? t.replace('.', ',') : t; }
   function reservations() { return S.all('diningReservations'); }
   function badge(s) { const b = STATUS[s] || [s, 'plain']; return U.badge(b[0], b[1]); }
   function prefVenue(m) {
@@ -188,9 +195,14 @@
   }
 
   /* ---------------- Shared fragments ---------------- */
+  /* Date block: the weekday in small capitals over the day number (the month is the heading above the rows). */
   function dateBlock(iso) {
     const d = F.toDate(iso);
-    return '<div class="pd-dblock"><span class="pd-dblock-wd">' + esc(d.toLocaleDateString('en-US', { weekday: 'short' })) + '</span><span class="pd-dblock-n">' + d.getDate() + '</span><span class="pd-dblock-m">' + esc(d.toLocaleDateString('en-US', { month: 'short' })) + '</span></div>';
+    return '<span class="pd-dblock"><span class="pd-dblock-wd">' + esc(d.toLocaleDateString('en-US', { weekday: 'short' })) + '</span><span class="pd-dblock-n">' + d.getDate() + '</span></span>';
+  }
+  function monthHead(iso) {
+    const d = F.toDate(iso);
+    return d.toLocaleDateString('en-US', d.getFullYear() === F.toDate(today()).getFullYear() ? { month: 'long' } : { month: 'long', year: 'numeric' });
   }
 
 
@@ -199,7 +211,7 @@
   let lastTab = 'reserve';
   /* One-line room notes for the venue sheet (the full descriptions stay on VENUES). */
   const SHORT_LINE = { 'Gallery Taphouse & Grill': 'Second floor, overlooking the 18th hole', 'Taphouse Bar': 'Local taps and the Gallery menu', 'Patio': 'Outdoor tables in the warmer months' };
-  /* The menu section that opens first for each meal. */
+  /* The menu section shown beside the form for each meal. */
   const MEAL_SECTION = { Breakfast: 'Breakfast', Lunch: 'Sandwiches', Dinner: 'Main attractions' };
   /* The time a member most likely wants, per meal (used to pre-scroll the chip row). */
   const LIKELY = { Breakfast: '08:30', Lunch: '12:30', Dinner: '19:00' };
@@ -232,16 +244,17 @@
     function upcoming() { return mine().filter(isUpcoming).sort(function (a, b) { return (a.date + a.time).localeCompare(b.date + b.time); }); }
     function nextRes() { return upcoming()[0] || null; }
 
+    /* Title, then one quiet line: the next reservation (opens it), or what the page is for. */
     function heroHTML() {
       const n = nextRes();
-      /* Several reservations on the next day: one card with a row for each (each row opens its reservation). */
+      /* Several reservations on the next day: the day, then a hairline row for each (each row opens its reservation). */
       const day = n ? upcoming().filter(function (r) { return r.date === n.date; }) : [];
       if (day.length > 1) return '<section class="p-hero pd-hero" data-reveal><h1>Dining</h1>' +
-        '<div class="pd-next-day"><p class="pd-next-day-h">' + Club.icon('dining') + '<span><span class="pd-next-k">Next</span> ' + esc(dayShort(n.date)) + ' · ' + day.length + ' reservations</span></p>' +
+        '<div class="pd-next-day"><p class="pd-next-day-h"><span><span class="pd-next-k">Next</span> ' + esc(dayShort(n.date)) + ' · ' + day.length + ' reservations</span></p>' +
           day.map(function (r) { return '<button type="button" class="pd-next pd-next-row" data-res="' + esc(r.id) + '"><span class="pd-next-text">' + esc(F.time(r.time) + ' · ' + venueShort(r.venue) + ' · ' + people(r.partySize)) + '</span>' + Club.icon('chevronRight', 'pd-next-go') + '</button>'; }).join('') +
         '</div></section>';
       return '<section class="p-hero pd-hero" data-reveal><h1>Dining</h1>' +
-        (n ? '<button type="button" class="pd-next" data-res="' + esc(n.id) + '">' + Club.icon('dining') +
+        (n ? '<button type="button" class="pd-next" data-res="' + esc(n.id) + '">' +
           '<span class="pd-next-text"><span class="pd-next-k">Next</span> ' + esc(dayShort(n.date) + ' · ' + F.time(n.time) + ' · ' + venueShort(n.venue) + ' · ' + people(n.partySize)) + '</span>' +
           Club.icon('chevronRight', 'pd-next-go') + '</button>'
           : '<p class="pd-hero-line">Reserve a table, browse the menus and manage your bookings.</p>') +
@@ -253,7 +266,11 @@
       { id: 'reserve', label: 'Reserve', render: drawReserve },
       { id: 'mine', label: 'My reservations', render: drawMine },
       { id: 'menus', label: 'Menus', render: drawMenus }
-    ], startTab, function (id) { lastTab = id; if (id !== 'reserve') Portal.actionBar.hide(); });
+    ], startTab, function (id) {
+      lastTab = id; if (id !== 'reserve') Portal.actionBar.hide();
+      /* Menus read like the printed menu: the restaurant's name is the heading there, so the page title steps back */
+      view.classList.toggle('pd-on-menus', id === 'menus');
+    });
 
     /** The number of upcoming reservations on the My reservations tab (hidden at 0), then the tab underline re-fitted. */
     function paintCount() {
@@ -303,19 +320,19 @@
       });
     }
 
-    /* ---------- Reserve: one compact card ---------- */
+    /* ---------- Reserve: one column of hairline rows ---------- */
     function drawReserve(panel) {
       lastTab = 'reserve';
       const days = []; for (let i = 0; i < 30; i++) days.push(Club.date.fromToday(i));
       const v0 = venueDef(draft.venue); draft.party = Math.max(v0.min, Math.min(v0.max, draft.party));
-      panel.innerHTML = '<div class="p-cols pd-cols"><div class="pd-main"><div class="pd-card" data-reveal>' +
-          '<div class="pd-where"></div>' +
-          '<div class="pd-dp"></div>' +
-          '<div class="pd-guests"><div class="pd-guests-ctl"></div><p class="pd-guests-note"></p></div>' +
-          '<div class="pd-meal"></div>' +
-          '<div class="pd-times" aria-live="polite"></div>' +
+      panel.innerHTML = '<div class="p-cols pd-cols"><div class="pd-main"><div class="pd-form" data-reveal>' +
+          '<div class="pd-f pd-where"></div>' +
+          '<div class="pd-f pd-dp"></div>' +
+          '<div class="pd-f pd-guests"><div class="pd-guests-ctl"></div><p class="pd-guests-note"></p></div>' +
+          '<div class="pd-f pd-meal"></div>' +
+          '<div class="pd-f pd-times" aria-live="polite"></div>' +
         '</div>' +
-        Portal.accordion({ id: 'pd-extras', icon: 'edit', title: 'Occasion, allergies or requests', summary: 'Optional', body:
+        Portal.accordion({ id: 'pd-extras', title: 'Occasion, allergies or requests', summary: 'Optional', body:
           '<form class="pd-details" novalidate><div class="pd-occ"></div>' +
           U.field({ label: 'Allergies or diet', name: 'dietary', value: draft.dietary, placeholder: 'For example: shellfish allergy', hint: 'The kitchen sees this with your reservation.' }) +
           U.field({ label: 'Special requests', name: 'notes', type: 'textarea', value: draft.notes, placeholder: 'A window table, a high chair, a birthday dessert' }) +
@@ -326,10 +343,10 @@
         const v = venueDef(draft.venue);
         const sec = MEAL_SECTION[draft.meal || mealNow()];
         const dishes = S.all('menuItems').filter(function (i) { return i.available !== false && i.section === sec; }).slice(0, 4);
-        U.$('.pd-side', panel).innerHTML = '<div class="pd-side-card"><div class="eyebrow">About this place</div><h2>' + esc(v.id) + '</h2><p class="pd-side-line">' + esc(v.line) + '</p>' +
-          '<ul class="pd-side-meta"><li>' + Club.icon('clock') + '<span>' + (v.callForHours ? 'For hours, call ' + telLink() : esc(hoursToday(v))) + '</span></li><li>' + Club.icon('user') + '<span>Dress code: ' + esc(v.dress.toLowerCase()) + '</span></li><li>' + Club.icon('phone') + '<span>' + telLink() + '</span></li></ul></div>' +
-          (dishes.length ? '<div class="pd-side-card"><div class="pd-side-h"><h3>On the menu: ' + esc(sec.toLowerCase()) + '</h3><button type="button" class="p-link" data-action="to-menus">Full menu</button></div><ul class="pd-side-dishes">' + dishes.map(function (i) {
-            return '<li><span>' + esc(i.name) + '</span><span class="pd-dish-price">' + esc(menuPrice(i.price)) + '</span></li>';
+        U.$('.pd-side', panel).innerHTML = '<div class="pd-side-sec"><div class="eyebrow">About this place</div><h2 class="pd-side-name">' + esc(v.id) + '</h2><p class="pd-side-line">' + esc(v.line) + '</p>' +
+          '<ul class="pd-side-meta"><li><span>' + (v.callForHours ? 'For hours, call ' + telLink() : esc(hoursToday(v))) + '</span></li><li><span>Dress code: ' + esc(v.dress.toLowerCase()) + '</span></li><li><span>' + telLink() + '</span></li></ul></div>' +
+          (dishes.length ? '<div class="pd-side-sec"><div class="pd-side-h"><h3>On the menu: ' + esc(sec.toLowerCase()) + '</h3><button type="button" class="p-link" data-action="to-menus">Full menu</button></div><ul class="pd-side-dishes">' + dishes.map(function (i) {
+            return '<li><span>' + esc(i.name) + '</span><span class="pd-dish-price" data-i18n-skip>' + esc(menuPrice(i.price)) + '</span></li>';
           }).join('') + '</ul></div>' : '');
       }
       U.on(panel, 'click', '[data-action=to-menus]', function () { tabsApi.activate('menus'); });
@@ -337,7 +354,7 @@
       /* Where */
       const venueRows = BOOKABLE.map(function (x) { return { value: x.id, label: x.id, sub: SHORT_LINE[x.id] + ' · ' + hoursToday(x) + ' · Dress code: ' + x.dress.toLowerCase() }; })
         .concat([{ value: '_banquet', label: 'Banquet Hall', sub: 'Events and weddings · call to book', href: Club.info.eventsWebsite || telHref() }]);
-      const where = Portal.selectField(U.$('.pd-where', panel), { label: 'Where', title: 'Where would you like to sit?', rows: venueRows, value: draft.venue, icon: 'dining',
+      const where = Portal.selectField(U.$('.pd-where', panel), { label: 'Where', title: 'Where would you like to sit?', rows: venueRows, value: draft.venue,
         onChange: function (val) { if (val === '_banquet') return; draft.venue = val; const vv = venueDef(val); draft.party = Math.max(vv.min, Math.min(vv.max, draft.party)); guests.update({ min: vv.min, max: vv.max, value: draft.party }); drawGuestsNote(); drawMeal(); refreshDays(); drawSide(); } });
 
       /* Date */
@@ -376,7 +393,7 @@
           /* if that meal is over today, move to the next one still serving */
           if (draft.date === today()) { const live = svcs.filter(function (s) { return s.slots.some(function (t) { return slotState(draft.venue, draft.date, t, draft.party) !== 'past'; }); }).map(function (s) { return s.id; }); if (live.length && live.indexOf(draft.meal) < 0) draft.meal = live[0]; }
         }
-        host.innerHTML = U.segmented(svcs.map(function (s) { return { value: s.id, label: s.id }; }), draft.meal, 'meal');
+        host.innerHTML = '<span class="pk-label" aria-hidden="true">Meal</span>' + U.segmented(svcs.map(function (s) { return { value: s.id, label: s.id }; }), draft.meal, 'meal');
         U.$('.segmented', host).setAttribute('role', 'group'); U.$('.segmented', host).setAttribute('aria-label', 'Meal');
         drawTimes();
       }
@@ -395,7 +412,7 @@
             return '<button type="button" class="pd-chip' + (on ? ' on' : '') + (x.st === 'full' ? ' full' : '') + '" data-time="' + x.t + '" role="radio" aria-checked="' + on + '"' + (x.st === 'full' ? ' disabled aria-label="' + esc(F.time(x.t)) + ', full"' : '') + '><span class="pd-chip-t">' + esc(F.time(x.t)) + '</span>' + (x.st === 'full' ? '<span class="pd-chip-s">Full</span>' : '') + '</button>';
           }).join('') + '</div>' +
           (open ? '' : '<p class="pd-svc-note">No tables left for ' + people(draft.party) + ' at ' + esc(svc.id.toLowerCase()) + '. Try another meal or date.</p>');
-        /* pre-scroll the row to the selected or most likely time */
+        /* where the times scroll sideways (they wrap into a grid here), start at the selected or most likely time */
         const row = U.$('.pd-chiprow', host);
         if (row) {
           const target = draft.time || LIKELY[svc.id];
@@ -482,19 +499,31 @@
 
     /* ---------- My reservations ---------- */
     function rowHTML(r) {
+      /* The word at the right edge: the status when it is not simply confirmed, or Today */
+      const k = r.status !== 'confirmed' ? (STATUS[r.status] || [r.status])[0] : (r.date === today() ? 'Today' : '');
       return '<li><button type="button" class="pd-row" data-res="' + esc(r.id) + '">' + dateBlock(r.date) +
         '<span class="pd-row-main"><span class="pd-row-t">' + esc(F.time(r.time) + ' · ' + venueShort(r.venue)) + '</span>' +
         '<span class="pd-row-s">' + esc(people(r.partySize) + (r.occasion ? ' · ' + r.occasion : '')) + '</span></span>' +
-        (r.status !== 'confirmed' ? badge(r.status) : '') + Club.icon('chevronRight', 'pd-row-go') + '</button></li>';
+        (k ? '<span class="pd-row-k">' + esc(k) + '</span>' : '') + '</button></li>';
+    }
+    /** Hairline rows under a small-capitals heading for each month. */
+    function rowsByMonth(rows) {
+      let out = '', mon = '';
+      rows.forEach(function (r) {
+        const key = r.date.slice(0, 7);
+        if (key !== mon) { out += (mon ? '</ul>' : '') + '<h3 class="pd-res-month">' + esc(monthHead(r.date)) + '</h3><ul class="pd-res-list">'; mon = key; }
+        out += rowHTML(r);
+      });
+      return out + (mon ? '</ul>' : '');
     }
     function drawMine(panel) {
       const list = mine();
       const up = upcoming();
       const past = list.filter(function (r) { return !isUpcoming(r); }).sort(function (a, b) { return (b.date + b.time).localeCompare(a.date + a.time); }).slice(0, 12);
-      panel.innerHTML = '<div class="p-cols pd-mine-cols"><div>' + (up.length ? '<ul class="p-list pd-res-list" data-reveal>' + up.slice(0, 5).map(rowHTML).join('') +
-          (up.length > 5 ? '<li><button type="button" class="pd-row pd-row-all" data-action="all">View all upcoming (' + up.length + ')' + Club.icon('chevronRight', 'pd-row-go') + '</button></li>' : '') + '</ul>'
-          : '<div class="panel pd-empty" data-reveal>' + U.empty({ icon: 'dining', title: 'No upcoming reservations', text: 'When you reserve a table, it appears here.', action: U.btn('Reserve a table', { kind: 'primary', action: 'go-reserve' }) }) + '</div>') +
-        '</div><div class="pd-past">' + Portal.accordion({ id: 'pd-past', icon: 'clock', title: 'Past visits', summary: past.length ? past.length + (past.length === 1 ? ' visit' : ' visits') : 'None yet',
+      panel.innerHTML = '<div class="p-cols pd-mine-cols"><div class="pd-up" data-reveal>' + (up.length ? rowsByMonth(up.slice(0, 5)) +
+          (up.length > 5 ? '<button type="button" class="pd-mrow" data-action="all">View all upcoming (' + up.length + ')</button>' : '')
+          : '<div class="pd-empty">' + U.empty({ icon: 'dining', title: 'No upcoming reservations', text: 'When you reserve a table, it appears here.', action: U.btn('Reserve a table', { kind: 'primary', action: 'go-reserve' }) }) + '</div>') +
+        '</div><div class="pd-past">' + Portal.accordion({ id: 'pd-past', title: 'Past visits', summary: past.length ? past.length + (past.length === 1 ? ' visit' : ' visits') : 'None yet',
           body: past.length ? '<ul class="pd-past-list">' + past.map(function (r) {
             return '<li><span class="pd-past-main"><span class="pd-past-t">' + esc(r.venue) + '</span><span class="pd-past-s">' + esc(F.date(r.date) + ' at ' + F.time(r.time) + ' · ' + people(r.partySize)) + '</span>' +
               Portal.receiptLink(visitReceipts(r)) + '</span>' + badge(r.status === 'confirmed' || r.status === 'seated' ? 'completed' : r.status) + '</li>';
@@ -535,7 +564,7 @@
         const svcs = servicesFor(r.venue, r.date);
         if (svcs.map(function (s) { return s.id; }).indexOf(st.meal) < 0 && svcs.length) st.meal = svcs[0].id;
         if (st.time && slotState(r.venue, r.date, st.time, st.party, r.id) !== 'open') st.time = null;
-        U.$('.pd-mod-meal', sh.body).innerHTML = svcs.length > 1 ? '<span class="pk-label">Meal</span>' + U.segmented(svcs.map(function (s) { return { value: s.id, label: s.id }; }), st.meal, 'mmeal') : '';
+        U.$('.pd-mod-meal', sh.body).innerHTML = svcs.length > 1 ? '<span class="pk-label" aria-hidden="true">Meal</span>' + U.segmented(svcs.map(function (s) { return { value: s.id, label: s.id }; }), st.meal, 'mmeal') : '';
         const svc = svcs.find(function (s) { return s.id === st.meal; });
         const states = svc ? svc.slots.map(function (t) { return { t: t, st: slotState(r.venue, r.date, t, st.party, r.id) }; }).filter(function (x) { return x.st !== 'past'; }) : [];
         U.$('.pd-mod-times', sh.body).innerHTML = states.length ? '<span class="pk-label">Time</span><div class="pd-chiprow" role="radiogroup" aria-label="Times">' + states.map(function (x) {
@@ -565,7 +594,7 @@
       });
     }
 
-    /* ---------- Menus: venue select, sections as accordions ---------- */
+    /* ---------- Menus: set like the printed menu, every section open ---------- */
     function venueKnown(id) { return VENUES.some(function (v) { return v.id === id; }); }
     /* Dining diet filter (Nov 21): the member's saved choice (members.preferences.diet, English labels) */
     function memberDiet() {
@@ -578,7 +607,16 @@
       const clean = list.filter(function (x, i) { return list.indexOf(x) === i; }).sort(function (a, b) { return (order.indexOf(a) + 1 || 99) - (order.indexOf(b) + 1 || 99); });
       S.update('members', m.id, { preferences: Object.assign({}, m.preferences || {}, { diet: clean }) });
     }
-    /** The sections and dishes under the chips, for the member's chosen markings. */
+    /** A dish: name with its small raised markings (V, VG, GF) left, the price as a plain figure right, one muted line. */
+    function dishHTML(i) {
+      const codes = dietOrder(i.dietary || []);
+      return '<li class="pd-dish"><div class="pd-dish-row"><span class="pd-dish-l"><span class="pd-dish-name">' + esc(i.name) + '</span>' +
+        (codes.length ? '<sup class="pd-dish-marks" aria-hidden="true" data-i18n-skip>' + esc(codes.join(' · ')) + '</sup>' +
+          '<span class="pd-vh"> (' + codes.map(function (c) { return '<span>' + esc(DIET_LABEL[c] || c) + '</span>'; }).join(', ') + ')</span>' : '') +
+        '</span><span class="pd-dish-price" data-i18n-skip>' + esc(menuPrice(i.price)) + '</span></div>' +
+        (i.description ? '<p class="pd-dish-desc">' + esc(i.description) + '</p>' : '') + '</li>';
+    }
+    /** The sections and dishes under the filter words, for the member's chosen markings. */
     function drawMenuList(panel, items, filters) {
       panel._menuItems = items; panel._menuFilters = filters;
       const known = filters.map(function (f) { return f.label; });
@@ -586,24 +624,16 @@
       const on = chosen.length > 0;
       const shown = items.filter(function (i) { return dietMatches(i, chosen, filters); });
       U.$$('[data-diet]', panel).forEach(function (b) { const p = chosen.indexOf(b.dataset.diet) >= 0; b.classList.toggle('on', p); b.setAttribute('aria-pressed', String(p)); });
+      const all = U.$('.pd-diet-all', panel); if (all) { all.classList.toggle('on', !on); all.setAttribute('aria-pressed', String(!on)); }
       const n = U.$('.pd-diet-n', panel); if (n) n.textContent = shown.length + (shown.length === 1 ? ' dish' : ' dishes');
       const saved = U.$('.pd-diet-saved', panel); if (saved) saved.hidden = !on;
       const clr = U.$('.pd-diet-clear', panel); if (clr) clr.hidden = !on || !shown.length;
       const secs = sectionsOf(shown);
-      const want = MEAL_SECTION[mealNow()];
-      const openSec = secs.indexOf(want) >= 0 ? want : secs[0];
-      U.$('.pd-menu-list', panel).innerHTML = !items.length ? U.empty({ icon: 'chef', title: 'The menu is being updated', text: 'Please ask your server about today’s specials.' })
+      U.$('.pd-menu-list', panel).innerHTML = !items.length ? '<div class="pd-menu-empty">' + U.empty({ icon: 'chef', title: 'The menu is being updated', text: 'Please ask your server about today’s specials.' }) + '</div>'
         : !shown.length ? '<div class="pd-diet-empty">' + U.empty({ icon: 'chef', title: 'No dishes match these filters', text: 'Try fewer filters, or ask your server what the kitchen can do.', action: '<button type="button" class="btn" data-action="diet-clear">Clear filters</button>' }) + '</div>'
         : '<div class="pd-menu-secs">' + secs.map(function (sec) {
-          const list = shown.filter(function (i) { return i.section === sec; });
-          const open = on || sec === openSec; const fold = !on && sec === openSec;
-          const from = Math.min.apply(null, list.map(function (i) { return +i.price || 0; }));
-          return Portal.accordion({ id: 'pd-m-' + sec.replace(/[^a-z]/gi, ''), title: sec, summary: list.length + (list.length === 1 ? ' item' : ' items') + ' · from ' + menuPrice(from), open: open,
-            body: '<ul class="pd-dishes">' + list.map(function (i, k) {
-              return '<li class="pd-dish"' + (fold && k >= 6 ? ' hidden data-more' : '') + '><div class="pd-dish-row"><span class="pd-dish-name">' + esc(i.name) + '</span><span class="pd-dish-price">' + esc(menuPrice(i.price)) + '</span></div>' +
-                (i.description ? '<p class="pd-dish-desc">' + esc(i.description) + '</p>' : '') +
-                ((i.dietary || []).length ? '<div class="pd-dish-tags">' + dietOrder(i.dietary).map(function (t) { return '<span class="pd-tag">' + esc(DIET_LABEL[t] || t) + '</span>'; }).join('') + '</div>' : '') + '</li>';
-            }).join('') + '</ul>' + (fold && list.length > 6 ? '<button type="button" class="p-link pd-show-all" data-action="show-all">Show all (' + list.length + ')</button>' : '') });
+          return '<section class="pd-sec"><h3 class="pd-sec-h">' + esc(sec) + '</h3><ul class="pd-dishes">' +
+            shown.filter(function (i) { return i.section === sec; }).map(dishHTML).join('') + '</ul></section>';
         }).join('') + '</div>';
     }
     function drawMenus(panel) {
@@ -614,33 +644,52 @@
       const v = venueDef(menuVenue);
       const gallery = !specific.length || v.id === 'Gallery Taphouse & Grill';
       const filters = dietFilters(items);
-      panel.innerHTML = '<div class="pd-menu-sel"></div>' +
-        '<p class="pd-menu-note">' + (gallery && v.id !== 'Gallery Taphouse & Grill' ? 'The ' + esc(v.id) + ' serves the Gallery kitchen menu. ' : '') + 'Breakfast until 2:00 PM · pizza night every Friday.</p>' +
-        (items.length ? '<div class="pd-diet" role="group" aria-labelledby="pd-diet-l"><span class="pk-label" id="pd-diet-l">Dietary</span><div class="pd-diet-chips">' + filters.map(function (f) {
-          return '<button type="button" class="pd-diet-chip" data-diet="' + esc(f.label) + '" aria-pressed="false">' + Club.icon('check', 'pd-diet-tick') + '<span>' + esc(f.label) + '</span></button>';
-        }).join('') + '</div><div class="pd-diet-meta"><span class="pd-diet-n" aria-live="polite"></span><span class="pd-diet-saved" hidden>Saved to your preferences</span>' +
-          '<button type="button" class="p-link pd-diet-clear" data-action="diet-clear" hidden>Clear filters</button></div></div>' : '') +
+      /* Under the name: the meals this room serves (its services), in small capitals */
+      const meals = SERVICE_ORDER.filter(function (x) { return v.services[x]; });
+      /* The key to the markings that appear on this menu */
+      const codes = dietOrder(items.reduce(function (a, i) { (i.dietary || []).forEach(function (c) { if (a.indexOf(c) < 0) a.push(c); }); return a; }, []));
+      panel.innerHTML = '<div class="pd-menu">' +
+        /* The restaurant's name is the picker: tap it to read another room's menu */
+        '<header class="pd-menu-h"><h2 class="pd-menu-name"><button type="button" class="pd-menu-pick" data-action="menu-venue" aria-haspopup="dialog" aria-label="' + esc('Menu for ' + menuVenue + '. Change place') + '">' +
+          '<span class="pd-menu-pick-t">' + esc(v.id) + '</span>' + Club.icon('chevronDown', 'pd-menu-chev') + '</button></h2>' +
+          (meals.length ? '<p class="pd-menu-eb">' + meals.map(function (x) { return '<span>' + esc(x) + '</span>'; }).join('<span class="pd-menu-dot" aria-hidden="true"> · </span>') + '</p>' : '') +
+          (gallery && v.id !== 'Gallery Taphouse & Grill' ? '<p class="pd-menu-note">The ' + esc(v.id) + ' serves the Gallery kitchen menu.</p>' : '') +
+        '</header>' +
+        (items.length ? '<div class="pd-diet" role="group" aria-label="Dietary"><div class="pd-diet-words">' +
+          '<button type="button" class="pd-diet-w pd-diet-all on" data-action="diet-clear" aria-pressed="true"><span>All</span></button>' +
+          filters.map(function (f) {
+            return '<button type="button" class="pd-diet-w" data-diet="' + esc(f.label) + '" aria-pressed="false"><span>' + esc(f.label) + '</span></button>';
+          }).join('') + '</div><p class="pd-diet-meta"><span class="pd-diet-n" aria-live="polite"></span><span class="pd-diet-saved" hidden>Saved to your preferences</span>' +
+          '<button type="button" class="pd-diet-clear" data-action="diet-clear" hidden>Clear filters</button></p></div>' : '') +
         '<div class="pd-menu-list"></div>' +
-        '<p class="pd-menu-foot">Tell your server about any allergies. Prices in CAD, plus tax.</p>';
+        '<footer class="pd-menu-foot">' +
+          (codes.length ? '<p class="pd-menu-key">' + codes.map(function (c) { return '<span class="pd-key"><span class="pd-key-c" data-i18n-skip>' + esc(c) + '</span> <span>' + esc(DIET_LABEL[c] || c) + '</span></span>'; }).join('') + '</p>' : '') +
+          '<p>Breakfast until 2:00 PM · pizza night every Friday.</p>' +
+          '<p>Tell your server about any allergies. Prices in CAD, plus tax.</p></footer></div>';
       drawMenuList(panel, items, filters);
       if (!panel.dataset.menuWired) {
         panel.dataset.menuWired = '1';
-        U.on(panel, 'click', '[data-action=show-all]', function (e, btn) { U.$$('[data-more]', btn.parentElement).forEach(function (li) { li.hidden = false; }); btn.remove(); });
-        /* Diet chips: toggle, remember on the member's preferences, redraw the list only (the chips keep focus) */
+        /* Diet words: toggle, remember on the member's preferences, redraw the list only (the words keep focus) */
         U.on(panel, 'click', '[data-diet]', function (e, btn) {
           const label = btn.dataset.diet; const cur = memberDiet();
           setMemberDiet(cur.indexOf(label) >= 0 ? cur.filter(function (x) { return x !== label; }) : cur.concat([label]));
           drawMenuList(panel, panel._menuItems, panel._menuFilters);
         });
-        U.on(panel, 'click', '[data-action=diet-clear]', function () {
+        U.on(panel, 'click', '[data-action=menu-venue]', function () {
+          Portal.openSheet({ title: 'Show the menu for', selected: menuVenue,
+            rows: BOOKABLE.map(function (x) { return { value: x.id, label: x.id }; }),
+            onPick: function (val) {
+              if (val === menuVenue) return;
+              menuVenue = val; draft.menuVenue = val; drawMenus(panel);
+              const pick = U.$('.pd-menu-pick', panel); if (pick) pick.focus({ preventScroll: true });
+            } });
+        });
+        U.on(panel, 'click', '[data-action=diet-clear]', function (e, btn) {
           setMemberDiet([]); drawMenuList(panel, panel._menuItems, panel._menuFilters);
-          const first = U.$('[data-diet]', panel); if (first) first.focus();
+          /* "Clear filters" hides itself: focus moves to All, which is now the active word */
+          if (!btn.isConnected || btn.hidden) { const first = U.$('.pd-diet-all', panel); if (first) first.focus(); }
         });
       }
-      Portal.selectField(U.$('.pd-menu-sel', panel), { title: 'Show the menu for', icon: 'chef', value: menuVenue,
-        rows: BOOKABLE.map(function (x) { return { value: x.id, label: x.id }; }),
-        onChange: function (val) { menuVenue = val; draft.menuVenue = val; drawMenus(panel); } });
-      const menuBtn = U.$('.pd-menu-sel .pk-select', panel); if (menuBtn) menuBtn.setAttribute('aria-label', 'Menu for ' + menuVenue + '. Change place');
     }
 
     return function () { Portal.actionBar.hide(); };

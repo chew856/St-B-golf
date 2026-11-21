@@ -85,12 +85,12 @@
   }
   /** Cart rules in plain words, with a one-line explanation of each. */
   const CART_INFO = {
-    'Normal': { pre: 'Carts ', rule: 'allowed', short: 'Allowed', label: 'Carts allowed', title: 'Carts allowed', text: 'Carts can drive on the fairways and rough. Keep them off tees and greens.' },
-    '90 degree': { pre: 'Carts on ', rule: '90° rule', short: '90° rule', label: 'Carts on 90° rule', title: 'The 90° rule', text: 'Keep to the cart path, then turn onto the fairway at a right angle to reach your ball and drive straight back to the path.' },
-    'Cart path only': { pre: 'Carts ', rule: 'on paths only', short: 'Paths only', label: 'Carts on paths only', title: 'Cart path only', text: 'Carts stay on the paved paths at all times. Walk from the path to your ball.' },
-    'No carts': { pre: '', rule: 'No carts today', short: 'Walking only', label: 'No carts today', title: 'No carts today', text: 'Carts are not allowed on the course today, so everyone walks.' }
+    'Normal': { pre: 'Carts ', rule: 'allowed', short: 'Allowed', label: 'Carts allowed', line: 'carts allowed', title: 'Carts allowed', text: 'Carts can drive on the fairways and rough. Keep them off tees and greens.' },
+    '90 degree': { pre: 'Carts on ', rule: '90° rule', short: '90° rule', label: 'Carts on 90° rule', line: 'carts on the 90° rule', title: 'The 90° rule', text: 'Keep to the cart path, then turn onto the fairway at a right angle to reach your ball and drive straight back to the path.' },
+    'Cart path only': { pre: 'Carts ', rule: 'on paths only', short: 'Paths only', label: 'Carts on paths only', line: 'carts on paths only', title: 'Cart path only', text: 'Carts stay on the paved paths at all times. Walk from the path to your ball.' },
+    'No carts': { pre: '', rule: 'No carts today', short: 'Walking only', label: 'No carts today', line: 'no carts today', title: 'No carts today', text: 'Carts are not allowed on the course today, so everyone walks.' }
   };
-  function cartInfo(rule) { return CART_INFO[rule || 'Normal'] || { pre: 'Carts: ' + rule, rule: '', short: String(rule), label: 'Carts: ' + rule, title: '', text: '' }; }
+  function cartInfo(rule) { return CART_INFO[rule || 'Normal'] || { pre: 'Carts: ' + rule, rule: '', short: String(rule), label: 'Carts: ' + rule, line: 'carts: ' + rule, title: '', text: '' }; }
   /** "6:30 to 7:51 AM": drops the first AM/PM when both times share it. */
   /* "10:30 to 4:00 PM": drop the first AM/PM only when both times have the same one (French times have none). */
   function rangeLabel(fa, fb, sep) { return (/ [AP]M$/.test(fa) && fa.slice(-2) === fb.slice(-2) ? fa.slice(0, -3) : fa) + (sep || ' to ') + fb; }
@@ -911,6 +911,8 @@
   };
 
   let kept = null;   /* the last render's choices, for background redraws */
+  let barGen = 0;    /* each showing of the pinned bar: leaving the page takes the bar's Tee times look off again */
+  const MINE_SHOWN = 4;   /* upcoming tee times listed before "View all upcoming" */
   Portal.register({
     id: 'tee-times', label: 'Tee times', short: 'Tee times', icon: 'flag', order: 10, tab: true,
     render: function (view, params, member) {
@@ -927,14 +929,14 @@
       /* Remembered defaults: this member's last booking (prefs), else their most recent tee time in the store. */
       const lastTT = S.where('teeTimes', function (t) { return t.bookedBy === me.id && t.status !== 'cancelled'; }).sort(function (a, b) { return (b.date + b.time).localeCompare(a.date + a.time); })[0];
       const state = {
-        date: wantDate || null, time: null, joinId: null, period: null, showAll: false, model: null,
+        date: wantDate || null, time: null, joinId: null, chosen: false, model: null,
         players: Math.max(1, Math.min(4, +Portal.prefs.get('tt.players', lastTT ? (lastTT.players || []).filter(function (p) { return !isPublic(p); }).length : 1) || 1)),
         holes: +Portal.prefs.get('tt.holes', lastTT ? lastTT.holes : 18) === 9 ? 9 : 18
       };
       if (wantTime && +params[2] >= 1 && +params[2] <= 4) state.players = +params[2];
-      /* A background redraw (another tab saved, new weather) keeps the day, period and party the member had chosen. */
+      /* A background redraw (another tab saved, new weather) keeps the day and party the member had chosen. */
       if (Portal.background && Portal.background() && kept && kept.member === me.id) {
-        ['date', 'period', 'showAll', 'players', 'holes'].forEach(function (k) { state[k] = kept.state[k]; });
+        ['date', 'chosen', 'players', 'holes'].forEach(function (k) { state[k] = kept.state[k]; });
       }
       kept = { member: me.id, state: state };
       function cartPref(m) {
@@ -943,34 +945,71 @@
         return !!Portal.prefs.get('tt.cart', false);
       }
 
-      /* ---- Course status: one line that opens today's conditions ---- */
+      /* ---- Course status: one quiet line under the title; tapping it opens today's conditions ---- */
       const ci = cartInfo(cs.cartRule);
       const speed = parseFloat(cs.greenSpeed);
       const greens = cs.greenSpeed ? cs.greenSpeed + (isNaN(speed) ? '' : speed >= 10.5 ? ' (fast)' : speed >= 9 ? ' (medium)' : ' (slow)') : 'Not posted';
-      const tile = function (k, v, sub) { return '<div class="tt-tile"><span class="tt-tile-k">' + esc(k) + '</span><span class="tt-tile-v">' + esc(v) + '</span>' + (sub ? '<span class="tt-tile-s">' + esc(sub) + '</span>' : '') + '</div>'; };
-      const statusTitle = cs.open === false ? 'Course closed today' : 'Course open · First tee ' + fmt.time(st.first) + ' · ' + ci.label;
-      const statusBody = '<div class="tt-tiles">' + tile('Carts', ci.short) + tile('Greens', greens) + tile('Pins', cs.pins || 'Not posted') + tile('Conditions', cs.firmness || 'Not posted') + '</div>' +
+      const DOT = '<span class="tt-dot" aria-hidden="true"> · </span>';
+      const kv = function (k, v) { return '<li><span>' + esc(k) + '</span><span>' + esc(v) + '</span></li>'; };
+      const statusLine = cs.open === false ? '<span>Course closed today</span>'
+        : '<span>Course open</span>' + DOT + '<span>' + esc('first tee ' + fmt.time(st.first)) + '</span>' + DOT + '<span>' + esc(ci.line) + '</span>';
+      const statusBody = '<ul class="tt-kv-list">' + kv('Carts', ci.short) + kv('Greens', greens) + kv('Pins', cs.pins || 'Not posted') + kv('Conditions', cs.firmness || 'Not posted') + '</ul>' +
         (ci.text ? '<p class="tt-cond-note"><span class="tt-cond-k">' + esc(ci.title) + ':</span> ' + esc(ci.text) + '</p>' : '') +
         (cs.message ? '<p class="tt-cond-note"><span class="tt-cond-k">From the grounds crew:</span> ' + esc(cs.message) + '</p>' : '');
 
+      /* Redesign (owner-approved, Nov 21): the title, the status line, the three sections as words, then the section. */
       view.innerHTML =
-        '<section class="p-hero tt-hero">' +
-          '<h1>Tee times</h1>' +
-          Portal.accordion({ id: 'tt-status', icon: 'course', title: statusTitle, body: statusBody }) +
-        '</section>' +
-        '<div class="tt-tabs"></div>';
+        '<div class="tt-root">' +
+          '<header class="tt-hero">' +
+            '<h1 class="tt-title">Tee times</h1>' +
+            '<button type="button" class="tt-status" aria-expanded="false" aria-controls="tt-status-b"><span class="tt-status-l">' + statusLine + '</span>' + Club.icon('chevronDown', 'tt-status-chev') + '</button>' +
+            '<div class="tt-status-b" id="tt-status-b" hidden>' + statusBody + '</div>' +
+          '</header>' +
+          '<div class="tt-tabs"></div>' +
+        '</div>';
+      const root = ui.$('.tt-root', view);
+      ui.on(view, 'click', '.tt-status', function (e, b) {
+        const open = b.getAttribute('aria-expanded') !== 'true';
+        b.setAttribute('aria-expanded', String(open)); ui.$('.tt-status-b', view).hidden = !open;
+      });
+      /* Layout measures the stylesheet cannot know (the header and the tab bar belong to the shell): the page's side
+         padding on phones (so lines and the selected row reach the screen edges), and the sticky header's height. */
+      function measure() {
+        if (!root.isConnected) return;
+        const r = view.getBoundingClientRect(), edge = r.width >= document.documentElement.clientWidth - 1;
+        if (edge) root.style.setProperty('--tt-edge', (parseFloat(getComputedStyle(view).paddingLeft) || 0) + 'px'); else root.style.removeProperty('--tt-edge');
+        const hd = document.querySelector('.p-header'), pos = hd ? getComputedStyle(hd).position : '';
+        root.style.setProperty('--tt-top', (hd && (pos === 'sticky' || pos === 'fixed') ? Math.round(hd.getBoundingClientRect().height) : 0) + 'px');
+        placeBar();
+      }
+      /** The pinned bar sits on the phone tab bar and lines up with the page's column. */
+      function placeBar() {
+        const bar = Portal.actionBar.el(); if (!bar || !bar.classList.contains('tt-bar')) return;
+        const tb = document.querySelector('.p-tabbar');
+        const h = tb && getComputedStyle(tb).display !== 'none' ? Math.round(tb.getBoundingClientRect().height) : 0;
+        bar.style.setProperty('--tt-tab-h', h + 'px');
+        bar.style.setProperty('--tt-inset', Math.max(16, Math.round(root.getBoundingClientRect().left)) + 'px');
+      }
+      /** Keep the chosen item of a sideways strip (sections, days) in view without moving the page. */
+      function reveal(box, el) {
+        if (!box || !el) return;
+        const a = el.offsetLeft, b = a + el.offsetWidth, pad = 28;
+        if (a - pad < box.scrollLeft) box.scrollLeft = Math.max(0, a - pad);
+        else if (b + pad > box.scrollLeft + box.clientWidth) box.scrollLeft = b + pad - box.clientWidth;
+      }
+      window.addEventListener('resize', measure);
 
-      /* ---- Three sections, Book first (owner, Nov 21): Book · My tee times · Weekend ballot.
+      /* ---- Three sections as a row of words, Book first (owner, Nov 21): Book · My tee times · Weekend ballot.
          #/tee-times, #/tee-times/mine and #/tee-times/ballot; a date (#/tee-times/<date>) opens Book on that day. ---- */
       const SECS = [
-        { id: 'book', label: 'Book', icon: 'flag', render: renderBook },
-        { id: 'mine', label: 'My tee times', icon: 'calendar', render: renderMine },
-        { id: 'ballot', label: 'Weekend ballot', icon: 'ball', render: renderBallot }
+        { id: 'book', label: 'Book', render: renderBook },
+        { id: 'mine', label: 'My tee times', render: renderMine },
+        { id: 'ballot', label: 'Weekend ballot', render: renderBallot }
       ];
       const tabsHost = ui.$('.tt-tabs', view);
       tabsHost.innerHTML = '<div class="tt-secs" role="tablist" aria-label="Tee times">' + SECS.map(function (x) {
         return '<button type="button" class="tab tt-sec" role="tab" id="tt-sec-' + x.id + '" data-tab="' + x.id + '" aria-controls="tt-sec-panel" aria-selected="false" tabindex="-1">' +
-          '<span class="tt-sec-ic" aria-hidden="true">' + Club.icon(x.icon) + '</span><span class="tt-sec-l">' + esc(x.label) + '</span><span class="tt-sec-n" aria-hidden="true" hidden></span></button>';
+          '<span class="tt-sec-l">' + esc(x.label) + '</span><span class="tt-sec-n" aria-hidden="true" hidden></span></button>';
       }).join('') + '</div><div class="wl-host"></div><div class="tab-host"></div>';
       let secNow = null;
       const tabs = {
@@ -978,6 +1017,7 @@
           const sec = SECS.find(function (x) { return x.id === id; }) || SECS[0];
           secNow = sec.id;
           ui.$$('.tt-sec', tabsHost).forEach(function (b) { const on = b.dataset.tab === sec.id; b.classList.toggle('active', on); b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
+          reveal(ui.$('.tt-secs', tabsHost), ui.$('.tt-sec.active', tabsHost));
           if (sec.id !== 'book') Portal.actionBar.hide();
           const host = ui.$('.tab-host', tabsHost); host.innerHTML = '';
           const panel = document.createElement('div');
@@ -1000,6 +1040,7 @@
         tabs.activate(id); const b = ui.$('.tt-sec[data-tab=' + id + ']', tabsHost); if (b) b.focus();
       });
       tabs.activate(startTab);
+      measure();
       paintWl();
       if (Portal.waitlist) Portal.waitlist.wire(view, me, function () { paintWl(); rerenderMine(); refreshBook(false); });
       const offHolds = Club.holds ? Club.holds.subscribe(function () { if (!document.body.classList.contains('ps-open')) refreshBook(false); }) : null;
@@ -1026,11 +1067,13 @@
         setCount('ballot', nw || op, 'Weekend ballot' + (nw ? ', ' + plural(nw, 'new result') : op ? ', ' + (op === 1 ? '1 entry' : op + ' entries') : ''), !!nw);
       }
 
-      /* ======================= Book ======================= */
+      /* ======================= Book =======================
+         Redesign (owner-approved, Nov 21): a strip of days, one slim row (players, how many open, 18 or 9 holes), then
+         the day's times as a starter's sheet list. The chosen time stays pinned in the dark bar with Continue. */
       function renderBook(panel) {
         const m = Portal.member() || me;
         if (m.status === 'suspended') {
-          panel.innerHTML = '<div class="panel tt-notice">' + ui.empty({ icon: 'key', title: 'Your golf privileges are paused', text: 'Your membership is suspended, so you can’t book online. Please call the membership office to restore your account.', action: '<a class="btn btn-primary" href="tel:' + esc(Club.info.phone.replace(/[^\d+]/g, '')) + '">' + Club.icon('phone') + '<span>Call ' + esc(Club.info.phone) + '</span></a>' }) + '</div>';
+          panel.innerHTML = '<div class="tt-notice">' + ui.empty({ icon: 'key', title: 'Your golf privileges are paused', text: 'Your membership is suspended, so you can’t book online. Please call the membership office to restore your account.', action: '<a class="btn btn-primary" href="tel:' + esc(Club.info.phone.replace(/[^\d+]/g, '')) + '">' + Club.icon('phone') + '<span>Call ' + esc(Club.info.phone) + '</span></a>' }) + '</div>';
           return;
         }
         if (!canGolf(m)) { panel.innerHTML = socialHTML(m); return; }
@@ -1038,34 +1081,35 @@
         const stand = standingOf(m.id);
         panel.innerHTML = '<div class="tt-book">' +
           (stand.ok ? '' : '<p class="tt-hint tt-rule bl-standing" role="note">' + Club.icon('alert') + '<span>' + esc(stand.reason) + '</span></p>') +
-          '<section class="tt-card">' +
-            '<div class="tt-date"></div>' +
-            '<div class="tt-grp-row"><div class="tt-players"></div><div class="tt-holes"><span class="pk-label" id="tt-holes-l">Holes</span>' +
-              ui.segmented([{ value: '18', label: '18' }, { value: '9', label: '9' }], String(state.holes), 'tt-holes') + '</div></div>' +
-            '<div class="tt-rules-host"></div>' +
-          '</section>' +
-          '<section class="tt-times-card" aria-label="Times"><div class="tt-times"></div></section>' +
+          '<div class="tt-card">' +
+            '<div class="tt-days-row"><div class="tt-days" role="group" aria-label="Date"></div>' +
+              '<button type="button" class="tt-cal" data-act="tt-cal" aria-haspopup="dialog" aria-label="Choose a date">' + Club.icon('calendar') + '</button></div>' +
+            '<div class="tt-date" hidden></div>' +
+            '<p class="tt-day-note"></p>' +
+            '<div class="tt-filters"><div class="tt-pl-wrap"><div class="tt-players" role="group" aria-label="Players"></div><span class="tt-open"></span></div>' +
+              '<div class="tt-holes">' + ui.segmented([{ value: '18', label: '18' }, { value: '9', label: '9' }], String(state.holes), 'tt-holes') + '</div></div>' +
+          '</div>' +
+          '<div class="tt-times-card"><div class="tt-times"></div></div>' +
           '<div class="tt-more">' +
-            Portal.accordion({ id: 'tt-course', icon: 'flag', title: 'Course and fees', summary: (teeLine() ? teeLine().split(' · ')[0] + ' · ' : '') + 'Guests from ' + fmt.money(Math.min(RT.weekday, RT.weekend, RT.twilight)),
+            '<div class="tt-rules-host"></div>' +
+            Portal.accordion({ id: 'tt-course', title: 'Course and fees',
               body: (teeLine() ? '<p class="tt-cond-note">' + esc(teeLine()) + '</p>' : '') +
                 '<ul class="tt-kv-list"><li><span>Guest, weekdays</span><span class="num">' + fmt.money(RT.weekday) + '</span></li><li><span>Guest, weekends and holidays</span><span class="num">' + fmt.money(RT.weekend) + '</span></li><li><span>Guest, after 5:30 PM</span><span class="num">' + fmt.money(RT.twilight) + '</span></li><li><span>Cart, per rider</span><span class="num">' + fmt.money(st.cartFee) + '</span></li><li><span>9 holes</span><span>60% of the fee</span></li></ul>' +
                 '<p class="tt-cond-note">Guest green fees go on the host member’s account at check-in.</p>' }) +
-            Portal.accordion({ id: 'tt-know', icon: 'info', title: 'Good to know', summary: 'Change or cancel up to 2 hours before',
+            Portal.accordion({ id: 'tt-know', title: 'Good to know',
               body: '<ul class="tt-bullets"><li>You can change or cancel up to 2 hours before you play.</li><li>Check in at the golf shop 15 minutes before your tee time.</li><li>Members and guests must follow the dress code. Soft spikes only, on the course and in the clubhouse.</li></ul>' }) +
           '</div></div>';
-        ui.$('.segmented[data-name=tt-holes]', panel).setAttribute('aria-labelledby', 'tt-holes-l');
-        Portal.stepper(ui.$('.tt-players', panel), { label: 'Players', value: state.players, min: 1, max: 4, onChange: function (v) {
-          state.players = v; Portal.prefs.set('tt.players', v);
-          if (state.time) { const s = slotNow(); if (!s || !fits(s)) clearTime(); }
-          refreshBook(false);
-        } });
+        const seg = ui.$('.segmented[data-name=tt-holes]', panel);
+        seg.setAttribute('role', 'group'); seg.setAttribute('aria-label', 'Holes');
+        ui.$$('button', seg).forEach(function (x) { x.setAttribute('aria-pressed', String(x.classList.contains('active'))); });
+        paintPlayers();
         mountDate(panel);
         if (wantTime) {
           const s = state.date === wantDate ? daySlots(state.date, m).find(function (x) { return x.time === wantTime; }) : null;
           if (s && fits(s)) pick(s, m); else ui.toast('That tee time is no longer available', 'bad');
         }
         wantTime = null;
-        refreshBook(true);
+        refreshBook();
       }
 
       function fits(s) { return bookable(s) && s.places >= state.players; }
@@ -1073,6 +1117,7 @@
       function allSums(m) { const days = stripDays(m); const sums = {}; days.forEach(function (d) { sums[d] = daySummary(d, m); }); return { days: days, sums: sums }; }
       function fitCount(sum, pid) { return sum.slots.filter(function (s) { return fits(s) && (!pid || periodOf(s.time) === pid); }).length; }
       function myTimes(sum) { return sum.slots.filter(function (s) { return s.state === 'mine'; }).map(function (s) { return s.time; }).sort(); }
+      /** Every day on the strip and in the calendar: what it offers, or why it is greyed out (disabled, reason). */
       function pickerDays(days, sums) {
         return days.map(function (d) {
           const s = sums[d], n = fitCount(s), mt = myTimes(s);
@@ -1085,43 +1130,65 @@
           return { date: d, meta: n ? plural(n, 'time') : '', pill: mt.length ? 'Your tee time · ' + fmt.time(mt[0]) + (mt.length > 1 ? ' +' + (mt.length - 1) : '') : '', disabled: !!(s.locked || s.closed || !n), reason: reason };
         });
       }
-      function dayNote(d, sum) {
+      /** The quiet line under the strip: the chosen day in full (the strip shows no month) and its forecast. */
+      function dayNoteHTML(d) {
         const wx = (Club.weather.forecast || []).find(function (w) { return w.date === d; });
-        const n = fitCount(sum);
-        const parts = [];
-        if (wx) parts.push(Club.icon(wx.icon) + '<span>' + esc(wx.cond) + ', ' + String(wx.hi).replace('-', '−') + '°</span>');
-        parts.push('<span>' + (sum.locked && sum.locked.ballot === 'open' ? 'Ballot · draw <span>' + esc(drawWhen(d)) + '</span>' : sum.locked ? 'Not open for booking yet' : sum.closed ? 'Course closed' : n ? plural(n, 'time') + ' available' : 'No times available') + '</span>');
-        return parts.join('<span aria-hidden="true">·</span>');
+        return '<span class="tt-dn-d">' + esc(longDate(d)) + '</span>' +
+          (wx ? '<span class="tt-dn-w">' + Club.icon(wx.icon) + '<span>' + esc(wx.cond) + ', ' + String(wx.hi).replace('-', '−') + '°</span></span>' : '');
+      }
+      /** The day strip: a small weekday over the day number. Greyed days can still be chosen: the list then says why. */
+      function paintDays(pd) {
+        const h = ui.$('.tt-days', view); if (!h) return;
+        const had = h.contains(document.activeElement), left = h.scrollLeft;
+        h.innerHTML = pd.map(function (x) {
+          const on = x.date === state.date, say = x.disabled ? x.reason : x.meta;
+          return '<button type="button" class="tt-day' + (on ? ' is-on' : '') + (x.disabled ? ' is-off' : '') + '" data-date="' + x.date + '" aria-pressed="' + on + '" tabindex="' + (on ? 0 : -1) + '">' +
+            '<span class="tt-day-w" aria-hidden="true">' + esc(fmt.weekday(x.date)) + '</span><span class="tt-day-n" aria-hidden="true">' + fmt.toDate(x.date).getDate() + '</span>' +
+            '<span class="sr-only">' + esc(longDate(x.date)) + '</span>' + (say ? '<span class="sr-only">' + esc(say) + '</span>' : '') + '</button>';
+        }).join('');
+        h.scrollLeft = left;
+        const on = ui.$('.tt-day.is-on', h);
+        reveal(h, on);
+        if (had && on) on.focus({ preventScroll: true });
+      }
+      /** Players: a compact minus and plus around "2 players". */
+      function paintPlayers() {
+        const h = ui.$('.tt-players', view); if (!h) return;
+        h.innerHTML = '<button type="button" class="tt-pl-btn" data-d="-1" aria-label="Fewer"' + (state.players <= 1 ? ' disabled' : '') + '><span aria-hidden="true">−</span></button>' +
+          '<output class="tt-pl-val" aria-live="polite">' + esc(plural(state.players, 'player')) + '</output>' +
+          '<button type="button" class="tt-pl-btn" data-d="1" aria-label="More"' + (state.players >= 4 ? ' disabled' : '') + '><span aria-hidden="true">+</span></button>';
       }
       function mountDate(panel) {
         const m = Portal.member() || me;
         const A = allSums(m), pd = pickerDays(A.days, A.sums);
         const ok = function (d) { return pd.some(function (x) { return x.date === d && !x.disabled; }); };
-        if (!state.date || state.date < td || A.days.indexOf(state.date) < 0 || (!ok(state.date) && pd.some(function (x) { return !x.disabled; }))) state.date = (pd.find(function (x) { return !x.disabled; }) || pd[0]).date;
-        dp = Portal.datePicker(ui.$('.tt-date', panel), { label: 'Date', title: 'Choose a date', value: state.date, days: pd, note: dayNote(state.date, A.sums[state.date]),
+        /* A greyed day the member chose themselves stays chosen (the list says why it is closed to them). */
+        if (!state.date || state.date < td || A.days.indexOf(state.date) < 0 || (!state.chosen && !ok(state.date) && pd.some(function (x) { return !x.disabled; }))) state.date = (pd.find(function (x) { return !x.disabled; }) || pd[0]).date;
+        /* The existing "Choose a date" sheet (Portal.datePicker) opens from the calendar button; its field stays hidden. */
+        dp = Portal.datePicker(ui.$('.tt-date', panel), { label: 'Date', title: 'Choose a date', value: state.date, days: pd,
           onChange: function (iso) { setDate(iso); } });
       }
       function setDate(iso) {
-        state.date = iso; clearTime(); state.period = null;
+        state.date = iso; state.chosen = true; clearTime();
         if (dp && dp.value() !== iso) dp.set(iso);
-        refreshBook(true);
+        refreshBook();
       }
-      /** Re-render the date note and options, the rules row and the times for the current state. */
-      function refreshBook(resetPeriod) {
-        const panel = ui.$('.tt-card', view); if (!panel) return;
+      /** Re-render the day strip, the slim row, the rules line and the times for the current state. */
+      function refreshBook() {
+        if (!ui.$('.tt-card', view)) return;
         const m = Portal.member() || me;
-        const A = allSums(m); const sum = A.sums[state.date];
-        if (dp) dp.update({ days: pickerDays(A.days, A.sums), note: dayNote(state.date, sum), value: state.date });
-        const rh = ui.$('.tt-rules-host', panel);
+        const A = allSums(m); const sum = A.sums[state.date]; const pd = pickerDays(A.days, A.sums);
+        if (dp) dp.update({ days: pd, value: state.date });
+        paintDays(pd);
+        ui.$('.tt-day-note', view).innerHTML = dayNoteHTML(state.date);
+        const bookDay = !sum.locked && !sum.closed;
+        ui.$('.tt-open', view).innerHTML = bookDay ? DOT + '<span>' + fitCount(sum) + ' open</span>' : '';
+        const rh = ui.$('.tt-rules-host', view);
         const wasOpen = !!ui.$('.pk-acc.is-open', rh);
-        rh.innerHTML = !sum.locked && !sum.closed ? rulesAcc(m, state.date, wasOpen) : '';
-        if (resetPeriod || !state.period) {
-          state.period = state.time ? periodOf(state.time) : ((PERIODS.find(function (p) { return fitCount(sum, p.id) > 0; }) || PERIODS[0]).id);
-        }
+        rh.innerHTML = bookDay ? rulesAcc(m, state.date, wasOpen) : '';
         renderTimes(ui.$('.tt-times', view), sum, A.days, A.sums);
         showBar();
       }
-
       function windowsText(w) {
         if (!w || !w.length) return 'no times';
         return w.map(function (x) {
@@ -1137,43 +1204,51 @@
         else { items.push('Weekdays: ' + esc(windowsText(r.windows.weekday))); items.push('Weekends and holidays: ' + esc(windowsText(r.windows.weekend))); }
         blocksOn(d).forEach(function (b) { items.push(esc(rangeLabel(fmt.time(b.start), endLabel(b.end), '–')) + ': closed for ' + esc(lowerFirst(b.reason || 'club use'))); });
         items.push(esc(windowLine(m)));
-        return Portal.accordion({ id: 'tt-rules', icon: 'info', title: 'Booking times for your membership', summary: r.tierName + ' · book ' + r.advanceDays + ' days ahead', open: open,
+        return Portal.accordion({ id: 'tt-rules', title: 'Booking times for your membership', open: open,
           body: '<ul class="tt-bullets">' + items.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul>' });
       }
 
+      /** A quiet message in place of the list: a day that is not open to the member yet, or the course closed. */
+      function stateHTML(title, text, action) {
+        return '<div class="tt-state"><p class="tt-state-t">' + esc(title) + '</p>' + (text ? '<p class="tt-state-s">' + esc(text) + '</p>' : '') + (action || '') + '</div>';
+      }
+      /** The starter's sheet: every time of the day still to come, in one list under Morning, Midday and Afternoon. */
       function renderTimes(el, sum, days, sums) {
-        const d = state.date;
+        const d = state.date; const m = Portal.member() || me;
+        const ae = document.activeElement, focusT = ae && el.contains(ae) && ae.dataset ? ae.dataset.time : null;
         if (sum.locked && sum.locked.ballot) { el.innerHTML = ballotBookHTML(d, sum.locked); return; }
-        if (sum.locked) { el.innerHTML = '<div class="tt-state">' + ui.empty({ icon: 'calendar', title: 'Opens on ' + longDate(sum.locked.opensOn), text: sum.locked.reason }) + '</div>'; return; }
-        if (sum.closed) { el.innerHTML = '<div class="tt-state">' + ui.empty({ icon: 'course', title: 'The course is closed today', text: (courseStatus().message || 'There is no play today.') + ' You can still book from tomorrow.', action: nextDayBtn(days, sums, d, null) }) + '</div>'; return; }
-        const counts = {}; PERIODS.forEach(function (p) { counts[p.id] = fitCount(sum, p.id); });
-        const p = PERIODS.find(function (x) { return x.id === state.period; }) || PERIODS[0];
-        const all = sum.slots.filter(function (s) { return p.test(toMin(s.time)); });
-        const shown = all.filter(function (s) { return state.showAll || fits(s) || s.state === 'mine'; });
-        let chips;
-        if (!counts[p.id] && !shown.some(function (s) { return s.state === 'mine'; }) && !state.showAll) {
-          const nd = days.find(function (x) { return x > d && !sums[x].locked && !sums[x].closed && fitCount(sums[x], p.id) > 0; });
-          chips = '<p class="tt-none">' + (all.length && all.every(function (s) { return s.state === 'past'; }) ? 'The ' + p.word + ' times have passed. ' : 'Nothing open in the ' + p.word + '. ') +
-            (nd ? '<button type="button" class="p-link" data-act="pick-day" data-date="' + nd + '">Try ' + esc(shortDay(nd)) + ' →</button>' : '') +
-            (all.some(function (z) { return wlSlot(z); }) ? '<button type="button" class="p-link" data-act="wl-join" data-window="' + p.id + '">Notify me if a spot opens</button>' : '') + '</p>';
-        } else {
-          const parts = []; let run = null;
-          shown.forEach(function (s) {
-            if (s.state === 'rule') { if (run) run.push(s); else { run = [s]; parts.push(run); } }
-            else { run = null; parts.push(s); }
-          });
-          chips = '<div class="tt-chips">' + parts.map(function (x) { return Array.isArray(x) ? runHTML(x) : chipHTML(x); }).join('') + '</div>';
+        if (sum.locked) { el.innerHTML = stateHTML('Opens on ' + longDate(sum.locked.opensOn), sum.locked.reason, ''); return; }
+        if (sum.closed) { el.innerHTML = stateHTML('The course is closed today', (courseStatus().message || 'There is no play today.') + ' You can still book from tomorrow.', nextDayBtn(days, sums, d)); return; }
+        const rows = sum.slots.filter(function (s) { return s.state !== 'past'; });
+        const n = fitCount(sum);
+        let top = '';
+        if (!n) {
+          const nd = days.find(function (x) { return x > d && !sums[x].locked && !sums[x].closed && fitCount(sums[x]) > 0; });
+          top = '<p class="tt-none"><span>' + esc(d === td && sum.over ? 'Today’s tee times have passed.' : state.players > 1 ? 'Nothing open for ' + plural(state.players, 'player') + ' on this day.' : 'Nothing open on this day.') + '</span>' +
+            (nd ? ' <button type="button" class="p-link" data-act="pick-day" data-date="' + nd + '">Try ' + esc(shortDay(nd)) + ' →</button>' : '') +
+            (rows.some(function (z) { return wlSlot(z); }) ? ' <button type="button" class="p-link" data-act="wl-join">Notify me if a spot opens</button>' : '') + '</p>';
         }
+        const out = [];
+        PERIODS.forEach(function (p) {
+          const list = rows.filter(function (s) { return p.test(toMin(s.time)); });
+          if (!list.length) return;
+          out.push('<h3 class="tt-per"><span>' + p.label + '</span><span class="tt-per-n">' + list.filter(fits).length + ' open</span></h3>');
+          for (let i = 0; i < list.length;) {
+            const s = list[i];
+            if (s.state === 'rule' || s.state === 'blocked') {   /* a long stretch closed to the member is one quiet line */
+              let j = i; while (j + 1 < list.length && list[j + 1].state === s.state) j++;
+              if (j - i >= 2) { out.push(runHTML(list.slice(i, j + 1))); i = j + 1; continue; }
+            }
+            out.push(slotHTML(s, m)); i++;
+          }
+        });
         el.innerHTML =
           (state.notice ? '<p class="hold-ended" role="status">' + Club.icon('clock') + '<span>' + esc(state.notice) + '</span></p>' : '') +
-          '<div class="segmented tt-periods" role="group" aria-label="Time of day">' + PERIODS.map(function (x) {
-            const on = x.id === p.id;
-            return '<button type="button" data-p="' + x.id + '" class="' + (on ? 'active' : '') + (counts[x.id] ? '' : ' is-empty') + '" aria-pressed="' + on + '"><span class="tt-per-l">' + x.label + '</span><span class="tt-per-n">' + counts[x.id] + ' open</span></button>';
-          }).join('') + '</div>' +
-          chips +
-          (Club.holds && counts[p.id] ? '<p class="hold-note tt-hold-note">' + Club.icon('clock') + '<span>When you continue, the time is held for ' + Club.holds.MINUTES + ' minutes while you add your group.</span></p>' : '') +
-          '<button type="button" class="p-link tt-showall" data-act="show-all">' + (state.showAll ? 'Show open times only' : 'Show all times') + '</button>' +
+          top +
+          (out.length ? '<div class="tt-slots">' + out.join('') + '</div>' : '') +
+          (Club.holds && n ? '<p class="hold-note tt-hold-note">' + Club.icon('clock') + '<span>When you continue, the time is held for ' + Club.holds.MINUTES + ' minutes while you add your group.</span></p>' : '') +
           wlDaysHTML(days, sums);
+        if (focusT) { const b = ui.$('.tt-slot[data-time="' + focusT + '"]', el); if (b && !b.disabled) b.focus({ preventScroll: true }); }
       }
       /** A tee time that is full for this group but could open up: a booked group, or too few places left. */
       function wlSlot(s, d) {
@@ -1193,85 +1268,102 @@
       }
       function runHTML(run) {
         const fa = fmt.time(run[0].time), fb = fmt.time(run[run.length - 1].time);
-        return '<div class="tt-chip-run" role="note"><span class="tt-run-t">' + esc(run.length === 1 ? fa : rangeLabel(fa, fb, '–')) + '</span> · Not available for your membership</div>';
+        return '<p class="tt-slot-run" role="note"><span class="tt-run-t">' + esc(rangeLabel(fa, fb, '–')) + '</span>' + DOT + '<span>' + (run[0].state === 'blocked' ? 'Reserved' : 'Outside your play times') + '</span></p>';
       }
       function nextDayBtn(days, sums, from) {
         const nd = days.find(function (x) { return x > from && fitCount(sums[x]) > 0; });
         return nd ? '<button type="button" class="btn btn-primary btn-sm" data-act="pick-day" data-date="' + nd + '">' + esc('See ' + shortDay(nd)) + '</button>' : '';
       }
-      function chipHTML(s) {
+      /** The member's friends in a group they may see, by first name: "George and Alex". */
+      function friendsIn(tt, m) {
+        if (!tt || !Portal.friends || !Portal.friends.friendsOf) return '';
+        const fs = Portal.friends.friendsOf(m.id);
+        return niceList((tt.players || []).filter(function (p) { return p.memberId && fs.indexOf(p.memberId) >= 0; })
+          .map(function (p) { const f = Club.members.get(p.memberId); return f ? f.firstName : ''; }).filter(Boolean));
+      }
+      /** One row of the starter's sheet: the time, four marks (filled = taken), a one-line note and one action word. */
+      function slotHTML(s, m) {
         const tp = timeParts(s.time);
-        let sub = '', few = false;
-        const ok = fits(s);
-        if (s.state === 'mine') sub = 'Your tee time';
-        else if (ok) { sub = spotsLeft(s.places); few = s.places <= 2; }
-        else if (bookable(s)) sub = spotsLeft(s.places);
-        else if (s.state === 'past') sub = 'Passed';
-        else if (s.state === 'blocked') sub = 'Reserved';
-        else if (s.state === 'clash') sub = 'Near your tee time';
-        else if (s.state === 'closed') sub = 'Closed';
-        else if (s.state === 'locked') sub = 'Not open yet';
-        else if (s.state === 'held') sub = 'On hold';
-        else if (s.state === 'ask') sub = 'Request to join';
-        else if (s.state === 'private') sub = 'Private group';
-        else sub = 'Full';
-        const sel = s.time === state.time;
-        const heads = Club.teeHeads && (ok || bookable(s) || s.state === 'mine' || s.state === 'full' || s.state === 'held');
-        const wl = !ok && wlSlot(s);   /* full for this group: tap to join the waitlist (js/portal/waitlist.js) */
-        if (wl && s.state === 'full') sub = 'Full · notify me';
-        return '<button type="button" class="tt-chip st-' + s.state + (sel ? ' selected' : '') + (few ? ' is-few' : '') + (wl ? ' is-wl' : '') + '" data-time="' + s.time + '"' + (!ok && !wl && s.state !== 'mine' ? ' disabled' : '') +
-          ' aria-pressed="' + sel + '" aria-label="' + esc(fmt.time(s.time) + ', ' + sub + (ok ? ', guest green fee ' + fmt.money(guestFee(state.date, s.time, barHoles18()), false) : '') + (s.reason ? '. ' + s.reason : '') + (wl ? '. Notify me if a spot opens' : '')) + '">' +
-          '<span class="tt-chip-t">' + tp.t + '<small>' + tp.ap + '</small></span>' +
-          (heads ? Club.teeHeads(4 - s.places) : '') +
-          '<span class="tt-chip-p">' + esc(sub) + '</span>' +
-          (ok ? '<span class="tt-chip-fee">Guest ' + esc(fmt.money(guestFee(state.date, s.time, barHoles18()), false)) + '</span>' : '') + '</button>';
+        const ok = fits(s), sel = ok && s.time === state.time, mine = s.state === 'mine';
+        const wl = !ok && wlSlot(s);   /* full for this group: the row joins the waitlist (js/portal/waitlist.js) */
+        const note = []; let marks = true, taken = 4 - s.places;
+        if (mine) note.push('Your tee time');
+        else if (bookable(s) || s.state === 'ask') {
+          note.push(s.state === 'ask' ? 'Request to join' : s.tt || s.held ? places(s.places) : 'Open tee time');
+          const fr = friendsIn(s.tt, m); if (fr) note.push('with ' + fr);
+          /* The guest green fee, only where one could apply: the member is booking for more than themselves. */
+          if (ok && state.players > 1) note.push('guest ' + fmt.money(guestFee(state.date, s.time, barHoles18()), false));
+        }
+        else if (s.state === 'rule') { note.push('Outside your play times'); marks = false; }
+        else if (s.state === 'blocked') { note.push('Reserved'); marks = false; }
+        else if (s.state === 'clash') note.push('Near your tee time');
+        else if (s.state === 'held') note.push('On hold');
+        else if (s.state === 'private') note.push('Private group');
+        else { note.push('Full'); taken = 4; }
+        const word = ok ? (s.tt ? 'Join' : 'Book') : wl ? 'Waitlist' : '';
+        let dots = '';
+        if (marks) { dots = '<span class="tt-spots" aria-hidden="true">'; for (let i = 0; i < 4; i++) dots += '<i' + (i < taken ? ' class="f"' : '') + '></i>'; dots += '</span>'; }
+        return '<button type="button" class="tt-slot st-' + s.state + (sel ? ' selected' : '') + (ok || mine ? '' : ' is-off') + (wl ? ' is-wl' : '') + '" data-time="' + s.time + '" data-go="' + word + '"' +
+          (!ok && !wl && !mine ? ' disabled' : '') + (ok ? ' aria-pressed="' + sel + '"' : '') + '>' +
+          '<span class="tt-slot-t"><span class="tt-slot-h">' + tp.t + '</span><small>' + (tp.ap || '') + '</small></span>' +
+          '<span class="tt-slot-mid">' + dots + '<span class="tt-slot-note">' + note.map(function (x) { return '<span>' + esc(x) + '</span>'; }).join(DOT) + '</span></span>' +
+          '<span class="tt-slot-go">' + (sel ? 'Selected' : word) + '</span></button>';
       }
 
       function clearTime() { state.time = null; state.joinId = null; state.model = null; Portal.actionBar.hide(); }
-      /** The card shows the guest fee for the holes chosen above (a group sets its own holes once joined). */
+      /** The row shows the guest fee for the holes chosen above (a group sets its own holes once joined). */
       function barHoles18() { return +state.holes === 9 ? 9 : 18; }
       function barHoles() { const s = slotNow(); return s && s.tt ? (s.tt.holes || 18) : state.holes; }
+      /** The pinned dark bar: the date, "4:24 PM · 18 holes" and Continue (above the tab bar on phones). */
       function showBar() {
         if (!state.time || !ui.$('.tt-card', view)) { Portal.actionBar.hide(); return; }
         Portal.actionBar.show({
-          summaryHTML: esc(shortDay(state.date)) + ' · ' + fmt.time(state.time) + '<small>' + esc(plural(state.players, 'player') + ' · ' + barHoles() + ' holes' + (state.joinId ? ' · joining a group' : '')) + '</small>',
+          summaryHTML: '<small class="tt-bar-d"><span>' + esc(longDate(state.date)) + '</span>' + (state.players > 1 ? DOT + '<span>' + esc(plural(state.players, 'player')) + '</span>' : '') + '</small>' +
+            '<span class="tt-bar-t"><span>' + esc(fmt.time(state.time)) + '</span>' + DOT + '<span>' + barHoles() + ' holes</span></span>',
           label: 'Continue', onClick: openBooking
         });
+        const bar = Portal.actionBar.el();
+        if (bar) { barGen++; bar.classList.add('tt-bar'); placeBar(); }
       }
 
       ui.on(view, 'click', '[data-act=pick-day]', function (e, b) { setDate(b.dataset.date); });
-      ui.on(view, 'click', '.tt-periods button', function (e, b) {
-        state.period = b.dataset.p;
-        const m = Portal.member() || me; const A = allSums(m);
-        renderTimes(ui.$('.tt-times', view), A.sums[state.date], A.days, A.sums);
-        const nb = ui.$('.tt-periods button[data-p="' + state.period + '"]', view); if (nb) nb.focus();
+      ui.on(view, 'click', '.tt-day', function (e, b) { if (b.dataset.date !== state.date) setDate(b.dataset.date); });
+      ui.on(view, 'keydown', '.tt-day', function (e, b) {
+        const all = ui.$$('.tt-day', view), i = all.indexOf(b);
+        const k = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: all.length - 1 }[e.key]; if (k == null || !all[k]) return;
+        e.preventDefault(); setDate(all[k].dataset.date);
+        const nb = ui.$('.tt-day.is-on', view); if (nb) nb.focus({ preventScroll: true });
       });
-      ui.on(view, 'click', '[data-act=show-all]', function () {
-        state.showAll = !state.showAll;
-        const m = Portal.member() || me; const A = allSums(m);
-        renderTimes(ui.$('.tt-times', view), A.sums[state.date], A.days, A.sums);
-        const nb = ui.$('[data-act=show-all]', view); if (nb) nb.focus();
+      ui.on(view, 'click', '[data-act=tt-cal]', function () { if (dp) dp.open(); });
+      ui.on(view, 'click', '.tt-pl-btn', function (e, b) {
+        const v = Math.max(1, Math.min(4, state.players + (+b.dataset.d))); if (b.disabled || v === state.players) return;
+        const dir = b.dataset.d;
+        state.players = v; Portal.prefs.set('tt.players', v);
+        if (state.time) { const s = slotNow(); if (!s || !fits(s)) clearTime(); }
+        paintPlayers(); refreshBook();
+        const nb = ui.$('.tt-pl-btn[data-d="' + dir + '"]', view), ob = ui.$('.tt-pl-btn:not([disabled])', view);
+        if (nb && !nb.disabled) nb.focus(); else if (ob) ob.focus();
       });
       ui.on(view, 'click', '.segmented[data-name=tt-holes] button', function (e, b) {
         state.holes = +b.dataset.value; Portal.prefs.set('tt.holes', state.holes);
         ui.$$('button', b.parentNode).forEach(function (x) { x.classList.toggle('active', x === b); x.setAttribute('aria-pressed', String(x === b)); });
         if (state.model && !state.joinId) state.model.holes = state.holes;
-        refreshBook(false);
+        refreshBook();
       });
-      ui.on(view, 'click', '.tt-chip', function (e, b) {
+      ui.on(view, 'click', '.tt-slot', function (e, b) {
         if (b.disabled) return;
         if (b.classList.contains('st-mine')) { tabs.activate('mine'); return; }
         if (b.classList.contains('is-wl')) { openWl({ time: b.dataset.time }); return; }
         const m = Portal.member() || me;
         const s = daySlots(state.date, m).find(function (x) { return x.time === b.dataset.time; });
-        if (!s || !fits(s)) { ui.toast('That tee time is no longer available', 'bad'); refreshBook(false); return; }
-        ui.$$('.tt-chip.selected', view).forEach(function (x) { x.classList.remove('selected'); x.setAttribute('aria-pressed', 'false'); });
-        b.classList.add('selected'); b.setAttribute('aria-pressed', 'true');
+        if (!s || !fits(s)) { ui.toast('That tee time is no longer available', 'bad'); refreshBook(); return; }
+        ui.$$('.tt-slot.selected', view).forEach(function (x) { x.classList.remove('selected'); x.setAttribute('aria-pressed', 'false'); ui.$('.tt-slot-go', x).textContent = x.dataset.go || ''; });
+        b.classList.add('selected'); b.setAttribute('aria-pressed', 'true'); ui.$('.tt-slot-go', b).textContent = 'Selected';
         if (state.notice) { state.notice = null; const n = ui.$('.hold-ended', view); if (n) n.remove(); }
         pick(s, m);
         showBar();
       });
-      ui.on(view, 'click', '[data-act=wl-join]', function (e, b) { openWl({ window: b.dataset.window }); });
+      ui.on(view, 'click', '[data-act=wl-join]', function (e, b) { openWl(b.dataset.window ? { window: b.dataset.window } : {}); });
       ui.on(view, 'click', '[data-act=wl-days]', function () { openWl({ date: null, days: state.wlDays || [] }); });
       /** Select a tee time on the Book tab: the member first, their usual cart choice. */
       function pick(s, m) {
@@ -1311,7 +1403,7 @@
           footer: '<button type="button" class="btn btn-primary tt-full" data-act="confirm">' + (state.joinId ? 'Join this tee time' : 'Confirm tee time') + '</button>',
           onClose: function () {
             if (H) { H.stopTimer(); H.release(); }   /* closing without booking frees the time at once */
-            if (booked) { clearTime(); state.period = null; const p = ui.$('.tt-card', view); if (p) refreshBook(true); }
+            if (booked) { clearTime(); refreshBook(); }
             else if (ended) { clearTime(); refreshBook(false); }
           }
         });
@@ -1451,16 +1543,17 @@
             : '<p class="tt-hint">Only the member who entered can change or withdraw this entry.</p>') : '') +
         '</div>';
       }
-      /** Book, a ballot day before its draw: one compact card (Enter the ballot, or the member's entry). */
+      /** Book, a ballot day before its draw: one compact line ("Weekend ballot · draw <when>") with Enter the ballot,
+          or the member's entry with View your entry. */
       function ballotBookHTML(d, lock) {
-        const m = Portal.member() || me, s = BL().schedule(d), e = BL().entryFor(m.id, d);
-        const sub = lock.ballot === 'before' ? 'Ballot opens on ' + longDate(s.opensOn) : lock.ballot === 'due' ? 'The draw is being made' : 'Draw on ' + drawWhen(d);
+        const m = Portal.member() || me, e = BL().entryFor(m.id, d);
+        const when = lock.ballot === 'open' ? '<span>draw</span> <span>' + esc(drawWhen(d)) + '</span>' : lock.ballot === 'due' ? '<span>The draw is being made</span>' : '';
+        const sub = e ? prefWords(e) : lock.ballot === 'before' ? lock.reason : '';
         const act = e ? '<button type="button" class="btn" data-act="go-ballot">View your entry</button>'
           : lock.ballot === 'open' && !ballotWhyNot(m) ? '<button type="button" class="btn btn-primary bl-enter" data-act="bl-enter" data-date="' + d + '">Enter the ballot</button>' : '';
         return '<div class="bl-book">' +
-          '<span class="bl-ic" aria-hidden="true">' + Club.icon('ball') + '</span>' +
-          '<div class="bl-book-t"><p class="bl-book-h">' + esc(e ? 'You’re in the ballot' : ballotKind(d)) + '</p>' +
-            '<p class="bl-book-s">' + (e ? '<span>' + esc(prefWords(e)) + '</span><span aria-hidden="true"> · </span>' : '') + '<span>' + esc(sub) + '</span></p></div>' +
+          '<div class="bl-book-t"><p class="bl-book-h"><span>' + esc(e ? 'You’re in the ballot' : ballotKind(d)) + '</span>' + (when ? DOT + when : '') + '</p>' +
+            (sub ? '<p class="bl-book-s"><span>' + esc(sub) + '</span></p>' : '') + '</div>' +
           (act ? '<div class="bl-book-acts">' + act + '</div>' : '') +
         '</div>';
       }
@@ -1479,40 +1572,57 @@
       }
       /** Entries waiting for their draw. */
       function openEntries(m) { return BL() ? BL().forMember(m.id).filter(function (e) { return e.date >= td && e.status === 'entered'; }) : []; }
-      function dateBlock(d) {
-        return '<span class="tt-row-date" aria-hidden="true"><span class="tt-rd-wk">' + esc(fmt.weekday(d)) + '</span><span class="tt-rd-n">' + fmt.toDate(d).getDate() + '</span></span>';
+      /** The date block of a row: a spaced-caps weekday over the day number. */
+      function dateBlock(d, off) {
+        return '<span class="tt-row-date' + (off ? ' is-off' : '') + '" aria-hidden="true"><span class="tt-rd-wk">' + esc(fmt.weekday(d)) + '</span><span class="tt-rd-n">' + fmt.toDate(d).getDate() + '</span></span>';
       }
-      /** A ballot day open for entry (or being drawn): the member's entry, or Enter the ballot. */
+      /** The small spaced-caps status word at the end of a row: Today, Ballot, New, No time. */
+      function word(text, cls) { return '<span class="tt-pill' + (cls ? ' ' + cls : '') + '">' + esc(text) + '</span>'; }
+      function withLine(names) { return names.length ? '<span>' + esc('with ' + niceList(names)) + '</span>' : ''; }
+      /** A ballot day open for entry (or being drawn): the member's entry, or Enter the ballot. One hairline row. */
       function dayCardHTML(x, m, can) {
         const d = x.date, e = BL().entryFor(m.id, d), due = x.phase === 'due';
-        return '<article class="bl-day">' +
-          '<div class="bl-day-top">' + dateBlock(d) + '<div class="bl-day-t"><h3 class="bl-day-h">' + esc(longDate(d)) + '</h3>' +
-            '<p class="bl-draw">' + Club.icon('clock') + '<span>' + (due ? esc('The draw is being made') : 'Draw on <span>' + esc(drawWhen(d)) + '</span>') + '</span></p></div></div>' +
-          (e ? entryCardHTML(e, m, { actions: !due }) : due || !can ? '' : '<button type="button" class="btn btn-primary tt-full bl-enter" data-act="bl-enter" data-date="' + d + '">Enter the ballot</button>') +
+        const draw = '<p class="tt-row-meta bl-draw">' + (due ? '<span>The draw is being made</span>' : 'Draw on <span>' + esc(drawWhen(d)) + '</span>') + '</p>';
+        if (!e) {
+          return '<article class="bl-day tt-trow">' + dateBlock(d) +
+            '<div class="tt-row-main"><h3 class="bl-day-h">' + esc(longDate(d)) + '</h3>' + draw + '</div>' +
+            (due || !can ? '' : '<button type="button" class="tt-act bl-enter" data-act="bl-enter" data-date="' + d + '">Enter the ballot</button>') +
+          '</article>';
+        }
+        const lead = e.memberId === m.id, any = +e.range >= 720, tp = timeParts(e.time);
+        const meta = [any ? '' : '<span>' + esc(windowWords(e)) + '</span>', '<span>' + e.holes + ' holes</span>', withLine(holdersOf(e, m))].filter(Boolean);
+        return '<article class="bl-day tt-trow is-entered">' + dateBlock(d) +
+          '<div class="tt-row-main bl-entry">' +
+            (any ? '<span class="tt-row-time bl-row-t">Any time</span>' : '<span class="tt-row-time">' + tp.t + '<small>' + (tp.ap || '') + '</small></span>') +
+            '<p class="tt-row-meta">' + meta.join(DOT) + '</p>' + draw +
+            (lead ? '' : '<p class="tt-row-meta"><span>Entered by</span> <span>' + esc(otherLabel({ memberId: e.memberId, type: 'member', name: Club.members.name(e.memberId) })) + '</span></p>') +
+            (due ? '' : lead
+              ? '<div class="bl-acts"><button type="button" class="tt-act" data-act="bl-edit" data-id="' + esc(e.id) + '">Change entry</button><button type="button" class="tt-act is-danger" data-act="bl-withdraw" data-id="' + esc(e.id) + '">Withdraw</button></div>'
+              : '<p class="tt-row-meta">Only the member who entered can change or withdraw this entry.</p>') +
+          '</div>' + word('Entered') +
         '</article>';
       }
       /** The next ballot day that is not open yet. */
       function soonCardHTML(x) {
-        return '<article class="bl-day is-soon"><div class="bl-day-top">' + dateBlock(x.date) + '<div class="bl-day-t"><h3 class="bl-day-h">' + esc(longDate(x.date)) + '</h3>' +
-          '<p class="bl-draw">' + Club.icon('calendar') + '<span>' + esc('Ballot opens on ' + longDate(x.schedule.opensOn)) + '</span></p></div></div></article>';
+        return '<article class="bl-day tt-trow is-soon">' + dateBlock(x.date, true) + '<div class="tt-row-main"><h3 class="bl-day-h">' + esc(longDate(x.date)) + '</h3>' +
+          '<p class="tt-row-meta bl-draw"><span>' + esc('Ballot opens on ' + longDate(x.schedule.opensOn)) + '</span></p></div></article>';
       }
       /** A drawn entry: the tee time it got, or No time. Opens the entry's sheet. */
       function resultRowHTML(e, m, isNew) {
-        const won = e.status === 'won';
+        const won = e.status === 'won', any = +e.range >= 720;
         const names = (e.players || []).filter(function (p) { return p.memberId !== m.id; }).map(function (p) { return p.type === 'guest' ? p.name : otherLabel(p); });
-        const tp = won ? timeParts(e.drawnTime) : null;
+        const tp = timeParts(won ? e.drawnTime : e.time);
         const pillA = won ? 'Tee time ' + fmt.time(e.drawnTime) : 'No time';
-        return '<button type="button" class="tt-row" data-act="bl-row" data-id="' + esc(e.id) + '" aria-label="' + esc(longDate(e.date) + ', ballot entry. ' + pillA + '. Open details') + '">' +
+        return '<button type="button" class="tt-row tt-trow ' + (won ? 'is-won' : 'is-missed') + '" data-act="bl-row" data-id="' + esc(e.id) + '" aria-label="' + esc(longDate(e.date) + ', ballot entry. ' + pillA + '. Open details') + '">' +
           dateBlock(e.date) +
-          '<span class="tt-row-main"><span class="tt-row-top">' +
-            (won ? '<span class="tt-row-time">' + tp.t + '<small>' + tp.ap + '</small></span><span class="tt-pill is-good">Tee time</span>'
-              : '<span class="tt-row-time bl-row-t">' + esc(+e.range >= 720 ? 'Any time' : fmt.time(e.time)) + '</span><span class="tt-pill is-bad">No time</span>') +
-            (isNew ? '<span class="tt-pill bl-pill-new">New</span>' : '') + '</span>' +
-            '<span class="tt-row-meta"><span>' + esc(e.holes + ' holes') + '</span><span aria-hidden="true"> · </span><span>' + esc(names.length ? 'With ' + niceList(names) : 'Just you') + '</span></span></span>' +
-          Club.icon('chevronRight', 'tt-go') + '</button>';
+          '<span class="tt-row-main">' +
+            (!won && any ? '<span class="tt-row-time bl-row-t">Any time</span>' : '<span class="tt-row-time' + (won ? '' : ' is-off') + '">' + tp.t + '<small>' + (tp.ap || '') + '</small></span>') +
+            '<span class="tt-row-meta">' + ['<span>' + e.holes + ' holes</span>', withLine(names)].filter(Boolean).join(DOT) + '</span></span>' +
+          '<span class="tt-row-k">' + (isNew ? word('New', 'bl-pill-new') : '') + (won ? '' : word('No time', 'is-bad')) + '</span>' +
+        '</button>';
       }
       function ballotHowHTML() {
-        return Portal.accordion({ id: 'bl-how', icon: 'info', title: 'How the ballot works', summary: 'Entries open 15 days ahead',
+        return Portal.accordion({ id: 'bl-how', title: 'How the ballot works',
           body: '<ul class="tt-bullets">' +
             '<li>Saturdays, Sundays and holidays are booked by ballot. Weekdays book as usual.</li>' +
             '<li>Enter from 15 days before until the draw at 12:00 PM, 13 days before. A Saturday is drawn on the Sunday, a Sunday on the Monday.</li>' +
@@ -1523,7 +1633,7 @@
       }
       function renderBallot(panel) {
         const m = Portal.member() || me;
-        if (!BL()) { panel.innerHTML = '<div class="panel tt-empty">' + ui.empty({ icon: 'ball', title: 'No ballot right now' }) + '</div>'; return; }
+        if (!BL()) { panel.innerHTML = '<div class="tt-empty"><p class="tt-state-t">No ballot right now</p></div>'; return; }
         const fresh = noticeList(m), isNew = {}; fresh.forEach(function (e) { isNew[e.id] = 1; });
         const why = ballotWhyNot(m);
         const cal = BL().upcoming(td, BL().OPEN_DAYS + 8);
@@ -1533,15 +1643,15 @@
           .sort(function (a, b) { return a.date.localeCompare(b.date); });
         panel.innerHTML = '<div class="bl-sec">' +
           '<p class="bl-sec-lead">Saturdays, Sundays and holidays are booked by ballot. Weekdays book as usual.</p>' +
-          (fresh.length ? '<p class="bl-new" role="status">' + Club.icon('bell') + '<span>' + esc(plural(fresh.length, 'new result')) + '</span></p>' : '') +
-          (results.length ? '<section class="bl-block" aria-labelledby="bl-res-h"><h2 class="tt-mine-h" id="bl-res-h">Results</h2>' +
-            '<div class="p-list tt-rounds">' + results.map(function (e) { return resultRowHTML(e, m, !!isNew[e.id]); }).join('') + '</div></section>' : '') +
+          (results.length ? '<section class="bl-block" aria-labelledby="bl-res-h"><div class="tt-mine-top"><h2 class="tt-mine-h" id="bl-res-h">Results</h2>' +
+            (fresh.length ? '<p class="bl-new" role="status"><span>' + esc(plural(fresh.length, 'new result')) + '</span></p>' : '') + '</div>' +
+            '<div class="tt-rounds">' + results.map(function (e) { return resultRowHTML(e, m, !!isNew[e.id]); }).join('') + '</div></section>' : '') +
           '<section class="bl-block" aria-labelledby="bl-open-h"><h2 class="tt-mine-h" id="bl-open-h">Open for entry</h2>' +
             (why ? '<p class="tt-hint tt-rule bl-standing" role="note">' + Club.icon('alert') + '<span>' + esc(why) + '</span></p>' : '') +
-            (open.length || next ? '<div class="bl-days">' + open.map(function (x) { return dayCardHTML(x, m, !why); }).join('') + (next ? soonCardHTML(next) : '') + '</div>'
+            (open.length || next ? '<div class="bl-days tt-rounds">' + open.map(function (x) { return dayCardHTML(x, m, !why); }).join('') + (next ? soonCardHTML(next) : '') + '</div>'
               : '<p class="tt-hint">No ballot is open right now.</p>') +
           '</section>' +
-          ballotHowHTML() +
+          '<div class="tt-more">' + ballotHowHTML() + '</div>' +
         '</div>';
         /* Seen once the section has shown them: the badge goes back to the count of open entries. */
         if (fresh.length) { fresh.forEach(function (e) { BL().seen(e.id, m.id); }); refreshTabCount(); }
@@ -1656,23 +1766,28 @@
         ui.on(sh.el, 'click', '[data-act=bl-see-tt]', function (ev, x) { sh.close(); if (x.dataset.tt && S.find('teeTimes', x.dataset.tt)) openDetail(x.dataset.tt); });
       });
 
-      /* ======================= My tee times ======================= */
+      /* ======================= My tee times =======================
+         Redesign (owner-approved, Nov 21): hairline rows (date block, time, one line of who and how, a status word),
+         then quiet rows: View all upcoming, Past rounds, Order or call the cart. */
       function renderMine(panel) {
         const m = Portal.member() || me;
         Portal.actionBar.hide();
         const up = upcoming(m), pa = past(m);
         const played = pa.filter(function (x) { return x.status === 'completed'; }).length;
-        panel.innerHTML =
-          '<section class="tt-mine-sec"><h2 class="tt-mine-h">Upcoming</h2>' + (Portal.cartLink ? Portal.cartLink(m) : '') +
-            (up.length ? '<div class="p-list tt-rounds">' + up.slice(0, 5).map(function (tt) { return rowHTML(tt, m); }).join('') +
-              (up.length > 5 ? '<button type="button" class="tt-all-row" data-act="all-up">View all upcoming (' + up.length + ')' + Club.icon('chevronRight', 'tt-go') + '</button>' : '') + '</div>' :
-              '<div class="panel tt-empty">' + ui.empty({ icon: 'flag', title: 'No tee times booked', text: canGolf(m) ? windowLine(m) : 'When a golfing member adds you to their tee time, it will show up here.', action: canGolf(m) && m.status !== 'suspended' ? ui.btn('Book a tee time', { kind: 'primary', action: 'go-book-empty' }) : '' }) + '</div>') +
+        const cart = Portal.cartLink ? Portal.cartLink(m) : '';
+        panel.innerHTML = '<div class="tt-mine">' +
+          '<section class="tt-mine-sec"><h2 class="tt-mine-h">Upcoming</h2>' +
+            (up.length ? '<div class="tt-rounds">' + up.slice(0, MINE_SHOWN).map(function (tt) { return rowHTML(tt, m); }).join('') + '</div>' :
+              '<div class="tt-empty"><p class="tt-state-t">No tee times booked</p><p class="tt-state-s">' + esc(canGolf(m) ? windowLine(m) : 'When a golfing member adds you to their tee time, it will show up here.') + '</p>' +
+                (canGolf(m) && m.status !== 'suspended' ? ui.btn('Book a tee time', { kind: 'primary', action: 'go-book-empty' }) : '') + '</div>') +
           '</section>' +
           (Portal.waitlist ? Portal.waitlist.listHTML(m) : '') +
-          '<section class="tt-mine-sec">' +
-            (pa.length ? Portal.accordion({ id: 'tt-past', icon: 'trophy', title: 'Past rounds', summary: plural(played, 'round') + ' played', body: pastBody(pa, m) })
+          '<div class="tt-mrows">' +
+            (up.length > MINE_SHOWN ? '<button type="button" class="tt-mrow tt-all-row" data-act="all-up"><span class="tt-mrow-l">View all upcoming</span><span class="tt-mrow-v">' + up.length + '</span></button>' : '') +
+            (pa.length ? Portal.accordion({ id: 'tt-past', title: 'Past rounds', summary: played + ' played', body: pastBody(pa, m) })
               : '<p class="tt-hint">Rounds you finish will be listed here.</p>') +
-          '</section>';
+            (cart || (Club.cart ? '<a class="tt-mrow" href="#/cart"><span class="tt-mrow-l">Order or call the cart</span><span class="tt-mrow-v">On the course</span></a>' : '')) +
+          '</div></div>';
       }
       function pastBody(pa, m) {
         return '<ul class="tt-past-list">' + pa.slice(0, pastShown).map(function (tt) { return pastHTML(tt, m); }).join('') + '</ul>' +
@@ -1683,17 +1798,19 @@
         return tt.source === 'ballot' || !!tt.ballotEntryId || (!!BL() && S.where('ballotEntries', function (e) { return e.status === 'won' && e.teeTimeId === tt.id; }).length > 0);
       }
       function rowHTML(tt, m) {
-        const dt = fmt.toDate(tt.date); const tp = timeParts(tt.time);
-        const mgr = managerOf(tt) === m.id;
+        const tp = timeParts(tt.time);
         const me1 = (tt.players || []).find(function (p) { return p.memberId === m.id; }) || {};
         const status = tt.status === 'on-course' ? 'On course' : tt.status === 'checked-in' ? 'Checked in' : 'Confirmed';
         const others = (tt.players || []).filter(function (p) { return p.memberId !== m.id; });
-        return '<button type="button" class="tt-row" data-act="detail" data-id="' + esc(tt.id) + '" aria-label="' + esc(longDate(tt.date) + ' at ' + fmt.time(tt.time) + ', ' + status + (fromBallot(tt) ? ', from the ballot' : '') + '. Open details') + '">' +
-          '<span class="tt-row-date" aria-hidden="true"><span class="tt-rd-wk">' + esc(fmt.weekday(tt.date)) + '</span><span class="tt-rd-n">' + dt.getDate() + '</span></span>' +
-          '<span class="tt-row-main"><span class="tt-row-top"><span class="tt-row-time">' + tp.t + '<small>' + tp.ap + '</small></span><span class="tt-pill">' + status + '</span>' +
-            (fromBallot(tt) ? '<span class="tt-pill bl-pill">Ballot</span>' : '') + '</span>' +   /* a tee time the weekend ballot gave */
-            '<span class="tt-row-meta">' + tt.holes + ' holes · ' + (me1.cart ? 'Cart' : 'Walking') + ' · ' + (others.length ? 'With ' + esc(niceList(others.map(function (p) { return otherLabel(p); }))) : 'Just you') + '</span></span>' +
-          Club.icon('chevronRight', 'tt-go') + '</button>';
+        const ballot = fromBallot(tt);
+        const now = tt.status === 'on-course' || tt.status === 'checked-in' ? status : tt.date === td ? 'Today' : '';
+        const meta = ['<span>' + tt.holes + ' holes</span>', me1.cart ? '<span>cart</span>' : '', withLine(others.map(function (p) { return otherLabel(p); }))].filter(Boolean);
+        return '<button type="button" class="tt-row tt-trow" data-act="detail" data-id="' + esc(tt.id) + '" aria-label="' + esc(longDate(tt.date) + ' at ' + fmt.time(tt.time) + ', ' + status + (ballot ? ', from the ballot' : '') + '. Open details') + '">' +
+          dateBlock(tt.date) +
+          '<span class="tt-row-main"><span class="tt-row-time">' + tp.t + '<small>' + (tp.ap || '') + '</small></span>' +
+            '<span class="tt-row-meta">' + meta.join(DOT) + '</span></span>' +
+          (now || ballot ? '<span class="tt-row-k">' + (now ? word(now) : '') + (ballot ? word('Ballot', 'bl-pill') : '') + '</span>' : '') +   /* a tee time the weekend ballot gave */
+        '</button>';
       }
       function pastHTML(tt, m) {
         const done = tt.status === 'completed';
@@ -1710,7 +1827,7 @@
       ui.on(view, 'click', '[data-act=go-book-empty], [data-action=go-book-empty]', function () { tabs.activate('book'); });
       ui.on(view, 'click', '[data-act=all-up]', function () {
         const m = Portal.member() || me;
-        const sh = Portal.openSheet({ title: 'Upcoming tee times', size: 'full', content: '<div class="p-list tt-rounds">' + upcoming(m).map(function (tt) { return rowHTML(tt, m); }).join('') + '</div>' });
+        const sh = Portal.openSheet({ title: 'Upcoming tee times', size: 'full', content: '<div class="tt-rounds">' + upcoming(m).map(function (tt) { return rowHTML(tt, m); }).join('') + '</div>' });
         ui.on(sh.body, 'click', '[data-act=detail]', function (e, b) { openDetail(b.dataset.id, sh); });
       });
       ui.on(view, 'click', '[data-act=detail]', function (e, b) { if (!b.closest('.ps-sheet')) openDetail(b.dataset.id); });
@@ -1895,7 +2012,14 @@
         });
       }
 
-      return function () { Portal.actionBar.hide(); if (dp) dp.close(); if (offHolds) offHolds(); if (Club.holds) { Club.holds.stopTimer(); Club.holds.release(); } };
+      return function () {
+        window.removeEventListener('resize', measure);
+        Portal.actionBar.hide();
+        /* The shared bar goes back to its usual look once it has slid away (unless Tee times showed it again). */
+        const bar = Portal.actionBar.el(), gen = barGen;
+        if (bar) setTimeout(function () { if (gen === barGen) { bar.classList.remove('tt-bar'); bar.style.removeProperty('--tt-tab-h'); bar.style.removeProperty('--tt-inset'); } }, 240);
+        if (dp) dp.close(); if (offHolds) offHolds(); if (Club.holds) { Club.holds.stopTimer(); Club.holds.release(); }
+      };
     }
   });
 })();

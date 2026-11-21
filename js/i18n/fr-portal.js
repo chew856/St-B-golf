@@ -3411,3 +3411,122 @@
     ]
   });
 })();
+
+/* ---------------- Redesign: card and dining (Nov 21) ----------------
+   The approved redesign of the Membership card (js/portal/card.js) and Dining (js/portal/dining.js). Most of their
+   words were already in the Dining, Dining diet filter and Membership card blocks above; these are the new ones.
+   Tier names, the member's name and number, the card code, dish markings (V, VG, GF) and prices are not translated. */
+(function () {
+  if (!window.Club || !Club.i18n || typeof Club.i18n.add !== 'function') return;
+  if (!(document.body ? document.body.classList.contains('portal') : /member\.html/.test(location.pathname))) return;
+  Club.i18n.add({
+    strings: {
+      'Since': 'Depuis',
+      'Card number': 'Numéro de carte',
+      'Show at the golf shop or the Gallery to charge to your account.': 'Présentez-la à la boutique de golf ou au Gallery pour porter vos achats à votre compte.'
+    },
+    patterns: [
+      /* The membership type on the card, "Birdie member": only for a real tier name, so no other line is caught */
+      [/^(.+) member$/, function (m) {
+        var tiers = Club.store && Club.store.all ? Club.store.all('membershipTiers') : [];
+        return tiers.some(function (t) { return t.name === m[1]; }) ? 'Membre ' + Club.i18n.t(m[1]) : null;
+      }],
+      [/^The (.+) serves the Gallery kitchen menu\.$/, function (m) {
+        var r = Club.i18n.t(m[1]);   /* la Terrasse, le Taphouse Bar */
+        return (/^(Terrasse|Salle)/.test(r) ? 'La ' : 'Le ') + r + ' sert le menu de la cuisine du Gallery.';
+      }]
+    ]
+  });
+})();
+
+/* ---------------- Redesign: nav and home (Nov 21) ----------------
+   The words-only tab bar and top bar, the More page (#/more, js/portal/app.js) and the new Home (js/portal/home.js):
+   the greeting line, the "Your next round" panel, This week, Account. Most single words (Home, Tee times, Dining,
+   Card, More, Golf, Lesson, Event, To do, Balance, Handicap, View all) were already in the blocks above. Names of
+   people and venues are not translated. */
+(function () {
+  if (!window.Club || !Club.i18n || typeof Club.i18n.add !== 'function') return;
+  if (!(document.body ? document.body.classList.contains('portal') : /member\.html/.test(location.pathname))) return;
+  var NB = ' ';
+  function pl(n, one, many) { return +n === 1 ? one : many; }
+  /* "A, B and C" -> "A, B et C" */
+  function et(s) { return String(s).replace(/ and ([^,]+)$/, ' et $1'); }
+  var WX = {
+    'and sunny': 'et ensoleillé', 'and partly cloudy': 'et partiellement nuageux', 'and overcast': 'et couvert', 'and cloudy': 'et nuageux',
+    'and breezy': 'et venteux', 'and foggy': 'et brumeux', 'with drizzle': 'avec bruine', 'with light rain': 'avec pluie légère',
+    'and raining': 'et pluvieux', 'and snowing': 'et neigeux', 'with thunderstorms': 'avec orages'
+  };
+  Club.i18n.add({
+    strings: {
+      /* More and the account menu */
+      'Profile and settings': 'Profil et réglages',
+      'Play: scorecard': 'Jouer' + NB + ': carte de score',
+      'Scores and handicap': 'Scores et handicap',
+      'Open now': 'Ouverte maintenant',
+      /* Home: the next round */
+      'Your next round': 'Votre prochaine partie',
+      'Your round today': 'Votre partie d’aujourd’hui',
+      '1st tee': '1er tertre',
+      '10th tee': '10e tertre',
+      'Start scorecard': 'Ouvrir la carte de score',
+      'Back to scorecard': 'Retour à la carte de score',
+      'No round booked': 'Aucune partie réservée',
+      /* Home: This week */
+      'Tee time': 'Départ',
+      'Ballot: tee time won': 'Tirage' + NB + ': départ obtenu',
+      'Ballot: no tee time': 'Tirage' + NB + ': aucun départ',
+      'See the result': 'Voir le résultat'
+    },
+    patterns: [
+      [/^Account menu, (.+)$/, 'Menu du compte, $1'],
+      /* "4° and sunny" on the greeting line */
+      [/^([−-]?\d+)° ((?:and|with) [a-z ]+)$/, function (m) { return WX[m[2]] ? m[1] + '° ' + WX[m[2]] : null; }],
+      /* "with George Wellesley, Alex Morgan and Natalie Hollis": names only */
+      [/^with ((?:[A-Z\d][^,]*?)(?:, [A-Z\d][^,]*?)*(?: and [A-Z\d].*)?)$/, function (m) { return 'avec ' + et(m[1]); }],
+      [/^Scorecard opens (.+)$/, 'La carte de score ouvre à $1'],
+      [/^Opens (\d.*)$/, 'Ouvre à $1'],
+      [/^On hole (\d+)$/, 'Au trou $1'],
+      [/^(\d+) new$/, function (m) { return m[1] + ' ' + pl(m[1], 'nouveauté', 'nouveautés'); }]
+    ]
+  });
+})();
+
+/* ---------------- Redesign: tee times (Nov 21) ----------------
+   The approved redesign of Tee times (js/portal/teetimes.js): the course status as one quiet line, the day strip, the
+   starter's sheet list (a note and one action word per time), the pinned bar, and the hairline rows of My tee times
+   and the Weekend ballot. Most words (Book, Join, Waitlist, Full, Your tee time, Morning, "12 open", "2 spots",
+   Upcoming, Past rounds, Ballot, New, No time, "with A and B") were already in the blocks above; these are the new ones. */
+(function () {
+  if (!window.Club || !Club.i18n || typeof Club.i18n.add !== 'function') return;
+  if (!(document.body ? document.body.classList.contains('portal') : /member\.html/.test(location.pathname))) return;
+  var NB = '\u00A0';
+  function pl(n, one, many) { return (+n === 1 || +n === 0 ? one : many); }
+  Club.i18n.add({
+    strings: {
+      /* the status line under the title: "Course open · first tee 6:30 AM · carts on the 90° rule" */
+      'carts allowed': 'voiturettes permises',
+      'carts on the 90° rule': 'voiturettes' + NB + ': règle du 90°',
+      'carts on paths only': 'voiturettes sur les sentiers seulement',
+      'no carts today': 'aucune voiturette aujourd’hui',
+      /* the list of times */
+      'Open tee time': 'Départ libre',
+      'Selected': 'Sélectionné',
+      'Nothing open on this day.': 'Rien de libre ce jour-là.',
+      'Today’s tee times have passed.': 'Les départs d’aujourd’hui sont passés.',
+      /* Book on a ballot day: "Weekend ballot · draw Sunday, Nov 22 at 12:00 PM" (the date and time are their own piece) */
+      'draw': 'tirage le',
+      /* My tee times */
+      'cart': 'voiturette',
+      'View all upcoming': 'Voir tous les départs à venir'
+    },
+    patterns: [
+      [/^first tee (.+)$/, 'premier départ $1'],
+      [/^carts: (.+)$/, function (m) { return 'voiturettes' + NB + ': ' + Club.i18n.t(m[1]); }],
+      /* the guest green fee in a time's note, "guest $66" (the amount is already in French form) */
+      [/^guest ((?:\$\s?)?\d[\d\s  .,]*(?:\s?\$)?)$/, 'invité $1'],
+      [/^Nothing open for (\d+) players? on this day\.$/, function (m) { return 'Rien de libre pour ' + m[1] + ' ' + pl(m[1], 'joueur', 'joueurs') + ' ce jour-là.'; }],
+      /* Past rounds: "23 played" */
+      [/^(\d+) played$/, function (m) { return m[1] + ' ' + pl(m[1], 'jouée', 'jouées'); }]
+    ]
+  });
+})();

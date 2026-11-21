@@ -1,4 +1,5 @@
-/* Portal: the members' side. Sign-in, page registry, router, header and mobile tab bar. */
+/* Portal: the members' side. Sign-in, page registry, router, the light top bar, the phone tab bar (words only) and
+   the More page (#/more). */
 (function () {
   const ui = Club.ui, esc = ui.esc;
   const SESSION = 'stboniface.portal.session';
@@ -34,33 +35,99 @@
     return { id: parts[0] || 'home', params: parts.slice(1) };
   }
   function shown(p) { try { return !(p.hidden && p.hidden()); } catch (e) { return true; } }
-  /* Menu order, most important first (owner, Nov 21): the header links, the tab bar (pages with tab: true, first 4)
-     and the account menu follow it. A page not listed here falls in after these, by its own `order`. */
-  const MENU = ['home', 'account', 'card', 'tee-times', 'play', 'dining', 'events', 'lessons', 'friends', 'scores', 'leaderboards',
-    'handbook', 'club', 'gifts', 'shop', 'takeout', 'cart', 'outings', 'feedback', 'profile'];
+  /* Navigation (owner-approved redesign, Nov 21): words only, no icons.
+     Phones: a tab bar of five words. Play left the bar: it is reached from Home's "Start scorecard" and from More.
+     Tablets and computers: the same words in a light top bar, in MENU order; what does not fit folds into More
+     (fitNav). My account and Profile are in the avatar menu. A page not listed falls in after these, by its `order`. */
+  const TABS = ['home', 'tee-times', 'dining', 'card'];
+  const MENU = ['home', 'tee-times', 'dining', 'events', 'lessons', 'card', 'friends', 'play', 'scores', 'leaderboards',
+    'handbook', 'club', 'gifts', 'shop', 'takeout', 'cart', 'outings', 'feedback', 'account', 'profile', 'more'];
+  const OFF_BAR = ['account', 'profile', 'more'];
+  const WORD = { card: 'Card' };   /* the short word for a page in the bars */
+  function word(p) { return WORD[p.id] || p.label; }
   function rank(p) { const i = MENU.indexOf(p.id); return i < 0 ? 1000 + p.order : i; }
   function sorted() { return pages.slice().sort(function (a, b) { return rank(a) - rank(b); }).filter(shown); }
-  /* The phone Menu sheet in labelled groups, Account first. Pages in no group go under Club. */
-  const SHEET = [
-    { label: 'Account', ids: ['account', 'card', 'profile'] },
-    { label: 'Golf', ids: ['tee-times', 'play', 'scores', 'lessons', 'leaderboards', 'outings'] },
-    { label: 'Food and drink', ids: ['dining', 'takeout', 'cart'] },
+  function menuKey() { return sorted().map(function (p) { return p.id; }).join(); }
+
+  /* ---------------- More (#/more): every page that is not a tab, as a plain grouped list ---------------- */
+  const GROUPS = [
+    { label: 'Account', ids: ['account', 'profile'] },
+    { label: 'Golf', ids: ['play', 'scores', 'lessons', 'leaderboards', 'outings'] },
+    { label: 'Food and drink', ids: ['takeout', 'cart'] },
     { label: 'Club', ids: ['events', 'friends', 'handbook', 'club', 'gifts', 'shop', 'feedback'] }
   ];
-  function sheetHTML(list) {
-    const placed = {}; SHEET.forEach(function (g) { g.ids.forEach(function (id) { placed[id] = 1; }); });
-    const link = function (p) { return '<a href="#/' + p.id + '">' + Club.icon(p.icon || 'flag') + '<span>' + esc(p.label) + '</span>' + Club.icon('chevronRight') + '</a>'; };
-    return SHEET.map(function (g, gi) {
-      const ps = g.ids.map(function (id) { return list.find(function (p) { return p.id === id; }); }).filter(Boolean)
-        .concat(gi === SHEET.length - 1 ? list.filter(function (p) { return !placed[p.id] && p.id !== 'home'; }) : []);
-      return ps.length ? '<div class="p-more-group"><p class="p-more-h">' + esc(g.label) + '</p>' + ps.map(link).join('') + '</div>' : '';
-    }).join('');
+  const MORE_LABEL = { profile: 'Profile and settings', play: 'Play: scorecard', scores: 'Scores and handicap' };
+  function toMin(t) { const p = String(t || '0:0').split(':'); return (+p[0]) * 60 + (+p[1] || 0); }
+  function ahead(date, time, mins) { const td = Club.date.today(), d = new Date(); return date > td || (date === td && toMin(time) + (mins || 0) >= d.getHours() * 60 + d.getMinutes()); }
+  function dayWord(date) {
+    const td = Club.date.today();
+    return date === td ? 'Today' : date === Club.date.addDays(td, 1) ? 'Tomorrow' : Club.fmt.toDate(date).toLocaleDateString('en-US', { weekday: 'short' });
   }
-  function menuKey() { return sorted().map(function (p) { return p.id; }).join(); }
+  /* The quiet value on the right of a More row, from real data ('' when there is nothing to say). */
+  function moreValue(p, m) {
+    const S = Club.store, fmt = Club.fmt, quiet = function (t) { return t ? '<span>' + esc(t) + '</span>' : ''; };
+    try {
+      if (p.id === 'account') {
+        const bal = Math.round((+m.balance || 0) * 100) / 100;
+        return (bal < 0 ? '<span>In credit</span> ' : '') + '<span class="p-more-fig">' + esc(fmt.money(Math.abs(bal))) + '</span>';
+      }
+      if (p.id === 'profile') return '<span data-i18n-skip>' + esc(m.firstName + ' ' + m.lastName) + '</span>';
+      if (p.id === 'play') {
+        const P = Club.play, who = P && P.viewerMember(m), tt = who && P.focusTeeTime(who); if (!tt) return '';
+        const r = P.sync.round(tt.id), w = P.windowFor(tt);
+        return quiet(r && r.status === 'playing' ? 'On hole ' + P.liveHole(tt) : r && r.status === 'finished' ? 'Round complete' : w.open ? 'Open now' : w.early ? 'Opens ' + fmt.time(w.opensAt) : '');
+      }
+      if (p.id === 'scores') return m.handicap != null && m.tierId !== 'tier_social' ? '<span class="p-more-fig">' + esc(fmt.handicap(m.handicap)) + '</span>' : '';
+      if (p.id === 'lessons') {
+        const l = S.all('lessons').filter(function (x) { return x && x.memberId === m.id && x.status === 'scheduled' && ahead(x.date, x.time, x.duration || 60); })
+          .sort(function (a, b) { return (a.date + a.time).localeCompare(b.date + b.time); })[0];
+        return l ? '<span>' + esc(dayWord(l.date)) + '</span>, <time>' + esc(fmt.time(l.time)) + '</time>' : '';
+      }
+      if (p.id === 'events') {
+        const e = S.all('events').filter(function (x) { return x && x.status === 'published' && x.date >= Club.date.today() && (x.registrations || []).some(function (r) { return r.memberId === m.id; }); })
+          .sort(function (a, b) { return (a.date + (a.start || '')).localeCompare(b.date + (b.start || '')); })[0];
+        return e ? '<span>' + esc(dayWord(e.date)) + '</span>, <span>' + esc(fmt.dateShort(e.date)) + '</span>' : '';
+      }
+      if (p.id === 'friends') return '<span data-more="friends"></span>';
+    } catch (err) { console.error(err); }
+    return '';
+  }
+  function moreHTML(m) {
+    const list = sorted().filter(function (p) { return TABS.indexOf(p.id) < 0 && p.id !== 'more'; });
+    const placed = {}; GROUPS.forEach(function (g) { g.ids.forEach(function (id) { placed[id] = 1; }); });
+    const row = function (p) {
+      return '<a class="p-more-row" href="#/' + p.id + '"><span class="p-more-l">' + esc(MORE_LABEL[p.id] || p.label) + (p.id === 'friends' ? '<i class="p-more-dot" hidden></i>' : '') + '</span>' +
+        '<span class="p-more-v">' + moreValue(p, m) + '</span></a>';
+    };
+    return '<div class="p-more"><h1 class="p-more-title">More</h1><nav class="p-more-rows" aria-label="More">' + GROUPS.map(function (g, gi) {
+      const ps = g.ids.map(function (id) { return list.find(function (p) { return p.id === id; }); }).filter(Boolean)
+        .concat(gi === GROUPS.length - 1 ? list.filter(function (p) { return !placed[p.id]; }) : []);
+      return ps.length ? '<section class="p-more-group"><h2 class="p-more-h">' + esc(g.label) + '</h2>' + ps.map(row).join('') + '</section>' : '';
+    }).join('') + '<section class="p-more-group p-more-end"><button type="button" class="p-more-row" data-action="signout"><span class="p-more-l">Sign out</span></button></section></nav></div>';
+  }
+  Portal.register({
+    id: 'more', label: 'More', order: 99, tab: false, nav: false,
+    render: function (view, params, member) {
+      const m = Portal.member() || member;
+      view.innerHTML = moreHTML(m);
+      /* New in Friends: the count the Friends page keeps on its header link (js/portal/friends.js, updateBadge). */
+      const nav = ui.$('.p-nav'), val = ui.$('[data-more=friends]', view), dot = ui.$('.p-more-dot', view);
+      if (!nav || !val) return;
+      const sync = function () {
+        const b = ui.$('a[data-page="friends"] .fr-badge', nav), n = b ? parseInt(b.textContent, 10) || 0 : 0;
+        const text = n ? n + ' new' : '';
+        if (val.dataset.n !== String(n)) { val.dataset.n = String(n); val.textContent = text; }
+        if (dot) dot.hidden = !n;
+      };
+      sync();
+      const mo = new MutationObserver(sync); mo.observe(nav, { childList: true, subtree: true, characterData: true });
+      return function () { mo.disconnect(); };
+    }
+  });
 
   /* ---------------- Sign in ---------------- */
   function signIn() {
-    document.body.className = 'portal signed-out';
+    document.body.className = 'portal signed-out'; delete document.body.dataset.page;
     const root = document.getElementById('portal');
     const demo = [Club.store.find('members', Club.store.DEMO_MEMBER)].filter(Boolean);
     root.innerHTML =
@@ -106,69 +173,83 @@
   }
 
   /* ---------------- Chrome ---------------- */
+  let wired = false;
+  function closeMenus() {
+    const me = ui.$('.p-me'), meBtn = ui.$('.p-me-btn'); if (me) me.classList.remove('open'); if (meBtn) meBtn.setAttribute('aria-expanded', 'false');
+    const pop = ui.$('.p-navmore-pop'), btn = ui.$('.p-navmore-btn'); if (pop) pop.hidden = true; if (btn) btn.setAttribute('aria-expanded', 'false');
+  }
   function chrome() {
     document.body.className = 'portal signed-in';
     const m = Portal.member();
     const root = document.getElementById('portal');
     const list = sorted();
-    const tabs = list.filter(function (p) { return p.tab; }).slice(0, 4);
+    const tabs = TABS.map(function (id) { return list.find(function (p) { return p.id === id; }); }).filter(Boolean);
+    const full = m.firstName + ' ' + m.lastName;
     root.innerHTML =
       '<header class="p-header"><div class="p-header-inner">' +
-        '<a class="p-brand" href="#/home" aria-label="' + esc(Club.info.name) + ' home">' + crest() + '<span><span class="p-brand-name">' + esc(Club.info.short) + '</span><span class="p-brand-sub">Members</span></span></a>' +
-        '<nav class="p-nav" aria-label="Main">' + list.filter(function (p) { return p.nav !== false && p.id !== 'account'; })   /* My account is in the name menu (owner, Nov 21) */.map(function (p, i) { return '<a href="#/' + p.id + '" data-page="' + p.id + '" data-ord="' + i + '">' + esc(p.label) + '</a>'; }).join('') +
-          '<div class="p-navmore" hidden><button type="button" class="p-navmore-btn" aria-haspopup="true" aria-expanded="false">More' + Club.icon('chevronDown') + '</button><div class="p-navmore-pop" hidden></div></div>' +
+        '<a class="p-brand" href="#/home" aria-label="' + esc(Club.info.name) + ' home">' + Club.logoImg('p-crest-img') + '<span class="p-brand-name">' + esc(Club.info.short) + '</span></a>' +
+        '<nav class="p-nav" aria-label="Main">' + list.filter(function (p) { return OFF_BAR.indexOf(p.id) < 0; }).map(function (p, i) { return '<a href="#/' + p.id + '" data-page="' + p.id + '" data-ord="' + i + '">' + esc(word(p)) + '</a>'; }).join('') +
+          '<div class="p-navmore" hidden><button type="button" class="p-navmore-btn" aria-haspopup="true" aria-expanded="false">More</button><div class="p-navmore-pop" hidden></div></div>' +
           '<span class="p-nav-ink"></span></nav>' +
         /* Language is a setting in Profile now (and on the sign-in page), not a header switch */
         '<div class="p-me">' +
-          '<button class="p-me-btn" type="button" aria-haspopup="true" aria-expanded="false">' + ui.avatar(m.firstName + ' ' + m.lastName, 'sm') + '<span class="p-me-name">' + esc(m.firstName) + '</span>' + Club.icon('chevronDown') + '</button>' +
+          '<button class="p-me-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="' + esc('Account menu, ' + full) + '">' + ui.avatar(full, 'sm') + '</button>' +
           '<div class="p-me-menu" role="menu">' +
-            '<div class="p-me-head"><div class="person-name">' + esc(m.firstName + ' ' + m.lastName) + '</div><div class="person-sub">Member #' + esc(m.memberNo) + '</div></div>' +
-            '<a href="#/account" role="menuitem">' + Club.icon('billing') + 'My account</a>' +
-            '<a href="#/card" role="menuitem">' + Club.icon('idcard') + 'Membership card</a>' +
-            '<a href="#/profile" role="menuitem">' + Club.icon('user') + 'My profile</a>' +
-            '<button type="button" data-action="signout" role="menuitem">' + Club.icon('logout') + 'Sign out</button>' +
+            '<div class="p-me-head"><div class="person-name">' + esc(full) + '</div><div class="person-sub">Member #' + esc(m.memberNo) + '</div></div>' +
+            '<a href="#/account" role="menuitem">My account</a>' +
+            '<a href="#/card" role="menuitem">Membership card</a>' +
+            '<a href="#/profile" role="menuitem">Profile and settings</a>' +
+            '<button type="button" data-action="signout" role="menuitem">Sign out</button>' +
           '</div>' +
         '</div>' +
       '</div></header>' +
       '<main id="p-view" class="p-main" tabindex="-1"></main>' +
-      '<footer class="p-footer"><div class="flourish">' + crest('p-crest sm') + '</div><p class="serif">' + esc(Club.info.name) + '</p>' +
-        '<p>' + esc(Club.info.address) + ' \u00b7 <a href="tel:' + esc(Club.info.phone.replace(/[^0-9]/g, '')) + '">' + esc(Club.info.phone) + '</a>' + (Club.info.email ? ' \u00b7 <a href="mailto:' + esc(Club.info.email) + '">' + esc(Club.info.email) + '</a>' : '') + '</p>' +
-        '<p class="p-social">' + (Club.info.social || []).map(function (l) { return '<a href="' + esc(l.url) + '" target="_blank" rel="noopener">' + esc(l.label) + '</a>'; }).join(' \u00b7 ') + '</p>' +
+      '<footer class="p-footer"><p class="serif">' + esc(Club.info.name) + '</p>' +
+        '<p>' + esc(Club.info.address) + ' · <a href="tel:' + esc(Club.info.phone.replace(/[^0-9]/g, '')) + '">' + esc(Club.info.phone) + '</a>' + (Club.info.email ? ' · <a href="mailto:' + esc(Club.info.email) + '">' + esc(Club.info.email) + '</a>' : '') + '</p>' +
+        '<p class="p-social">' + (Club.info.social || []).map(function (l) { return '<a href="' + esc(l.url) + '" target="_blank" rel="noopener">' + esc(l.label) + '</a>'; }).join(' · ') + '</p>' +
         (Club.info.landAcknowledgement ? '<p class="p-land">' + esc(Club.info.landAcknowledgement) + '</p>' : '') + '</footer>' +
-      '<nav class="p-tabbar" aria-label="Quick">' + tabs.map(function (p) { return '<a href="#/' + p.id + '" data-page="' + p.id + '">' + Club.icon(p.icon || 'flag') + '<span>' + esc(p.short || p.label) + '</span></a>'; }).join('') +
-        '<button type="button" class="p-more-btn">' + Club.icon('menu') + '<span>More</span></button></nav>';
+      '<nav class="p-tabbar" aria-label="Quick">' + tabs.map(function (p) { return '<a href="#/' + p.id + '" data-page="' + p.id + '"><span>' + esc(word(p)) + '</span></a>'; }).join('') +
+        '<a href="#/more" data-page="more" class="p-more-btn"><span>More</span></a></nav>';
 
-    const me = ui.$('.p-me', root), meBtn = ui.$('.p-me-btn', root);
-    meBtn.addEventListener('click', function () { const o = me.classList.toggle('open'); meBtn.setAttribute('aria-expanded', o); });
-    document.addEventListener('mousedown', function (e) { if (!e.target.closest('.p-me')) { me.classList.remove('open'); meBtn.setAttribute('aria-expanded', 'false'); } });
-    ui.on(root, 'click', '.p-me-menu a', function () { me.classList.remove('open'); });
-    ui.on(root, 'click', '[data-action=signout]', function () { ui.confirm({ title: 'Sign out?', text: 'You can sign back in any time with your member number.', confirmLabel: 'Sign out' }).then(function (ok) { if (ok) Portal.signOut(); }); });
-    ui.$('.p-more-btn', root).addEventListener('click', function () {
-      const d = ui.drawer({ title: 'Menu', eyebrow: Club.info.short, body: '<div class="p-more-list">' + sheetHTML(list) + '<div class="p-more-group"><button type="button" data-action="signout">' + Club.icon('logout') + '<span>Sign out</span></button></div></div>' });
-      ui.on(d.body, 'click', 'a', function () { d.close(); });
-      ui.on(d.body, 'click', '[data-action=signout]', function () { d.close(); Portal.signOut(); });
-    });
-    const navMore = ui.$('.p-navmore', root), navMoreBtn = ui.$('.p-navmore-btn', root), navMorePop = ui.$('.p-navmore-pop', root);
-    navMoreBtn.addEventListener('click', function () { const o = navMorePop.hidden; navMorePop.hidden = !o; navMoreBtn.setAttribute('aria-expanded', o); });
-    document.addEventListener('mousedown', function (e) { if (!navMore.contains(e.target)) { navMorePop.hidden = true; navMoreBtn.setAttribute('aria-expanded', 'false'); } });
-    ui.on(navMorePop, 'click', 'a', function () { navMorePop.hidden = true; navMoreBtn.setAttribute('aria-expanded', 'false'); });
-    /* Escape at document level: Safari does not focus a button on click, so the key never reaches the menu itself. */
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !navMorePop.hidden) { navMorePop.hidden = true; navMoreBtn.setAttribute('aria-expanded', 'false'); navMoreBtn.focus(); } });
-    let fitT = null;
-    const refit = function () { clearTimeout(fitT); fitT = setTimeout(function () { fitNav(); markActive(); }, 60); };
-    window.addEventListener('resize', refit);
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(refit);
-    /* Links change width after the header is drawn (the Friends badge arrives later), which moved the underline off its
+    /* The handlers below look the elements up when they run, so they are bound once and survive a redraw of the bars. */
+    if (!wired) {
+      wired = true;
+      ui.on(root, 'click', '.p-me-btn', function (e, b) { const me = b.closest('.p-me'), o = me.classList.toggle('open'); b.setAttribute('aria-expanded', o); });
+      ui.on(root, 'click', '.p-me-menu a', closeMenus);
+      ui.on(root, 'click', '[data-action=signout]', function () {
+        closeMenus();
+        ui.confirm({ title: 'Sign out?', text: 'You can sign back in any time with your member number.', confirmLabel: 'Sign out' }).then(function (ok) { if (ok) Portal.signOut(); });
+      });
+      ui.on(root, 'click', '.p-navmore-btn', function (e, b) { const pop = ui.$('.p-navmore-pop'), o = pop.hidden; pop.hidden = !o; b.setAttribute('aria-expanded', o); });
+      ui.on(root, 'click', '.p-navmore-pop a', closeMenus);
+      document.addEventListener('mousedown', function (e) {
+        const me = ui.$('.p-me'), meBtn = ui.$('.p-me-btn'), navMore = ui.$('.p-navmore');
+        if (me && !e.target.closest('.p-me')) { me.classList.remove('open'); meBtn.setAttribute('aria-expanded', 'false'); }
+        if (navMore && !navMore.contains(e.target)) { ui.$('.p-navmore-pop', navMore).hidden = true; ui.$('.p-navmore-btn', navMore).setAttribute('aria-expanded', 'false'); }
+      });
+      /* Escape at document level: Safari does not focus a button on click, so the key never reaches the menu itself. */
+      document.addEventListener('keydown', function (e) {
+        if (e.key !== 'Escape') return;
+        const pop = ui.$('.p-navmore-pop'), me = ui.$('.p-me');
+        if (pop && !pop.hidden) { closeMenus(); ui.$('.p-navmore-btn').focus(); }
+        else if (me && me.classList.contains('open')) { closeMenus(); ui.$('.p-me-btn').focus(); }
+      });
+      window.addEventListener('resize', refit);
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(refit);
+    }
+    /* Links change width after the header is drawn (the Friends mark arrives later), which moved the underline off its
        link and could squeeze the brand: re-fit on any change inside the nav, ignoring fitNav's own moves. */
     new MutationObserver(function () { if (!fitting) refit(); }).observe(ui.$('.p-nav', root), { childList: true, subtree: true, characterData: true });
     if (Club.i18n) Club.i18n.translate(ui.$('.p-header', root));   /* French labels are longer: measure those */
     fitNav();
   }
+  let fitT = null;
+  function refit() { clearTimeout(fitT); fitT = setTimeout(function () { fitNav(); markActive(); }, 60); }
 
   let fitting = false;
 
   /* Priority menu: when the header is too narrow for every page, pages move into More from the end of the list
-     (MENU order), so Home, Tee times and Play stay in the bar longest. My account is not in the bar: it is in the name menu. */
+     (MENU order), so Home, Tee times and Dining stay in the bar longest. My account and Profile are in the avatar menu. */
   function fitNav() {
     const nav = ui.$('.p-nav'), inner = ui.$('.p-header-inner'), more = nav && ui.$('.p-navmore', nav);
     if (!nav || !more || getComputedStyle(nav).display === 'none') return;
@@ -188,7 +269,12 @@
 
   function markActive() {
     const id = current && current.id;
-    ui.$$('.p-nav a, .p-tabbar a').forEach(function (a) { const on = a.dataset.page === id; a.classList.toggle('active', on); if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    /* A page reached through More keeps More lit in the tab bar. */
+    const inMore = !!id && TABS.indexOf(id) < 0;
+    ui.$$('.p-nav a, .p-tabbar a').forEach(function (a) {
+      const here = a.dataset.page === id, on = here || (inMore && a.dataset.page === 'more' && !!a.closest('.p-tabbar'));
+      a.classList.toggle('active', on); if (here) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    });
     const navMore = ui.$('.p-navmore'); if (navMore) navMore.classList.toggle('has-active', !!ui.$('.p-navmore-pop a.active'));
     const ink = ui.$('.p-nav-ink'), act = ui.$('.p-nav > a.active') || (navMore && !navMore.hidden && navMore.classList.contains('has-active') ? navMore : null);
     if (ink && act) { ink.style.opacity = 1; ink.style.width = act.offsetWidth + 'px'; ink.style.transform = 'translateX(' + act.offsetLeft + 'px)'; }
@@ -210,6 +296,7 @@
     cleanup = null;
     const same = current && current.id === p.id;
     current = p;
+    document.body.dataset.page = p.id;   /* body[data-page]: a hook for page-specific chrome in the stylesheets */
     const host = document.getElementById('p-view');
     host.innerHTML = '';
     const view = document.createElement('div');

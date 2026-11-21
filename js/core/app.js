@@ -138,7 +138,7 @@
       /* A membership card (scanner or typed): "STB-M-1003" or the bare number puts that member first, so Enter opens them. */
       const card = Club.members.fromCode(q);
       let out = Club.store.all('members').filter(function (m) { return card ? m.id === card.id : (m.firstName + ' ' + m.lastName + ' ' + m.memberNo + ' ' + m.email).toLowerCase().indexOf(q) >= 0; }).slice(0, 6)
-        .map(function (m) { return { label: m.firstName + ' ' + m.lastName, sub: 'Member #' + m.memberNo + (card ? ' · Membership card' : ''), href: 'members/' + m.id, avatar: true }; });
+        .map(function (m) { return { label: m.firstName + ' ' + m.lastName, sub: 'Member #' + m.memberNo + (card && /^stb/i.test(q) ? ' · Membership card' : ''), href: 'members/' + m.id, avatar: true }; });
       if (card && /^stb/i.test(q)) return out;
       modules.forEach(function (mod) { if (mod.search) { try { out = out.concat((mod.search(q) || []).slice(0, 4)); } catch (e) { console.error(e); } } });
       modules.forEach(function (mod) { if (mod.label.toLowerCase().indexOf(q) >= 0) out.push({ label: mod.label, sub: 'Go to page', href: mod.id, icon: mod.icon }); });

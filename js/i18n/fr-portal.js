@@ -3378,3 +3378,33 @@
     ]
   });
 })();
+
+/* ---------------- Membership card (Nov 21) ----------------
+   The digital membership card page (#/card, js/portal/card.js) and its entry points: Home quick actions, My account,
+   the name menu and the phone Menu sheet. The member's name, number and card code are not translated. */
+(function () {
+  if (!window.Club || !Club.i18n || typeof Club.i18n.add !== 'function') return;
+  if (!(document.body ? document.body.classList.contains('portal') : /member\.html/.test(location.pathname))) return;
+  var NB = ' ';
+  Club.i18n.add({
+    strings: {
+      'Membership card': 'Carte de membre',
+      'Card': 'Carte',
+      'Member': 'Membre',
+      'Member number': 'Numéro de membre',
+      'Membership': 'Adhésion',
+      'Member since': 'Membre depuis',
+      'Show this at the golf shop or the Gallery.': 'Présentez-la à la boutique de golf ou au Gallery.',
+      'Charging paused:': 'Achats au compte suspendus' + NB + ':',
+      'Make a payment': 'Faire un paiement',
+      'Your membership is suspended.': 'Votre adhésion est suspendue.',
+      'This membership has been resigned.': 'Cette adhésion a pris fin par démission.',
+      'Please call the club office.': 'Veuillez appeler le bureau du club.'
+    },
+    patterns: [
+      [/^(\d{4}) season$/, 'Saison $1'],
+      [/^(.+) is unpaid (\d+) days after the statement date\.$/, '$1 demeure impayé $2 jours après la date du relevé.'],
+      [/^QR code (STB-M-\d+)$/, 'Code QR $1']
+    ]
+  });
+})();

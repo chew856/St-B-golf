@@ -345,6 +345,20 @@ body.portal .p-cols > * { min-width: 0; }
   body.portal .ps-grab { display: none; }
   body.portal .ps-head { padding-top: 14px; }
 }
+/* Tablets, including an iPad in split view (owner, Nov 21): the top menu instead of the phone tab bar, from 768px.
+   Things that sat above the tab bar drop to the bottom edge. Links that do not fit fold into More (fitNav, app.js). */
+@media (min-width: 768px) {
+  body.portal .p-nav { display: flex; margin: 0 auto 0 16px; gap: 20px; align-self: stretch; min-width: 0; }
+  body.portal .p-nav a { display: inline-flex; align-items: center; font-size: 0.9375rem; white-space: nowrap; }
+  body.portal .p-tabbar { display: none !important; }
+  body.portal.signed-in { padding-bottom: 0; }
+  body.portal .pk-bar { bottom: 0; border-radius: 16px 16px 0 0; }
+  body.portal .toasts { bottom: 24px; }
+  body.portal.has-bar .toasts { bottom: 96px; }
+  body.portal .lv-navb { bottom: 0; }
+  body.portal .co-hcbar { bottom: 24px; }
+  body.portal .fr-composer { bottom: 0; }
+}
 @media (min-width: 1024px) {
   body.portal .p-page { max-width: 1200px; padding: 32px 32px 56px; }
   body.portal .p-header-inner, body.portal .p-footer { max-width: 1200px; }

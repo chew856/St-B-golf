@@ -21,6 +21,8 @@
     '</section>';
   }
   /** The dress code and hours from the handbook, with the soft spikes and check-in rules, in one dialog. */
+  /* Also opened from the phone menu (site.js) */
+  Pub.openKnow = function () { openKnow(); };
   function openKnow() {
     const H = Club.handbook;
     const sec = H ? H.get('dress-code') : null, v = sec ? H.view(sec) : null, skip = H && H.french() ? ' data-i18n-skip' : '';

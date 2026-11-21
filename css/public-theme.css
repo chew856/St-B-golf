@@ -479,3 +479,7 @@ body.public .pub-bk-dlg { margin-top: 0; }
 @media (max-width: 480px) {
   body.public .pub-quick-a svg { display: none; }
 }
+
+/* Phones and small tablets (owner, Nov 21): the home page's link row moves into the menu (the three lines, top right),
+   like an app. The menu button shows below 880px (css/public.css), so the row hides there. */
+@media (max-width: 879px) { body.public .pub-quick { display: none; } }

@@ -431,6 +431,8 @@
           .map(function (x) { return '<a href="#/' + esc(x.id) + '">' + Club.icon(x.nav.icon || 'chevronRight') + '<span>' + esc(x.nav.label || x.label) + '</span>' + Club.icon('chevronRight') + '</a>'; }).join('') +
         (p ? '<a href="#/bookings">' + Club.icon('calendar') + '<span>My bookings</span>' + Club.icon('chevronRight') + '</a>' + (Pub.cartNav && Pub.cartNav(p) ? '<a href="#/cart">' + Club.icon('cart') + '<span>Order to the course</span>' + Club.icon('chevronRight') + '</a>' : '') + '<a href="#/account">' + Club.icon('user') + '<span>My account</span>' + Club.icon('chevronRight') + '</a>'
           : '<a href="#/signin">' + Club.icon('key') + '<span>Sign in</span>' + Club.icon('chevronRight') + '</a><a href="#/signup">' + Club.icon('plus') + '<span>Create an account</span>' + Club.icon('chevronRight') + '</a>') +
+        (p ? '<a href="#/account">' + Club.icon('user') + '<span>My account</span>' + Club.icon('chevronRight') + '</a>' : '') +
+        (Pub.openKnow ? '<button type="button" data-act="menu-know">' + Club.icon('info') + '<span>Dress code and hours</span>' + Club.icon('chevronRight') + '</button>' : '') +
         '<a href="member.html">' + Club.icon('crest') + '<span>Members sign in here</span>' + Club.icon('chevronRight') + '</a>' +
         '<a href="' + phoneHref() + '">' + Club.icon('phone') + '<span>Call the golf shop, ' + esc(Club.info.phone) + '</span>' + Club.icon('chevronRight') + '</a>' +
         (p ? '<button type="button" data-act="menu-signout">' + Club.icon('logout') + '<span>Sign out</span></button>' : '') +
@@ -438,6 +440,7 @@
     d.el.classList.add('pub-drawer');
     ui.on(d.body, 'click', 'a', function () { d.close(); });
     ui.on(d.body, 'click', '[data-act=menu-signout]', function () { d.close(); signOut(); });
+    ui.on(d.body, 'click', '[data-act=menu-know]', function () { d.close(); Pub.openKnow(); });
   }
   function signIn(id, quiet) {
     setSession(id); paintHeader();

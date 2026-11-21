@@ -330,7 +330,7 @@
   }
 
   Pub.register({
-    id: 'join', label: 'Become a member', title: 'Become a member', nav: { label: 'Become a member', order: 10 },
+    id: 'join', label: 'Become a member', title: 'Become a member', nav: { label: 'Become a member', order: 10, icon: 'members' },
     render: function (view, params, p) {
       view.classList.add('join-page');
       if (params[0] === 'apply') { window.scrollTo({ top: 0 }); return apply(view, params[1] || '', p); }

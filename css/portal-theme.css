@@ -51,10 +51,10 @@ body.portal {
 
   /* ---------- Membership Handbook page (js/portal/handbook.js): the printed handbook's look ---------- */
   --font-handbook: "Khand", "Arial Narrow", sans-serif;   /* the handbook's tall condensed headings */
-  --hb-ink: #2C3E2F;        /* the handbook's dark green headings */
-  --hb-olive: #879268;      /* St.B olive (the oak in the logo): the cover bands and heading rules */
-  --hb-olive-ink: #5C6743;  /* olive for small text on light */
-  --hb-cream: #F3F1E4;      /* cream wash: the section being read */
+  --hb-ink: var(--forest-800);    /* headings: the site's green (owner, Nov 21; was the printed handbook's #2C3E2F) */
+  --hb-olive: var(--forest-800);  /* cover bands, heading rules, contents marker: the site's green (owner, Nov 21; was olive #879268) */
+  --hb-olive-ink: var(--forest-500);   /* small group labels on light */
+  --hb-cream: var(--sage-100);    /* the section being read */
   --hb-paper: #FFFFFF;      /* the page itself, and text on the olive band */
 
   /* ---------- Aliases kept for page stylesheets from the previous pass ---------- */

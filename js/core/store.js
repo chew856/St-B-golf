@@ -708,7 +708,7 @@
     { id: 'stf_25', firstName: 'Harriet', lastName: 'Vance', role: 'Front Desk', department: 'Administration', email: 'hvance@stboniface.example', phone: '(204) 233-2497', hourlyRate: 20, status: 'active' }
   ]);
 
-  /* From the 2025 St. Boniface scorecard: men's par and handicap, Black / Green / Silver tees. */
+  /* From the 2027 St. Boniface scorecard: men's par and handicap, Black / Green / Silver tees. */
   store.seed('holes', function () {
     const pars = [4, 4, 4, 4, 3, 4, 4, 4, 5, 4, 5, 3, 5, 3, 4, 4, 5, 3];
     const hcp = [8, 4, 10, 12, 14, 18, 16, 2, 6, 3, 17, 5, 7, 9, 13, 11, 1, 15];

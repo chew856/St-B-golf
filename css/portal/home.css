@@ -3,7 +3,7 @@
    ========================================================================== */
 
 /* ---------------- Greeting hero ---------------- */
-.hm-hero { position: relative; overflow: hidden; background: var(--forest-950); color: var(--on-dark); border-radius: 16px; padding: 14px 18px; margin-bottom: 14px; }
+.hm-hero { position: relative; overflow: hidden; background: var(--forest-800); color: var(--on-dark); border-radius: var(--radius-card); padding: 14px 18px; margin-bottom: 14px; }
 .hm-mark { position: absolute; right: -18px; bottom: -22px; width: 150px; opacity: 0.06; pointer-events: none; color: var(--on-dark); }
 .hm-mark .stb-logo, .hm-mark svg, .hm-mark img { display: block; width: 100%; height: auto; color: var(--on-dark); }
 .hm-hero-date { position: relative; margin: 0 0 4px; font-size: var(--fs-label); font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--on-dark-2); }
@@ -35,7 +35,7 @@ body.portal .hm-hello { position: relative; margin: 0; font-family: var(--font-t
 .hm-groups { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .hm-group { min-width: 0; }
 .hm-g-head { display: flex; align-items: center; gap: 8px; min-height: 32px; margin: 0 0 6px 2px; }
-.hm-g-ic { width: 24px; height: 24px; flex: none; border-radius: 7px; background: var(--sage-100); color: var(--forest-800); display: inline-flex; align-items: center; justify-content: center; }
+.hm-g-ic { width: 24px; height: 24px; flex: none; border-radius: var(--radius-ctl); background: var(--sage-100); color: var(--forest-800); display: inline-flex; align-items: center; justify-content: center; }
 .hm-g-ic .icon { width: 15px; height: 15px; }
 body.portal .hm-g-t { margin: 0; flex: 1 1 auto; min-width: 0; font-family: var(--sans); font-size: var(--fs-label); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-2); line-height: 1.3; }
 body.portal .hm-g-more { min-height: 32px; font-size: var(--fs-meta); margin: -6px 0; padding: 6px 0; position: relative; }
@@ -44,7 +44,7 @@ body.portal .p-list.hm-list > li, body.portal .p-list.hm-nlist > li { padding: 0
 .hm-row { display: flex; align-items: center; gap: 14px; min-height: 64px; padding: 10px 12px 10px 12px; color: var(--text); text-decoration: none; }
 @media (hover: hover) { .hm-row:hover, .hm-n:hover { background: var(--sage-50); text-decoration: none; } }
 /* Date block: weekday over day number; today is filled */
-.hm-date { flex: none; width: 44px; height: 44px; border-radius: 10px; background: var(--sage-50); border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05; }
+.hm-date { flex: none; width: 44px; height: 44px; border-radius: var(--radius-card); background: var(--sage-50); border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05; }
 .hm-date-w { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--forest-500); }
 .hm-date-n { font-size: var(--fs-card); font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums lining-nums; }
 .hm-date.is-today { background: var(--forest-800); border-color: var(--forest-800); }
@@ -103,7 +103,7 @@ body.portal .hm-fr-head h2.eyebrow { margin: 0 0 0 4px; font-family: var(--sans)
   body.portal .hm-hello { font-size: 2rem; }
   .hm-mark { width: 14rem; right: -1rem; bottom: -1.5rem; }
   /* Quick actions sit beside the greeting as a quiet 2x2 panel */
-  .hm-actions { align-self: stretch; max-width: none; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: center; gap: 1rem 0.5rem; padding: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-card); }
+  .hm-actions { align-self: stretch; max-width: none; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: center; gap: 1rem 0.5rem; padding: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
   .hm-action-ic { width: 3rem; height: 3rem; }
   .hm-action-l { font-size: var(--fs-meta); }
   .hm-row { padding: 0.625rem 1rem; }

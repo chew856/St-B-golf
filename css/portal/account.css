@@ -162,7 +162,7 @@ body.portal .pa-st-pay { margin: -6px 16px 6px 64px; }
 .pa-secure { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-meta); color: var(--forest-500); }
 .pa-secure svg { width: 18px; height: 18px; }
 .pa-newcard .cc { margin-bottom: 12px; }
-.pa-mark { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 32px; flex: none; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); }
+.pa-mark { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 32px; flex: none; border: 1px solid var(--border); border-radius: var(--radius-ctl); background: var(--surface); color: var(--text); }
 .pa-mark .cc-mark { max-width: 40px; }
 .pa-mark .cc-mark-generic { width: 20px; height: 20px; color: var(--text-3); }
 .pa-rv-method { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }

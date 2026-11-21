@@ -1,47 +1,66 @@
 /* ==========================================================================
-   Members' portal theme v2 (member.html only). Loaded last.
+   Members' portal theme v3 (member.html only). Loaded last.
 
-   Refined, premium and easy to use: a quiet private-club look on a soft sage
-   "mist", framed in deep forest green. Everything is scoped to body.portal, so
-   the staff system and the public site are unaffected. Old token names are
-   remapped onto this palette, so existing components follow it.
+   "Inter with a touch of serif" (owner-approved redesign, Nov 21; REDESIGN-PLAN.md step 1): the club's deep greens on
+   a soft Mist page, Paper for raised surfaces, hairline Rules instead of shadows, small spaced capitals in Oak, and
+   one aged-brass accent for "you are here" marks only (never small text). Bodoni Moda (.sig) for signature moments
+   only: big times, dates, the member's name, venue names. Everything is scoped to body.portal, so the staff system
+   and the public site are unaffected. Old token names are remapped onto this palette, so existing components follow.
 
-   Contrast (WCAG): --text on --surface 15.6:1, --text-2 on --surface 6.9:1,
-   --text-3 on --surface 5.3:1 (on --bg 4.9:1, on --sage-100 4.55:1), --on-dark on --forest-950 16.2:1,
-   --on-dark-2 on --forest-950 9.0:1, --forest-500 on --surface 5.6:1,
-   --danger on --surface 7.4:1.
+   Contrast (WCAG 2.1, computed): --text (Ink) on Mist 14.1:1, on Paper 15.4:1; --text-2 on Mist 6.5:1, on Paper
+   7.1:1, on --sage-100 6.0:1; --text-3 on Mist 5.2:1, on Paper 5.7:1, on --sage-100 4.8:1; --label (dark oak) on
+   Mist 5.1:1, on Paper 5.6:1, on --sage-100 4.7:1; --forest-500 on Mist 5.8:1, on --sage-100 5.3:1; --danger on
+   Mist 6.3:1; --warn on Mist 5.9:1; --on-dark on Fairway 12.1:1, on Ink 15.5:1; --on-dark-2 on Fairway 7.1:1, on Ink 8.5:1.
+   Oak (#7E8558) is 3.3:1 on Mist, so it is kept for marks and large type; small labels use --label (#5F6542).
+   Brass is 2.8:1 on Mist and 5.0:1 on Ink: a mark colour (underlines, selected edges), never text.
    ========================================================================== */
 
 body.portal {
-  /* ---------- Brand ---------- */
-  --forest-950: #101E17;
-  --forest-900: #14261D;
-  --forest-800: #1C3326;
-  --forest-700: #27442F;
-  --forest-500: #4E6B57;
-  --sage-200: #D5DED5;
-  --sage-100: #E6ECE5;
-  --sage-50:  #EFF3EE;
+  /* ---------- The redesign palette (Nov 21) ---------- */
+  --c-ink: #12201A;       /* Ink: text, the deepest green (header, tab bar) */
+  --c-fairway: #1D3528;   /* Fairway: dark panels, primary buttons, the membership card */
+  --c-mist: #E9ECE4;      /* Mist: the page */
+  --c-paper: #F4F5F0;     /* Paper: raised surfaces (panels, cards, sheets) */
+  --c-rule: #C9CEC1;      /* Rule: hairlines */
+  --c-oak: #7E8558;       /* Oak: marks and large type only (3.3:1 on Mist) */
+  --c-oak-ink: #5F6542;   /* darker oak: 11 to 12px spaced capital labels (5.1:1 on Mist) */
+  --c-brass: #A8864E;     /* Brass: the single accent, "you are here" marks only, never text */
+  --accent: var(--c-brass);
+  --label: var(--c-oak-ink);
+
+  /* ---------- Brand (older names, mapped onto the palette) ---------- */
+  --forest-950: var(--c-ink);
+  --forest-900: #172A20;
+  --forest-800: var(--c-fairway);
+  --forest-700: #284434;
+  --forest-500: #46604F;
+  --sage-200: #D2D7CA;
+  --sage-100: #DFE3D8;
+  --sage-50:  #ECEEE7;
 
   /* ---------- Surfaces and text ---------- */
-  --bg: #F2F4F1;
-  --surface: #FAFBF9;
-  --border: #E0E5DF;
-  --border-strong: #C8D0C7;
-  --text: #16201A;
-  --text-2: #4F5A53;
-  --text-3: #616C65;
+  --bg: var(--c-mist);
+  --surface: var(--c-paper);
+  --border: var(--c-rule);
+  --border-strong: #AEB4A6;
+  --text: var(--c-ink);
+  --text-2: #4A554D;
+  --text-3: #59635B;
   --on-dark: #F3F6F2;
   --on-dark-2: rgba(243, 246, 242, 0.72);
   --danger: #9B2C2C;
-  --warn: #8A5A12;
+  --warn: #7A5010;
 
   /* ---------- Shape, depth, motion ---------- */
-  --radius-card: 14px;
-  --radius-ctl: 10px;
-  --shadow-card: 0 1px 2px rgba(16, 30, 23, 0.04), 0 4px 12px rgba(16, 30, 23, 0.04);
-  --shadow-thumb: 0 1px 2px rgba(16, 30, 23, 0.08), 0 2px 6px rgba(16, 30, 23, 0.08);
-  --shadow-sheet: 0 -8px 32px rgba(16, 30, 23, 0.18);
+  /* Small radii: 4px panels, cards, buttons and fields; 10px the membership card and sheets; 999px only for small
+     pills, badges and avatars. No card shadows: hairlines and space separate things. Overlays keep a soft shadow. */
+  --radius-card: 4px;
+  --radius-ctl: 4px;
+  --radius-lg: 10px;
+  --radius-pill: 999px;
+  --shadow-card: 0 0 0 0 transparent;   /* no card shadows; a valid zero shadow so lists such as "var(--shadow-card), ..." still parse */
+  --shadow-thumb: 0 1px 2px rgba(18, 32, 26, 0.10);
+  --shadow-sheet: 0 -8px 32px rgba(18, 32, 26, 0.16);
   --ease-ui: cubic-bezier(0.2, 0.7, 0.2, 1);
   --t-ui: 180ms;
 
@@ -51,6 +70,9 @@ body.portal {
   --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-title: var(--sans);
   --serif: var(--font-title);
+  /* The signature serif (Bodoni Moda, member.html's Google Fonts link): only through .sig and the few signature
+     classes listed under "Signature serif" below. */
+  --font-sig: "Bodoni Moda", Georgia, "Times New Roman", serif;
   /* Type scale: one size per role. Page title, section title, card title, body, meta and label, plus display
      numbers (balances, times, scores). Weights: titles 600, UI 500, text 400. */
   --fs-page: 1.75rem;      /* 28: page and hero titles (h1) */
@@ -121,7 +143,7 @@ body.portal .muted, body.portal .ink-2 { color: var(--text-2); }
 body.portal small, body.portal .person-sub, body.portal .field-hint, body.portal .stat-meta { font-size: var(--fs-meta); color: var(--text-2); line-height: 1.45; }
 body.portal .num, body.portal time, body.portal td, body.portal .stat-value { font-variant-numeric: tabular-nums lining-nums; }
 /* Eyebrow: the one refined accent per section */
-body.portal .eyebrow, body.portal .label-caps { font-family: var(--sans); font-size: var(--fs-label); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--forest-500); }
+body.portal .eyebrow, body.portal .label-caps { font-family: var(--sans); font-size: var(--fs-label); font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--label); }
 /* Everything else is sentence case with normal spacing */
 body.portal .btn, body.portal .tab, body.portal .segmented button, body.portal .badge, body.portal .field label,
 body.portal .p-nav a, body.portal .p-tabbar a, body.portal .p-tabbar button, body.portal .table th { text-transform: none; letter-spacing: normal; }
@@ -133,12 +155,12 @@ body.portal :focus-visible { outline: 2px solid var(--forest-700); outline-offse
 body.portal a, body.portal button, body.portal .btn { transition: background-color var(--t-ui) var(--ease-ui), border-color var(--t-ui) var(--ease-ui), color var(--t-ui) var(--ease-ui), box-shadow var(--t-ui) var(--ease-ui); }
 @media (prefers-reduced-motion: reduce) { body.portal *, body.portal *::before, body.portal *::after { animation: none !important; transition: none !important; } }
 
-/* ---------- Surfaces: soft cards with a hairline and a whisper of shadow ---------- */
+/* ---------- Surfaces: Paper on Mist, a Rule hairline, no shadow ---------- */
 body.portal .panel, body.portal .stats { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
 body.portal .panel-head { border-bottom: 1px solid var(--border); padding: 16px; }
 body.portal .panel-head h3 { font-size: var(--fs-card); font-weight: var(--fw-title); }
 body.portal .panel-body { padding: 16px; }
-body.portal .panel.dark { background: var(--forest-950); color: var(--on-dark); border-color: var(--forest-950); }
+body.portal .panel.dark { background: var(--forest-800); color: var(--on-dark); border-color: var(--forest-800); }
 body.portal .panel.dark h2, body.portal .panel.dark h3 { color: var(--on-dark); }
 body.portal .panel.dark .muted, body.portal .panel.dark .eyebrow { color: var(--on-dark-2); }
 body.portal .p-hero::before { display: none; }
@@ -188,12 +210,12 @@ body.portal .tabs { gap: 24px; border-bottom: 1px solid var(--border); flex-wrap
 body.portal .tabs::-webkit-scrollbar { display: none; }
 body.portal .tab { flex: none; min-height: 44px; font-size: 0.9375rem; font-weight: 500; color: var(--text-2); padding: 10px 0; white-space: nowrap; hyphens: none; overflow-wrap: normal; }
 body.portal .tab.active { color: var(--text); }
-body.portal .tab-ink { height: 2px; background: var(--forest-800); }
+body.portal .tab-ink { height: 2px; background: var(--accent); }   /* brass: "you are here" */
 
 /* ---------- Segmented control: iOS style sage track with a raised thumb ---------- */
 body.portal .segmented { background: var(--sage-100); border: 0; border-radius: var(--radius-ctl); padding: 3px; gap: 2px; display: inline-flex; flex-wrap: nowrap; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
 body.portal .segmented::-webkit-scrollbar { display: none; }
-body.portal .segmented button { min-height: 44px; font-size: 0.875rem; font-weight: 500; color: var(--text-2); border-radius: 8px; padding: 6px 14px; background: transparent; white-space: nowrap; flex: none; text-transform: none; }
+body.portal .segmented button { min-height: 44px; font-size: 0.875rem; font-weight: 500; color: var(--text-2); border-radius: 3px; padding: 6px 14px; background: transparent; white-space: nowrap; flex: none; text-transform: none; }
 body.portal .segmented button.active, body.portal .segmented button[aria-pressed="true"], body.portal .segmented button[aria-checked="true"] { background: var(--surface); color: var(--text); box-shadow: var(--shadow-thumb); }
 
 /* ---------- Badges and pills ---------- */
@@ -222,7 +244,7 @@ body.portal svg.icon { stroke-width: 1.5; }
 
 /* ---------- Dialogs, sheets, toasts ---------- */
 body.portal .overlay { background: var(--forest-scrim); z-index: 140; }   /* confirm dialogs sit above kit sheets */
-body.portal .modal, body.portal .drawer { background: var(--surface); border-top: 0; border-radius: var(--radius-card); box-shadow: var(--shadow-sheet); }
+body.portal .modal, body.portal .drawer { background: var(--surface); border-top: 0; border-radius: var(--radius-lg); box-shadow: var(--shadow-sheet); }
 body.portal .drawer { border-left: 1px solid var(--border); border-radius: 0; }
 body.portal .modal-head h3, body.portal .drawer .modal-head h3 { font-family: var(--font-title); font-size: var(--fs-section); font-weight: var(--fw-title); }
 body.portal .modal-foot { background: var(--surface); border-top: 1px solid var(--border); }
@@ -232,7 +254,7 @@ body.portal .toast svg { color: var(--on-dark); }
   /* Phone tap targets: footer links and the basket's item names (the public site does the same in public-theme.css). */
   body.portal .p-footer .p-social a { display: inline-flex; align-items: center; min-height: 40px; }
   body.portal .sh-line-name { display: inline-flex; align-items: center; min-height: 44px; }
-  body.portal .modal { border-radius: 18px 18px 0 0; }
+  body.portal .modal { border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
   body.portal .modal::before { content: ""; display: block; width: 36px; height: 4px; border-radius: 2px; background: var(--border-strong); margin: 8px auto 0; flex: none; }
 }
 
@@ -247,7 +269,7 @@ body.portal .p-crest.stb-logo { color: var(--on-dark); height: 30px; }
 body.portal .p-nav a { font-size: 0.875rem; font-weight: 500; color: var(--on-dark-2); text-transform: none; letter-spacing: normal; }
 body.portal .p-nav a.active { color: var(--on-dark); }
 @media (hover: hover) { body.portal .p-nav a:hover { color: var(--on-dark); } }
-body.portal .p-nav-ink { background: var(--on-dark); height: 2px; }
+body.portal .p-nav-ink { background: var(--accent); height: 2px; }
 body.portal .p-me-btn { border: 0; padding: 0; min-height: 44px; min-width: 44px; gap: 4px; background: none; }
 body.portal .p-me-btn .avatar { width: 36px; height: 36px; font-size: min(0.9375rem, 15px); background: transparent; color: var(--on-dark); box-shadow: inset 0 0 0 1px var(--on-dark-a40); }
 body.portal .p-me-btn svg { color: var(--on-dark-2); width: 16px; height: 16px; }
@@ -263,7 +285,7 @@ body.portal .p-more-list a, body.portal .p-more-list button { font-size: 1rem; m
 body.portal .p-more-list svg { width: 20px; height: 20px; color: var(--forest-500); }
 /* Grouped: Account, Golf, Food and drink, Club, then Sign out */
 body.portal .p-more-group + .p-more-group { margin-top: 20px; }
-body.portal .p-more-h { margin: 0 0 2px; font-size: var(--fs-label); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-2); }
+body.portal .p-more-h { margin: 0 0 2px; font-size: var(--fs-label); font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--label); }
 body.portal .p-more-group > :last-child { border-bottom: 0; }
 
 /* ---------- Footer: compact, so it never costs a third of a screen ---------- */
@@ -288,13 +310,13 @@ body.portal .p-tabbar a span, body.portal .p-tabbar button span { display: block
 body.portal .p-tabbar svg { width: 22px; height: 22px; padding: 0; background: none; color: inherit; }
 body.portal .p-tabbar a.active { color: var(--on-dark); font-weight: 500; }
 body.portal .p-tabbar a.active svg { background: none; color: var(--on-dark); }
-body.portal .p-tabbar a.active::before { content: ""; position: absolute; top: 0; left: 50%; width: 24px; height: 2px; margin-left: -12px; border-radius: 0 0 2px 2px; background: var(--on-dark); }
+body.portal .p-tabbar a.active::before { content: ""; position: absolute; top: 0; left: 50%; width: 24px; height: 2px; margin-left: -12px; border-radius: 0 0 2px 2px; background: var(--accent); }
 body.portal.signed-in { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
 body.portal .toasts { bottom: calc(80px + env(safe-area-inset-bottom)); }
 
 /* ---------- Sign in ---------- */
 body.portal.signed-out { background: var(--forest-950); }
-body.portal .p-signin-card { border-top: 0; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-signin); }
+body.portal .p-signin-card { border-top: 0; border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow-signin); }
 body.portal .p-signin h1 { font-family: var(--font-title); font-size: var(--fs-page); font-weight: var(--fw-title); }
 body.portal .p-signin-sub { color: var(--text-2); font-size: 0.9375rem; }
 body.portal .p-demo-btn { min-height: 60px; border: 1px solid var(--border); border-radius: var(--radius-ctl); background: var(--surface); }
@@ -336,10 +358,10 @@ body.portal .p-cols > * { min-width: 0; }
 @media (min-width: 768px) {
   body.portal .p-page { max-width: 760px; padding: 28px 28px 40px; }
   body.portal .p-header-inner, body.portal .p-footer { max-width: 760px; }
-  body.portal .p-tabbar { left: 0; right: 0; margin: 0 auto; max-width: 760px; border-radius: 16px 16px 0 0; }
+  body.portal .p-tabbar { left: 0; right: 0; margin: 0 auto; max-width: 760px; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
   body.portal .pk-bar { max-width: 760px; }
   /* sheets become centred dialogs */
-  body.portal .ps-sheet { top: 50%; bottom: auto; max-width: 560px; max-height: min(760px, 86vh); max-height: min(760px, 86dvh); border-radius: var(--radius-card); transform: translateY(-46%) scale(0.98); opacity: 0; transition: transform 180ms var(--ease-ui), opacity 180ms var(--ease-ui); padding-bottom: 0; }
+  body.portal .ps-sheet { top: 50%; bottom: auto; max-width: 560px; max-height: min(760px, 86vh); max-height: min(760px, 86dvh); border-radius: var(--radius-lg); transform: translateY(-46%) scale(0.98); opacity: 0; transition: transform 180ms var(--ease-ui), opacity 180ms var(--ease-ui); padding-bottom: 0; }
   body.portal .ps-sheet.open { transform: translateY(-50%); opacity: 1; }
   body.portal .ps-sheet.is-full { height: min(860px, 90vh); height: min(860px, 90dvh); }
   body.portal .ps-grab { display: none; }
@@ -352,7 +374,7 @@ body.portal .p-cols > * { min-width: 0; }
   body.portal .p-nav a { display: inline-flex; align-items: center; font-size: 0.9375rem; white-space: nowrap; }
   body.portal .p-tabbar { display: none !important; }
   body.portal.signed-in { padding-bottom: 0; }
-  body.portal .pk-bar { bottom: 0; border-radius: 16px 16px 0 0; }
+  body.portal .pk-bar { bottom: 0; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
   body.portal .toasts { bottom: 24px; }
   body.portal.has-bar .toasts { bottom: 96px; }
   body.portal .lv-navb { bottom: 0; }
@@ -367,7 +389,7 @@ body.portal .p-cols > * { min-width: 0; }
   body.portal .p-nav a { display: inline-flex; align-items: center; font-size: 0.9375rem; }
   body.portal .p-tabbar { display: none !important; }
   body.portal.signed-in { padding-bottom: 0; }
-  body.portal .pk-bar { bottom: 0; max-width: 1200px; border-radius: 16px 16px 0 0; padding: 12px 24px; }
+  body.portal .pk-bar { bottom: 0; max-width: 1200px; border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding: 12px 24px; }
   body.portal.has-bar .p-page { padding-bottom: 120px; }
   body.portal .toasts { bottom: 24px; }
   body.portal.has-bar .toasts { bottom: 96px; }
@@ -389,9 +411,9 @@ body.portal .p-navmore-btn { display: inline-flex; align-items: center; gap: 4px
 body.portal .p-navmore-btn[aria-expanded="true"], body.portal .p-navmore.has-active .p-navmore-btn { color: var(--on-dark); }
 @media (hover: hover) { body.portal .p-navmore-btn:hover { color: var(--on-dark); } }
 body.portal .p-navmore-btn svg { width: 14px; height: 14px; }
-body.portal .p-navmore-pop { position: absolute; top: calc(100% - 8px); right: 0; z-index: 60; min-width: 200px; padding: 6px; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-ctl); box-shadow: var(--shadow-card); }
+body.portal .p-navmore-pop { position: absolute; top: calc(100% - 8px); right: 0; z-index: 60; min-width: 200px; padding: 6px; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-ctl); box-shadow: var(--shadow-drop); }
 body.portal .p-navmore-pop[hidden] { display: none; }
-body.portal .p-nav .p-navmore-pop a { color: var(--text); padding: 10px 12px; border-radius: 8px; }
+body.portal .p-nav .p-navmore-pop a { color: var(--text); padding: 10px 12px; border-radius: 3px; }
 @media (hover: hover) { body.portal .p-nav .p-navmore-pop a:hover { background: var(--sage-50); color: var(--text); } }
 body.portal .p-nav .p-navmore-pop a.active { color: var(--forest-800); font-weight: 600; }
 
@@ -414,3 +436,33 @@ body.portal .pa-opt, body.portal .pp-comm-ctl, body.portal .fr-sw-ctl, body.port
    without moving the underline (tabs sit 24px apart, so neighbours do not overlap). */
 body.portal .tab, body.portal .pe-tab, body.portal .pc-subnav a { position: relative; }
 body.portal .tab::before, body.portal .pe-tab::before, body.portal .pc-subnav a::before { content: ""; position: absolute; top: 0; bottom: 0; left: -12px; right: -12px; }
+
+/* ==========================================================================
+   Redesign step 1 (Nov 21): foundations. REDESIGN-PLAN.md.
+   ========================================================================== */
+/* ---------- Signature serif: Bodoni Moda for big times, dates, the member's name and venue names only ---------- */
+body.portal .sig { font-family: var(--font-sig); font-weight: 400; font-variant-numeric: lining-nums; letter-spacing: -0.01em; }
+/* Home: the greeting's first name, italic (js/portal/home.js) */
+body.portal .hm-hello-name { font-family: var(--font-sig); font-style: italic; font-weight: 400; font-size: 1.08em; letter-spacing: 0; }
+/* Home: the big next tee time (js/portal/play.js, "Today" card) */
+body.portal .lv-tcard-time { font-family: var(--font-sig); font-weight: 400; font-size: 2.25rem; line-height: 1.05; letter-spacing: -0.02em; font-variant-numeric: lining-nums; }
+/* Tee times: the time on each chip; AM/PM stays in Inter */
+body.portal .tt-chip-t { font-family: var(--font-sig); font-weight: 400; font-size: 1.375rem; line-height: 1.1; letter-spacing: -0.01em; font-variant-numeric: lining-nums; }
+body.portal .tt-chip-t small { font-family: var(--sans); font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.06em; margin-left: 3px; }
+/* Date numbers in date blocks: Home Coming up, My tee times, Events, Account activity */
+body.portal .hm-date-n, body.portal .tt-rd-n, body.portal .pe-date-n, body.portal .pa-date-d { font-family: var(--font-sig); font-weight: 400; font-variant-numeric: lining-nums; letter-spacing: -0.01em; }
+body.portal .hm-date-n { font-size: 1.375rem; line-height: 1; }
+body.portal .tt-rd-n { font-size: 1.5rem; line-height: 1.05; }
+/* Dining > Menus: the venue name on the venue picker */
+body.portal .pd-menu-sel .pk-select-main { font-family: var(--font-sig); font-weight: 400; font-size: 1.375rem; line-height: 1.2; letter-spacing: 0; }
+
+/* ---------- Small spaced capitals in dark oak: section and group labels ---------- */
+body.portal .hm-g-t, body.portal .lv-eb, body.portal .lv-root h2.lv-eb { font-size: var(--fs-label); font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--label); }
+body.portal .hm-hero-date, body.portal .p-brand-sub { letter-spacing: 0.18em; }
+body.portal .hm-date-w { letter-spacing: 0.1em; color: var(--label); }
+body.portal .hm-date.is-today .hm-date-w { color: var(--on-dark); }
+
+/* ---------- Sheets and steppers: small radii (kit.css is shared with the staff site, so these stay here) ---------- */
+body.portal .ps-sheet { border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+body.portal .pk-step { border-radius: 3px; }
+@media (min-width: 768px) { body.portal .ps-sheet { border-radius: var(--radius-lg); } }

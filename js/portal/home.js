@@ -103,7 +103,7 @@
     return '<section class="hm-hero" aria-labelledby="hm-hero-h">' +
       '<span class="hm-mark" aria-hidden="true">' + Portal.crest('hm-mark-svg') + '</span>' +
       '<p class="hm-hero-date"><time datetime="' + esc(today()) + '">' + esc(fmt.toDate(today()).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })) + '</time></p>' +
-      '<h1 id="hm-hero-h" class="hm-hello">' + greeting() + ', ' + esc(m.firstName) + '</h1>' +
+      '<h1 id="hm-hero-h" class="hm-hello">' + greeting() + ', <span class="hm-hello-name">' + esc(m.firstName) + '</span></h1>' +
       '<div class="hm-hero-row">' +
         (t.cond ? '<div class="hm-hero-col">' + Club.icon(t.icon || 'sun') + '<div><p class="hm-hero-main">' + esc(String(now).replace('-', '−')) + '° ' + esc(t.cond) + '</p><p class="hm-hero-sub">H ' + esc(String(t.hi).replace('-', '−')) + '° · L ' + esc(lo) + '°</p></div></div>' : '') +
         '<div class="hm-hero-col">' + Club.icon(open ? 'flag' : 'alert') + '<div>' +

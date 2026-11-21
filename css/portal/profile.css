@@ -9,9 +9,9 @@
   position: relative; overflow: hidden; isolation: isolate;
   width: 100%; aspect-ratio: 1.586; min-height: 0;
   display: flex; flex-direction: column; justify-content: space-between; gap: 16px;
-  padding: 20px 22px; border-radius: 16px; color: var(--on-dark);
+  padding: 20px 22px; border-radius: var(--radius-lg); color: var(--on-dark);
   background: linear-gradient(135deg, var(--forest-900) 0%, var(--forest-950) 70%);
-  box-shadow: 0 12px 32px color-mix(in srgb, var(--forest-950) 28%, transparent);
+  box-shadow: none;
 }
 /* Soft sheen along the top edge */
 .pp-card::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;

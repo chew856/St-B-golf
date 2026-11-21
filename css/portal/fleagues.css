@@ -123,7 +123,7 @@ body.portal .fl-invite-btn { margin-top: 10px; }
 .fl-team-row th { padding: 8px 14px 6px; text-align: left; font: 500 var(--fs-meta)/1.3 var(--sans); color: var(--forest-800); background: var(--sage-100); }
 .fl-stick-in { position: sticky; left: 14px; }
 .fl-cells { display: flex; flex-direction: column; gap: 4px; align-items: stretch; }
-.fl-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 4.25rem; min-height: 44px; padding: 3px 6px; border-radius: 8px; border: 1px solid transparent; background: none; font: inherit; color: var(--text); line-height: 1.2; }
+.fl-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 4.25rem; min-height: 44px; padding: 3px 6px; border-radius: var(--radius-ctl); border: 1px solid transparent; background: none; font: inherit; color: var(--text); line-height: 1.2; }
 .fl-v { font-size: var(--fs-body); font-weight: 600; }
 .fl-d { font-size: 0.6875rem; color: var(--text-3); }
 button.fl-cell { cursor: pointer; background: var(--surface); border-color: var(--border); }
@@ -183,7 +183,7 @@ body.portal .p-list.fl-picks > li { padding: 0; display: block; min-height: 0; }
 .fl-pick-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
 .fl-pick-l { font-size: var(--fs-body); font-weight: 500; line-height: 1.35; }
 .fl-pick-s { font-size: var(--fs-meta); color: var(--text-2); }
-.fl-check { flex: none; width: 24px; height: 24px; border-radius: 6px; border: 2px solid var(--border-strong); display: inline-flex; align-items: center; justify-content: center; color: transparent; }
+.fl-check { flex: none; width: 24px; height: 24px; border-radius: 3px; border: 2px solid var(--border-strong); display: inline-flex; align-items: center; justify-content: center; color: transparent; }
 .fl-check .icon { width: 16px; height: 16px; }
 .fl-check.is-on { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); }
 .fl-pick.is-fixed .fl-check.is-on { background: var(--forest-500); border-color: var(--forest-500); }

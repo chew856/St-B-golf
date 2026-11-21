@@ -132,6 +132,9 @@
     'Lesson': 'Cours',
     'Event': 'Événement'
   });
+  /* The greeting's first name sits in its own span (the serif name, redesign Nov 21), so the words before it are a
+     text node of their own. */
+  add({ 'Good morning,': 'Bonjour,', 'Good afternoon,': 'Bon après-midi,', 'Good evening,': 'Bonsoir,' });
   pat(/^Good morning, (.+)$/, 'Bonjour, $1');
   pat(/^Good afternoon, (.+)$/, 'Bon après-midi, $1');
   pat(/^Good evening, (.+)$/, 'Bonsoir, $1');

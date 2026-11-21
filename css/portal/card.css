@@ -11,7 +11,7 @@ body.portal .mc-hero { margin-bottom: 16px; }
 .mc-wrap { max-width: 24rem; margin: 0 auto; }
 
 /* ---------------- The card ---------------- */
-.mc-card { position: relative; overflow: hidden; padding: 20px; border-radius: 20px; background: var(--forest-900); color: var(--on-dark); box-shadow: var(--shadow-card), var(--shadow-drop); border: 1px solid var(--forest-700); }
+.mc-card { position: relative; overflow: hidden; padding: 20px; border-radius: var(--radius-lg); background: var(--forest-800); color: var(--on-dark); box-shadow: none; border: 1px solid var(--forest-700); }
 .mc-mark { position: absolute; right: -28px; bottom: -36px; width: 170px; opacity: 0.06; pointer-events: none; color: var(--on-dark); }
 .mc-mark .stb-logo { display: block; width: 100%; height: 150px; color: var(--on-dark); }
 .mc-card > :not(.mc-mark) { position: relative; }
@@ -20,7 +20,7 @@ body.portal .mc-hero { margin-bottom: 16px; }
 body.portal .mc-top .mc-logo.stb-logo { height: 36px; width: 42px; flex: none; color: var(--on-dark); }
 .mc-club { display: flex; flex-direction: column; min-width: 0; flex: 1; }
 .mc-club-name { font-family: var(--font-title); font-size: var(--fs-card); font-weight: var(--fw-title); line-height: 1.25; color: var(--on-dark); }
-.mc-club-sub { font-size: var(--fs-label); font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--on-dark-2); }
+.mc-club-sub { font-size: var(--fs-label); font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--on-dark-2); }
 .mc-season { flex: none; padding: 4px 10px; border: 1px solid var(--on-dark-a30); border-radius: 999px; font-size: var(--fs-label); font-weight: 500; line-height: 1.4; color: var(--on-dark); white-space: nowrap; font-variant-numeric: tabular-nums; }
 
 .mc-paused { display: flex; gap: 8px; align-items: flex-start; margin: 16px 0 0; padding: 10px 12px; border-radius: var(--radius-ctl); background: var(--danger-bg); color: var(--danger); }
@@ -28,16 +28,16 @@ body.portal .mc-top .mc-logo.stb-logo { height: 36px; width: 42px; flex: none; c
 .mc-paused p { margin: 0; font-size: var(--fs-meta); line-height: 1.45; color: var(--danger); }
 .mc-paused a { color: var(--danger); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; white-space: nowrap; }
 
-.mc-qr { width: min(100%, 17rem); aspect-ratio: 1; margin: 18px auto 0; border-radius: 14px; overflow: hidden; background: var(--qr-paper); }
+.mc-qr { width: min(100%, 17rem); aspect-ratio: 1; margin: 18px auto 0; border-radius: var(--radius-card); overflow: hidden; background: var(--qr-paper); }
 .mc-qr-svg { display: block; width: 100%; height: 100%; }
 .mc-qr-bg { fill: var(--qr-paper); }
 .mc-qr-ink { fill: var(--qr-ink); }
 .mc-code { margin: 10px 0 0; text-align: center; font-size: var(--fs-body); font-weight: 500; letter-spacing: 0.08em; color: var(--on-dark-2); font-variant-numeric: tabular-nums; }
 
-body.portal .mc-name { margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--on-dark-a15); font-family: var(--font-title); font-size: var(--fs-section); font-weight: var(--fw-title); line-height: 1.25; letter-spacing: -0.01em; color: var(--on-dark); overflow-wrap: anywhere; }
+body.portal .mc-name { margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--on-dark-a15); font-family: var(--font-sig); font-size: 1.875rem; font-weight: 400; line-height: 1.15; letter-spacing: 0; font-variant-numeric: lining-nums; color: var(--on-dark); overflow-wrap: anywhere; }
 .mc-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(5.5rem, 1fr)); gap: 10px 12px; margin: 10px 0 0; }
 .mc-facts > div { min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; }
-.mc-facts dt { font-size: var(--fs-label); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--on-dark-2); }
+.mc-facts dt { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--on-dark-2); }
 .mc-facts dd { margin: 2px 0 0; font-size: var(--fs-body); font-weight: 500; color: var(--on-dark); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 
 .mc-note { margin: 14px 0 0; text-align: center; font-size: var(--fs-meta); color: var(--text-2); }

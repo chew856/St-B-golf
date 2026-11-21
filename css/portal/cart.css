@@ -101,7 +101,7 @@
 .co .co-cat { flex: none; min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); font: 500 var(--fs-body)/1 var(--sans); cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
 @media (hover: hover) { .co .co-cat:hover { border-color: var(--forest-500); } }
 .co .co-cat.active { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); }
-.co-cat-n { min-width: 22px; height: 22px; border-radius: 11px; padding: 0 6px; background: var(--sage-100); color: var(--forest-800); font-size: var(--fs-meta); display: inline-flex; align-items: center; justify-content: center; }
+.co-cat-n { min-width: 22px; height: 22px; border-radius: 999px; padding: 0 6px; background: var(--sage-100); color: var(--forest-800); font-size: var(--fs-meta); display: inline-flex; align-items: center; justify-content: center; }
 .co .co-cat.active .co-cat-n { background: var(--on-dark); color: var(--forest-800); }
 .co-items { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); overflow: hidden; }
 .co .co-item { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 12px 8px 16px; border-bottom: 1px solid var(--border); }

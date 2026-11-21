@@ -43,7 +43,7 @@ body.portal .p-link.pc-more { padding: 0 8px; margin: 0 -8px; }
 .pc-tile-n { font-size: var(--fs-meta); line-height: 1.4; color: var(--text-2); }
 .pc-accs { margin-top: 12px; }
 .pc-hole-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(max(1.75rem, calc((100% - 32px) / 9)), 1fr)); gap: 4px; }
-.pc-hole-grid li { min-height: 32px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 8px; font-size: var(--fs-meta); color: var(--text-2); background: var(--surface); font-variant-numeric: tabular-nums; }
+.pc-hole-grid li { min-height: 32px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: var(--radius-ctl); font-size: var(--fs-meta); color: var(--text-2); background: var(--surface); font-variant-numeric: tabular-nums; }
 .pc-hole-grid li.h-GUR { background: var(--sage-50); border: 1px dashed var(--warn); color: var(--warn); font-weight: 500; }
 .pc-hole-grid li.h-closed { background: var(--sage-50); border: 1px solid var(--danger); color: var(--danger); text-decoration: line-through; font-weight: 500; }
 .pc-legend { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: var(--fs-meta); color: var(--text-2); }

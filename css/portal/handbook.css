@@ -71,7 +71,7 @@ body.portal .hb-sub { margin: 24px 0 6px; font-family: var(--font-handbook); fon
 .hb-kv dd { margin: 0; font-variant-numeric: tabular-nums; }
 
 .hb-hit { background: var(--hb-cream); color: var(--text); border-radius: 3px; padding: 0 1px; box-shadow: 0 0 0 1px var(--hb-olive), inset 0 -2px 0 var(--hb-olive); }
-.hb-untr { display: flex; gap: 8px; align-items: flex-start; max-width: 46rem; margin: 0 0 12px; padding: 8px 10px; border-radius: 8px; background: var(--hb-cream); font-size: var(--fs-meta); color: var(--text-2); }
+.hb-untr { display: flex; gap: 8px; align-items: flex-start; max-width: 46rem; margin: 0 0 12px; padding: 8px 10px; border-radius: var(--radius-ctl); background: var(--hb-cream); font-size: var(--fs-meta); color: var(--text-2); }
 .hb-untr .icon { width: 18px; height: 18px; flex: none; color: var(--hb-olive-ink); margin-top: 1px; }
 .hb-none-act { margin: 4px 0 0; text-align: center; }
 .hb-foot { max-width: 46rem; margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--border); font-size: var(--fs-meta); color: var(--text-2); }

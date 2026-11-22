@@ -320,7 +320,8 @@ body.portal .pk-bar.ax-bar .pa-mark .cc-mark { max-width: 24px; }
 
 /* ---------------- The receipt (Club.receipts, css/receipts.css) as a clean document in the portal ---------------- */
 body.portal .rc { border-radius: var(--radius-card); box-shadow: none; }
-body.portal .rc .rc-head, body.portal .rc .rc-lines, body.portal .rc .rc-total, body.portal .rc .rc-foot { border-style: solid; border-color: var(--border); }
+body.portal .rc .rc-head { border-bottom-style: solid; border-bottom-color: var(--border); }
+body.portal .rc .rc-lines, body.portal .rc .rc-total, body.portal .rc .rc-foot { border-top-style: solid; border-top-color: var(--border); }
 body.portal .rc .rc-club { font-family: var(--sans); font-size: 1rem; font-weight: 500; letter-spacing: -0.01em; }
 body.portal .rc .rc-kind { font-family: var(--sans); font-size: 1.25rem; font-weight: 500; letter-spacing: -0.02em; }
 body.portal .rc .rc-total strong { font-family: var(--font-sig); font-size: 1.5rem; font-weight: 400; font-variant-numeric: lining-nums; }

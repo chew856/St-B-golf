@@ -162,7 +162,7 @@
     let dueLine, dueSub;
     if (bal <= 0.005) { dueLine = bal < -0.005 ? 'In credit' : 'Settled'; dueSub = bal < -0.005 ? money(-bal) + ' will go toward your next charges' : 'Nothing is due. Thank you.'; }
     else if (open.some(function (s) { return owedOn(s, m) > 0.005; })) { const s = open.find(function (s) { return owedOn(s, m) > 0.005; }); dueLine = s.dueOn ? fmt.date(s.dueOn) : 'On receipt'; dueSub = (s.status === 'overdue' ? 'Past due · ' : '') + monthLabel(s.period) + ' statement'; }
-    else { dueLine = 'Next statement'; dueSub = 'On your ' + monthName(key) + ' statement'; }
+    else { dueLine = 'Next statement'; dueSub = 'On your statement for ' + monthName(key); }
     const stHref = latest ? '#/account/statement/' + esc(latest.id) : '';
     const acts = (bal > 0.005 ? '<a class="btn btn-light pa-bal-pay" href="#/account/pay">Make a payment</a>' : '') +
       (latest ? '<a class="p-link pa-bal-st" href="' + stHref + '">View statement</a>' : '');

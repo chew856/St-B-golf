@@ -22,7 +22,7 @@
   --lv-dark: var(--c-fairway, var(--forest-800));
   --lv-soft: var(--c-oak-soft, var(--on-dark-2));       /* spaced capitals on the dark panel */
   --lv-quiet-dark: var(--on-dark-3, var(--on-dark-2));
-  --lv-dark-rule: var(--on-dark-rule, rgba(243, 246, 242, 0.18));
+  --lv-dark-rule: var(--on-dark-rule, var(--on-dark-line, var(--on-dark-2)));
   --lv-band: var(--surface);                            /* the chosen row */
 }
 .lv-root { display: flex; flex-direction: column; max-width: 35rem; margin: 0 auto; }

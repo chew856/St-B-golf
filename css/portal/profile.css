@@ -50,7 +50,8 @@ body.portal .pp-lang .i18n-switch .i18n-opt { position: relative; min-width: 46p
 body.portal .pp-lang .i18n-switch .i18n-opt[aria-pressed=true] { background-color: var(--c-ink); color: var(--on-dark); }
 body.portal .pp-lang .i18n-switch .i18n-opt::before { content: ""; position: absolute; left: 0; right: 0; top: -6px; bottom: -6px; }   /* a 44px tap area around the slim control */
 
-/* ---------------- Sheet contents ---------------- */
+/* ---------------- Sheet contents ----------------
+   Only top and bottom margins here: css/kit.css gives a sheet's own children their side margins. */
 .pp-form { display: flex; flex-direction: column; gap: 14px; padding-top: 8px; }
 .pp-form .field { margin: 0; }
 .pp-form .input, .pp-form .select, .pp-form .textarea { width: 100%; }
@@ -60,13 +61,13 @@ body.portal .segmented.pp-seg { display: flex; width: 100%; gap: 0; padding: 0; 
 body.portal .segmented.pp-seg button { flex: 1 1 0; min-height: 44px; padding: 0 10px; border: 0; border-radius: 0; background: none; box-shadow: none; color: var(--text-2); font: 500 0.875rem/1.2 var(--sans); white-space: normal; }
 body.portal .segmented.pp-seg button + button { border-left: 1px solid var(--border); }
 body.portal .segmented.pp-seg button.active { background: var(--c-ink); color: var(--on-dark); box-shadow: none; }
-body.portal .pp-kv { margin: 0; border-bottom: 1px solid var(--border); }
+body.portal .pp-kv { margin-top: 0; margin-bottom: 0; border-bottom: 1px solid var(--border); }
 body.portal .pp-kv > div { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 4px 16px; min-height: 48px; padding: 12px 0; border-top: 1px solid var(--border); }
 body.portal .pp-kv > div:first-child { border-top: 0; }
 body.portal .pp-kv dt { font-size: 0.9375rem; color: var(--text-2); }
 body.portal .pp-kv dd { margin: 0; font-size: 0.9375rem; font-weight: 500; color: var(--text); text-align: right; }
-body.portal .pp-note { display: block; margin: 14px 0 0; padding: 0; background: none; border-radius: 0; font-size: 0.8125rem; line-height: 1.5; color: var(--text-3); }
-body.portal .pp-comm { list-style: none; margin: 0; padding: 0; border-bottom: 1px solid var(--border); }
+body.portal .pp-note { display: block; margin-top: 14px; margin-bottom: 0; padding: 0; background: none; border-radius: 0; font-size: 0.8125rem; line-height: 1.5; color: var(--text-3); }
+body.portal .pp-comm { list-style: none; margin-top: 0; margin-bottom: 0; padding: 0; border-bottom: 1px solid var(--border); }
 body.portal .pp-comm li { display: flex; align-items: center; gap: 14px; min-height: 64px; padding: 11px 0; }
 body.portal .pp-comm li + li { border-top: 1px solid var(--border); }
 body.portal .pp-comm-text { flex: 1; min-width: 0; display: flex; flex-direction: column; cursor: pointer; }
@@ -76,15 +77,15 @@ body.portal .pp-comm-ctl { display: flex; align-items: center; gap: 10px; flex: 
 body.portal .pp-state { min-width: 1.9em; font: 600 0.6875rem/1.4 var(--sans); letter-spacing: 0.14em; text-transform: uppercase; color: var(--label); text-align: right; }
 .pp-toggle { flex: none; display: inline-block; }
 body.portal .pp-toggle input:checked + span { background: var(--c-ink); }
-body.portal .pp-golf-top { display: flex; flex-direction: column; margin: 6px 0 10px; }
+body.portal .pp-golf-top { display: flex; flex-direction: column; margin-top: 6px; margin-bottom: 10px; }
 body.portal .pp-golf-l { font-size: 0.6875rem; font-weight: 600; line-height: 1.4; letter-spacing: 0.18em; text-transform: uppercase; color: var(--label); }
 body.portal .pp-hcp { margin-top: 6px; font-family: var(--font-sig); font-weight: 400; font-size: 3rem; line-height: 1; letter-spacing: -0.02em; color: var(--text); font-variant-numeric: lining-nums; }
 body.portal .pp-trend { margin-top: 6px; font-size: 0.8125rem; color: var(--text-3); }
-.pp-chart { margin: 14px 0 12px; }
+.pp-chart { margin-top: 14px; margin-bottom: 12px; }
 body.portal .pp-chart-h { margin: 0 0 6px; font-family: var(--sans); font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--label); }
 .pp-spark .chart { width: 100% !important; }
-body.portal .pp-chart-empty { margin: 12px 0; font-size: 0.8125rem; color: var(--text-3); }
-body.portal .pp-intro { margin: 2px 0 6px; font-size: 0.8125rem; line-height: 1.5; color: var(--text-3); }
+body.portal .pp-chart-empty { margin-top: 12px; margin-bottom: 12px; font-size: 0.8125rem; color: var(--text-3); }
+body.portal .pp-intro { margin-top: 2px; margin-bottom: 6px; font-size: 0.8125rem; line-height: 1.5; color: var(--text-3); }
 .pp-req { margin-top: 18px; }
 .pp-blocked { margin-top: 18px; }
 body.portal .pp-blocked .pp-comm li { min-height: 48px; }

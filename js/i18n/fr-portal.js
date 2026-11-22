@@ -3617,7 +3617,10 @@
     },
     patterns: [
       /* the amount is already in French form ("1 111 $ to date") */
-      [/^(.+) to date$/, '$1 à ce jour']
+      [/^(.+) to date$/, '$1 à ce jour'],
+      /* Payment due, when nothing is owed on a statement yet: "On your statement for November" (the month is already
+         French; "d’" before a vowel: avril, août, octobre) */
+      [/^On your statement for (.+)$/, function (m) { return 'Sur votre relevé ' + (/^[aeiouyàâéèêîôû]/i.test(m[1]) ? 'd’' : 'de ') + m[1]; }]
     ]
   });
 })();

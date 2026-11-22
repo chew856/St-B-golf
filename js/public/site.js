@@ -386,10 +386,10 @@
     root.innerHTML =
       '<a class="pub-skip" href="#pub-view">Skip to content</a>' +
       '<header class="pub-header"><div class="pub-header-inner">' +
-        '<a class="pub-brand" href="#/" aria-label="' + esc(Club.info.name) + ' public golf home">' + Club.logo('pub-crest') + '<span><span class="pub-brand-name">' + esc(Club.info.short) + '</span><span class="pub-brand-sub">Public golf</span></span></a>' +
+        '<a class="pub-brand" href="#/" aria-label="' + esc(Club.info.name) + ' public golf home">' + Club.logoImg('pub-crest-img') + '<span class="pub-brand-t"><span class="pub-brand-name">' + esc(Club.info.short) + '</span><span class="pub-brand-sub">Public golf</span></span></a>' +
         '<nav class="pub-nav" aria-label="Main"></nav>' +
         '<div class="pub-me"></div>' +
-        '<button type="button" class="pub-menu-btn" aria-label="Open menu">' + Club.icon('menu') + '</button>' +
+        '<button type="button" class="pub-menu-btn" aria-label="Open menu"><span class="pub-menu-lines" aria-hidden="true"><i></i><i></i><i></i></span></button>' +
       '</div></header>' +
       '<main id="pub-view" class="pub-main" tabindex="-1"></main>' +
       '<footer class="pub-footer"><div class="pub-footer-inner">' +
@@ -413,7 +413,7 @@
     ui.$$('a', nav).forEach(function (a, i) { a.dataset.ord = i; });
     mine.innerHTML = p
       ? '<a class="pub-me-btn" href="#/account" title="My account">' + ui.avatar(p.firstName + ' ' + p.lastName, 'sm') + '<span class="pub-me-name">' + esc(p.firstName) + '</span></a>'
-      : '<a class="btn btn-ghost btn-sm pub-signin-link" href="#/signin">Sign in</a><a class="btn btn-brass btn-sm pub-signup-link" href="#/signup">Create account</a>';
+      : '<a class="pub-signin-link" href="#/signin">Sign in</a><a class="btn btn-primary btn-sm pub-signup-link" href="#/signup">Create account</a>';   /* redesign (Nov 22): Sign in is a word, Create account the one Ink button */
     const fl = ui.$('.pub-footer-lang'); if (fl) fl.hidden = !!p;   /* signed in: language is in My account */
     markActive();
     if (Club.i18n) Club.i18n.translate(ui.$('.pub-header'));   /* French labels are longer: measure those */
@@ -431,18 +431,18 @@
   function openMenu() {
     const p = me();
     const d = ui.drawer({ eyebrow: Club.info.short, title: p ? 'Hello, ' + p.firstName : 'Public golf',
-      body: '<div class="pub-menu">' + (Club.i18n && !p ? Club.i18n.switchRow('pub-menu-lang', Club.icon('globe')) : '') +
-        '<a href="#/">' + Club.icon('flag') + '<span>Book a tee time</span>' + Club.icon('chevronRight') + '</a>' +
+      /* Redesign (Nov 22): a plain hairline list of words, no icons. */
+      body: '<div class="pub-menu">' + (Club.i18n && !p ? Club.i18n.switchRow('pub-menu-lang') : '') +
+        '<a href="#/"><span>Book a tee time</span></a>' +
         /* Pages registered with nav (Become a member, Gift cards, Takeout ...), as in the header menu. */
         pages.filter(function (x) { return x.nav && (!x.nav.auth || p); }).sort(function (a, b) { return (a.nav.order || 50) - (b.nav.order || 50); })
-          .map(function (x) { return '<a href="#/' + esc(x.id) + '">' + Club.icon(x.nav.icon || 'chevronRight') + '<span>' + esc(x.nav.label || x.label) + '</span>' + Club.icon('chevronRight') + '</a>'; }).join('') +
-        (p ? '<a href="#/bookings">' + Club.icon('calendar') + '<span>My bookings</span>' + Club.icon('chevronRight') + '</a>' + (Pub.cartNav && Pub.cartNav(p) ? '<a href="#/cart">' + Club.icon('cart') + '<span>Order to the course</span>' + Club.icon('chevronRight') + '</a>' : '') + '<a href="#/account">' + Club.icon('user') + '<span>My account</span>' + Club.icon('chevronRight') + '</a>'
-          : '<a href="#/signin">' + Club.icon('key') + '<span>Sign in</span>' + Club.icon('chevronRight') + '</a><a href="#/signup">' + Club.icon('plus') + '<span>Create an account</span>' + Club.icon('chevronRight') + '</a>') +
-        (p ? '<a href="#/account">' + Club.icon('user') + '<span>My account</span>' + Club.icon('chevronRight') + '</a>' : '') +
-        (Pub.openKnow ? '<button type="button" data-act="menu-know">' + Club.icon('info') + '<span>Dress code and hours</span>' + Club.icon('chevronRight') + '</button>' : '') +
-        '<a href="member.html">' + Club.icon('crest') + '<span>Members sign in here</span>' + Club.icon('chevronRight') + '</a>' +
-        '<a href="' + phoneHref() + '">' + Club.icon('phone') + '<span>Call the golf shop, ' + esc(Club.info.phone) + '</span>' + Club.icon('chevronRight') + '</a>' +
-        (p ? '<button type="button" data-act="menu-signout">' + Club.icon('logout') + '<span>Sign out</span></button>' : '') +
+          .map(function (x) { return '<a href="#/' + esc(x.id) + '"><span>' + esc(x.nav.label || x.label) + '</span></a>'; }).join('') +
+        (p ? '<a href="#/bookings"><span>My bookings</span></a>' + (Pub.cartNav && Pub.cartNav(p) ? '<a href="#/cart"><span>Order to the course</span></a>' : '') + '<a href="#/account"><span>My account</span></a>'
+          : '<a href="#/signin"><span>Sign in</span></a><a href="#/signup"><span>Create an account</span></a>') +
+        (Pub.openKnow ? '<button type="button" data-act="menu-know"><span>Dress code and hours</span></button>' : '') +
+        '<a href="member.html"><span>Members sign in here</span></a>' +
+        '<a href="' + phoneHref() + '"><span>Call the golf shop, ' + esc(Club.info.phone) + '</span></a>' +
+        (p ? '<button type="button" data-act="menu-signout"><span>Sign out</span></button>' : '') +
       '</div>' });
     d.el.classList.add('pub-drawer');
     ui.on(d.body, 'click', 'a', function () { d.close(); });

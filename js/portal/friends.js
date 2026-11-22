@@ -675,7 +675,7 @@
       '<p class="fr-privacy"><span>Messages are private between you and ' + esc(m.firstName) + '. Club staff only see a message if it is reported.</span></p>' +
       '<ol class="fr-msgs" aria-label="Conversation">' + (msgs.length ? msgs.map(function (x) {
         const mine = x.from === me;
-        return '<li class="fr-msg' + (mine ? ' is-mine' : '') + '">' + (mine ? '<div class="fr-bubble">' + esc(x.body) + '</div>'
+        return '<li class="fr-msg' + (mine ? ' is-mine' : '') + '">' + (mine ? '<div class="fr-bubble" data-i18n-skip>' + esc(x.body) + '</div>'
           : '<button type="button" class="fr-bubble" data-fr="msg" data-msg="' + esc(x.id) + '" aria-haspopup="dialog" aria-label="Message from ' + esc(m.firstName) + ': ' + esc(x.body) + '. Options">' + esc(x.body) + '</button>') +
           '<span class="fr-msg-t">' + esc(msgTime(x.at)) + '</span></li>';
       }).join('') : '<li class="fr-quiet">No messages yet. Say hello.</li>') + '</ol>' +

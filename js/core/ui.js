@@ -462,7 +462,9 @@
       n.setAttribute('data-counted', '');
       const target = +n.dataset.count; const dec = +(n.dataset.decimals || 0); const pre = n.dataset.prefix || '';
       const f = function (v) { return pre + v.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec }); };
-      if (reduce) { n.textContent = f(target); return; }
+      /* No count-up inside [data-count-static] (owner, Nov 22: My account and the staff dashboard show the final
+         number straight away, so a figure is never read part-way) */
+      if (reduce || n.closest('[data-count-static]')) { n.textContent = f(target); return; }
       const dur = 1100; const t0 = performance.now();
       (function tick(t) { const p = Math.min(1, (t - t0) / dur); const e = 1 - Math.pow(1 - p, 4); n.textContent = f(target * e); if (p < 1) requestAnimationFrame(tick); })(t0);
     });

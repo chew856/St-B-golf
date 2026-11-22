@@ -142,7 +142,7 @@
       '<div class="pa-ovwrap"><div class="grid pa-ov">' +
         '<section class="panel pa-balance" data-reveal><div class="panel-body">' +
           '<div class="eyebrow">Your account</div><div class="pa-bal-h">Current balance</div>' +
-          '<div class="pa-bal-val"><span data-count="' + Math.abs(bal) + '" data-prefix="' + (bal < -0.005 ? '-$' : '$') + '" data-decimals="2">' + esc(fmt.money(0)) + '</span></div>' +
+          '<div class="pa-bal-val" data-count-static><span data-count="' + Math.abs(bal) + '" data-prefix="' + (bal < -0.005 ? '-$' : '$') + '" data-decimals="2">' + esc((bal < -0.005 ? '-$' : '$') + Math.abs(bal).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })) + '</span></div>' +
           standingNote(m) +
           (aging.pastDue > 0.005 && bal > 0.005 ? '<p class="pa-past">' + Club.icon('info') + '<span>' + money(Math.min(aging.pastDue, bal)) + ' is over 30 days old. Already paid? Ignore this.</span></p>' : '') +
           '<dl class="pa-facts"><div><dt>Payment due</dt><dd>' + esc(dueLine) + '</dd><dd class="muted">' + dueSub + '</dd></div>' +

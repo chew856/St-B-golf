@@ -780,7 +780,7 @@
     }
     U.on(api.el, 'click', '[data-hole]', function (e, b) { showHole(b.classList.contains('selected') ? null : b.dataset.hole); });
     U.on(api.el, 'click', '[data-hole-close]', function () { showHole(null); });
-    U.animateIn(api.body);
+    api.body.setAttribute('data-count-static', ''); U.animateIn(api.body);
   }
 
   /* ---------------- Sections & live refresh ---------------- */
@@ -810,7 +810,7 @@
   function render(view) {
     const today = D.today();
     const name = (Club.user && Club.user.firstName) || 'there';
-    view.innerHTML = '<div class="dash">' +
+    view.innerHTML = '<div class="dash" data-count-static>' +
       U.pageHeader({
         eyebrow: F.weekday(today) === 'Sat' || F.weekday(today) === 'Sun' ? 'Weekend service at ' + Club.info.short : F.toDate(today).toLocaleDateString('en-US', { weekday: 'long' }) + ' at ' + Club.info.short,
         title: greeting() + ', ' + name,

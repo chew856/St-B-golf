@@ -18,11 +18,11 @@ await tel.fill('(204) 555-0100'); await tel.evaluate(el => el.setSelectionRange(
 ok(await tel.inputValue() === '(209) 555-0100', 'editing a middle digit works', await tel.inputValue());
 await tel.evaluate(el => el.setSelectionRange(el.value.length, el.value.length)); for (let i = 0; i < 14; i++) await p.keyboard.press('Backspace');
 ok(await tel.inputValue() === '', 'can be cleared with backspace', await tel.inputValue());
-// countdown is small and off the form
-const t = await p.evaluate(() => { const h = document.querySelector('.hold-timer'); if (!h) return null; const r = h.getBoundingClientRect(); const card = [...document.querySelectorAll('.pub-card, .panel, form')].map(x => x.getBoundingClientRect()).filter(x => x.width > 600).sort((a, b) => b.right - a.right)[0];
-  return { w: Math.round(r.width), h: Math.round(r.height), left: Math.round(r.left), cardRight: card ? Math.round(card.right) : null, label: h.getAttribute('aria-label') }; });
-ok(t && t.w <= 190 && t.h <= 70 && /Time left/.test(t.label), 'countdown is a small pill (was 232 x 230) and still announces the time left', t);
-ok(t && (t.cardRight == null || t.left >= t.cardRight), 'countdown sits clear of the booking form at this width', t);
+// countdown (public redesign, Nov 22): one quiet line in the page under the booking steps, never a card over the form
+const t = await p.evaluate(() => { const h = document.querySelector('.hold-timer'); if (!h) return null; const r = h.getBoundingClientRect();
+  return { h: Math.round(r.height), inPage: !!h.closest('.pub-hold-host'), position: getComputedStyle(h).position, label: h.getAttribute('aria-label'), text: h.innerText.replace(/\s+/g, ' ').trim() }; });
+ok(t && t.h <= 60 && /Time left/.test(t.label) && /\d\d\D{0,2}\d\d/.test(t.text), 'countdown is one quiet line (was a 232 x 230 card) and still announces the time left', t);
+ok(t && t.inPage && t.position === 'static', 'countdown sits in the page, clear of the booking form', t);
 await p.screenshot({ path: 'phone-hold-1470.png' });
 // staff: stored phones formatted once; member form formats
 const s = await c.newPage(); s.on('pageerror', e => errs.push(e.message));

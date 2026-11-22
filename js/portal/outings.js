@@ -129,7 +129,7 @@
   }
   function contactsHTML() {
     return '<ul class="po-people">' + O.PDF.contacts.map(function (c) {
-      return '<li><div class="po-person"><span class="po-person-n">' + esc(c.name) + '</span><span class="po-person-r">' + esc(c.title) + '</span>' +
+      return '<li><div class="po-person"><span class="po-person-n" data-i18n-skip>' + esc(c.name) + '</span><span class="po-person-r">' + esc(c.title) + '</span>' +
         '<span class="po-person-links"><a class="p-link" href="' + esc(tel(Club.info.phone, c.ext)) + '"><span>' + esc(Club.info.phone + ' ext. ' + c.ext) + '</span></a>' +
         '<a class="p-link" href="mailto:' + esc(c.email) + '"><span>' + esc(c.email) + '</span></a></span></div></li>';
     }).join('') + '</ul>';
@@ -163,8 +163,8 @@
   function enquiryRow(o) {
     const p = pkg(o.packageId);
     const d = fmt.toDate(o.date);
-    return '<li><button type="button" class="po-enq" data-enq="' + esc(o.id) + '" aria-label="' + esc(o.organization + ', ' + fmt.date(o.date)) + '">' +
-      '<span class="po-dblock" aria-hidden="true"><small>' + esc(d.toLocaleDateString('en-US', { month: 'short' })) + '</small><span class="po-dblock-n">' + d.getDate() + '</span></span>' +
+    return '<li><button type="button" class="po-enq" data-enq="' + esc(o.id) + '">' +
+      '<span class="po-dblock"><small>' + esc(d.toLocaleDateString('en-US', { month: 'short' })) + '</small><span class="po-dblock-n">' + d.getDate() + '</span></span>' +
       '<span class="po-enq-main"><span class="po-enq-t" data-i18n-skip>' + esc(o.organization) + '</span>' +
       '<span class="po-enq-s">' + esc(o.players + ' players') + (p && !unsureYet(o) ? ' · ' + esc(p.name) : '') + '</span></span>' +
       badge(o) + '</button></li>';

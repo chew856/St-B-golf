@@ -207,7 +207,7 @@ body.portal .pl-progs .pk-acc-head { min-height: 68px; }
 
 /* ---------- Tablet and desktop ---------- */
 @media (min-width: 768px) {
-  .pl-main, .pl-side, .pl-up, .pl-past-acc { max-width: 36rem; }
+  .pl-main, .pl-side, .pl-up, .pl-past-acc, .pl-next-day { max-width: 36rem; }
 }
 @media (min-width: 1024px) {
   /* Book: the form in a readable column, the professionals beside it */

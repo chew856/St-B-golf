@@ -83,6 +83,8 @@ body.portal .fr-title p { margin: 0; padding: 6px 0 10px; font-size: var(--fs-me
 body.portal .fr-tabs a { position: relative; flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 10px 0 10.5px; border-bottom: 1.5px solid transparent; font: 500 0.875rem/1.4 var(--sans); color: var(--text-3); white-space: nowrap; text-decoration: none; }
 @media (hover: hover) { body.portal .fr-tabs a:hover { color: var(--text); text-decoration: none; } }
 body.portal .fr-tabs a.active { color: var(--text); border-bottom-color: var(--accent); }
+/* short words ("Amis") keep a 44px tap area without moving the underline */
+body.portal .fr-tabs a::before { content: ""; position: absolute; top: 0; bottom: 0; left: -11px; right: -11px; }
 /* something waiting (requests, unread messages): a small brass badge with Ink figures, as on Tee times */
 .fr-count { min-width: 18px; padding: 1px 6px; border-radius: 999px; background: var(--accent); color: var(--c-ink); font-size: 0.6875rem; font-weight: 600; line-height: 1.45; text-align: center; font-variant-numeric: tabular-nums; }
 
@@ -111,7 +113,7 @@ body.portal .fr-empty .empty svg { display: none; }
 .fr-act { flex: 0 1 auto; display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 0 18px; margin-left: auto; }
 .fr-pend { letter-spacing: 0.14em; white-space: nowrap; }
 /* The actions of a row are words: the main one in Ink, the other quiet (as on Home) */
-body.portal .fr-rows .btn, body.portal .fr-rows .p-link { flex: none; min-width: 0; min-height: 44px; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; color: var(--text); font-size: 0.875rem; font-weight: 600; letter-spacing: 0.01em; text-decoration: none; white-space: nowrap; }
+body.portal .fr-rows .btn, body.portal .fr-rows .p-link { flex: none; justify-content: flex-end; min-width: 44px; min-height: 44px; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; color: var(--text); font-size: 0.875rem; font-weight: 600; letter-spacing: 0.01em; text-decoration: none; white-space: nowrap; }
 body.portal .fr-rows .p-link { font-weight: 500; color: var(--text-2); }
 body.portal .fr-rows .btn svg { display: none; }
 @media (hover: hover) { body.portal .fr-rows .btn:hover, body.portal .fr-rows .p-link:hover, .fr-row:hover .fr-row-name, .fr-round:hover .fr-tee-when {

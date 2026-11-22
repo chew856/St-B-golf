@@ -326,7 +326,7 @@ body.portal .rc .rc-kind { font-family: var(--sans); font-size: 1.25rem; font-we
 body.portal .rc .rc-total strong { font-family: var(--font-sig); font-size: 1.5rem; font-weight: 400; font-variant-numeric: lining-nums; }
 body.portal .rc .rc-meta dt, body.portal .rc .rc-lines th { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--label); }
 /* The quiet Receipt link beside something paid for (Portal.receiptLink, js/portal/kit.js) */
-body.portal .p-rc-link { min-height: 44px; font-size: 0.8125rem; }
+body.portal .p-rc-link { min-width: 44px; min-height: 44px; font-size: 0.8125rem; }
 body.portal .p-rc-link svg { display: none; }
 /* Under a past lesson, visit or round: a full-height tap target that does not add to the row's height */
 body.portal .pl-past-main .p-rc-link, body.portal .pd-past-main .p-rc-link, body.portal .tt-past-main .p-rc-link { align-self: flex-start; margin: -8px 0 -12px; }

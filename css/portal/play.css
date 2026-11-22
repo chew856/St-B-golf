@@ -211,6 +211,8 @@ body .lv-band .lv-band-h { margin: 0; font-family: var(--sans); font-weight: 500
 .lv-fin-side > .btn { margin-top: 22px; }
 .lv-reopen { margin-top: 12px; text-align: left; }
 .lv-reopen .lv-link { display: inline; min-height: 0; font-size: inherit; }
+.lv-reopen .lv-link { position: relative; }
+.lv-reopen .lv-link::after { content: ""; position: absolute; inset: -14px -4px; }   /* a 44px tap area around the words */
 
 /* ---------------- Public site: My rounds and the modal "sheet" ---------------- */
 .lv-pubsheet-foot { margin-top: 14px; }

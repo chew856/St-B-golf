@@ -1,8 +1,7 @@
 /* ==========================================================================
    Portal: Leaderboards (plb-), js/portal/leaderboards.js. Portal tokens only.
    Redesign (Nov 22, the members' app language): hairlines and words, no cards, no pills, no shadows.
-   The period and the board are words with a brass underline (the boards scroll sideways on a phone, the page never
-   does); the ranking is a plain list with the place and the value in the serif; the member's own row carries a
+   The period and the board are words with a brass underline; the ranking is a plain list with the place and the value in the serif; the member's own row carries a
    brass line in the margin instead of a filled box. Sheets: a golfer's figures under small capitals, the counted
    rounds as hairline rows, the scorecard as a clean table.
    Contrast (WCAG 2.1, computed): --text on Mist 14.1:1; --text-2 6.5:1; --text-3 5.2:1; --label 5.1:1 (4.7:1 on
@@ -27,9 +26,8 @@ body.portal .plb-head h2.label-caps, .plb-period-one, .plb-tile-k, .plb-r-kl, .p
 @media (hover: hover) { .plb-period button:hover { color: var(--text); } }
 .plb-period-one { margin: 0; padding: 12px 0; border-bottom: 1px solid var(--border); }
 
-/* Boards: smaller words in one row that scrolls sideways (the page itself never does) */
-.plb-chips { display: flex; gap: 2px; margin: 0 -20px; padding: 6px 13px 0; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
-.plb-chips::-webkit-scrollbar { display: none; }
+/* Boards: smaller words under the period; they wrap onto a second line when they do not fit */
+.plb-chips { display: flex; flex-wrap: wrap; gap: 0 2px; margin: 0 -7px; padding: 6px 0 0; }
 .plb-chip { flex: none; min-width: 44px; min-height: 44px; padding: 0 7px; border: 0; border-radius: 0; background: none; color: var(--text-2); font: 400 0.8125rem/1.2 var(--sans); white-space: nowrap; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .plb-chip span { display: inline-block; padding: 4px 0; border-bottom: 2px solid transparent; transition: border-color var(--t-ui) var(--ease-ui); }
 @media (hover: hover) { .plb-chip:hover { color: var(--text); } }
@@ -126,7 +124,4 @@ body.portal .plb-card-sub + .plb-card-sub { margin-top: -12px; }
   .plb-r-k { min-width: 2rem; }
   .plb-card col.plb-col-l { width: 2.8rem; }
   .plb-card col.plb-col-t { width: 2.1rem; }
-}
-@media (min-width: 768px) {
-  .plb-chips { flex-wrap: wrap; overflow: visible; margin: 0 -7px; padding: 6px 0 0; }
 }

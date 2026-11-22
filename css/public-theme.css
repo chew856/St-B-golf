@@ -657,6 +657,8 @@ body.public .pub-footer { border-top: 1px solid var(--border); }
 body.public .pub-footer-inner { max-width: 1184px; margin: 0 auto; padding: 22px var(--pg) 28px; text-align: center; color: var(--text-3); font-size: 0.8125rem; line-height: 1.5; }
 body.public .pub-footer-inner p { margin: 0 0 2px; }
 body.public .pub-footer .flourish { display: none; }
+body.public .pub-footer-addr { text-wrap: balance; }   /* the phone number stays with the dot before it */
+body.public .pub-footer-addr a { white-space: nowrap; }
 body.public .pub-footer-name { font-family: var(--sans); font-size: 0.9375rem; font-weight: 500; color: var(--text); }
 body.public .pub-footer a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 2px; color: var(--text); text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 4px; }
 body.public .pub-footer-inner .pub-land { max-width: 640px; margin: 6px auto 0; font-style: normal; color: var(--text-3); }

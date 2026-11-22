@@ -138,7 +138,7 @@ body.portal .po-choice.active .po-choice-k { display: block; }
 /* the format: words, a brass underline on the chosen one */
 body.portal .po-fmt { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 12px; min-height: 60px; margin-top: 0; border-bottom: 1px solid var(--border); }
 body.portal .po-fmt .pk-label { display: block; margin: 0; }
-body.portal .po-page .po-seg { display: flex; width: auto; gap: 6px; margin: 0 -6px; padding: 0; border-radius: 0; background: none; overflow: visible; }
+body.portal .po-page .po-seg { display: flex; flex-wrap: wrap; width: auto; max-width: calc(100% + 12px); gap: 0 6px; margin: 0 -6px; padding: 0; border-radius: 0; background: none; overflow: visible; }
 body.portal .po-page .po-seg button { position: relative; flex: none; min-width: 44px; min-height: 44px; padding: 0 6px; border-radius: 0; background: none; box-shadow: none; font-size: 0.875rem; font-weight: 500; line-height: 1.2; color: var(--text-2); white-space: nowrap; }
 body.portal .po-page .po-seg button.active { background: none; box-shadow: none; color: var(--text); }
 body.portal .po-page .po-seg button.active::after { content: ""; position: absolute; left: 6px; right: 6px; bottom: 8px; height: 2px; background: var(--accent); }
@@ -187,6 +187,7 @@ body.portal .po-done-acts .btn { justify-content: center; min-height: 48px; }
   @keyframes po-pop { from { transform: scale(0.6); opacity: 0; } to { transform: none; opacity: 1; } }
 }
 body.portal .po-call { min-height: 0; display: inline; }
+body.portal .po-done > .po-fine { margin-top: 18px; }
 
 @media (max-width: 599.98px) {
   body.portal .po-done-acts .btn { flex: 1 1 100%; }

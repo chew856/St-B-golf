@@ -95,12 +95,12 @@ body.portal .fl-invite-btn, body.portal .fl-addteam { align-self: flex-start; ma
 .fl-team-h { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 0 0 8px; font: 500 0.96875rem/1.35 var(--sans); color: var(--text); }
 .fl-team-n { letter-spacing: 0.14em; white-space: nowrap; }
 /* Rules: a plain label and value list */
-.fl-kv { margin: 0; display: block; border-bottom: 1px solid var(--border); }
-.fl-kv > div { display: grid; grid-template-columns: minmax(5.5rem, 28%) minmax(0, 1fr); gap: 12px; align-items: baseline; padding: 11px 0; border-top: 1px solid var(--border); }
-.fl-kv dt { line-height: 1.7; }
-.fl-kv dd { margin: 0; font-size: 0.9375rem; font-weight: 500; line-height: 1.45; overflow-wrap: anywhere; }
-.fl-kv > .fl-kv-note { display: block; margin: 0; padding: 0 0 11px; border-top: 0; }
-.fl-kv > .fl-kv-note dd { padding-left: calc(max(5.5rem, 28%) + 12px); font-size: var(--fs-meta); font-weight: 400; color: var(--text-2); }
+.fl-kv { margin: 0; display: grid; grid-template-columns: minmax(5rem, auto) minmax(0, 1fr); border-bottom: 1px solid var(--border); }
+.fl-kv > div { display: contents; }   /* one grid for the list: the labels share a column that fits the longest */
+.fl-kv dt, .fl-kv dd { padding: 11px 0; border-top: 1px solid var(--border); }
+.fl-kv dt { padding-right: 16px; line-height: 2.05; white-space: nowrap; }
+.fl-kv dd { margin: 0; min-width: 0; font-size: 0.9375rem; font-weight: 500; line-height: 1.45; overflow-wrap: anywhere; }
+.fl-kv > .fl-kv-note dd { grid-column: 2; padding: 0 0 11px; border-top: 0; font-size: var(--fs-meta); font-weight: 400; color: var(--text-2); }
 body.portal .fl-rules { margin: 12px 0 0; padding-left: 1.1rem; display: grid; gap: 4px; }
 body.portal .fl-rules li { padding-left: 2px; }
 .fl-danger { padding-top: 0; }

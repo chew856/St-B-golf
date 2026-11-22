@@ -5,7 +5,7 @@ const B = 'http://localhost:8001/site/'; const OUT = 'po/';
 const res = []; let fails = 0;
 const ok = (c, m, x) => { res.push((c ? 'PASS ' : 'FAIL ') + m + (c || x === undefined ? '' : '  got: ' + JSON.stringify(x))); if (!c) fails++; };
 async function human(p, sel) {
-  const loc = p.locator(sel).first(); await loc.waitFor({ timeout: 8000 }); await loc.scrollIntoViewIfNeeded().catch(() => {}); await p.waitForTimeout(150);
+  const loc = p.locator(sel).first(); await loc.waitFor({ timeout: 8000 }); await loc.evaluate(el => el.scrollIntoView({ block: 'center' })).catch(() => {}); await p.waitForTimeout(150);   /* centred: clear of the sticky top bar */
   const box = await loc.boundingBox(); const x = box.x + box.width / 2, y = box.y + box.height / 2;
   await p.mouse.move(x - 6, y - 4); await p.mouse.move(x, y); await p.mouse.down(); await p.mouse.move(x + 1, y + 1); await p.mouse.up(); await p.waitForTimeout(450);
 }
@@ -30,7 +30,7 @@ for (const lang of ['en', 'fr']) for (const [w, h] of [[1440, 900], [390, 844]])
 
   /* Navigation: the page is in the header (or its More menu) on desktop and in the phone More menu */
   if (w >= 1024) ok(await p.locator('.p-nav a[data-page=outings]').count() === 1, tag + ' Group outings link in the header nav');
-  else { await human(p, '.p-more-btn'); ok(await p.locator('.drawer a[href="#/outings"], .overlay a[href="#/outings"]').count() >= 1, tag + ' Group outings in the phone More menu'); await p.keyboard.press('Escape'); await p.waitForTimeout(400); }
+  else { await human(p, '.p-tabbar .p-more-btn'); await p.waitForTimeout(400); ok(await p.locator('.p-more a.p-more-row[href="#/outings"]').count() === 1, tag + ' Group outings on the phone More page'); }   /* More is a page since the Nov 21 redesign */
 
   await p.evaluate(() => { if (Club.i18n.clearMissing) Club.i18n.clearMissing(); location.hash = '#/outings'; }); await p.waitForTimeout(1100);
   ok(await p.locator('.po-pkg').count() === 3, tag + ' three packages shown');

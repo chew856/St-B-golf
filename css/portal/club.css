@@ -73,9 +73,10 @@ body.portal .pc-today-link { display: inline-flex; align-items: center; min-heig
 @media (hover: hover) { body.portal .pc-today-link:hover { text-decoration-color: var(--on-dark); } }
 .pc-today :focus-visible { outline-color: var(--on-dark); }
 /* Carts, Greens, Pins, Holes: a quiet label and value list */
-.pc-facts { margin: 8px 0 0; padding: 0; }
-.pc-facts > div { display: grid; grid-template-columns: minmax(4.75rem, 24%) minmax(0, 1fr); gap: 12px; align-items: baseline; padding: 13px 0; border-bottom: 1px solid var(--border); }
-.pc-facts dt { line-height: 1.7; }
+.pc-facts { display: grid; grid-template-columns: minmax(4.75rem, auto) minmax(0, 1fr); margin: 8px 0 0; padding: 0; }
+.pc-facts > div { display: contents; }   /* one grid for the whole list, so the labels share a column that fits the longest (French) */
+.pc-facts dt, .pc-facts dd { padding: 13px 0; border-bottom: 1px solid var(--border); }
+.pc-facts dt { padding-right: 16px; line-height: 2.05; white-space: nowrap; }
 .pc-facts dd { margin: 0; min-width: 0; }
 .pc-fact-v { display: block; font-size: 0.96875rem; font-weight: 500; line-height: 1.4; color: var(--text); font-variant-numeric: tabular-nums; }
 .pc-fact-n { display: block; margin-top: 1px; font-size: 0.8125rem; line-height: 1.45; color: var(--text-3); }

@@ -14,7 +14,7 @@
 .gc-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 /* ---------------- Small spaced capitals: the labels of these screens ---------------- */
-.gc-idx-k, .gc-est-k, .gc-month, .gc-dblock small, .gc-stat-k, .gc-sum-k, .gc-new-k,
+.gc-idx-k, .gc-est-k, body.portal .gc-month, .gc-dblock small, .gc-stat-k, .gc-sum-k, .gc-new-k,
 body.portal .gc-flow .pk-label, body.portal .gc-total .pk-label {
   font-family: var(--sans); font-size: 0.6875rem; font-weight: 600; line-height: 1.4; letter-spacing: 0.18em; text-transform: uppercase; color: var(--label);
 }

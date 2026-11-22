@@ -125,7 +125,6 @@ body.portal .to-done-paid { margin: 0 0 18px; font-size: 0.8125rem; color: var(-
   body.portal .to-olines li { grid-template-columns: minmax(0, 1fr) auto 4.5rem; }
   body.portal .to-oline-amt { grid-column: auto; }
 }
-/* Phone: the clubhouse number in the small print gets a taller hit area without moving the text around it. */
-@media (max-width: 768px) {
-  body.portal .to-fine a { display: inline-block; padding: 12px 0; margin: -12px 0; }
-}
+/* The clubhouse number in the small print: a taller hit area that does not move the text around it. */
+body.portal .to-fine a { position: relative; }
+body.portal .to-fine a::after { content: ""; position: absolute; left: -4px; right: -4px; top: -14px; bottom: -14px; }

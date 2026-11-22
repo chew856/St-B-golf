@@ -290,7 +290,7 @@ async function teeTime(lang, w) {
   await shotStep(p, `xe-${lang}-${w}-tee-2-payment`, '.pub-card-panel');
   await click(p, '.pub-card-panel .ckf-step:not([hidden]) .ckf-next');
   ok(await at(p, '.pub-card-panel') === 'review', tag + ' Review step');
-  ok(await p.locator('.pub-steps li.active [aria-current=step]').count() === 1 && /4/.test(await p.locator('.pub-steps li.active').innerText()), tag + ' indicator on step 4');
+  ok(await p.locator('.pub-steps li.active [aria-current=step]').count() === 1 && await p.locator('.pub-steps li.active button').getAttribute('data-step') === '4', tag + ' indicator on step 4');   /* public redesign (Nov 22): the steps are words, no numbers */
   ok(await p.locator('.hold-timer.is-in').count() === 1, tag + ' hold countdown still on Review');
   const ov = await p.evaluate(() => { const a = document.querySelector('.hold-timer').getBoundingClientRect(), b = document.querySelector('.pub-paybtn').getBoundingClientRect(); return { timerTop: a.top, timerBottom: a.bottom, btn: b.top }; });
   await p.locator('.pub-paybtn').scrollIntoViewIfNeeded();

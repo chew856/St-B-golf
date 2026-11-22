@@ -3530,3 +3530,94 @@
     ]
   });
 })();
+
+/* ---------------- Redesign: golf pages (Nov 22) ----------------
+   The redesigned Play (live scorecard), Scores and handicap, Leaderboards, Lessons and Group outings
+   (js/portal/play.js, scores.js, leaderboards.js, lessons.js, outings.js). Almost every word on these screens was
+   already in the blocks above; these are the new ones. The Play strings are shared with the public site
+   (public.html loads this file too), so they are added on both pages; the rest are for the members' portal only. */
+(function () {
+  if (!window.Club || !Club.i18n || typeof Club.i18n.add !== 'function') return;
+  /* Play: the tee time's panel, the list of games */
+  Club.i18n.add({
+    strings: {
+      'Start scorecard': 'Ouvrir la carte de score',
+      'Back to scorecard': 'Retour à la carte de score',
+      'Opens 5 minutes before your tee time. Your group keeps score together, each on their own phone.': 'Ouvre 5 minutes avant votre départ. Votre groupe tient le score ensemble, chacun sur son téléphone.',
+      'Selected': 'Sélectionné',
+      '18 holes': '18 trous',
+      '9 holes': '9 trous'
+    },
+    patterns: [
+      [/^Scorecard opens (.+)$/, 'La carte de score ouvre à $1']
+    ]
+  });
+  if (!(document.body ? document.body.classList.contains('portal') : /member\.html/.test(location.pathname))) return;
+  Club.i18n.add({
+    strings: {
+      /* Lessons > Packages: the lessons left as the row's figure, "3 of 5" over this label */
+      'Lessons left': 'Cours restants'
+    },
+    patterns: [
+      [/^of (\d+)$/, 'sur $1'],
+      /* Scores > Post a score: the pinned bar on the Attest step */
+      [/^Attested by ([A-ZÀ-Ý].+)$/, 'Attesté par $1']
+    ]
+  });
+})();
+
+/* ---------------- Redesign: club pages (Nov 22) ----------------
+   Events, Friends and friends leagues, The club, the Handbook's details and Rate your visits in the approved
+   language (js/portal/events.js, friends.js, fleagues.js, club.js, feedback.js). The pages kept their sentences, so
+   nearly every string was already in the blocks above (and in fr-fleagues.js); these are the new ones. */
+(function () {
+  if (!window.Club || !Club.i18n || typeof Club.i18n.add !== 'function') return;
+  if (!(document.body ? document.body.classList.contains('portal') : /member\.html/.test(location.pathname))) return;
+  Club.i18n.add({
+    strings: {
+      /* Events: the dark panel, the registration panel, the event's label and value list */
+      'Your next event': 'Votre prochain événement',
+      'Your registration': 'Votre inscription',
+      'Spots': 'Places',
+      'Junior': 'Junior',
+      /* Friends: the line under the title */
+      'Shared between friends only.': 'Partagé entre amis seulement.',
+      /* A friends league: "Your place · Final" on the dark panel */
+      'Final': 'Final'
+    },
+    patterns: [
+      /* A friends league's dark panel: the place set large, then "of 5" */
+      [/^of (\d+)$/, 'sur $1'],
+      /* Club news: how long ago, already in French from Club.fmt.relative ("Il y a 10 jours"). Named here so the
+         translator's aid (Club.i18n.missing) does not take it for English. */
+      [/^Il y a (\d+) jours$/, 'Il y a $1 jours']
+    ]
+  });
+})();
+
+/* ---------------- Redesign: account pages (Nov 22) ----------------
+   The redesign of My account, Profile, Gift cards, Shop, Takeout and Order to the course (js/portal/account.js,
+   profile.js, gifts.js, shop.js, takeout.js, cart.js). The pages were laid out again with the words they already had,
+   so nearly everything is in the blocks above; these are the few new ones. */
+(function () {
+  if (!window.Club || !Club.i18n || typeof Club.i18n.add !== 'function') return;
+  if (!(document.body ? document.body.classList.contains('portal') : /member\.html/.test(location.pathname))) return;
+  Club.i18n.add({
+    strings: {
+      /* My account, Overview: the quiet line that opens the month by department ("This month" · "$1,111 to date") */
+      'This month': 'Ce mois-ci',
+      /* Pay: the label of the block showing the balance today and after the payment */
+      'Your balance': 'Votre solde',
+      /* Renew: the one line under the title */
+      'Nothing is charged until you confirm.': 'Rien n’est facturé avant votre confirmation.',
+      /* Profile: the last group (language, sign out) */
+      'Settings': 'Paramètres',
+      /* Takeout on phones: the pinned bar's first button */
+      'View order': 'Voir la commande'
+    },
+    patterns: [
+      /* the amount is already in French form ("1 111 $ to date") */
+      [/^(.+) to date$/, '$1 à ce jour']
+    ]
+  });
+})();

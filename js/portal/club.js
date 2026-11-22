@@ -1,5 +1,9 @@
 /* Portal: The club. Course conditions, club news, member directory and club information.
-   Read only: courseStatus (course.js), announcements (communications.js), members and staff (core). */
+   Read only: courseStatus (course.js), announcements (communications.js), members and staff (core).
+   Redesign (Nov 22, the owner-approved language; css/portal/club.css): the four sections as words with a brass
+   underline. Course: one dark Fairway panel (open or closed, the temperature as the one serif figure, Book a tee
+   time), then a quiet label and value list. News: a reading list with date blocks. Directory: hairline rows.
+   Club info: hours and contacts as plain label and value lists. No cards, no avatars. */
 (function () {
   'use strict';
   const S = Club.store, ui = Club.ui, fmt = Club.fmt, esc = ui.esc;
@@ -108,7 +112,7 @@
   function renderCourse(host) {
     const st = S.getObj('courseStatus', null);
     const w = Club.weather;
-    if (!st) { host.innerHTML = '<section class="panel">' + ui.empty({ icon: 'course', title: 'No course report yet', text: 'The superintendent posts conditions each morning. Please call the golf shop for today’s details.' }) + '</section>'; return; }
+    if (!st) { host.innerHTML = '<section class="pc-empty">' + ui.empty({ icon: 'course', title: 'No course report yet', text: 'The superintendent posts conditions each morning. Please call the golf shop for today’s details.' }) + '</section>'; return; }
     const holes = Array.isArray(st.holes) && st.holes.length ? st.holes : [];
     const gur = holes.filter(function (h) { return h.status === 'GUR'; });
     const closed = holes.filter(function (h) { return h.status === 'closed'; });
@@ -122,53 +126,56 @@
     const affected = closed.length + gur.length;
     const spd = +st.greenSpeed || 0;
     const pace = spd >= 10.5 ? 'fast' : spd >= 9 ? 'medium' : 'slow';
-    const tile = function (label, value, note) { return '<div class="pc-tile"><span class="pc-tile-l">' + esc(label) + '</span><span class="pc-tile-v">' + esc(value) + '</span>' + (note ? '<span class="pc-tile-n">' + esc(note) + '</span>' : '') + '</div>'; };
+    const fact = function (label, value, note) { return '<div><dt>' + esc(label) + '</dt><dd><span class="pc-fact-v">' + esc(value) + '</span>' + (note ? '<span class="pc-fact-n">' + esc(note) + '</span>' : '') + '</dd></div>'; };
     const lo = w && w.today && w.today.lo != null ? String(w.today.lo).replace('-', '−') : '';
     const neg = function (v) { return String(v).replace('-', '−'); };   /* every temperature with a true minus sign, as the low already was */
     host.innerHTML =
-      '<article class="pc-card pc-cond' + (open ? '' : ' is-closed') + '">' +
-        '<header class="pc-cond-head"><div>' +
-          '<h2 class="pc-cond-state">' + (open ? 'Open for play' : 'Closed today') + '</h2>' +
-          '<p class="pc-stamp">' + esc(stamp(st.updatedAt)) + '</p></div>' +
-          (w && w.today ? '<p class="pc-now">' + Club.icon(w.today.icon) + '<span>' + esc(neg(w.nowTemp)) + '° ' + esc(w.today.cond) + '<br><span class="pc-now-c">H ' + esc(neg(w.today.hi)) + '° · L ' + esc(lo) + '° · Wind ' + esc(w.today.wind) + ' km/h</span></span></p>' : '') +
-        '</header>' +
-        '<div class="pc-tiles">' +
-          tile('Carts', st.cartRule === '90 degree' ? '90° rule' : (st.cartRule || 'Normal'), cartText[st.cartRule] || '') +
-          tile('Greens', spd.toFixed(1) + ' (' + pace + ')', (st.firmness || 'Medium') + ' greens') +
-          tile('Pins', pins, pins === 'Back' ? 'Take an extra club in.' : pins === 'Front' ? 'Mind the false fronts.' : '') +
-          tile('Holes', affected ? affected + ' affected' : 'All in play', affected ? holesNote : '') +
-        '</div>' +
-        (st.message ? '<div class="pc-note">' + Portal.accordion({ id: 'pc-note', icon: 'info', title: 'Note from the grounds crew', summary: (supt ? supt.firstName + ' ' + supt.lastName + ', ' : '') + 'Superintendent', body: '<p class="pc-note-p">' + esc(st.message) + '</p>' }) + '</div>' : '') +
+      '<div class="pc-course-main"><article class="pc-cond pc-today' + (open ? '' : ' is-closed') + '">' +
+        '<p class="pc-stamp">' + esc(stamp(st.updatedAt)) + '</p>' +
+        '<div class="pc-today-row"><div class="pc-today-b"><h2 class="pc-cond-state">' + (open ? 'Open for play' : 'Closed today') + '</h2>' +
+          (w && w.today ? '<p class="pc-now"><span>' + esc(w.today.cond) + '</span> · <span class="pc-now-c">H ' + esc(neg(w.today.hi)) + '° · L ' + esc(lo) + '° · Wind ' + esc(w.today.wind) + ' km/h</span></p>' : '') + '</div>' +
+          (w && w.today ? '<p class="pc-temp">' + esc(neg(w.nowTemp)) + '°</p>' : '') + '</div>' +
+        '<div class="pc-today-rule"></div>' +
+        '<div class="pc-cta"><a class="pc-today-btn" href="#/tee-times">Book a tee time</a><a class="pc-today-link" href="' + tel(Club.info.phone) + '"><span>Call the golf shop</span></a></div>' +
       '</article>' +
+      '<dl class="pc-facts">' +
+        fact('Carts', st.cartRule === '90 degree' ? '90° rule' : (st.cartRule || 'Normal'), cartText[st.cartRule] || '') +
+        fact('Greens', spd.toFixed(1) + ' (' + pace + ')', (st.firmness || 'Medium') + ' greens') +
+        fact('Pins', pins, pins === 'Back' ? 'Take an extra club in.' : pins === 'Front' ? 'Mind the false fronts.' : '') +
+        fact('Holes', affected ? affected + ' affected' : 'All in play', affected ? holesNote : '') +
+      '</dl></div>' +
       '<div class="pc-accs">' +
-        (holes.length ? Portal.accordion({ id: 'pc-holes', icon: 'flag', open: wide(), title: 'Hole status', summary: affected ? affected + ' affected' : 'All 18 in play',
+        (st.message ? Portal.accordion({ id: 'pc-note', title: 'Note from the grounds crew', summary: (supt ? supt.firstName + ' ' + supt.lastName + ', ' : '') + 'Superintendent', body: '<p class="pc-note-p">' + esc(st.message) + '</p>' }) : '') +
+        (holes.length ? Portal.accordion({ id: 'pc-holes', open: wide(), title: 'Hole status', summary: affected ? affected + ' affected' : 'All 18 in play',
           body: '<ol class="pc-hole-grid">' + holes.map(function (h) { const lbl = h.status === 'GUR' ? 'ground under repair' : h.status === 'closed' ? 'closed' : 'in play'; return '<li class="h-' + esc(h.status) + '" aria-label="Hole ' + h.number + ': ' + lbl + '"><span>' + h.number + '</span></li>'; }).join('') + '</ol>' +
             '<ul class="pc-legend"><li><i class="h-open"></i>In play</li><li><i class="h-GUR"></i>Ground under repair</li><li><i class="h-closed"></i>Closed</li></ul>' +
             '<p class="pc-holes-note">' + esc(holesNote) + '</p>' }) : '') +
-        Portal.accordion({ id: 'pc-fc', icon: 'calendar', open: wide(), title: '7-day forecast', summary: w.forecast.length > 1 ? 'Tomorrow ' + neg(w.forecast[1].hi) + '° · ' + w.forecast[1].cond : '',
+        Portal.accordion({ id: 'pc-fc', open: wide(), title: '7-day forecast', summary: w.forecast.length > 1 ? 'Tomorrow ' + neg(w.forecast[1].hi) + '° · ' + w.forecast[1].cond : '',
           body: '<ol class="pc-fc">' + w.forecast.map(function (d, i) {
             return '<li' + (i === 0 ? ' class="today"' : '') + '><span class="pc-fc-day">' + esc(i === 0 ? 'Today' : fmt.weekday(d.date)) + '</span>' +
-              '<span class="pc-fc-cond">' + Club.icon(d.icon) + '<span>' + esc(d.cond) + '</span></span>' +
+              '<span class="pc-fc-cond"><span>' + esc(d.cond) + '</span></span>' +
               '<span class="pc-fc-rain">' + d.rain + '% rain</span>' +
               '<span class="pc-fc-t">' + neg(d.hi) + '° <span>' + String(d.lo).replace('-', '−') + '°</span></span></li>';
           }).join('') + '</ol>' }) +
-      '</div>' +
-      '<div class="pc-cta"><a class="btn btn-primary" href="#/tee-times">Book a tee time</a><a class="btn" href="' + tel(Club.info.phone) + '">' + Club.icon('phone') + '<span>Call the golf shop</span></a></div>';
+      '</div>';
   }
 
   /* ---------------- Club news ---------------- */
   function renderNews(host, m, refreshNav) {
     const list = myNews(m); const read = readSet(m.id);
     if (!list.length) {
-      host.innerHTML = '<section class="panel">' + ui.empty({ icon: 'mail', title: 'No notices just now', text: m.status === 'suspended' ? 'Club notices resume once your account review is complete. The club office is happy to help.' : 'Notices from the club will appear here as they are sent.' }) + '</section>';
+      host.innerHTML = '<section class="pc-empty">' + ui.empty({ icon: 'mail', title: 'No notices just now', text: m.status === 'suspended' ? 'Club notices resume once your account review is complete. The club office is happy to help.' : 'Notices from the club will appear here as they are sent.' }) + '</section>';
       return;
     }
-    host.innerHTML = '<ul class="p-list pc-news">' + list.map(function (a) {
-      const unread = read.indexOf(a.id) < 0;
+    /* Each notice: a date block (the month in small capitals over the day), the title, how long ago, and a small
+       brass dot while it is unread. */
+    host.innerHTML = '<ul class="pc-list pc-news">' + list.map(function (a) {
+      const unread = read.indexOf(a.id) < 0, day = a.sentAt.slice(0, 10), d = fmt.toDate(day);
       return '<li><button type="button" class="pc-notice' + (unread ? ' unread' : '') + '" data-id="' + esc(a.id) + '" aria-haspopup="dialog">' +
-        '<span class="pc-notice-date">' + esc(fmt.dateShort(a.sentAt.slice(0, 10))) + '</span>' +
-        '<span class="pc-notice-title">' + esc(a.title) + '</span>' + (unread ? '<span class="badge pc-new">New</span>' : '') +
-        Club.icon('chevronRight', 'pc-chev') + '</button></li>';
+        '<span class="pc-notice-d" aria-hidden="true"><small>' + esc(d.toLocaleDateString('en-US', { month: 'short' })) + '</small><span class="pc-notice-n">' + d.getDate() + '</span></span>' +
+        '<span class="pc-notice-b"><span class="pc-notice-title">' + esc(a.title) + '</span>' +
+        '<span class="pc-notice-date">' + esc(fmt.relative(day)) + '</span></span>' +
+        (unread ? '<span class="pc-new"><span class="pc-vh">New</span></span>' : '') + '</button></li>';
     }).join('') + '</ul>';
     ui.on(host, 'click', '.pc-notice', function (e, b) {
       const a = S.find('announcements', b.dataset.id); if (!a) return;
@@ -193,20 +200,20 @@
     if (dir.limit < (wide() ? 24 : 10)) dir.limit = wide() ? 24 : 10;
     const all = S.all('members').filter(function (m) { return m.status !== 'resigned'; })
       .sort(function (a, b) { return a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName); });
-    host.innerHTML = '<section class="pc-dirwrap"><div class="pc-dir-head"><label class="pc-search"><span class="pc-search-l">Search</span><span class="pc-search-box">' + Club.icon('search') + '<input class="input" type="search" name="q" placeholder="Search members by name" aria-label="Search members by name" autocomplete="off" value="' + esc(dir.q) + '"></span></label>' +
-      '<p class="pc-privacy">' + Club.icon('info') + '<span>Name, membership and year joined only. The club office can pass on a message.</span></p></div><div class="pc-dir"></div></section>';
+    host.innerHTML = '<section class="pc-dirwrap"><div class="pc-dir-head"><label class="pc-search"><span class="pc-search-l">Find a member</span><span class="pc-search-box">' + Club.icon('search') + '<input class="input" type="search" name="q" placeholder="Search members by name" aria-label="Search members by name" autocomplete="off" value="' + esc(dir.q) + '"></span></label>' +
+      '<p class="pc-privacy"><span>Name, membership and year joined only. The club office can pass on a message.</span></p></div><div class="pc-dir"></div></section>';
     const out = ui.$('.pc-dir', host);
     function draw() {
       const q = dir.q.trim().toLowerCase();
       const list = q ? all.filter(function (m) { return (m.firstName + ' ' + m.lastName).toLowerCase().indexOf(q) >= 0 || m.lastName.toLowerCase().indexOf(q) === 0; }) : all;
-      if (!list.length) { out.innerHTML = ui.empty({ icon: 'members', title: 'No members found', text: 'No member matches "' + dir.q.trim() + '". Try a first or last name.' }); return; }
+      if (!list.length) { out.innerHTML = '<div class="pc-empty">' + ui.empty({ icon: 'members', title: 'No members found', text: 'No member matches "' + dir.q.trim() + '". Try a first or last name.' }) + '</div>'; return; }
       const shown = list.slice(0, dir.limit);
       let letter = '';
-      out.innerHTML = '<p class="pc-dir-count">' + (q ? list.length + (list.length === 1 ? ' member matches' : ' members match') : list.length + ' members') + '</p><ul class="p-list pc-dir-list">' + shown.map(function (m) {
+      out.innerHTML = '<p class="pc-dir-count">' + (q ? list.length + (list.length === 1 ? ' member matches' : ' members match') : list.length + ' members') + '</p><ul class="pc-list pc-dir-list">' + shown.map(function (m) {
         const t = tierOf(m); const L = m.lastName[0].toUpperCase(); let h = '';
-        if (!q && L !== letter) { letter = L; h = '<li class="pc-letter-head"><h3 class="eyebrow">' + esc(L) + '</h3></li>'; }
-        return h + '<li class="pc-dir-row">' + ui.avatar(m.firstName + ' ' + m.lastName, 'sm', m.id !== me.id) + '<span class="pc-dir-main"><span class="person-name">' + esc(m.firstName + ' ' + m.lastName) + (m.id === me.id ? ' <span class="muted">(you)</span>' : '') + '</span><span class="person-sub">' + esc(t ? t.name : 'Member') + (m.memberSince ? ' · Member since ' + esc(String(m.memberSince).slice(0, 4)) : '') + '</span></span></li>';
-      }).join('') + '</ul>' + (list.length > shown.length ? '<div class="pc-dir-more">' + ui.btn('Show more', { action: 'more', sm: true }) + '<span class="muted">Showing ' + shown.length + ' of ' + list.length + '</span></div>' : '');
+        if (!q && L !== letter) { letter = L; h = '<li class="pc-letter-head"><h3>' + esc(L) + '</h3></li>'; }
+        return h + '<li class="pc-dir-row"><span class="pc-dir-main"><span class="person-name">' + esc(m.firstName + ' ' + m.lastName) + (m.id === me.id ? ' <span class="muted">(you)</span>' : '') + '</span></span><span class="person-sub">' + esc(t ? t.name : 'Member') + (m.memberSince ? ' · Member since ' + esc(String(m.memberSince).slice(0, 4)) : '') + '</span></li>';
+      }).join('') + '</ul>' + (list.length > shown.length ? '<button type="button" class="pc-all" data-action="more"><span>Show more</span><span class="pc-all-n">Showing ' + shown.length + ' of ' + list.length + '</span></button>' : '');
     }
     draw();
     let tmr;
@@ -225,32 +232,32 @@
       const ph = Club.info.phone; const i = text.indexOf(ph);
       return i < 0 ? esc(text) : esc(text.slice(0, i)) + '<a href="' + esc(main.href) + '">' + esc(ph) + '</a>' + esc(text.slice(i + ph.length));
     }
-    const callMain = '<a class="p-link pc-call" href="' + esc(main.href) + '">' + Club.icon('phone') + '<span>Main line ' + esc(main.label) + '</span></a>';
+    const callMain = '<a class="p-link pc-call" href="' + esc(main.href) + '"><span>Main line ' + esc(main.label) + '</span></a>';
     host.innerHTML =
-      '<section class="pc-card pc-about"><h2>About the club</h2>' +
+      '<div class="pc-info-main"><section class="pc-about"><h2 class="pc-h">About the club</h2>' +
         '<p class="pc-about-p">' + about + ' <span class="pc-about-more" hidden>' + about2 + '</span> <button type="button" class="p-link pc-more" aria-expanded="false" data-act="about">More</button></p>' +
         callMain +
       '</section>' +
+      /* Hours: each place in small capitals, then its days and hours as a label and value list */
+      '<section class="pc-sec pc-hours"><h2 class="pc-h">Hours</h2>' + hoursList().map(function (h) {
+        return '<h3 class="pc-caps">' + esc(h.venue) + '</h3><dl class="pc-kv">' + h.lines.map(function (l) {
+          const v = l[1] === Club.info.phone ? '<a href="' + esc(main.href) + '">' + esc(l[1]) + '</a>' : '<span>' + esc(l[1]) + '</span>' + (l[2] ? '<span aria-hidden="true">' + l[2] + '</span>' : '');
+          return '<div class="pc-hour-line"><dt>' + esc(l[0]) + '</dt><dd>' + v + '</dd></div>'; }).join('') + '</dl>' + (h.note ? '<p class="pc-hour-note">' + telLine(h.note) + '</p>' : '');
+      }).join('') +
+      (Club.handbook ? '<p class="pc-hour-src">From the club’s 2027 Membership Handbook. <a class="p-link" href="#/handbook/hours">Read the handbook</a></p>' : '') + '</section></div>' +
+      '<div class="pc-info-side"><section class="pc-sec pc-contacts"><h2 class="pc-h">Who to contact</h2>' +
+        (people.length ? '<ul class="pc-list pc-people">' + people.map(function (x) {
+          const s = x.s; const ph = phoneOf(s.phone);
+          return '<li><div class="pc-row-main"><h3>' + esc(s.firstName + ' ' + s.lastName) + '</h3><p class="pc-person-role">' + esc(s.role) + '</p><p class="pc-person-note">' + esc(x.note) + '</p></div>' +
+            '<a class="p-link pc-call" href="' + esc(ph.href) + '"><span>' + esc(ph.label) + '</span></a></li>';
+        }).join('') + '</ul>' : '<p class="pc-quiet">Please call the club office at <a href="' + esc(main.href) + '">' + esc(Club.info.phone) + '</a>.</p>') + '</section>' +
       '<div class="pc-accs">' +
-        Portal.accordion({ id: 'pc-hours', icon: 'clock', title: 'Hours', summary: 'Office · Pro Shop · Gallery · Beer Cart',
-          body: '<ul class="pc-rows">' + hoursList().map(function (h) {
-            return '<li>' + Club.icon(h.icon, 'pc-row-ic') + '<div class="pc-row-main"><h3>' + esc(h.venue) + '</h3>' + h.lines.map(function (l) {
-              const v = l[1] === Club.info.phone ? '<a href="' + esc(main.href) + '">' + esc(l[1]) + '</a>' : '<span>' + esc(l[1]) + '</span>' + (l[2] ? '<span aria-hidden="true">' + l[2] + '</span>' : '');
-              return '<p class="pc-hour-line"><span>' + esc(l[0]) + '</span> · ' + v + '</p>'; }).join('') + (h.note ? '<p class="pc-hour-note">' + telLine(h.note) + '</p>' : '') + '</div></li>';
-          }).join('') + '</ul>' +
-          (Club.handbook ? '<p class="pc-hour-src">From the club’s 2027 Membership Handbook. <a class="p-link" href="#/handbook/hours">Read the handbook</a></p>' : '') }) +
-        Portal.accordion({ id: 'pc-people', icon: 'phone', title: 'Who to contact', summary: people.length ? people.length + ' people, by phone' : 'Call the club office',
-          body: people.length ? '<ul class="pc-rows pc-people">' + people.map(function (x) {
-            const s = x.s; const ph = phoneOf(s.phone);
-            return '<li>' + ui.avatar(s.firstName + ' ' + s.lastName, '', true) + '<div class="pc-row-main"><h3>' + esc(s.firstName + ' ' + s.lastName) + '</h3><p class="pc-person-role">' + esc(s.role) + '</p><p class="pc-person-note">' + esc(x.note) + '</p>' +
-              '<a class="p-link pc-call" href="' + esc(ph.href) + '">' + Club.icon('phone') + '<span>' + esc(ph.label) + '</span></a></div></li>';
-          }).join('') + '</ul>' : '<p>Please call the club office at <a href="' + esc(main.href) + '">' + esc(Club.info.phone) + '</a>.</p>' }) +
-        Portal.accordion({ id: 'pc-benefits', icon: 'star', title: 'Membership benefits', summary: BENEFITS.length + ' included',
-          body: '<ul class="pc-benefits">' + BENEFITS.map(function (b) { return '<li>' + Club.icon('check') + '<span>' + esc(b) + '</span></li>'; }).join('') + '</ul>' }) +
-        Portal.accordion({ id: 'pc-et', icon: 'info', title: 'Dress code and etiquette', summary: 'Golf attire · soft spikes only',
+        Portal.accordion({ id: 'pc-benefits', title: 'Membership benefits', summary: BENEFITS.length + ' included',
+          body: '<ul class="pc-benefits">' + BENEFITS.map(function (b) { return '<li><span>' + esc(b) + '</span></li>'; }).join('') + '</ul>' }) +
+        Portal.accordion({ id: 'pc-et', title: 'Dress code and etiquette', summary: 'Golf attire · soft spikes only',
           body: '<ul class="pc-rows">' + ETIQUETTE.map(function (e) { return '<li><div class="pc-row-main"><h3>' + esc(e.title) + '</h3><p>' + esc(e.text) + '</p>' + (e.link && Club.handbook ? '<a class="p-link" href="' + e.link[0] + '">' + esc(e.link[1]) + '</a>' : '') + '</div></li>'; }).join('') + '</ul>' }) +
-        (links.length ? Portal.accordion({ id: 'pc-links', icon: 'link', title: 'Website and social', summary: links.map(function (l) { return l.label; }).slice(0, 3).join(' · ') + (links.length > 3 ? ' and more' : ''),
-          body: '<ul class="pc-rows pc-links">' + links.map(function (l) { return '<li><a href="' + esc(l.url) + '" target="_blank" rel="noopener">' + Club.icon('link') + '<span>' + esc(l.label) + '</span>' + Club.icon('chevronRight', 'pc-chev') + '</a></li>'; }).join('') + '</ul>' }) : '') +
+      '</div>' +
+      (links.length ? '<section class="pc-sec pc-linksec"><h2 class="pc-h">Website and social</h2><ul class="pc-list pc-links">' + links.map(function (l) { return '<li><a href="' + esc(l.url) + '" target="_blank" rel="noopener"><span>' + esc(l.label) + '</span></a></li>'; }).join('') + '</ul></section>' : '') +
       '</div>';
     ui.on(host, 'click', '[data-act=about]', function (e, b) {
       const more = ui.$('.pc-about-more', host); const open = b.getAttribute('aria-expanded') === 'true';

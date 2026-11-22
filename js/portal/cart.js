@@ -225,7 +225,9 @@
             : q ? '<div class="co-step" role="group" aria-label="' + esc(m.name) + ' quantity"><button type="button" data-dec="' + esc(m.id) + '" aria-label="One fewer ' + esc(m.name) + '">' + '<span aria-hidden="true">−</span></button><output aria-live="polite">' + q + '</output><button type="button" data-inc="' + esc(m.id) + '" aria-label="One more ' + esc(m.name) + '"' + (q >= 20 ? ' disabled' : '') + '><span aria-hidden="true">+</span></button></div>'
             : '<button type="button" class="co-add" data-inc="' + esc(m.id) + '" aria-label="Add ' + esc(m.name) + '">' + Club.icon('plus') + '<span>Add</span></button>';
           return '<li class="co-item' + (m.soldOut ? ' is-out' : '') + (q ? ' is-in' : '') + '"><span class="co-item-main"><span class="co-item-n">' + esc(m.name) + '</span>' +
-            '<span class="co-item-s">' + esc((m.size ? m.size + ' · ' : '') + fmt.money(m.price)) + '</span>' + (m.alcohol ? '<span class="co-item-s">ID may be checked</span>' : '') + '</span>' + ctl + '</li>';
+            (ctx.site === 'portal'   /* the portal sets the price apart, in the serif (css/portal/cart.css) */
+              ? (m.size ? '<span class="co-item-s">' + esc(m.size) + '</span>' : '') + (m.alcohol ? '<span class="co-item-s">ID may be checked</span>' : '') + '</span><span class="co-item-p num">' + esc(fmt.money(m.price)) + '</span>'
+              : '<span class="co-item-s">' + esc((m.size ? m.size + ' · ' : '') + fmt.money(m.price)) + '</span>' + (m.alcohol ? '<span class="co-item-s">ID may be checked</span>' : '') + '</span>') + ctl + '</li>';
         }).join('') + '</ul>';
     }
 
@@ -554,7 +556,8 @@
       o.wire(sh.body, function (label) { btn.textContent = label; btn.classList.toggle('btn-danger', label === 'Cancel order'); btn.classList.toggle('btn-primary', label !== 'Cancel order'); });
       btn.addEventListener('click', function () { if (o.onConfirm() !== false) sh.close(); });
     },
-    bar: { show: function (o) { Portal.actionBar.show(o); }, hide: function () { Portal.actionBar.hide(); } },
+    /* the pinned total, in the dark bar (Portal.inkBar, js/portal/account.js) */
+    bar: { show: function (o) { (Portal.inkBar || Portal.actionBar).show(o); }, hide: function () { Portal.actionBar.hide(); } },
     pickHole: function (current, onPick) {
       Portal.openSheet({ title: 'Which hole are you on now?', selected: current, rows: Array.from({ length: 18 }, function (_, i) { return { value: i + 1, label: 'Hole ' + (i + 1), sub: i + 1 === +current ? 'Where the cart expects you' : '' }; }), onPick: function (v) { onPick(+v); } });
     }
@@ -564,8 +567,9 @@
     id: 'cart', label: 'Order to the course', short: 'Order', icon: 'cart', order: 12, tab: false, nav: false,
     render: function (view, params, member) {
       const m = Portal.member() || member;
-      return mount(view, { golfer: memberGolfer(m), site: 'portal', bookHref: '#/tee-times', kit: portalKit,
+      const stop = mount(view, { golfer: memberGolfer(m), site: 'portal', bookHref: '#/tee-times', kit: portalKit,
         nameOf: function (d) { return Portal.playerLabel ? Portal.playerLabel({ memberId: d.memberId, name: d.name, type: d.golferType === 'public' ? 'public' : 'member' }, m.id) : shortName(d.name); } });
+      return function () { if (typeof stop === 'function') stop(); if (Portal.inkBar) Portal.inkBar.release(); };
     }
   });
   /** Home: a highlighted fifth quick action when the member plays today and the cart is out (or an order is open). */

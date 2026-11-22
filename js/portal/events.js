@@ -1,4 +1,7 @@
-/* Members' portal: Events. Club calendar, invitation-style event pages, RSVP and tournament boards.
+/* Members' portal: Events. Club calendar, event pages, RSVP and tournament boards.
+   Redesign (Nov 22, owner-approved language): hairline rows with date blocks (weekday in small capitals over the day
+   number), sections as words with a brass underline, one dark Fairway panel per page (your next event; your
+   registration; the next league night), no cards. Styles: css/portal/events.css.
    Registrations are written exactly as the staff Events module writes them (js/modules/events.js):
    { memberId, guests, registeredAt, charged } on events[].registrations, seats = 1 + guests, golf-only
    types for golfing tiers, and fees posted with Club.chargeMember (category Events, source events,
@@ -126,24 +129,35 @@
   /* ---------------- Fragments ---------------- */
   function shortRange(ev) { return ev.start ? F.time(ev.start) + (ev.end ? '–' + F.time(ev.end) : '') : 'Time to be confirmed'; }
   function shortPrice(p) { return +p ? F.money0(p) : 'Free'; }
-  function capBar(ev) {
+  function capInfo(ev) {
     const cap = +ev.capacity || 0; const s = seats(ev); const left = placesLeft(ev);
     const pct = cap ? Math.min(100, Math.round(s / cap * 100)) : 0;
     const state = !isOpen(ev) ? 'closed' : left <= 0 ? 'full' : left <= 5 ? 'low' : '';
     const label = state === 'closed' ? s + ' of ' + cap + ' filled · Registration closed' : state === 'full' ? s + ' of ' + cap + ' filled · Full' : left <= 5 ? 'Only ' + left + (left === 1 ? ' spot' : ' spots') + ' left' : left + ' spots left';
-    return '<div class="pe-cap' + (state ? ' ' + state : '') + '"><div class="pe-cap-bar" role="presentation"><span style="width:' + pct + '%"></span></div><p class="pe-cap-t">' + esc(label) + '</p></div>';
+    return { pct: pct, state: state, label: label };
+  }
+  /* The event page: a hairline that fills, and the count in words. Lists show the words only. */
+  function capBar(ev) {
+    const c = capInfo(ev);
+    return '<div class="pe-cap' + (c.state ? ' ' + c.state : '') + '"><div class="pe-cap-bar" role="presentation"><span style="width:' + c.pct + '%"></span></div><p class="pe-cap-t">' + esc(c.label) + '</p></div>';
   }
   function goingBadge() { return '<span class="pe-going">Going</span>'; }
+  function wdShort(d) { return d.toLocaleDateString('en-US', { weekday: 'short' }); }
+  function longDay(iso) { return F.toDate(iso).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }); }
+  /** Date block: the weekday in small capitals over the day number (the full date is in the row for screen readers). */
   function dateBlock(iso) {
     const d = F.toDate(iso);
-    return '<div class="pe-date" aria-hidden="true"><span class="pe-date-wd">' + esc(d.toLocaleDateString('en-US', { weekday: 'short' })) + '</span><span class="pe-date-n">' + d.getDate() + '</span><span class="pe-date-m">' + esc(d.toLocaleDateString('en-US', { month: 'short' })) + '</span></div>';
+    return '<span class="pe-date" aria-hidden="true"><small class="pe-date-wd">' + esc(wdShort(d)) + '</small><span class="pe-date-n">' + d.getDate() + '</span></span>';
   }
+  /** One event as a hairline row: date block, title, one meta line, then its type and the spots left; "Going" on the right. */
   function card(ev, memberId) {
-    const reg = myReg(ev, memberId);
-    return '<a class="pe-card t-' + typeKey(ev.type) + (reg ? ' mine' : '') + '" href="#/events/' + esc(ev.id) + '">' +
+    const reg = myReg(ev, memberId), c = capInfo(ev);
+    return '<li><a class="pe-card pe-row t-' + typeKey(ev.type) + (reg ? ' mine' : '') + '" href="#/events/' + esc(ev.id) + '">' +
       dateBlock(ev.date) +
-      '<div class="pe-card-body"><div class="pe-card-top"><span class="eyebrow">' + esc(typeLabel(ev.type)) + '</span>' + (reg ? goingBadge() : '') + '</div>' +
-      '<h3 class="pe-card-title">' + esc(ev.title) + '</h3><p class="pe-card-meta">' + esc(shortRange(ev) + ' · ' + ev.venue + ' · ' + shortPrice(ev.price)) + '</p>' + capBar(ev) + '</div></a>';
+      '<span class="pe-row-b"><span class="pe-sr">' + esc(longDay(ev.date)) + '</span><span class="pe-card-title pe-row-t">' + esc(ev.title) + '</span>' +
+      '<span class="pe-card-meta pe-row-m">' + esc(shortRange(ev) + ' · ' + ev.venue + ' · ' + shortPrice(ev.price)) + '</span>' +
+      '<span class="pe-row-m pe-row-x"><span>' + esc(typeLabel(ev.type)) + '</span> · <span class="pe-cap-w' + (c.state ? ' ' + c.state : '') + '">' + esc(c.label) + '</span></span></span>' +
+      (reg ? goingBadge() : '') + '</a></li>';
   }
   function liveTag(t) {
     return t.status === 'live' ? '<span class="pe-live"><span class="pe-live-dot" aria-hidden="true"></span>Live</span>' : '<span class="pe-final">Final results</span>';
@@ -207,8 +221,22 @@
   }
   function mineRow(e, memberId) {
     const r = myReg(e, memberId);
-    return '<li><a href="#/events/' + esc(e.id) + '"><span class="pe-mine-main"><span class="pe-mine-when">' + esc(F.toDate(e.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + (e.start ? ' · ' + F.time(e.start) : '')) + '</span>' +
-      '<span class="pe-mine-title">' + esc(e.title) + '</span><span class="pe-mine-sub">' + esc(e.venue + ' · ' + guestLine(r.guests)) + '</span></span>' + Club.icon('chevronRight') + '</a></li>';
+    return '<li><a class="pe-row" href="#/events/' + esc(e.id) + '">' + dateBlock(e.date) + '<span class="pe-row-b pe-mine-main"><span class="pe-row-t pe-mine-title">' + esc(e.title) + '</span>' +
+      '<span class="pe-row-m pe-mine-when">' + esc(F.toDate(e.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + (e.start ? ' · ' + F.time(e.start) : '')) + '</span>' +
+      '<span class="pe-row-m pe-mine-sub">' + esc(e.venue + ' · ' + guestLine(r.guests)) + '</span></span></a></li>';
+  }
+  /** The one dark panel of the Events page: the next event the member is going to, its date set large. */
+  function nextEventHTML(e, memberId) {
+    const r = myReg(e, memberId), d = F.toDate(e.date);
+    return '<section class="pe-next" aria-label="Your next event">' +
+      '<p class="pe-next-eb"><span>Your next event</span> · <span>' + esc(F.relative(e.date)) + '</span></p>' +
+      '<div class="pe-next-row"><span class="pe-next-d" aria-hidden="true"><small>' + esc(wdShort(d)) + '</small><span class="pe-next-n">' + d.getDate() + '</span></span>' +
+      '<div class="pe-next-b"><p class="pe-next-t">' + esc(e.title) + '</p>' +
+      '<p class="pe-next-meta">' + esc(longDay(e.date) + (e.start ? ' · ' + F.time(e.start) : '')) + '</p>' +
+      '<p class="pe-next-meta">' + esc(e.venue + ' · ' + guestLine(r.guests)) + '</p></div></div>' +
+      '<div class="pe-next-rule"></div>' +
+      '<div class="pe-next-acts"><a class="pe-next-btn" href="#/events/' + esc(e.id) + '">Details</a>' +
+      '<button type="button" class="pe-next-link" data-ics="' + esc(e.id) + '">Add to calendar</button></div></section>';
   }
   function guestLine(g) { return g ? 'You + ' + g + (g === 1 ? ' guest' : ' guests') : 'Just you'; }
 
@@ -228,9 +256,9 @@
   });
   function liveSummary(t, memberId) {
     const lb = leaderboard(t, 'net').filter(function (l) { return l.thru; }).slice(0, 5);
-    return '<section class="pe-side-lb" aria-labelledby="pe-slb-h"><div class="pe-side-lb-head"><span class="pe-live"><span class="pe-live-dot" aria-hidden="true"></span>Live</span><h2 id="pe-slb-h" class="pe-lb-title">' + esc(t.name) + '</h2><p class="pe-lb-sub">Top 5 · net</p></div>' +
+    return '<section class="pe-side-lb" aria-labelledby="pe-slb-h"><div class="pe-side-lb-head"><span class="pe-live"><span class="pe-live-dot" aria-hidden="true"></span>Live</span><h2 id="pe-slb-h" class="pe-h">' + esc(t.name) + '</h2><p class="pe-lb-sub">Top 5 · net</p></div>' +
       '<ol class="pe-side-rows">' + lb.map(function (l) { return '<li' + (l.p.memberId === memberId ? ' class="me"' : '') + '><span class="pe-c-pos">' + esc(l.pos) + '</span><span class="pe-side-name">' + esc(l.name) + '</span><span class="pe-score ' + parClass(l.netToPar) + '"><span aria-hidden="true">' + esc(toPar(l.netToPar)) + '</span><span class="pe-sr">' + esc(toParWords(l.netToPar)) + '</span></span></li>'; }).join('') + '</ol>' +
-      '<a class="p-link pe-side-go" href="#/events/leaderboard" data-trn="' + esc(t.id) + '">Full leaderboard' + Club.icon('chevronRight') + '</a></section>';
+      '<a class="pe-all pe-side-go" href="#/events/leaderboard" data-trn="' + esc(t.id) + '">Full leaderboard</a></section>';
   }
 
   function renderIndex(view, member) {
@@ -240,24 +268,24 @@
     if (typeFilter !== 'All' && types.indexOf(typeFilter) < 0) typeFilter = 'All';
     const live = S.all('tournaments').filter(function (t) { return t.status === 'live'; })[0];
 
-    view.innerHTML = pageHead(evs, mine) + pageTabs('calendar') + '<div class="pe-cal-layout"><div class="pe-side">' +
-      (live ? '<a class="pe-live-banner" href="#/events/leaderboard" data-trn="' + esc(live.id) + '"><span class="pe-live-dot" aria-hidden="true"></span><span class="pe-lbn-t"><span class="pe-lbn-b">Live now: ' + esc(live.name) + '</span><span class="pe-lbn-l">View leaderboard</span></span>' + Club.icon('chevronRight') + '</a>' : '') +
-      '<section class="pe-mine" aria-labelledby="pe-mine-h"><h2 id="pe-mine-h">My events</h2>' +
-        (mine.length ? '<ul class="p-list pe-mine-list">' + mine.slice(0, mineShow()).map(function (e) { return mineRow(e, member.id); }).join('') +
-          (mine.length > mineShow() ? '<li><button type="button" class="pe-mine-all">' + 'All my events (' + mine.length + ')' + Club.icon('chevronRight') + '</button></li>' : '') + '</ul>'
+    const rest = mine.slice(1);
+    const counts = function (t) { return t === 'All' ? evs.length : evs.filter(function (e) { return e.type === t; }).length; };
+    view.innerHTML = pageHead(evs, mine) + pageTabs('calendar') + '<div class="pe-cal-layout">' +
+      (mine.length ? nextEventHTML(mine[0], member.id) : '') +
+      '<div class="pe-side">' +
+      (live ? '<a class="pe-live-banner" href="#/events/leaderboard" data-trn="' + esc(live.id) + '">' + liveTag(live) + '<span class="pe-lbn-b">' + esc(live.name) + '</span><span class="pe-lbn-l">Leaderboard</span></a>' : '') +
+      (rest.length || !mine.length ? '<section class="pe-mine" aria-labelledby="pe-mine-h"><h2 id="pe-mine-h" class="pe-h">My events</h2>' +
+        (rest.length ? '<ul class="pe-rows pe-mine-list">' + rest.slice(0, mineShow()).map(function (e) { return mineRow(e, member.id); }).join('') + '</ul>' +
+          (rest.length > mineShow() ? '<button type="button" class="pe-all pe-mine-all">' + 'All my events (' + mine.length + ')' + '</button>' : '')
           : '<p class="pe-quiet">You haven’t registered for any events yet. Choose one below.</p>') +
-      '</section>' + (live && isDesk() ? liveSummary(live, member.id) : '') + '</div>' +
-      '<section class="pe-cal" aria-labelledby="pe-cal-h"><div class="pe-cal-head"><h2 id="pe-cal-h">Upcoming</h2>' +
-        (evs.length >= 6 ? '<div class="pe-filter-f"></div>' : '') + '</div>' +
+      '</section>' : '') + (live && isDesk() ? liveSummary(live, member.id) : '') + '</div>' +
+      '<section class="pe-cal" aria-labelledby="pe-cal-h"><h2 id="pe-cal-h" class="pe-h">Upcoming</h2>' +
+        (evs.length >= 6 ? '<div class="pe-filter" role="group" aria-label="Show events">' + ['All'].concat(types).map(function (t) {
+          const on = t === typeFilter;
+          return '<button type="button" class="pe-fw' + (on ? ' on' : '') + '" data-type="' + esc(t) + '" aria-pressed="' + on + '"><span>' + esc(t === 'All' ? 'All events' : CHIP_LABEL[t] || t) + '</span><small>' + counts(t) + '</small></button>';
+        }).join('') + '</div>' : '') +
         '<div class="pe-months" aria-live="polite"></div></section></div>';
 
-    if (evs.length >= 6) {
-      Portal.selectField(U.$('.pe-filter-f', view), {
-        title: 'Show events', value: typeFilter,
-        rows: [{ value: 'All', label: 'All events', meta: String(evs.length) }].concat(types.map(function (t) { return { value: t, label: CHIP_LABEL[t] || t, meta: String(evs.filter(function (e) { return e.type === t; }).length) }; })),
-        onChange: function (v) { typeFilter = v; drawMonths(); }
-      });
-    }
     function drawMonths() {
       const list = evs.filter(function (e) { return typeFilter === 'All' || e.type === typeFilter; });
       const groups = {}; list.forEach(function (e) { (groups[monthOf(e.date)] = groups[monthOf(e.date)] || []).push(e); });
@@ -269,7 +297,7 @@
       const host = U.$('.pe-months', view);
       host.innerHTML = list.length ? keys.map(function (k) {
         const evsK = groups[k]; const n = evsK.length; const name = monthLabel(k).replace(' ' + t0.slice(0, 4), '');
-        const grid = function (arr) { return '<div class="pe-grid">' + arr.map(function (e) { return card(e, member.id); }).join('') + '</div>'; };
+        const grid = function (arr) { return '<ul class="pe-rows pe-grid">' + arr.map(function (e) { return card(e, member.id); }).join('') + '</ul>'; };
         if (openKeys.indexOf(k) >= 0) {
           const take = Math.max(0, Math.min(n, openShow() - shown)); shown += take;
           const rest = evsK.slice(take);
@@ -278,10 +306,17 @@
             (rest.length ? '<div class="pe-month-acc pe-month-rest">' + Portal.accordion({ id: 'pe-mr-' + k, title: 'More in ' + name, summary: rest.length + (rest.length === 1 ? ' event' : ' events'), body: grid(rest) }) + '</div>' : '') + '</div>';
         }
         return '<div class="pe-month pe-month-acc">' + Portal.accordion({ id: 'pe-m-' + k, title: name, summary: n + (n === 1 ? ' event' : ' events'), body: grid(evsK) }) + '</div>';
-      }).join('') : '<div class="panel">' + U.empty({ icon: 'events', title: 'No events to show', text: typeFilter === 'All' ? 'New events will appear here as soon as the club announces them.' : 'There are no upcoming events of this type. Try another filter.' }) + '</div>';
+      }).join('') : '<div class="pe-empty">' + U.empty({ icon: 'events', title: 'No events to show', text: typeFilter === 'All' ? 'New events will appear here as soon as the club announces them.' : 'There are no upcoming events of this type. Try another filter.' }) + '</div>';
       void cur;
     }
     drawMonths();
+    /* The type filter: words, a brass underline on the chosen one */
+    U.on(view, 'click', '.pe-fw', function (e, b) {
+      typeFilter = b.dataset.type;
+      U.$$('.pe-fw', view).forEach(function (x) { const on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); });
+      drawMonths();
+    });
+    U.on(view, 'click', '[data-ics]', function (e, b) { const ev = S.find('events', b.dataset.ics); const r = ev && myReg(ev, member.id); if (ev) downloadIcs(ev, r ? r.guests : 0); });
     U.on(view, 'click', '.pe-mine-all', function () {
       Portal.openSheet({ title: 'My events', size: 'full', rows: mine.map(function (e) {
         const r = myReg(e, member.id);
@@ -297,7 +332,7 @@
     if (!boards.some(function (t) { return t.id === boardState.pick; })) boardState.pick = boards[0] ? boards[0].id : null;
     view.innerHTML = head(member, 'leaderboard') +
       (boards.length ? '<div class="pe-lbx' + (boards.length > 1 ? '' : ' one') + '"><div class="pe-lb-pick"></div><div class="pe-board-host"></div></div>'
-        : '<div class="panel">' + U.empty({ icon: 'trophy', title: 'No leaderboards right now', text: 'Results from live and recent tournaments appear here.' }) + '</div>');
+        : '<div class="pe-empty">' + U.empty({ icon: 'trophy', title: 'No leaderboards right now', text: 'Results from live and recent tournaments appear here.' }) + '</div>');
     if (!boards.length) return;
     function drawBoard() {
       const t = S.find('tournaments', boardState.pick); if (!t) return;
@@ -305,7 +340,7 @@
     }
     if (boards.length > 1) {
       Portal.selectField(U.$('.pe-lb-pick', view), {
-        label: 'Tournament', title: 'Choose a tournament', icon: 'trophy', value: boardState.pick,
+        label: 'Tournament', title: 'Choose a tournament', value: boardState.pick,
         rows: boards.map(function (x) { return { value: x.id, label: x.name, sub: (x.status === 'live' ? 'Live · ' : 'Final · ') + F.dateShort(x.date) + ' · ' + x.format }; }),
         onChange: function (v) { boardState.pick = v; drawBoard(); }
       });
@@ -319,22 +354,25 @@
 
   function renderEvent(view, id, member) {
     const ev = S.find('events', id);
-    const back = '<a class="pe-back" href="#/events">' + Club.icon('chevronLeft') + '<span>All events</span></a>';
+    const back = '<a class="pe-back" href="#/events">' + Club.icon('chevronLeft') + '<span>All events</span></a>';   /* a plain text link */
     if (!ev || ev.status === 'draft' || (ev.type === 'Private' && !myReg(ev, member.id))) {
-      view.innerHTML = back + '<div class="panel">' + U.empty({ icon: 'events', title: 'Event not found', text: 'This event may have been cancelled or not announced yet.', action: '<a class="btn btn-primary" href="#/events">See all events</a>' }) + '</div>';
+      view.innerHTML = back + '<div class="pe-empty">' + U.empty({ icon: 'events', title: 'Event not found', text: 'This event may have been cancelled or not announced yet.', action: '<a class="btn btn-primary" href="#/events">See all events</a>' }) + '</div>';
       return;
     }
     const d = F.toDate(ev.date); const reg = myReg(ev, member.id);
     const trns = S.where('tournaments', function (t) { return t.eventId === ev.id && (t.status === 'live' || t.status === 'final'); });
+    /* The date set large beside the title, then a plain label and value list, the description and the registration. */
     view.innerHTML = back + '<div class="pe-dgrid">' +
       '<article class="pe-detail t-' + typeKey(ev.type) + '">' +
-        '<div class="pe-card-top"><span class="eyebrow">' + esc(typeLabel(ev.type)) + '</span>' + (reg ? goingBadge() : '') + '</div>' +
-        '<h1 class="pe-detail-title">' + esc(ev.title) + '</h1>' +
-        '<ul class="pe-meta"><li>' + Club.icon('calendar') + '<span>' + esc(d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) + (ev.start ? ' · ' + shortRange(ev) : '')) + '</span></li><li>' + Club.icon('pin') + '<span>' + esc(ev.venue) + '</span></li><li>' + Club.icon('tag') + '<span>' + esc(priceLabel(ev.price)) + '</span></li></ul>' +
-        (ev.status === 'published' ? capBar(ev) : '') +
+        '<div class="pe-detail-head"><span class="pe-detail-d" aria-hidden="true"><small>' + esc(wdShort(d)) + '</small><span class="pe-detail-n">' + d.getDate() + '</span><small>' + esc(d.toLocaleDateString('en-US', { month: 'short' })) + '</small></span>' +
+        '<div class="pe-detail-id"><div class="pe-card-top"><span class="eyebrow">' + esc(typeLabel(ev.type)) + '</span>' + (reg ? goingBadge() : '') + '</div>' +
+        '<h1 class="pe-detail-title">' + esc(ev.title) + '</h1></div></div>' +
+        '<dl class="pe-meta"><div><dt>When</dt><dd>' + esc(d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) + (ev.start ? ' · ' + shortRange(ev) : '')) + '</dd></div>' +
+        '<div><dt>Where</dt><dd>' + esc(ev.venue) + '</dd></div><div><dt>Price</dt><dd>' + esc(priceLabel(ev.price)) + '</dd></div>' +
+        (ev.status === 'published' ? '<div class="pe-meta-cap"><dt>Spots</dt><dd>' + capBar(ev) + '</dd></div>' : '') + '</dl>' +
         (ev.description ? '<div class="pe-desc clamped"><p id="pe-desc-t">' + esc(ev.description) + '</p><button type="button" class="p-link pe-more" aria-expanded="false" aria-controls="pe-desc-t" hidden>More</button></div>' : '') +
       '</article>' +
-      (trns.length ? '<ul class="p-list pe-detail-boards">' + trns.map(function (t) { return '<li><a href="#/events/leaderboard" data-trn="' + esc(t.id) + '" class="pe-board-link">' + Club.icon('trophy') + '<span class="pe-mine-main"><span class="pe-mine-title">Leaderboard</span><span class="pe-mine-sub">' + esc((t.status === 'live' ? 'Live now · ' : 'Final results · ') + t.name) + '</span></span>' + Club.icon('chevronRight') + '</a></li>'; }).join('') + '</ul>' : '') +
+      (trns.length ? '<ul class="pe-rows pe-detail-boards">' + trns.map(function (t) { return '<li><a href="#/events/leaderboard" data-trn="' + esc(t.id) + '" class="pe-board-link"><span class="pe-mine-main"><span class="pe-mine-title">Leaderboard</span><span class="pe-mine-sub">' + esc((t.status === 'live' ? 'Live now · ' : 'Final results · ') + t.name) + '</span></span></a></li>'; }).join('') + '</ul>' : '') +
       '<div class="pe-rsvp-host"></div></div>';
     const desc = U.$('.pe-desc', view);
     if (desc) {
@@ -366,19 +404,19 @@
     let html;
     if (justBooked === evId && reg) {
       justBooked = null;
-      html = '<section class="pe-rsvp pe-confirm" aria-live="polite"><div class="pe-confirm-head"><span class="pe-att-mark">' + Club.icon('check') + '</span><div><h2>You’re registered</h2>' +
+      html = '<section class="pe-rsvp pe-confirm pe-dark p-dark" aria-live="polite"><p class="pe-dark-eb">Your registration</p><div class="pe-confirm-head"><div><h2>You’re registered</h2>' +
         '<p class="pe-confirm-line">' + esc(ev.title) + ' · ' + esc(F.dateShort(ev.date)) + (ev.start ? ' at ' + esc(F.time(ev.start)) : '') + '</p></div></div>' +
         '<dl class="pe-kv"><div><dt>Who’s going</dt><dd>' + esc(whoLine(reg.guests)) + '</dd></div><div><dt>Charged to your account</dt><dd>' + (reg.charged ? F.money(reg.charged) : 'No charge') + '</dd></div></dl>' +
-        '<div class="pe-rsvp-acts">' + U.btn('Add to calendar', { kind: 'primary', icon: 'calendar', action: 'ics' }) + (reg.charged ? Portal.receiptLink(rcs.slice(0, 1), { btn: true, label: 'View receipt' }) : '') + U.btn('Done', { action: 'done' }) + '</div></section>';
+        '<div class="pe-rsvp-acts">' + U.btn('Add to calendar', { kind: 'primary', action: 'ics' }) + (reg.charged ? Portal.receiptLink(rcs.slice(0, 1), { btn: true, label: 'View receipt' }) : '') + U.btn('Done', { action: 'done' }) + '</div></section>';
     } else if (reg) {
       const names = (reg.guestNames || []).filter(Boolean);
       const rcBtn = Portal.receiptLink(rcs, { btn: true, label: rcs.length > 1 ? 'View receipts' : 'View receipt' });
-      html = '<section class="pe-rsvp">' +
-        '<div class="pe-confirm-head"><span class="pe-att-mark">' + Club.icon('check') + '</span><div><h2>' + (reg.guests ? 'You’re going with ' + reg.guests + (reg.guests === 1 ? ' guest' : ' guests') : 'You’re going') + '</h2>' +
+      html = '<section class="pe-rsvp pe-dark p-dark"><p class="pe-dark-eb">Your registration</p>' +
+        '<div class="pe-confirm-head"><div><h2>' + (reg.guests ? 'You’re going with ' + reg.guests + (reg.guests === 1 ? ' guest' : ' guests') : 'You’re going') + '</h2>' +
         (names.length ? '<p class="pe-att-names">Guests: ' + esc(names.join(', ')) + '</p>' : '') +
         '<p class="pe-att-fee">' + (reg.charged ? F.money(reg.charged) + ' charged to your account (Events).' : (+ev.price ? 'Fees for this event are settled with the club office.' : 'This event is free.')) + '</p></div></div>' +
-        (isOpen(ev) ? '<div class="pe-rsvp-acts">' + U.btn('Change guests', { icon: 'edit', action: 'modify' }) + U.btn('Add to calendar', { icon: 'calendar', action: 'ics' }) + rcBtn + U.btn('Cancel registration', { kind: 'danger', icon: 'close', action: 'cancel' }) + '</div>'
-          : '<p class="pe-closed-note">' + (ev.status === 'cancelled' ? 'This event has been cancelled. The club office will contact you about any fees.' : 'Registration is closed. To make a change, call ' + esc(Club.info.phone) + '.') + '</p>' + (ev.date >= today() || rcBtn ? '<div class="pe-rsvp-acts">' + (ev.date >= today() ? U.btn('Add to calendar', { icon: 'calendar', action: 'ics' }) : '') + rcBtn + '</div>' : '')) +
+        (isOpen(ev) ? '<div class="pe-rsvp-acts">' + U.btn('Change guests', { kind: 'primary', action: 'modify' }) + U.btn('Add to calendar', { action: 'ics' }) + rcBtn + U.btn('Cancel registration', { kind: 'danger', action: 'cancel' }) + '</div>'
+          : '<p class="pe-closed-note">' + (ev.status === 'cancelled' ? 'This event has been cancelled. The club office will contact you about any fees.' : 'Registration is closed. To make a change, call ' + esc(Club.info.phone) + '.') + '</p>' + (ev.date >= today() || rcBtn ? '<div class="pe-rsvp-acts">' + (ev.date >= today() ? U.btn('Add to calendar', { kind: 'primary', action: 'ics' }) : '') + rcBtn + '</div>' : '')) +
         '</section>';
     } else if (ev.status === 'cancelled') {
       html = notice('This event has been cancelled', 'This event will not go ahead. See the calendar for other events.');
@@ -415,7 +453,7 @@
     requestAnimationFrame(function () { if (!document.querySelector('.pe-reg')) Portal.actionBar.hide(); });
   }
   function notice(title, text) {
-    return '<section class="pe-rsvp pe-notice"><h2>' + esc(title) + '</h2><p>' + esc(text) + '</p><a class="btn" href="#/events">See all events</a></section>';
+    return '<section class="pe-rsvp pe-notice"><h2>' + esc(title) + '</h2><p>' + esc(text) + '</p><a class="p-link" href="#/events">See all events</a></section>';
   }
 
   /* Registration: the guests control and the Register / Save button live in the sticky action bar. With no guests the
@@ -458,7 +496,7 @@
       const host = U.$('.pe-bar-g', Portal.actionBar.el()); if (!host) return;
       stepper = null;
       if (!g) {
-        host.innerHTML = U.btn('Add a guest', { icon: 'plus', action: 'add-guest' });
+        host.innerHTML = U.btn('Add a guest', { action: 'add-guest' });
         const add = U.$('[data-action=add-guest]', host);
         add.hidden = maxGuests() === 0;
         add.addEventListener('click', function () { g = 1; draw(); paintGuests(true); });
@@ -595,9 +633,9 @@
     return isGolfer(m) && (!Club.teeRules || Club.teeRules.tierRules(m).golf !== false);
   }
   function moveHTML(mv) {
-    if (mv === 'new') return '<span class="pl-move new">New</span>';
-    if (mv == null || mv === 0) return '<span class="pl-move same"><span aria-hidden="true">–</span><span class="pe-sr">No change</span></span>';
-    return '<span class="pl-move ' + (mv > 0 ? 'up' : 'down') + '">' + Club.icon(mv > 0 ? 'arrowUp' : 'arrowDown') + '<span aria-hidden="true">' + Math.abs(mv) + '</span><span class="pe-sr">' + (mv > 0 ? 'Up ' : 'Down ') + Math.abs(mv) + '</span></span>';
+    if (mv === 'new') return '<span class="plg-move new">New</span>';
+    if (mv == null || mv === 0) return '<span class="plg-move same"><span aria-hidden="true">–</span><span class="pe-sr">No change</span></span>';
+    return '<span class="plg-move ' + (mv > 0 ? 'up' : 'down') + '">' + Club.icon(mv > 0 ? 'arrowUp' : 'arrowDown') + '<span aria-hidden="true">' + Math.abs(mv) + '</span><span class="pe-sr">' + (mv > 0 ? 'Up ' : 'Down ') + Math.abs(mv) + '</span></span>';
   }
   function pluralWk(n) { return n + (n === 1 ? ' night' : ' nights'); }
 
@@ -606,7 +644,7 @@
     const L = Club.league; const lg = L && L.current ? L.current() : null;
     if (!lg) {
       view.innerHTML = head(member, 'league') +
-        '<div class="panel">' + U.empty({ icon: 'trophy', title: 'The league isn’t set up yet', text: 'The golf shop will post the league season here. Questions? Call the club office on ' + Club.info.phone + '.' }) + '</div>';
+        '<div class="pe-empty">' + U.empty({ icon: 'trophy', title: 'The league isn’t set up yet', text: 'The golf shop will post the league season here. Questions? Call the club office on ' + Club.info.phone + '.' }) + '</div>';
       return;
     }
     const me = Portal.member() || member;
@@ -620,9 +658,9 @@
 
     let joinHTML = '';
     if (!onRoster && canGolf(me) && me.status === 'active' && st !== 'complete') {
-      joinHTML = '<section class="panel pl-join"><div><h2>Join the league</h2>' +
+      joinHTML = '<section class="plg-join"><div><h2 class="pe-h">Join the league</h2>' +
         '<p>It’s free to join. Play the ' + esc(lg.night.toLowerCase()) + 's that suit you. Your points count from the nights you play.</p></div>' +
-        U.btn('Join the league', { kind: 'primary', icon: 'plus', action: 'join' }) + '</section>';
+        U.btn('Join the league', { kind: 'primary', action: 'join' }) + '</section>';
     } else if (!onRoster && canGolf(me) && st === 'complete') {
       joinHTML = '<p class="pe-quiet">The ' + esc(year) + ' season has finished. Ask the golf shop about next season.</p>';
     }
@@ -634,25 +672,25 @@
       if (!(rows.length && sd.played.length)) return '<p class="pe-lb-empty">' + (rows.length ? 'Standings will appear after the first league night.' : 'The roster is being prepared.') + '</p>';
       const meIdx = rows.findIndex(function (r) { return r.memberId === me.id; });
       const show = full ? rows : rows.slice(0, LG_TOP); if (!full && meIdx >= LG_TOP) show.push(rows[meIdx]);
-      return '<div class="pe-lbt-wrap"><table class="pe-lbt pl-table"><colgroup><col class="pe-w-pos"><col><col class="pe-w-num"><col class="pe-w-num"></colgroup><thead><tr><th scope="col" class="pe-c-pos"><abbr title="Position">#</abbr></th><th scope="col">Player</th><th scope="col" class="pe-c-num">Points</th><th scope="col" class="pe-c-num">Move</th></tr></thead><tbody>' + show.map(function (r) {
+      return '<div class="pe-lbt-wrap"><table class="pe-lbt plg-table"><colgroup><col class="pe-w-pos"><col><col class="pe-w-num"><col class="pe-w-num"></colgroup><thead><tr><th scope="col" class="pe-c-pos"><abbr title="Position">#</abbr></th><th scope="col">Player</th><th scope="col" class="pe-c-num">Points</th><th scope="col" class="pe-c-num">Move</th></tr></thead><tbody>' + show.map(function (r) {
         const isMe = r.memberId === me.id;
         return '<tr class="' + (r.rounds ? '' : 'waiting') + (isMe ? ' me' : '') + (isMe && !full && meIdx >= LG_TOP ? ' pe-gap' : '') + '"' + (isMe ? ' id="pl-me"' : '') + '>' +
           '<td class="pe-c-pos">' + (r.rounds ? esc(r.pos) : '<span aria-hidden="true">–</span>') + '</td><th scope="row" class="pe-c-name">' + esc(r.name) + (isMe ? ' <span class="pe-you">You</span>' : '') + '<span class="pe-lb-wait">' + (r.rounds ? r.rounds + (r.rounds === 1 ? ' round' : ' rounds') : 'No rounds yet') + '</span></th>' +
           '<td class="pe-c-num pe-score">' + r.total + '<span class="pe-stack-l"> points</span></td><td class="pe-c-num pe-c-move">' + moveHTML(r.move) + '</td></tr>';
       }).join('') + '</tbody></table></div>' +
-        (rows.length > LG_TOP ? '<div class="pe-lb-more-row"><button type="button" class="p-link pl-st-more" data-full="' + (full ? '0' : '1') + '" aria-expanded="' + !!full + '">' + (full ? 'Top ' + LG_TOP + ' only' : 'Full standings (' + rows.length + ')') + '</button></div>' : '');
+        (rows.length > LG_TOP ? '<div class="pe-lb-more-row"><button type="button" class="p-link plg-st-more" data-full="' + (full ? '0' : '1') + '" aria-expanded="' + !!full + '">' + (full ? 'Top ' + LG_TOP + ' only' : 'Full standings (' + rows.length + ')') + '</button></div>' : '');
     }
     view.innerHTML = head(member, 'league') +
-      '<section class="pl-head"><h2>' + esc(lg.name) + '</h2>' +
-      '<p class="pl-meta">' + esc(lg.night + 's from ' + F.time(lg.startTime) + ' · ' + (+lg.holes === 18 ? '18 holes' : '9 holes') + ', ' + lg.format + ' · ' + F.dateShort(lg.season.start) + '–' + F.dateShort(lg.season.end)) + '</p>' +
-      '<p class="pl-facts">' + esc(facts.join(' · ')) + '</p></section>' +
-      '<div class="pl-grid"><div class="pl-top">' + joinHTML + nextPanel(lg, nextW, st, rows) + '</div>' +
-      '<section class="pe-lb pl-board" aria-labelledby="pl-st-h"><header class="pe-lb-top"><div class="pe-lb-head">' + (st === 'complete' ? '<span class="pe-final">Season complete</span>' : '<span class="pe-live pe-static"><span class="pe-live-dot" aria-hidden="true"></span>In season</span>') +
+      '<div class="plg"><section class="plg-head"><h2 class="pe-h">' + esc(lg.name) + '</h2>' +
+      '<p class="plg-meta">' + esc(lg.night + 's from ' + F.time(lg.startTime) + ' · ' + (+lg.holes === 18 ? '18 holes' : '9 holes') + ', ' + lg.format + ' · ' + F.dateShort(lg.season.start) + '–' + F.dateShort(lg.season.end)) + '</p>' +
+      '<p class="plg-facts">' + esc(facts.join(' · ')) + '</p></section>' +
+      '<div class="plg-grid"><div class="plg-top">' + nextPanel(lg, nextW, st, rows) + joinHTML + '</div>' +
+      '<section class="pe-lb plg-board" aria-labelledby="pl-st-h"><header class="pe-lb-top"><div class="pe-lb-head">' + (st === 'complete' ? '<span class="pe-final">Season complete</span>' : '<span class="pe-live pe-static"><span class="pe-live-dot" aria-hidden="true"></span>In season</span>') +
       '<h3 class="pe-lb-title" id="pl-st-h">Standings</h3><p class="pe-lb-sub">' + esc((st === 'complete' ? 'Final standings' : lastW ? 'After week ' + (sd.upto + 1) + ', ' + F.dateShort(lastW.date) : 'Before the first league night') + ' · ' + (stroke ? 'Points by net finish each night' : 'Stableford points, ' + lg.allowance + '% allowance')) + '</p></div></header>' +
-      '<div class="pl-st-host">' + standingsHTML(false) + '</div>' +
+      '<div class="plg-st-host">' + standingsHTML(false) + '</div>' +
       '<p class="pe-lb-foot">Move is the change since the last league night.</p></section>' +
-      '<div class="pl-more">' + (onRoster ? myPanel(lg, me.id, mine) : '') + winnersPanel(lg, sd) + '</div></div>';
-    U.on(view, 'click', '.pl-st-more', function (e, b) { U.$('.pl-st-host', view).innerHTML = standingsHTML(b.dataset.full === '1'); const nb = U.$('.pl-st-more', view); if (nb) nb.focus(); });
+      '<div class="plg-more">' + (onRoster ? myPanel(lg, me.id, mine) : '') + winnersPanel(lg, sd) + '</div></div></div>';
+    U.on(view, 'click', '.plg-st-more', function (e, b) { U.$('.plg-st-host', view).innerHTML = standingsHTML(b.dataset.full === '1'); const nb = U.$('.plg-st-more', view); if (nb) nb.focus(); });
 
     U.on(view, 'click', '[data-action=join]', function () {
       U.confirm({ title: 'Join the league?', text: 'You will be added to the ' + lg.name + ' for the ' + year + ' season. It’s free, and you play the nights that suit you.', confirmLabel: 'Join the league' }).then(function (ok) {
@@ -666,40 +704,42 @@
         Portal.render();
       });
     });
-    U.on(view, 'click', '.pl-weeks-more', function (e, b) {
-      const list = U.$('.pl-weeks', view); const open = list.classList.toggle('all');
+    U.on(view, 'click', '.plg-weeks-more', function (e, b) {
+      const list = U.$('.plg-weeks', view); const open = list.classList.toggle('all');
       U.$('span', b).textContent = open ? 'Show recent weeks only' : 'Show all ' + b.dataset.n + ' weeks';
-      b.setAttribute('aria-expanded', open); U.$('svg', b).classList.toggle('pe-flip', open);
+      b.setAttribute('aria-expanded', open);
     });
   }
+  /** The league's one dark panel: the next league night, its date set large. A finished season shows its champion. */
   function nextPanel(lg, w, st, rows) {
     const L = Club.league;
     if (st === 'complete') {
       const champ = rows.filter(function (r) { return r.rank === 1 && r.rounds; });
       if (!champ.length) return '';
-      return '<p class="pl-champ-line">' + Club.icon('trophy') + '<span><span class="pl-champ-l">' + esc(lg.season.start.slice(0, 4)) + ' champion' + (champ.length > 1 ? 's' : '') + ':</span> ' + esc(champ.map(function (r) { return r.name; }).join(' and ')) + ' · ' + champ[0].total + ' points</span></p>';
+      return '<p class="plg-champ-line"><span><span class="plg-champ-l">' + esc(lg.season.start.slice(0, 4)) + ' champion' + (champ.length > 1 ? 's' : '') + ':</span> ' + esc(champ.map(function (r) { return r.name; }).join(' and ')) + ' · ' + champ[0].total + ' points</span></p>';
     }
-    if (!w) return '<section class="panel pl-card"><h3>Next league night</h3><p class="pl-muted">No more league nights are scheduled.</p></section>';
-    const b = L.weekBlock(w);
-    return '<section class="panel pl-card"><h3>Next league night</h3><div class="pl-next-row">' + dateBlock(w.date) +
-      '<div><p class="pl-next-t">Week ' + (lg.weeks.indexOf(w) + 1) + ' · ' + esc(L.nineLabel(w.nine)) + '</p><p class="pl-muted">' + esc(F.relative(w.date) + ' · first tee ' + F.time(lg.startTime)) + '</p>' +
-      (b ? '<p class="pl-note">' + Club.icon('flag') + '<span>Tee times are kept for league play from ' + esc(F.time(b.start)) + '.</span></p>' : '') + '</div></div></section>';
+    if (!w) return '<section class="plg-none"><h3 class="pe-caps">Next league night</h3><p class="plg-muted">No more league nights are scheduled.</p></section>';
+    const b = L.weekBlock(w), d = F.toDate(w.date);
+    return '<section class="pe-next plg-next"><h3 class="pe-next-eb">Next league night</h3>' +
+      '<div class="pe-next-row"><span class="pe-next-d" aria-hidden="true"><small>' + esc(wdShort(d)) + '</small><span class="pe-next-n">' + d.getDate() + '</span></span>' +
+      '<div class="pe-next-b"><p class="pe-next-t">Week ' + (lg.weeks.indexOf(w) + 1) + ' · ' + esc(L.nineLabel(w.nine)) + '</p><p class="pe-next-meta">' + esc(F.relative(w.date) + ' · first tee ' + F.time(lg.startTime)) + '</p>' +
+      (b ? '<p class="pe-next-meta plg-note"><span>Tee times are kept for league play from ' + esc(F.time(b.start)) + '.</span></p>' : '') + '</div></div></section>';
   }
   function myPanel(lg, memberId, mine) {
     const L = Club.league; const stroke = lg.format === 'Stroke play';
     const weeks = (lg.weeks || []).filter(function (w) { return w.date <= today() || L.isPlayed(w); });
     const SHOW = 5;
-    return Portal.accordion({ id: 'pl-mine', icon: 'user', title: 'Your season', summary: mine && mine.rounds ? mine.total + ' points · ' + pluralWk(mine.rounds) + ' · best ' + mine.best : 'No rounds yet', body:
-      (weeks.length ? '<ul class="pl-weeks">' + weeks.slice().reverse().map(function (w, k) {
+    return Portal.accordion({ id: 'pl-mine', title: 'Your season', summary: mine && mine.rounds ? mine.total + ' points · ' + pluralWk(mine.rounds) + ' · best ' + mine.best : 'No rounds yet', body:
+      (weeks.length ? '<ul class="plg-weeks">' + weeks.slice().reverse().map(function (w, k) {
         const i = lg.weeks.indexOf(w);
         const rk = L.isPlayed(w) ? L.weekRank(w, lg).find(function (r) { return r.memberId === memberId; }) : null;
         let right;
-        if (w.cancelled) right = '<span class="pl-muted">' + esc(w.note || 'Cancelled') + '</span>';
-        else if (!L.isPlayed(w)) right = '<span class="pl-muted">Results to come</span>';
-        else if (!rk) right = '<span class="pl-muted">' + ((w.absent || []).indexOf(memberId) >= 0 ? 'Absent' : 'Did not play') + '</span>';
-        else right = '<span class="pl-wk-score"><b>' + rk.points + ' points</b><span>Gross ' + rk.gross + (stroke ? ' · net ' + rk.net : '') + '</span></span>';
-        return '<li class="' + (rk ? '' : 'off') + (k >= SHOW ? ' extra' : '') + '"><span class="pl-wk-main"><span class="pl-wk-t">Week ' + (i + 1) + ' · ' + esc(F.dateShort(w.date)) + '</span><span class="pl-muted">' + esc(L.nineLabel(w.nine)) + (rk ? ' · ' + (rk.tied ? 'tied ' : '') + ordinal(rk.place) + ' of ' + w.results.length : '') + '</span></span>' + right + '</li>';
-      }).join('') + '</ul>' + (weeks.length > SHOW ? '<button type="button" class="btn pl-weeks-more" data-n="' + weeks.length + '" aria-expanded="false">' + Club.icon('chevronDown') + '<span>Show all ' + weeks.length + ' weeks</span></button>' : '') : '<p class="pl-muted">Your weekly results will appear here after your first league night.</p>') });
+        if (w.cancelled) right = '<span class="plg-muted">' + esc(w.note || 'Cancelled') + '</span>';
+        else if (!L.isPlayed(w)) right = '<span class="plg-muted">Results to come</span>';
+        else if (!rk) right = '<span class="plg-muted">' + ((w.absent || []).indexOf(memberId) >= 0 ? 'Absent' : 'Did not play') + '</span>';
+        else right = '<span class="plg-wk-score"><b>' + rk.points + ' points</b><span>Gross ' + rk.gross + (stroke ? ' · net ' + rk.net : '') + '</span></span>';
+        return '<li class="' + (rk ? '' : 'off') + (k >= SHOW ? ' extra' : '') + '"><span class="plg-wk-main"><span class="plg-wk-t">Week ' + (i + 1) + ' · ' + esc(F.dateShort(w.date)) + '</span><span class="plg-muted">' + esc(L.nineLabel(w.nine)) + (rk ? ' · ' + (rk.tied ? 'tied ' : '') + ordinal(rk.place) + ' of ' + w.results.length : '') + '</span></span>' + right + '</li>';
+      }).join('') + '</ul>' + (weeks.length > SHOW ? '<button type="button" class="pe-all plg-weeks-more" data-n="' + weeks.length + '" aria-expanded="false"><span>Show all ' + weeks.length + ' weeks</span></button>' : '') : '<p class="plg-muted">Your weekly results will appear here after your first league night.</p>') });
   }
   function ordinal(n) { const s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
   function winnersPanel(lg, sd) {
@@ -707,9 +747,9 @@
     const list = sd.played.slice().reverse().slice(0, 6);
     if (!list.length) return '';
     const last = L.weekWinners(lg.weeks[list[0]], lg);
-    return Portal.accordion({ id: 'pl-win', icon: 'trophy', title: 'Recent winners', summary: 'Week ' + (list[0] + 1) + ': ' + last.map(function (r) { return memberName(r.memberId); }).join(', '), body: '<ul class="pl-weeks pl-winners all">' + list.map(function (i) {
+    return Portal.accordion({ id: 'pl-win', title: 'Recent winners', summary: 'Week ' + (list[0] + 1) + ': ' + last.map(function (r) { return memberName(r.memberId); }).join(', '), body: '<ul class="plg-weeks plg-winners all">' + list.map(function (i) {
       const w = lg.weeks[i]; const ws = L.weekWinners(w, lg);
-      return '<li><span class="pl-wk-main"><span class="pl-wk-t">' + esc(ws.map(function (r) { return memberName(r.memberId); }).join(', ')) + '</span><span class="pl-muted">Week ' + (i + 1) + ' · ' + esc(F.dateShort(w.date)) + '</span></span><span class="pl-wk-score"><b>' + (stroke ? 'Net ' + ws[0].net : ws[0].points + ' points') + '</b></span></li>';
+      return '<li><span class="plg-wk-main"><span class="plg-wk-t">' + esc(ws.map(function (r) { return memberName(r.memberId); }).join(', ')) + '</span><span class="plg-muted">Week ' + (i + 1) + ' · ' + esc(F.dateShort(w.date)) + '</span></span><span class="plg-wk-score"><b>' + (stroke ? 'Net ' + ws[0].net : ws[0].points + ' points') + '</b></span></li>';
     }).join('') + '</ul>' });
   }
 

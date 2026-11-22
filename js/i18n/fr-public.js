@@ -740,3 +740,17 @@
     [/^Your hold on (.+) has ended\. Please choose a time again\.$/, 'Le délai pour réserver $1 est écoulé. Veuillez choisir une heure de nouveau.']
   ] });
 })();
+
+/* ---- Redesign: public site (Nov 22) ----
+   The times are a starter's sheet list: each row ends with one action word. Public site only (the portal loads this
+   file too and has its own words). */
+(function () {
+  'use strict';
+  var portal = document.body ? document.body.classList.contains('portal') : /member\.html/.test(location.pathname);
+  if (portal || !window.Club || !Club.i18n || typeof Club.i18n.add !== 'function') return;
+  Club.i18n.add({ strings: {
+    'Book': 'Réserver',
+    'Join': 'Se joindre',
+    'View': 'Voir'
+  } });
+})();

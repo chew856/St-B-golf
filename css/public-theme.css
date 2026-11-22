@@ -1,57 +1,100 @@
 /* ==========================================================================
    Public site theme (public.html only). Loaded last.
 
-   Matches the members' portal (css/portal-theme.css): the same forest and sage
-   palette, Inter for text and Lora for titles and display numbers, soft rounded
-   cards, sentence-case labels and no brass. Everything is scoped to body.public,
-   so the staff system and the portal are unaffected. The public stylesheets'
-   token names (night, brass, linen...) are remapped onto this palette, so their
-   components follow it; the rules further down remove the brass ornament.
+   Redesign (Nov 22): the public site is the same club as the members' portal ("Inter with a touch of serif",
+   REDESIGN-PLAN.md; the portal's css/portal-theme.css). The club's deep greens on a soft Mist page, Paper for raised
+   surfaces, hairline Rules instead of boxes and shadows, small spaced capitals in dark Oak, Ink for the primary
+   button, and one aged-brass accent for "you are here" marks only (never text). Inter for everything you read;
+   Bodoni Moda (--font-sig) only for signature numerals: tee times, day numbers and totals.
+
+   The token names are the portal's, so the pieces both sites share (the Play screens, Order to the course, the pay
+   panel, gift cards, shop, takeout, waitlist) take the same colours here. Everything is scoped to body.public.
+
+   Contrast (WCAG 2.1, as computed for the portal): --text (Ink) on Mist 14.1:1, on Paper 15.4:1; --text-2 on Mist
+   6.5:1; --text-3 on Mist 5.2:1, on Paper 5.7:1; --label (dark oak) on Mist 5.1:1; --danger on Mist 6.3:1; --warn on
+   Mist 5.9:1; --on-dark on Ink 15.5:1. Brass is 2.8:1 on Mist: a mark colour (underlines, dots), never text.
    ========================================================================== */
 
 body.public {
-  /* ---------- Brand (same values as the portal) ---------- */
-  --forest-950: #101E17;
-  --forest-900: #14261D;
-  --forest-800: #1C3326;
-  --forest-700: #27442F;
-  --forest-500: #4E6B57;
-  --sage-200: #D5DED5;
-  --sage-100: #E6ECE5;
-  --sage-50:  #EFF3EE;
+  /* ---------- The palette (the portal's, Nov 21) ---------- */
+  --c-ink: #12201A;       /* Ink: text, primary buttons, the deepest green */
+  --c-fairway: #1D3528;   /* Fairway: dark panels */
+  --c-mist: #E9ECE4;      /* Mist: the page and the header (public.html theme-color and the manifest match it) */
+  --c-paper: #F4F5F0;     /* Paper: raised surfaces (dialogs, the menu, fields) */
+  --c-rule: #C9CEC1;      /* Rule: hairlines */
+  --c-oak: #7E8558;       /* Oak: marks and large type only */
+  --c-oak-ink: #5F6542;   /* darker oak: small spaced capital labels */
+  --c-brass: #A8864E;     /* Brass: the single accent, "you are here" marks only, never text */
+  --c-oak-soft: #B9BE95;  /* pale oak: spaced capitals on Fairway and Ink panels */
+  --accent: var(--c-brass);
+  --label: var(--c-oak-ink);
+
+  /* ---------- Brand (older names, mapped onto the palette) ---------- */
+  --forest-950: var(--c-ink);
+  --forest-900: #172A20;
+  --forest-800: var(--c-fairway);
+  --forest-700: #284434;
+  --forest-500: #46604F;
+  --sage-200: #D2D7CA;
+  --sage-100: #DFE3D8;
+  --sage-50:  #ECEEE7;
 
   /* ---------- Surfaces and text ---------- */
-  --bg: #F2F4F1;
-  --surface: #FAFBF9;
-  --border: #E0E5DF;
-  --border-strong: #C8D0C7;
-  --text: #16201A;
-  --text-2: #4F5A53;
-  --text-3: #616C65;
+  --bg: var(--c-mist);
+  --surface: var(--c-paper);
+  --border: var(--c-rule);
+  --border-strong: #AEB4A6;
+  --text: var(--c-ink);
+  --text-2: #4A554D;
+  --text-3: #59635B;
   --on-dark: #F3F6F2;
   --on-dark-2: rgba(243, 246, 242, 0.72);
-  --on-dark-line: rgba(243, 246, 242, 0.14);
+  --on-dark-3: #CDD2C4;
+  --on-dark-rule: rgba(233, 236, 228, 0.18);
+  --on-dark-line: var(--on-dark-rule);
   --on-dark-ring: rgba(243, 246, 242, 0.32);
   --danger: #9B2C2C;
   --danger-tint: #F4E9E7;
-  --warn: #8A5A12;
+  --danger-bg: var(--danger-tint);
+  --warn: #7A5010;
+  --pub-off: var(--border-strong);   /* greyed: days and times that cannot be booked */
 
   /* ---------- Shape, depth, motion ---------- */
-  --radius-card: 14px;
-  --radius-ctl: 10px;
-  --shadow-card: 0 1px 2px rgba(16, 30, 23, 0.04), 0 4px 12px rgba(16, 30, 23, 0.04);
-  --shadow-thumb: 0 1px 2px rgba(16, 30, 23, 0.08), 0 2px 6px rgba(16, 30, 23, 0.08);
-  --shadow-sheet: 0 -8px 32px rgba(16, 30, 23, 0.18);
-  --shadow-pop: 0 1px 2px rgba(16, 30, 23, 0.04), 0 12px 28px rgba(16, 30, 23, 0.12);
-  --scrim: rgba(16, 30, 23, 0.42);   /* behind dialogs (the portal's value) */
+  --radius-card: 4px;
+  --radius-ctl: 4px;
+  --radius-lg: 10px;
+  --radius-pill: 999px;
+  --shadow-card: 0 0 0 0 transparent;   /* no card shadows; a valid zero shadow so lists of shadows still parse */
+  --shadow-thumb: 0 1px 2px rgba(18, 32, 26, 0.10);
+  --shadow-sheet: 0 -8px 32px rgba(18, 32, 26, 0.16);
+  --shadow-pop: 0 12px 28px rgba(18, 32, 26, 0.12);
+  --scrim: rgba(18, 32, 26, 0.42);
   --ease-ui: cubic-bezier(0.2, 0.7, 0.2, 1);
   --t-ui: 180ms;
 
   /* ---------- Type ---------- */
-  --serif: "Lora", "Newsreader", Georgia, serif;
   --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-title: var(--sans);
+  --serif: var(--font-title);   /* older rules that ask for the serif get Inter */
+  --font-sig: "Bodoni Moda", Georgia, "Times New Roman", serif;   /* signature numerals only */
+  --fs-page: 2.125rem;
+  --fs-section: 1.375rem;
+  --fs-card: 1.0625rem;
+  --fs-body: 0.9375rem;
+  --fs-meta: 0.8125rem;
+  --fs-label: 0.75rem;
+  --fs-num: 1.5rem;
+  --fs-num-lg: 2rem;
+  --fw-title: 600;
 
-  /* ---------- Public token names mapped onto this palette ---------- */
+  /* ---------- Aliases the shared stylesheets use ---------- */
+  --green-900: var(--forest-900); --green-800: var(--forest-800); --green-700: var(--forest-700);
+  --green-100: var(--sage-100); --green-50: var(--sage-50);
+  --bg-subtle: var(--bg); --text-secondary: var(--text-2); --text-disabled: var(--text-3);
+  --warning: var(--warn); --warning-bg: var(--sage-50);
+  --info: var(--forest-500); --info-bg: var(--sage-50); --success: var(--forest-800);
+  --radius-btn: var(--radius-ctl);
+  --focus: 0 0 0 2px var(--bg), 0 0 0 4px var(--forest-700);
   --night: var(--forest-950);  --night-2: var(--forest-900);  --night-3: var(--forest-800);
   --green: var(--forest-800);  --green-2: var(--forest-700);  --green-tint: var(--sage-100);
   --brass: var(--forest-500);  --brass-ink: var(--forest-500); --brass-soft: var(--on-dark); --brass-tint: var(--sage-50);
@@ -64,78 +107,122 @@ body.public {
   --oxblood: var(--danger);  --oxblood-tint: var(--danger-tint);
   --slate: var(--forest-500);  --slate-tint: var(--sage-50);
   --r-control: var(--radius-ctl); --r-panel: var(--radius-card);
-  --font-display: var(--serif);
+  --font-display: var(--font-title);
   --font-body: var(--sans);
   --shadow-overlay: var(--shadow-sheet);
 
+  /* ---------- Page frame ---------- */
+  --pg: 20px;        /* the page's side padding */
+  --edge: 20px;      /* how far hairlines reach past the text column: to the screen edge on phones, 0 above */
+  --rg: 20px;        /* how far list rows reach past the text column (room for the hover and selected band) */
+  --pub-top: 0px;    /* the sticky header's height (0 where the header scrolls away) */
+
+  font-optical-sizing: none;   /* Bodoni Moda at its text cut: big sizes would switch to the hairline display cut */
   background: var(--bg);
   color: var(--text);
   font-family: var(--sans);
   font-size: 1rem;
   line-height: 1.5;
+  font-weight: 400;
   -webkit-font-smoothing: antialiased;
 }
-body.public ::selection { background: var(--sage-100); color: var(--text); }
-body.public a { color: var(--forest-800); }
-@media (hover: hover) { body.public a:hover { text-decoration-color: var(--forest-500); } }
+@supports (color: color-mix(in srgb, red, blue)) { body.public { --pub-off: color-mix(in srgb, var(--text-3) 55%, var(--bg)); } }
+@media (min-width: 768px) { body.public { --pg: 36px; --edge: 0px; --rg: 16px; } }
+@media (min-width: 880px) { body.public { --pub-top: calc(72px + env(safe-area-inset-top)); } }
+@media (min-width: 1024px) { body.public { --pg: 32px; } }
+body.public ::selection { background: var(--sage-200); color: var(--text); }
+body.public a { color: var(--text); }
+@media (hover: hover) { body.public a:hover { text-decoration-color: var(--accent); } }
 
-/* ---------- Type roles: serif for titles and display numbers, Inter for everything else ---------- */
-body.public h1, body.public h2 { font-family: var(--serif); font-weight: 500; color: var(--text); letter-spacing: -0.005em; text-transform: none; }
-body.public h3, body.public h4 { font-family: var(--sans); font-weight: 500; color: var(--text); letter-spacing: normal; text-transform: none; }
-body.public strong, body.public b, body.public th { font-weight: 500; }
+/* ---------- Type roles ---------- */
+body.public h1, body.public h2, body.public h3, body.public h4 { font-family: var(--font-title); font-weight: var(--fw-title); color: var(--text); text-transform: none; }
+body.public h1 { font-size: var(--fs-page); font-weight: 500; line-height: 1.12; letter-spacing: -0.025em; }
+body.public h2 { font-size: var(--fs-section); font-weight: 500; line-height: 1.3; letter-spacing: -0.02em; }
+body.public h3 { font-size: var(--fs-card); line-height: 1.35; letter-spacing: -0.005em; }
+body.public h4 { font-size: 1rem; line-height: 1.4; letter-spacing: normal; }
+body.public strong, body.public b, body.public th { font-weight: 600; }
 body.public .serif { font-family: var(--sans); font-style: normal; }
 body.public em, body.public i { font-style: normal; }
-body.public .pub-rate-amt, body.public .pub-band-rate, body.public .pub-fees-total, body.public .pub-sel-time,
-body.public .pub-ticket-time, body.public .pub-order-time .serif, body.public .pub-receipt-amt, body.public .join-dues-amt,
-body.public .join-pos-n, body.public .gp-bal-amt, body.public .gcv-amt { font-family: var(--serif); font-weight: 500; font-variant-numeric: lining-nums tabular-nums; }
 body.public .muted { color: var(--text-2); }
-body.public .eyebrow, body.public .label-caps { font-family: var(--sans); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--forest-500); }
+body.public .num, body.public time, body.public td { font-variant-numeric: tabular-nums lining-nums; }
+body.public .eyebrow, body.public .label-caps, body.public .p-caps { font-family: var(--sans); font-size: 0.6875rem; font-weight: 600; line-height: 1.5; letter-spacing: 0.18em; text-transform: uppercase; color: var(--label); }
 body.public .btn, body.public .tab, body.public .segmented button, body.public .badge, body.public .field label, body.public .table th { text-transform: none; letter-spacing: normal; }
-/* No italics anywhere: the portal keeps every line upright */
-body.public .pub-hero-lead, body.public .pub-sig-copy, body.public .pub-auth-intro .serif, body.public .pub-page-head .serif,
-body.public .pub-ticket-sign, body.public .pub-receipt-foot, body.public .pub-land, body.public .join-done-lead,
-body.public .gcv-msg, body.public .to-card-notes { font-style: normal; font-family: var(--sans); }
+body.public .sig, body.public .p-fig { font-family: var(--font-sig); font-weight: 400; font-variant-numeric: lining-nums; letter-spacing: -0.01em; }
 
 /* ---------- Focus and motion ---------- */
 body.public :focus-visible { outline: 2px solid var(--forest-700); outline-offset: 2px; box-shadow: none; }
-body.public a, body.public button, body.public .btn { transition: background-color var(--t-ui) var(--ease-ui), border-color var(--t-ui) var(--ease-ui), color var(--t-ui) var(--ease-ui), box-shadow var(--t-ui) var(--ease-ui); }
+body.public a, body.public button, body.public .btn { transition: background-color var(--t-ui) var(--ease-ui), border-color var(--t-ui) var(--ease-ui), color var(--t-ui) var(--ease-ui); }
+@media (prefers-reduced-motion: reduce) { body.public *, body.public *::before, body.public *::after { animation: none !important; transition: none !important; } }
 
-/* ---------- Surfaces ---------- */
-body.public .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
+/* ---------- Surfaces: no boxes on the page. A section is a hairline, a small label and space ---------- */
+body.public .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: none; }
 body.public .panel-head { border-bottom: 1px solid var(--border); }
-body.public .panel-head h3 { font-size: 1.0625rem; font-weight: 500; }
+body.public .panel-head h3 { font-size: var(--fs-card); font-weight: var(--fw-title); }
+body.public .pub-page .panel { background: none; border: 0; border-top: 1px solid var(--border); border-radius: 0; }
+body.public .pub-page .panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 18px 0 4px; border-bottom: 0; }
+body.public .pub-page .panel-head h3 { margin: 2px 0 0; font-size: var(--fs-section); font-weight: 500; line-height: 1.3; letter-spacing: -0.02em; }
+body.public .pub-page .panel-body { padding: 10px 0 24px; }
+body.public .pub-page .panel-body.flush { padding: 4px 0 12px; }
+body.public .pub-page .panel-head > svg, body.public .pub-head-icon { display: none; }
 body.public .divider, body.public .divider.brass { background: var(--border); }
+body.public .pub-page .empty { padding: 18px 0 8px; text-align: left; color: var(--text-3); }
+body.public .pub-page .empty svg { display: none; }
+body.public .empty h4 { margin: 0 0 4px; font-family: var(--sans); font-size: 1rem; font-weight: 500; color: var(--text); }
+body.public .pub-page .empty p { max-width: 36rem; margin: 0 0 12px; font-size: 0.875rem; line-height: 1.5; }
+body.public .pub-page .empty .btn { margin-top: 8px; }
+body.public .stack > * + * { margin-top: 0; }
 
-/* ---------- Buttons ---------- */
-body.public .btn { font-family: var(--sans); font-weight: 500; font-size: 0.9375rem; min-height: 44px; padding: 0 18px; border-radius: var(--radius-ctl); background: var(--surface); color: var(--text); border: 1px solid var(--border-strong); gap: 8px; box-shadow: none; }
+/* The shared list language (as the portal's): a section title, plain hairline rows, a date block, a dark panel */
+body.public .p-h { margin: 0 0 10px; font-family: var(--sans); font-size: var(--fs-section); font-weight: 500; line-height: 1.3; letter-spacing: -0.02em; color: var(--text); }
+body.public .p-rows { list-style: none; margin: 0; padding: 0; }
+body.public .p-rows > * { border-top: 1px solid var(--border); }
+body.public .p-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 48px; padding: 12px 0; color: var(--text); font: 500 0.96875rem/1.35 var(--sans); text-decoration: none; }
+body.public .p-row-v { flex: none; font-size: 0.84375rem; font-weight: 400; color: var(--text-3); text-align: right; }
+body.public .p-date { flex: none; width: 52px; text-align: center; font-family: var(--font-sig); font-size: 1.625rem; font-weight: 400; line-height: 1; font-variant-numeric: lining-nums; color: var(--text); }
+body.public .p-date small { display: block; margin-bottom: 4px; font-family: var(--sans); font-size: 0.6875rem; font-weight: 600; line-height: 1.2; letter-spacing: 0.18em; text-transform: uppercase; color: var(--label); }
+body.public .p-dark { background: var(--c-fairway); color: var(--on-dark); border-radius: var(--radius-card); }
+body.public .p-dark .p-caps { color: var(--c-oak-soft); }
+body.public .p-dark .p-link { color: var(--on-dark); }
+
+/* ---------- Buttons: Ink for the one main action, a hairline for the rest, words for the small ones ---------- */
+body.public .btn { font-family: var(--sans); font-weight: 500; font-size: 0.9375rem; min-height: 48px; padding: 0 18px; border-radius: var(--radius-ctl); background: var(--surface); color: var(--text); border: 1px solid var(--border-strong); gap: 8px; box-shadow: none; line-height: 1.25; text-decoration: none; }
 @media (hover: hover) { body.public .btn:hover { background: var(--sage-50); border-color: var(--forest-500); text-decoration: none; } }
-body.public .btn-primary, body.public .btn-brass { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); font-weight: 600; }
-@media (hover: hover) { body.public .btn-primary:hover, body.public .btn-brass:hover { background: var(--forest-700); border-color: var(--forest-700); color: var(--on-dark); } }
-body.public .btn-ghost { background: transparent; border-color: transparent; color: var(--forest-800); }
+body.public .btn svg { width: 18px; height: 18px; }
+body.public .btn-primary, body.public .btn-brass { background: var(--c-ink); border-color: var(--c-ink); color: var(--on-dark); font-weight: 600; }
+@media (hover: hover) { body.public .btn-primary:hover, body.public .btn-brass:hover { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); } }
+body.public .btn-light, body.public .p-dark .btn-primary { background: var(--c-mist); border-color: var(--c-mist); color: var(--c-ink); font-weight: 600; border-radius: 3px; }
+@media (hover: hover) { body.public .btn-light:hover, body.public .p-dark .btn-primary:hover { background: var(--c-paper); border-color: var(--c-paper); color: var(--c-ink); } }
+body.public .btn-ghost { background: transparent; border-color: transparent; color: var(--text); }
 @media (hover: hover) { body.public .btn-ghost:hover { background: var(--sage-50); border-color: transparent; } }
 body.public .btn-danger { color: var(--danger); border-color: var(--border-strong); background: var(--surface); }
 body.public .btn-sm { min-height: 40px; font-size: 0.875rem; padding: 0 14px; }
+body.public .btn-icon, body.public .btn-icon.btn-sm { width: 44px; min-width: 44px; min-height: 44px; padding: 0; }
 body.public .btn[disabled], body.public .btn:disabled { opacity: 1; background: var(--sage-50); color: var(--text-3); border-color: var(--border); }
-body.public .pub-link { color: var(--forest-800); text-decoration-color: var(--border-strong); }
-@media (hover: hover) { body.public .pub-link:hover { text-decoration-color: var(--forest-800); } }
+/* Text link: Ink with a brass underline */
+body.public .pub-link, body.public .p-link { background: none; border: 0; padding: 0; color: var(--text); font: 500 0.9375rem/1.3 var(--sans); cursor: pointer; text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 4px; }
+body.public button.pub-link, body.public a.pub-link.pub-back, body.public .p-link { display: inline-flex; align-items: center; min-height: 44px; }
+@media (hover: hover) { body.public .pub-link:hover, body.public .p-link:hover { text-decoration-color: var(--text); } }
+body.public p a, body.public .pub-fine a, body.public dd a { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
 
 /* ---------- Forms ---------- */
-body.public .field label { font-size: 0.875rem; font-weight: 500; color: var(--text-2); }
+body.public .field label, body.public .join-legend { font-size: 0.875rem; font-weight: 500; letter-spacing: normal; text-transform: none; color: var(--text-2); }
 body.public .input, body.public .select, body.public .textarea { min-height: 48px; font-size: 1rem; border: 1px solid var(--border-strong); border-radius: var(--radius-ctl); background-color: var(--surface); color: var(--text); font-family: var(--sans); }
 body.public .input:focus, body.public .select:focus, body.public .textarea:focus { border-color: var(--forest-700); box-shadow: none; outline: 2px solid var(--forest-700); outline-offset: 1px; }
 body.public .input.invalid, body.public .select.invalid { border-color: var(--danger); }
 body.public .field-error { font-size: 0.875rem; color: var(--danger); font-weight: 500; }
-body.public .check input { accent-color: var(--forest-800); }
+body.public .field-hint { font-size: var(--fs-meta); color: var(--text-3); line-height: 1.45; }
+body.public .check { min-height: 44px; font-size: 0.9375rem; }
+body.public .check input { width: 20px; height: 20px; flex: none; accent-color: var(--c-ink); }
 body.public .toggle span { background: var(--border-strong); }
-body.public .toggle input:checked + span { background: var(--forest-800); }
+body.public .toggle input:checked + span { background: var(--c-ink); }
 
 /* ---------- Tabs and segmented controls ---------- */
-body.public .tabs { border-bottom: 1px solid var(--border); }
-body.public .tab { font-size: 0.9375rem; font-weight: 500; color: var(--text-2); }
+body.public .tabs { gap: 24px; border-bottom: 1px solid var(--border); }
+body.public .tab { min-height: 44px; font-size: 0.9375rem; font-weight: 500; color: var(--text-2); }
 body.public .tab.active { color: var(--text); }
-body.public .tab-ink { height: 2px; background: var(--forest-800); }
+body.public .tab-ink { height: 2px; background: var(--accent); }
 body.public .segmented { background: var(--sage-100); border: 0; border-radius: var(--radius-ctl); padding: 3px; gap: 2px; }
-body.public .segmented button { font-size: 0.875rem; font-weight: 500; color: var(--text-2); border-radius: 8px; background: transparent; }
+body.public .segmented button { min-height: 44px; font-size: 0.875rem; font-weight: 500; color: var(--text-2); border-radius: 3px; background: transparent; }
 body.public .segmented button.active, body.public .segmented button[aria-pressed="true"], body.public .segmented button[aria-checked="true"] { background: var(--surface); color: var(--text); box-shadow: var(--shadow-thumb); }
 
 /* ---------- Badges, avatars, tables, icons ---------- */
@@ -145,344 +232,565 @@ body.public .badge.good, body.public .badge.brass, body.public .badge.dark, body
 body.public .badge.warn { background: var(--sage-50); color: var(--warn); }
 body.public .badge.bad { background: var(--danger-tint); color: var(--danger); }
 body.public .badge.plain, body.public .badge.outline { background: var(--surface); color: var(--text-2); border: 1px solid var(--border); }
-body.public .avatar { background: var(--forest-800); color: var(--on-dark); border: 0; font-family: var(--serif); font-weight: 500; }
+body.public .avatar { background: var(--forest-800); color: var(--on-dark); border: 0; font-family: var(--sans); font-weight: 600; }
 body.public .table th { font-size: 0.8125rem; font-weight: 500; color: var(--text-2); background: transparent; border-color: var(--border); }
 body.public .table td { border-color: var(--border); }
-body.public .empty svg { color: var(--forest-500); }
 body.public svg.icon { stroke-width: 1.5; }
 
-/* ---------- Dialogs, sheets, toasts ---------- */
+/* ---------- Dialogs, the menu, toasts ---------- */
 body.public .overlay { background: var(--scrim); }
-body.public .modal, body.public .drawer { background: var(--surface); border-top: 0; border-radius: var(--radius-card); box-shadow: var(--shadow-sheet); }
+body.public .modal, body.public .drawer { background: var(--surface); border-top: 0; border-radius: var(--radius-lg); box-shadow: var(--shadow-sheet); }
 body.public .drawer { border-left: 1px solid var(--border); border-radius: 0; }
-body.public .modal-head h3, body.public .drawer .modal-head h3 { font-family: var(--serif); font-size: 1.375rem; font-weight: 500; }
+body.public .modal-head h3, body.public .drawer .modal-head h3 { font-family: var(--font-title); font-size: var(--fs-section); font-weight: 500; letter-spacing: -0.02em; }
 body.public .modal-foot { background: var(--surface); border-top: 1px solid var(--border); }
-body.public .toast { background: var(--forest-950); color: var(--on-dark); border-left: 0; border-radius: var(--radius-ctl); font-size: 0.9375rem; }
+body.public .toast { background: var(--c-ink); color: var(--on-dark); border-left: 0; border-radius: var(--radius-ctl); font-size: 0.9375rem; }
 body.public .toast svg { color: var(--on-dark); }
-@media (max-width: 768px) { body.public .modal { border-radius: 18px 18px 0 0; } }
+@media (max-width: 768px) { body.public .modal { border-radius: var(--radius-lg) var(--radius-lg) 0 0; } }
+body.public .i18n-switch { border-color: var(--border-strong); border-radius: 3px; padding: 0; gap: 0; }
+body.public .i18n-opt, body.public .i18n-row .i18n-switch .i18n-opt { border-radius: 2px; letter-spacing: 0.08em; text-indent: 0.08em; color: var(--text-3); min-width: 44px; height: 40px; }
+body.public .i18n-opt[aria-pressed=true], body.public .i18n-row .i18n-switch .i18n-opt[aria-pressed=true] { background: var(--c-ink); color: var(--on-dark); }
+body.public .i18n-row > svg { display: none; }
 
 /* ==========================================================================
-   Public pages
+   The header: light Mist with a hairline, the colour crest, "St. Boniface" and a small PUBLIC GOLF label.
+   Computers (880px and up): sticky; the pages as spaced capitals with a brass line under the current one; Sign in as
+   a word and Create account as the one Ink button. Below that: the crest on the left and the three-line menu button
+   on the right; the menu opens as a plain list.
    ========================================================================== */
-
-/* ---------- Header: forest bar, serif name, PUBLIC GOLF eyebrow, sentence-case links ---------- */
-body.public .pub-header { background: var(--forest-950); border-bottom: 0; padding-top: env(safe-area-inset-top); }   /* home-screen app: clear the notch */
-body.public .pub-header .pub-crest.stb-logo { color: var(--on-dark); height: 30px; }
-body.public .pub-crest.stb-logo.sm, body.public .pub-crest.stb-logo.lg { color: var(--forest-500); }
-body.public .pub-brand-name { font-family: var(--serif); font-weight: 500; font-size: 1.25rem; line-height: 1.1; letter-spacing: normal; color: var(--on-dark); }
-body.public .pub-brand-sub { font-family: var(--sans); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.12em; color: var(--on-dark-2); margin-top: 3px; }
-body.public .pub-me .btn-ghost { color: var(--on-dark); }
-@media (hover: hover) { body.public .pub-me .btn-ghost:hover { background: var(--forest-800); color: var(--on-dark); } }
-/* Create account sits on the dark bar, so it is the light button (as the EN | FR switch's pressed option) */
-body.public .pub-me .btn-brass, body.public .pub-me .btn-primary { background: var(--on-dark); border-color: var(--on-dark); color: var(--forest-950); }
-@media (hover: hover) { body.public .pub-me .btn-brass:hover, body.public .pub-me .btn-primary:hover { background: var(--sage-100); border-color: var(--sage-100); color: var(--forest-950); } }
-body.public .pub-me-btn { border: 0; padding: 0; min-height: 44px; gap: 6px; background: none; }
-body.public .pub-me-btn .avatar { width: 36px; height: 36px; background: transparent; color: var(--on-dark); box-shadow: inset 0 0 0 1px var(--on-dark-ring); }
-body.public .pub-me-name { color: var(--on-dark); font-weight: 500; font-size: 0.9375rem; }
-@media (hover: hover) { body.public .pub-me-btn:hover .avatar { box-shadow: inset 0 0 0 1px var(--on-dark); } }
-body.public .pub-menu-btn { border-color: var(--on-dark-ring); border-radius: var(--radius-ctl); color: var(--on-dark); }
-body.public .i18n-switch { border-color: var(--on-dark-ring); }
-body.public .i18n-opt { letter-spacing: 0.08em; text-indent: 0.08em; }
-body.public .i18n-row .i18n-switch { border-color: var(--border-strong); }
-body.public .pub-menu a, body.public .pub-menu button { color: var(--text); border-color: var(--border); }
-body.public .pub-menu svg { color: var(--forest-500); }
+body.public .pub-header { position: relative; z-index: 40; background: var(--bg); color: var(--text); border-bottom: 1px solid var(--border); padding-top: env(safe-area-inset-top); }
+body.public .pub-header-inner { display: flex; align-items: center; gap: 20px; max-width: 1320px; height: auto; min-height: 60px; margin: 0 auto; padding: 0 var(--pg); }
+body.public .pub-brand { display: flex; align-items: center; gap: 12px; flex: none; min-height: 44px; margin-right: auto; color: var(--text); text-decoration: none; }
+body.public .pub-crest-img { height: 32px; width: auto; flex: none; }
+body.public .pub-brand-t { display: flex; flex-direction: column; }
+body.public .pub-brand-name { font: 500 1.0625rem/1.1 var(--sans); letter-spacing: -0.01em; white-space: nowrap; color: var(--text); }
+body.public .pub-brand-sub { margin-top: 4px; font: 600 0.625rem/1 var(--sans); letter-spacing: 0.2em; text-transform: uppercase; white-space: nowrap; color: var(--label); }
+body.public .pub-brand .pub-brand-sub { display: block; }
+body.public .pub-nav { display: none; }
+body.public .pub-me { display: none; align-items: center; gap: 20px; flex: none; }
+body.public .pub-signin-link, body.public .pub-nav a, body.public .pub-more-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 0; border: 0; background: none; cursor: pointer; font: 600 0.6875rem/1 var(--sans); letter-spacing: 0.16em; text-transform: uppercase; white-space: nowrap; color: var(--text-3); text-decoration: none; }
+body.public .pub-signin-link { color: var(--text); }
+body.public .pub-signup-link { min-height: 40px; white-space: nowrap; }
+body.public .pub-me-btn { display: flex; align-items: center; gap: 10px; min-height: 44px; min-width: 44px; padding: 0; border: 0; background: none; color: var(--text); text-decoration: none; }
+body.public .pub-me-btn .avatar { width: 36px; height: 36px; min-width: 36px; background: transparent; color: var(--text); box-shadow: inset 0 0 0 1px var(--border-strong); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; }
+@media (hover: hover) { body.public .pub-me-btn:hover .avatar { box-shadow: inset 0 0 0 1px var(--text); } }
+body.public .pub-me-name { display: none; font-size: 0.9375rem; font-weight: 500; color: var(--text); }
+body.public .pub-menu-btn { display: inline-flex; align-items: center; justify-content: flex-end; flex: none; width: 44px; height: 44px; margin-right: -2px; padding: 0; border: 0; border-radius: var(--radius-ctl); background: none; color: var(--text); cursor: pointer; }
+body.public .pub-menu-lines { display: grid; gap: 5px; width: 24px; }
+body.public .pub-menu-lines i { display: block; height: 1.5px; background: currentColor; }
+@media (min-width: 560px) { body.public .pub-me { display: flex; } }
 @media (min-width: 880px) {
-  body.public .pub-header-inner { height: 64px; }
-  body.public .pub-nav a { color: var(--on-dark-2); font-size: 0.9375rem; font-weight: 500; letter-spacing: normal; text-transform: none; }
-  body.public .pub-nav a.active, body.public .pub-nav .pub-nav-members { color: var(--on-dark); }
-  @media (hover: hover) { body.public .pub-nav a:hover { color: var(--on-dark); } }
-  body.public .pub-nav a.active::after { background: var(--on-dark); }
-  body.public .pub-more-btn { color: var(--on-dark-2); font: 500 0.9375rem var(--sans); letter-spacing: normal; text-transform: none; }
-  body.public .pub-more-btn[aria-expanded="true"], body.public .pub-more.has-active .pub-more-btn { color: var(--on-dark); }
-  body.public .pub-more-pop { background: var(--surface); border-color: var(--border-strong); border-radius: var(--radius-ctl); box-shadow: var(--shadow-pop); }
-  body.public .pub-nav .pub-more-pop a { color: var(--text); font-size: 0.9375rem; border-radius: 8px; }
-  @media (hover: hover) { body.public .pub-nav .pub-more-pop a:hover { background: var(--sage-50); color: var(--text); } }
-  body.public .pub-nav .pub-more-pop a.active, body.public .pub-nav .pub-more-pop .pub-nav-members { color: var(--forest-800); font-weight: 600; }
+  body.public .pub-header { position: sticky; top: 0; }
+  body.public .pub-header-inner { min-height: 72px; gap: 24px; }
+  body.public .pub-brand { gap: 14px; margin-right: 0; }
+  body.public .pub-crest-img { height: 34px; }
+  body.public .pub-nav { position: relative; display: flex; flex: none; align-items: center; align-self: stretch; gap: 24px; margin: 0 auto 0 14px; }
+  body.public .pub-nav a { position: relative; }
+  body.public .pub-nav a.active, body.public .pub-more-btn[aria-expanded="true"], body.public .pub-more.has-active .pub-more-btn { color: var(--text); }
+  body.public .pub-nav a.active::after { content: ""; position: absolute; left: 0; right: 0; top: calc(50% + 11px); height: 1.5px; background: var(--accent); }
+  body.public .pub-me-name { display: inline; }
+  body.public .pub-menu-btn { display: none; }
 }
+@media (min-width: 880px) and (hover: hover) { body.public .pub-nav a:hover, body.public .pub-more-btn:hover, body.public .pub-signin-link:hover { color: var(--text); text-decoration: none; } }
+/* More: the links that do not fit the bar (fitNav in js/public/site.js) */
+body.public .pub-more { position: relative; display: flex; align-items: center; height: 100%; }
+body.public .pub-more[hidden] { display: none; }
+body.public .pub-more-btn { gap: 4px; }
+body.public .pub-more-btn svg { display: none; }
+body.public .pub-more-pop { position: absolute; top: calc(50% + 22px); right: -12px; z-index: 60; display: flex; flex-direction: column; min-width: 240px; padding: 0; overflow: hidden; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-pop); }
+body.public .pub-more-pop[hidden] { display: none; }
+body.public .pub-nav .pub-more-pop a { min-height: 46px; padding: 0 16px; border-top: 1px solid var(--border); color: var(--text); font: 500 0.9375rem/1.3 var(--sans); letter-spacing: normal; text-transform: none; }
+body.public .pub-nav .pub-more-pop a:first-child { border-top: 0; }
+body.public .pub-nav .pub-more-pop a.active { font-weight: 600; box-shadow: inset 2px 0 0 var(--accent); }
+body.public .pub-nav .pub-more-pop a.active::after { display: none; }
+@media (hover: hover) { body.public .pub-nav .pub-more-pop a:hover { background: var(--sage-50); color: var(--text); } }
 
-/* ---------- Hero: deep forest panel, no brass frame, crest watermark kept ---------- */
-body.public .pub-hero { background: var(--forest-950); color: var(--on-dark); border-radius: var(--radius-card); }
-body.public .pub-hero::before { display: none; }
-body.public .pub-hero::after { background: var(--forest-800); opacity: 1; }
-body.public .pub-hero .eyebrow { color: var(--on-dark-2); }
-body.public .pub-hero h1 { color: var(--on-dark); font-size: clamp(2rem, 5vw, 2.875rem); line-height: 1.15; }
-body.public .pub-hero-lead { color: var(--on-dark-2); font-size: 1.0625rem; line-height: 1.55; }
-body.public .pub-hero-actions .btn { min-height: 48px; }
-body.public .pub-hero .btn-brass, body.public .pub-hero .btn-primary { background: var(--on-dark); border-color: var(--on-dark); color: var(--forest-950); }
-@media (hover: hover) { body.public .pub-hero .btn-brass:hover, body.public .pub-hero .btn-primary:hover { background: var(--sage-100); border-color: var(--sage-100); color: var(--forest-950); } }
-body.public .pub-btn-night { background: transparent; color: var(--on-dark); border-color: var(--on-dark-ring); }
-@media (hover: hover) { body.public .pub-btn-night:hover { background: var(--forest-800); color: var(--on-dark); border-color: var(--on-dark-ring); } }
-body.public .pub-rates { background: var(--forest-900); border: 1px solid var(--on-dark-line); border-radius: 12px; }
-body.public .pub-rates .label-caps { color: var(--on-dark-2); }
-body.public .pub-rates li { border-bottom-color: var(--on-dark-line); }
-body.public .pub-rate-name { color: var(--on-dark); font-weight: 500; }
-body.public .pub-rate-amt { color: var(--on-dark); font-size: 1.875rem; }
-@media (max-width: 768px) {
-  body.public .pub-rates { background: transparent; border: 0; border-top: 1px solid var(--on-dark-line); border-radius: 0; }
-  body.public .pub-hero .eyebrow, body.public .pub-rates .label-caps { font-size: 0.6875rem; }
-  body.public .pub-page .pub-hero h1 { font-size: 1.625rem; }
-  body.public .pub-hero-lead { font-size: 0.875rem; }
-  body.public .pub-rate-amt { font-size: 1.375rem; }
-}
+/* The menu (phones and tablets): a plain hairline list of words */
+body.public .pub-drawer { background: var(--bg); }
+body.public .pub-drawer .modal-head { padding: 22px 24px 10px; }
+body.public .pub-drawer .modal-body { padding: 0 24px 24px; }
+body.public .pub-menu a, body.public .pub-menu > button { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; min-height: 52px; padding: 12px 0; border: 0; border-top: 1px solid var(--border); background: none; color: var(--text); font: 500 0.96875rem/1.35 var(--sans); text-align: left; text-decoration: none; cursor: pointer; }
+body.public .pub-menu > :first-child { border-top: 0; }
+body.public .pub-menu > :last-child { border-bottom: 1px solid var(--border); }
+body.public .pub-menu [data-act="menu-signout"] { color: var(--text-2); }
+body.public .pub-menu-lang { min-height: 56px; padding: 8px 0; border-bottom: 0; font-size: 0.96875rem; font-weight: 500; color: var(--text); }
+@media (hover: hover) { body.public .pub-menu a:hover span, body.public .pub-menu > button:hover span { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 4px; } }
 
-/* ---------- Booking: steps, day strip, time cards ---------- */
-body.public .pub-book-head h2 { font-size: 1.75rem; }
-body.public .pub-steps { border-bottom-color: var(--border); }
-body.public .pub-steps button { font-size: 0.875rem; font-weight: 500; letter-spacing: normal; text-transform: none; color: var(--text-3); }
-body.public .pub-steps li.active button { color: var(--text); }
-body.public .pub-steps li.active button::after { background: var(--forest-800); }
-body.public .pub-steps li.done button { color: var(--forest-800); }
-body.public .pub-step-n { font-size: 0.8125rem; font-weight: 500; }
-body.public .pub-steps li.active .pub-step-n { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); }
+/* ---------- Page frame and titles ---------- */
+body.public .pub-page { width: 100%; max-width: 1184px; margin: 0 auto; padding: 16px var(--pg) 48px; }
+@media (min-width: 768px) { body.public .pub-page { padding: 28px var(--pg) 56px; } }
+body.public .pub-page-head { padding: 6px 0 0; }
+body.public .pub-page-head h1, body.public .pub-home-head h1, body.public .pub-auth-intro h1 { margin: 0; font-size: var(--fs-page); font-weight: 500; line-height: 1.15; letter-spacing: -0.025em; }
+body.public .pub-page-head .eyebrow { margin-bottom: 6px; }
+body.public .pub-page-head p, body.public .pub-page-head .serif { max-width: 40rem; margin: 6px 0 0; font-size: 0.84375rem; line-height: 1.5; color: var(--text-3); }
+body.public .pub-sec { margin-top: 30px; }
+body.public .pub-sec-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+body.public .pub-sec-head h2 { margin: 0; font: 600 0.6875rem/1.5 var(--sans); letter-spacing: 0.2em; text-transform: uppercase; color: var(--label); }
+body.public .pub-fine { margin: 12px 0 0; font-size: 0.8125rem; line-height: 1.5; color: var(--text-3); }
+body.public .pub-alert, body.public .ck-alert, body.public .ckf-alert { border-radius: var(--radius-ctl); }
 
-body.public .pub-day { border-color: var(--border); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow-card); }
-@media (hover: hover) { body.public .pub-day:hover { border-color: var(--forest-500); } }
-body.public .pub-day-wk, body.public .pub-day-mo { font-size: 0.75rem; font-weight: 500; letter-spacing: normal; text-transform: none; color: var(--text-2); }
-body.public .pub-day-n { font-size: 1.625rem; font-weight: 500; color: var(--text); }
-body.public .pub-day-lab { font-size: 0.75rem; color: var(--forest-800); }
-body.public .pub-day.is-none .pub-day-n, body.public .pub-day.is-none .pub-day-lab { color: var(--text-3); }
-body.public .pub-day-hol { background: var(--sage-100); color: var(--forest-800); border-color: var(--border-strong); font-size: 0.6875rem; letter-spacing: normal; text-transform: none; font-weight: 500; }
-body.public .pub-day.active { background: var(--forest-800); border-color: var(--forest-800); }
-body.public .pub-day.active .pub-day-wk, body.public .pub-day.active .pub-day-mo, body.public .pub-day.active .pub-day-lab { color: var(--on-dark-2); }
-body.public .pub-day.active .pub-day-n { color: var(--on-dark); }
-body.public .pub-day.has-mine::after { background: var(--forest-500); }
-body.public .pub-day.active.has-mine::after { background: var(--on-dark); }
-body.public .pub-strip-note svg { color: var(--forest-500); }
+/* ==========================================================================
+   Book a tee time: the starter's sheet (js/public/book.js). One column, like the portal's Tee times.
+   ========================================================================== */
+body.public .pub-home-head, body.public .pub-book { max-width: 760px; margin-left: auto; margin-right: auto; }
+body.public .pub-home-head { display: block; padding: 6px 0 4px; }
+body.public .pub-quick { display: none; }   /* the header and its menu have these links on every screen (owner, Nov 21) */
+body.public .pub-page.is-done .pub-home-head { display: none; }
+body.public .pub-book { margin-top: 0; scroll-margin-top: calc(var(--pub-top) + 8px); }
 
-body.public .pub-times { border-color: var(--border); box-shadow: var(--shadow-card); }
-body.public .pub-times-head h3 { font-family: var(--serif); font-size: 1.375rem; }
-body.public .pub-wx svg { color: var(--forest-500); }
-body.public .pub-hol-note { background: var(--sage-50); color: var(--forest-800); }
-body.public .pub-band + .pub-band { border-top-color: var(--border); }
-body.public .pub-band-name { font-size: 0.75rem; font-weight: 500; letter-spacing: 0.08em; color: var(--forest-500); }
-body.public .pub-band-rate { color: var(--text); }
-body.public .pub-chip { border-color: var(--border-strong); border-radius: var(--radius-ctl); background: var(--surface); }
-@media (hover: hover) { body.public .pub-chip:hover { border-color: var(--forest-500); background: var(--sage-50); } }
-body.public .pub-chip-t { font-size: 1.125rem; font-weight: 500; color: var(--text); }
-body.public .pub-chip-t small { letter-spacing: normal; }
-body.public .pub-chip-amt { font-size: 1.0625rem; font-weight: 500; color: var(--text); }
-body.public .pub-chip-p, body.public .pub-chip-rate { color: var(--forest-800); }
-body.public .pub-chip.st-mine { border-color: var(--forest-500); background: var(--sage-50); }
-body.public .pub-chip.st-mine .tee-head { color: var(--forest-500); }
-body.public .pub-chip.selected { background: var(--forest-800); border-color: var(--forest-800); }
-body.public .pub-chip.selected .pub-chip-price { border-top-color: var(--on-dark-line); }
+/* The steps: four words, a brass line under the current one */
+body.public .pub-steps { display: flex; gap: 22px; list-style: none; margin: 0 calc(-1 * var(--edge)); padding: 0 var(--edge); box-shadow: inset 0 -1px 0 var(--border); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+body.public .pub-steps::-webkit-scrollbar { display: none; }
+body.public .pub-steps li { flex: none; }
+body.public .pub-steps button { display: inline-flex; align-items: center; min-height: 44px; padding: 1.5px 0 0; border: 0; border-bottom: 1.5px solid transparent; border-radius: 0; background: none; color: var(--text-3); font: 600 0.6875rem/1 var(--sans); letter-spacing: 0.16em; text-transform: uppercase; white-space: nowrap; cursor: pointer; }
+body.public .pub-steps button[disabled] { cursor: default; }
+body.public .pub-steps li.active button { color: var(--text); border-bottom-color: var(--accent); }
+body.public .pub-steps li.done button { color: var(--text-2); }
+@media (hover: hover) { body.public .pub-steps li.done button:hover { color: var(--text); } }
+@media (max-width: 420px) { body.public .pub-steps { gap: 16px; } body.public .pub-steps button { font-size: 0.65625rem; letter-spacing: 0.12em; } }
 
-/* ---------- Players, add-ons, fees ---------- */
-body.public .pub-sel { border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
-body.public .pub-sel-time, body.public .pub-sel-day { color: var(--text); }
-body.public .pub-join { background: var(--sage-50); border-radius: var(--radius-card); }
-body.public .pub-join svg { color: var(--forest-500); }
-body.public .pub-pl { border-bottom-color: var(--border); }
-body.public .pub-pl-n { border-color: var(--border-strong); color: var(--forest-800); font-weight: 500; }
-body.public .pub-walk { font-size: 0.8125rem; letter-spacing: normal; text-transform: none; }
-body.public .pub-add-btn { border-color: var(--border-strong); color: var(--forest-800); border-radius: var(--radius-ctl); }
-@media (hover: hover) { body.public .pub-add-btn:hover { border-color: var(--forest-500); background: var(--sage-50); } }
-body.public .pub-addon-price { color: var(--text-2); }
-@media (hover: hover) { body.public .pub-addon-chip:hover { border-color: var(--forest-500); } }
-body.public .pub-addon-chip.on { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); }
-@media (hover: hover) { body.public .pub-qty-b:hover:not([disabled]) { background: var(--sage-50); } }
-body.public .pub-fees-card { background: var(--sage-50); border-color: var(--border); }
-body.public .pub-fees-total { color: var(--text); font-size: 1.75rem; }
-body.public .pub-fees-sum { border-top-color: var(--border-strong); }
+/* The hold on the chosen time: one quiet line under the steps, which stays in view (Club.holds.timer, css/holds.css) */
+body.public .pub-hold-host { position: sticky; top: var(--pub-top); z-index: 6; margin: 0 calc(-1 * var(--edge)); padding: 0 var(--edge); background: var(--bg); box-shadow: inset 0 -1px 0 var(--border); }
+body.public .pub-hold-host:empty { display: none; }
+body.public .pub-hold-host .hold-timer { position: static; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; width: auto; margin: 0; padding: 11px 0; background: none; color: var(--text-3); border-radius: 0; box-shadow: none; text-align: left; opacity: 1; transform: none; }
+body.public .pub-hold-host .hold-timer-l, body.public .pub-hold-host .hold-timer-bar, body.public .pub-hold-host .hold-timer-u small { display: none; }
+body.public .pub-hold-host .hold-timer-w { display: block; order: 1; margin: 0; font-size: 0.8125rem; line-height: 1.4; white-space: normal; color: var(--text-3); }
+body.public .pub-hold-host .hold-timer-v { order: 2; display: flex; flex: none; gap: 0; margin: 0; }
+body.public .pub-hold-host .hold-timer-u { display: inline; }
+body.public .pub-hold-host .hold-timer-u b { font: 600 0.875rem/1.4 var(--sans); color: var(--text); font-variant-numeric: tabular-nums; }
+body.public .pub-hold-host .hold-timer-u:first-child b::after { content: ":"; }
+body.public .pub-hold-host .hold-timer.is-low .hold-timer-u b { color: var(--danger); }
+body.public .hold-ended { display: block; margin: 14px 0 0; padding: 0; background: none; border-radius: 0; font-size: 0.875rem; color: var(--warn); }
+body.public .hold-ended .icon { display: none; }
 
-/* ---------- Payment, confirmation ---------- */
-body.public .pub-secure { font-size: 0.8125rem; font-weight: 500; letter-spacing: normal; text-transform: none; color: var(--forest-800); }
-body.public .pub-card-opt { border-color: var(--border-strong); border-radius: var(--radius-ctl); }
-@media (hover: hover) { body.public .pub-card-opt:hover { border-color: var(--forest-500); } }
-body.public .pub-card-opt:has(input:checked) { border-color: var(--forest-800); background: var(--sage-50); }
-body.public .pub-card-opt-t { font-weight: 500; color: var(--text); }
-body.public .pub-mark { border-color: var(--border); border-radius: 6px; }
-body.public .pub-ticket { border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
-body.public .pub-ticket::before { display: none; }
-body.public .pub-ticket-time { color: var(--text); }
-body.public .pub-ticket-pl li { border-bottom-color: var(--border); }
-body.public .pub-ticket-pl .serif { font-size: 1rem; font-weight: 500; color: var(--text); }
+/* The days: a weekday word over a serif number, a brass line under the chosen day */
+body.public .pub-strip-wrap { margin: 0 calc(-1 * var(--edge)); box-shadow: inset 0 -1px 0 var(--border); }
+body.public .pub-strip { display: flex; gap: 3px; padding: 0 max(0px, calc(var(--edge) - 8px)); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+body.public .pub-strip::-webkit-scrollbar { display: none; }
+body.public .pub-day { position: relative; flex: 0 0 auto; min-width: 40px; display: flex; flex-direction: column; align-items: center; gap: 2px; margin: 0; padding: 12px 2px 13px; border: 0; border-radius: 0; background: none; color: var(--text-3); font: 400 0.8125rem/1.3 var(--sans); white-space: nowrap; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+body.public .pub-day::after { content: ""; position: absolute; left: 8px; right: 8px; bottom: 0; height: 1.5px; background: transparent; }
+body.public .pub-day-n { font-family: var(--font-sig); font-size: 1.5rem; font-weight: 400; line-height: 1.15; letter-spacing: -0.01em; font-variant-numeric: lining-nums; color: var(--text); }
+body.public .pub-day.active { color: var(--text); }
+body.public .pub-day.active::after { background: var(--accent); }
+body.public .pub-day.is-none, body.public .pub-day.is-none .pub-day-n { color: var(--pub-off); }
+body.public .pub-day.is-none.active, body.public .pub-day.is-none.active .pub-day-n { color: var(--text-3); }
+body.public .pub-day.has-mine::before { content: ""; position: absolute; top: 9px; right: 3px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }   /* a day you already play */
+body.public .pub-day:focus-visible { outline-offset: -2px; }
+@media (hover: hover) { body.public .pub-day:not(.active):not(.is-none):hover { color: var(--text); } }
+@media (min-width: 768px) { body.public .pub-day { flex: 1 1 0; } }
 
-/* ---------- Good to know, auth, my bookings, account ---------- */
-body.public .pub-know h2, body.public .pub-sec-head h2 { font-size: 1.375rem; }
-body.public .pub-sig-yds > span { font-family: var(--sans); font-weight: 500; color: var(--text); }
-body.public .pub-sig-copy { font-size: 1rem; line-height: 1.6; }
-body.public .pub-remind-list li { border-bottom-color: var(--border); }
-body.public .pub-remind-list svg, body.public .pub-head-icon { color: var(--forest-500); }
-body.public .pub-remind-list strong { color: var(--text); font-weight: 500; }
-body.public .pub-auth-panel { border-top: 1px solid var(--border); }
-body.public .pub-auth-intro .serif, body.public .pub-page-head .serif { font-size: 1rem; color: var(--text-2); }
-body.public .pub-pw-eye.on { color: var(--forest-800); }
-body.public .pub-bk-date { border-right-color: var(--border); }
-body.public .pub-bk-wk, body.public .pub-bk-mo { font-size: 0.75rem; font-weight: 500; letter-spacing: normal; text-transform: none; color: var(--text-2); }
-body.public .pub-bk-n { font-weight: 500; color: var(--text); }
-body.public .pub-bk-time { font-size: 1.25rem; font-weight: 500; color: var(--text); }
-body.public .pub-bk-acts { border-top-color: var(--border); }
-body.public .pub-bk-lock { background: var(--sage-50); }
-body.public .pub-bk-adds svg { color: var(--forest-500); }
-body.public .pub-acc-sum strong { color: var(--text); }
-body.public .pub-rc-t, body.public .pub-rc-amt { color: var(--text); font-weight: 500; }
-body.public .pub-rc-amt small { letter-spacing: normal; text-transform: none; color: var(--forest-800); }
-body.public .pub-receipt-club, body.public .pub-receipt-amt, body.public .pub-receipt-kv dd { color: var(--text); }
+/* The day: one quiet line (date, weather), the small squared 18 / 9 control, then the times */
+body.public .pub-times { margin: 0; padding: 0; background: none; border: 0; }
+body.public .pub-swap { animation: fade var(--t-med) var(--ease-out) both; }
+body.public .pub-times-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 54px; padding: 4px 0; }
+body.public .pub-day-line { display: flex; flex-wrap: wrap; gap: 0 6px; min-width: 0; margin: 0; font: 400 0.84375rem/1.4 var(--sans); letter-spacing: normal; color: var(--text-3); }
+body.public .pub-day-line > span:first-child { color: var(--text); font-weight: 500; }
+body.public .pub-hol-note { margin: 0 0 6px; padding: 0; background: none; font-size: 0.8125rem; line-height: 1.45; color: var(--text-3); }
+body.public .pub-holes-pick { flex: none; margin: 0; }
+body.public .pub-holes-pick .segmented { display: inline-flex; width: auto; max-width: none; gap: 0; padding: 0; overflow: visible; background: none; border: 1px solid var(--border); border-radius: 3px; }
+body.public .pub-holes-pick .segmented button { position: relative; flex: none; min-width: 44px; min-height: 34px; padding: 0 12px; border: 0; border-radius: 0; background: none; box-shadow: none; color: var(--text-3); font: 400 0.8125rem/1 var(--sans); white-space: nowrap; }
+body.public .pub-holes-pick .segmented button::before { content: ""; position: absolute; left: 0; right: 0; top: -5px; bottom: -5px; }   /* a 44px tap area around the small control */
+body.public .pub-holes-pick .segmented button:first-child { border-radius: 2px 0 0 2px; }
+body.public .pub-holes-pick .segmented button:last-child { border-radius: 0 2px 2px 0; }
+body.public .pub-holes-pick .segmented button.active { background: var(--c-ink); color: var(--on-dark); box-shadow: none; }
+/* A rate: its name in small capitals, and the price as one quiet line */
+body.public .pub-band-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 14px 0 8px; border-bottom: 1px solid var(--border); }
+body.public .pub-band:first-of-type .pub-band-head { padding-top: 6px; }
+body.public .pub-band-name { font: 600 0.6875rem/1.5 var(--sans); letter-spacing: 0.2em; text-transform: uppercase; color: var(--label); }
+body.public .pub-band-rate { font: 500 0.84375rem/1.4 var(--sans); color: var(--text); white-space: nowrap; font-variant-numeric: tabular-nums; }
+body.public .pub-band-rate small { font-size: inherit; font-weight: 400; color: var(--text-3); }
+/* A time: the time in the serif, four round marks, the places, one action word */
+body.public .pub-chips { display: block; }
+body.public .pub-chip { box-sizing: border-box; display: grid; grid-template-columns: var(--pub-time-w, 118px) minmax(0, 1fr) auto; align-items: center; width: calc(100% + 2 * var(--rg)); min-height: 57px; margin: 0 calc(-1 * var(--rg)); padding: 13px var(--rg); border: 0; border-radius: 0; box-shadow: none; background: linear-gradient(var(--border), var(--border)) var(--rg) 0 / calc(100% - 2 * var(--rg)) 1px no-repeat; color: var(--text); font-family: var(--sans); text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+html[lang^="fr"] body.public .pub-chip { --pub-time-w: 112px; }
+body.public .pub-chips > .pub-chip:first-child { background-image: none; }   /* the rate's heading carries the line above the first time */
+body.public .pub-chip-t { white-space: nowrap; line-height: 1; }
+body.public .pub-chip-h { font-family: var(--font-sig); font-size: 1.875rem; font-weight: 400; line-height: 1; letter-spacing: -0.01em; font-variant-numeric: lining-nums; }
+body.public .pub-chip-t small, body.public .pub-sel-time small, body.public .pub-bk-time small { margin-left: 3px; font: 600 0.6875rem/1 var(--sans); letter-spacing: 0.12em; color: var(--text-3); }
+body.public .pub-chip-mid { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+body.public .pub-spots { display: flex; gap: 6px; }
+body.public .pub-spots i { display: block; width: 9px; height: 9px; border: 1.2px solid currentColor; border-radius: 50%; }
+body.public .pub-spots i.f { background: currentColor; }
+body.public .pub-chip-p { font-size: 0.78125rem; line-height: 1.35; color: var(--text-3); }
+body.public .pub-chip-go { padding-left: 12px; font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.02em; white-space: nowrap; color: var(--text); }
+body.public .pub-chip.selected { background-color: var(--surface); background-image: linear-gradient(var(--accent), var(--accent)); background-position: 0 0; background-size: 100% 1px; }
+body.public .pub-chip.st-mine .pub-chip-p { color: var(--text); font-weight: 500; }
+body.public .pub-chip.st-mine .pub-chip-go { color: var(--text-2); }
+body.public .pub-chip:focus-visible { outline-offset: -2px; }
+@media (hover: hover) { body.public .pub-chip:not(.selected):hover { background-color: var(--surface); } }
+body.public .wl-acts { display: flex; flex-wrap: wrap; gap: 8px; }
 
-/* ---------- Footer: compact and quiet, as the portal's ---------- */
-body.public .pub-footer { border-top-color: var(--border); }
-body.public .pub-footer-inner { padding: var(--s5) var(--s4) var(--s6); color: var(--text-2); font-size: 0.875rem; line-height: 1.5; }
-body.public .pub-footer .flourish { display: none; }
-body.public .pub-footer-name { font-family: var(--sans); font-size: 1rem; font-weight: 500; color: var(--text); }
-body.public .pub-footer-est { font-size: 0.75rem; font-weight: 500; letter-spacing: 0.08em; color: var(--forest-500); }
-body.public .pub-footer a { color: var(--forest-800); }
-body.public .pub-social { letter-spacing: normal; }
-body.public .pub-land { font-size: 0.8125rem; color: var(--text-3); }
+/* ---------- Players ---------- */
+/* The chosen time: large in the serif, the day and the price beside it, Change as a word */
+body.public .pub-sel { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 0 16px; }
+body.public .pub-sel-when { display: flex; align-items: center; gap: 16px; min-width: 0; }
+body.public .pub-sel-time { font-family: var(--font-sig); font-size: 2.75rem; font-weight: 400; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: lining-nums; white-space: nowrap; color: var(--text); }
+body.public .pub-sel-day { font-size: 0.96875rem; font-weight: 500; line-height: 1.35; color: var(--text); }
+body.public .pub-sel .muted { font-size: 0.8125rem; line-height: 1.45; color: var(--text-3); }
+body.public .pub-sel-change { flex: none; }
+/* Sections of the booking: a small capitals label on the left, a quiet note on the right */
+body.public .pub-stage .panel-head { align-items: baseline; padding: 16px 0 6px; }
+body.public .pub-stage .panel-head h3 { margin: 0; font: 600 0.6875rem/1.5 var(--sans); letter-spacing: 0.2em; text-transform: uppercase; color: var(--label); }
+body.public .pub-stage .panel-head .muted, body.public .pub-secure { font: 400 0.8125rem/1.4 var(--sans); letter-spacing: normal; text-transform: none; color: var(--text-3); }
+body.public .pub-opt-word { font: inherit; color: inherit; }
+body.public .pub-stage .panel-body { padding: 0 0 8px; }
+body.public .pub-gate .pub-gate-head h3 { margin: 18px 0 2px; font-size: var(--fs-section); font-weight: 500; letter-spacing: -0.02em; }
+body.public .pub-gate .pub-gate-head p { margin: 0 0 14px; font-size: 0.84375rem; color: var(--text-3); }
+body.public .pub-gate .panel-body { padding-bottom: 8px; }
+body.public .pub-pl-list { list-style: none; margin: 0; padding: 0; }
+body.public .pub-pl { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "who ride"; align-items: center; gap: 4px 16px; min-height: 64px; padding: 10px 0; border-top: 1px solid var(--border); }
+body.public .pub-pl-list > .pub-pl:first-child { border-top: 0; }
+body.public .pub-pl.is-guest { grid-template-areas: "who who" "ride x"; }
+body.public .pub-pl.is-fresh { animation: rise var(--t-med) var(--ease-out) both; }
+body.public .pub-pl-who { grid-area: who; min-width: 0; }
+body.public .pub-pl-k { font: 600 0.6875rem/1.5 var(--sans); letter-spacing: 0.18em; text-transform: uppercase; color: var(--label); }
+body.public .pub-pl .person-name { font-size: 1rem; font-weight: 500; line-height: 1.35; color: var(--text); overflow-wrap: break-word; }
+body.public .pub-guest-f { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; margin: 6px 0 0; }
+body.public .pub-guest-f .field { margin: 0; }
+body.public .pub-guest-f .pub-guest-email { grid-column: 1 / -1; }
+body.public .pub-pl-ride { grid-area: ride; }
+body.public .pub-pl-x { grid-area: x; justify-self: end; font-size: 0.875rem; color: var(--text-2); }
+/* Walk / Cart: two words, a brass line under the chosen one */
+body.public .pub-ride.segmented { display: inline-flex; gap: 20px; padding: 0; background: none; border: 0; border-radius: 0; }
+body.public .pub-ride.segmented button { position: relative; min-width: 44px; min-height: 44px; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; color: var(--text-3); font: 500 0.9375rem/1 var(--sans); }
+body.public .pub-ride.segmented button.active { background: none; box-shadow: none; color: var(--text); }
+body.public .pub-ride.segmented button.active::after { content: ""; position: absolute; left: 50%; width: 100%; max-width: 3.2em; transform: translateX(-50%); top: calc(50% + 12px); height: 1.5px; background: var(--accent); }
+@media (hover: hover) { body.public .pub-ride.segmented button:not(.active):hover { color: var(--text); } }
+body.public .pub-walk { font-size: 0.875rem; color: var(--text-3); }
+body.public .pub-add-wrap { border-top: 1px solid var(--border); padding: 2px 0; }
+body.public .pub-add-btn { min-height: 48px; }
+body.public .pub-full { margin: 0; padding: 13px 0; font-size: 0.84375rem; color: var(--text-3); }
+body.public .pub-rule { margin: 0; padding: 12px 0; border-top: 1px solid var(--border); font-size: 0.84375rem; color: var(--warn); }
+body.public .pub-opts { display: flex; flex-wrap: wrap; gap: 0 6px; padding: 12px 0 10px; border-top: 1px solid var(--border); font-size: 0.84375rem; line-height: 1.45; color: var(--text-3); }
+body.public .pub-cart-note::before { content: "\00B7\00A0"; }
+/* Extras: a hairline list. Per golfer: small squared choices; per booking: minus, a number, plus */
+body.public .pub-adds { margin-top: 10px; }
+body.public .pub-adds-list { list-style: none; margin: 0; padding: 0; }
+body.public .pub-addon { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; min-height: 60px; padding: 10px 0; border-top: 1px solid var(--border); }
+body.public .pub-adds-list > .pub-addon:first-child { border-top: 0; }
+body.public .pub-addon-head { display: flex; flex-direction: column; flex: 1 1 160px; min-width: 0; }
+body.public .pub-addon-name { font-size: 0.96875rem; font-weight: 500; line-height: 1.35; color: var(--text); }
+body.public .pub-addon-price { font-size: 0.8125rem; color: var(--text-3); font-variant-numeric: tabular-nums lining-nums; }
+body.public .pub-addon-who { display: flex; flex-wrap: wrap; gap: 8px; }
+body.public .pub-addon-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; max-width: 160px; padding: 0 14px; border: 1px solid var(--border-strong); border-radius: 3px; background: none; color: var(--text-2); font: 400 0.875rem/1.2 var(--sans); cursor: pointer; }
+body.public .pub-addon-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.public .pub-addon-tick { display: none; width: 14px; height: 14px; flex: none; }
+body.public .pub-addon-chip.on { background: var(--c-ink); border-color: var(--c-ink); color: var(--on-dark); }
+body.public .pub-addon-chip.on .pub-addon-tick { display: block; }
+@media (hover: hover) { body.public .pub-addon-chip:not(.on):hover { border-color: var(--text); color: var(--text); } }
+body.public .pub-qty { display: inline-flex; align-items: center; border: 0; background: none; }
+body.public .pub-qty-b { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 0; background: none; color: var(--text); cursor: pointer; }
+body.public .pub-qty-b span { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border: 1px solid var(--border-strong); border-radius: 50%; font: 400 1rem/1 var(--sans); }
+body.public .pub-qty-b[disabled] { cursor: default; opacity: 1; }
+body.public .pub-qty-b[disabled] span { color: var(--pub-off); border-color: var(--border); }
+@media (hover: hover) { body.public .pub-qty-b:not([disabled]):hover span { background: var(--surface); border-color: var(--text); } }
+body.public .pub-qty-v { min-width: 28px; text-align: center; font: 500 1rem/1 var(--sans); color: var(--text); font-variant-numeric: tabular-nums lining-nums; }
+/* The fees as a short bill, and the total as the serif figure */
+body.public .pub-fees { margin-top: 10px; border-top: 1px solid var(--border); }
+body.public .pub-fees-lines { list-style: none; margin: 0; padding: 0; }
+body.public .pub-fees-lines li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); font-size: 0.875rem; line-height: 1.4; color: var(--text-3); }
+body.public .pub-fees-lines li:first-child { border-top: 0; }
+body.public .pub-fees-lines .num { flex: none; color: var(--text); }
+body.public .pub-fees-top, body.public .pub-sum-total { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 16px 0 0; border-top: 1px solid var(--border-strong); }
+body.public .pub-fees-total, body.public .pub-sum-amt { font-family: var(--font-sig); font-size: 2.25rem; font-weight: 400; line-height: 1; letter-spacing: -0.01em; font-variant-numeric: lining-nums; color: var(--text); }
+body.public .pub-fees-note { margin: 8px 0 0; font-size: 0.8125rem; line-height: 1.5; color: var(--text-3); }
+body.public .pub-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 22px; }
+body.public .pub-cta { flex: 1; justify-content: center; max-width: 340px; min-width: 0; min-height: 52px; margin-left: auto; white-space: normal; text-align: center; }
 
-/* ---------- Become a member ---------- */
-body.public .join-offer { background: var(--forest-900); border: 1px solid var(--on-dark-line); border-radius: 12px; }
-body.public .join-offer .label-caps { color: var(--on-dark-2); }
-body.public .join-offer li, body.public .join-offer-note { border-color: var(--on-dark-line); }
-body.public .join-offer-name, body.public .join-offer-t { color: var(--on-dark); }
-body.public .join-cat-age { color: var(--text-2); }
-body.public .join-step-n { background: var(--sage-100); color: var(--forest-800); font-weight: 500; }
-body.public .join-opt-tag, body.public .join-legend { letter-spacing: normal; text-transform: none; font-size: 0.8125rem; }
-@media (hover: hover) { body.public .join-opt:hover { border-color: var(--forest-500); background: var(--sage-50); } }
-body.public .join-opt:focus-within { outline-color: var(--forest-700); }
-body.public .join-side-phone svg, body.public .join-done-crest { color: var(--forest-500); }
-
-/* ---------- Gift cards, takeout, feedback ---------- */
-body.public .gcv-face::after { border-color: var(--on-dark-line); opacity: 1; }
-body.public .gcv-kind, body.public .gcv-code-l, body.public .ckf-rv-t { letter-spacing: 0.08em; }
-body.public .gc-box.is-open, body.public .gp-bal-res { background: var(--sage-50); }
-@media (hover: hover) { body.public .gp-amt:hover { border-color: var(--forest-500); } }
-body.public .gp-amt { font-family: var(--sans); font-weight: 500; }
-body.public .gp-amt.active { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); }
+/* ---------- Payment and Review ---------- */
+body.public .pub-pay { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; }
+body.public .pub-page .pub-sum { border-top: 0; }
+body.public .pub-page .pub-sum .panel-body { padding: 20px 0 22px; }
+body.public .pub-sum-day { font: 600 0.6875rem/1.5 var(--sans); letter-spacing: 0.18em; text-transform: uppercase; color: var(--label); }
+body.public .pub-sum-time { display: flex; align-items: flex-start; gap: 8px; margin-top: 8px; font-family: var(--font-sig); font-size: 4.5rem; font-weight: 400; line-height: 0.95; letter-spacing: -0.02em; font-variant-numeric: lining-nums; color: var(--text); }
+body.public .pub-sum-time small { margin: 0.55rem 0 0; font: 600 0.8125rem/1 var(--sans); letter-spacing: 0.14em; color: var(--text-3); }
+body.public .pub-sum-join { margin-top: 8px; font-size: 0.84375rem; color: var(--text-3); }
+body.public .pub-sum-kv { margin: 18px 0 0; padding: 0; }
+body.public .pub-sum-kv > div { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 11px 0; border-top: 1px solid var(--border); }
+body.public .pub-sum-kv dt { font-size: 0.875rem; color: var(--text-3); }
+body.public .pub-sum-kv dd { margin: 0; font-size: 0.9375rem; font-weight: 500; color: var(--text); text-align: right; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+body.public .pub-bk-dlg { margin-top: 0; }
+body.public .pub-card-panel .panel-body, body.public .pub-page .pub-card-panel .panel-body { padding: 4px 0 8px; }
+body.public .pub-card-opt { display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 10px 0; border: 0; border-top: 1px solid var(--border); border-radius: 0; background: none; cursor: pointer; }
+body.public .ck-methods { gap: 0; margin-bottom: 14px; border-bottom: 1px solid var(--border); }
+body.public .ck-methods > .pub-card-opt:first-child { border-top: 0; }
+body.public .pub-card-opt input { width: 20px; height: 20px; flex: none; margin: 0; accent-color: var(--c-ink); }
+body.public .pub-card-opt:has(input:checked) { background: none; }
+body.public .pub-card-opt-main { display: flex; flex-direction: column; min-width: 0; }
+body.public .pub-card-opt-t { font-size: 0.96875rem; font-weight: 500; color: var(--text); }
+body.public .pub-card-opt-s { font-size: 0.8125rem; color: var(--text-3); }
+body.public .pub-mark { border-color: var(--border); border-radius: 3px; background: var(--surface); }
+body.public .pub-paybtn { width: 100%; min-height: 54px; margin-top: 16px; justify-content: center; font-size: 1rem; }
+body.public .pub-paybtn.is-busy svg { animation: pub-spin 900ms linear infinite; }
+body.public .ckf-nav { align-items: center; gap: 16px; }
+body.public .ckf-nav .btn { min-height: 52px; }
+body.public .ckf-nav .pub-paybtn { margin-top: 0; }
+body.public .ckf-nav .ckf-next svg, body.public .ckf-nav .btn-ghost.ckf-back svg { display: none; }
+body.public .ckf-nav .btn-ghost.ckf-back { min-height: 44px; padding: 0; background: none; font-weight: 500; text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 4px; }
 body.public .ckf-step:focus-visible { outline-color: var(--forest-700); }
-body.public .to-pizza { background: var(--forest-950); border-radius: var(--radius-card); }
-body.public .to-pizza .eyebrow { color: var(--on-dark-2); }
-body.public .to-pizza h3 { font-family: var(--serif); color: var(--on-dark); }
-body.public .to-pizza .to-add { background: var(--on-dark); border-color: var(--on-dark); color: var(--forest-950); }
-body.public .to-tag { letter-spacing: normal; text-transform: none; font-weight: 500; background: var(--sage-100); color: var(--forest-800); }
-@media (hover: hover) { body.public .to-secbtn:hover, body.public .to-day:hover:not(:disabled) { border-color: var(--forest-500); } }
-body.public .to-day.active { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); }
-body.public .to-day-n { font-family: var(--sans); font-weight: 500; }
-body.public .pfb .vf-icon { background: var(--sage-100); color: var(--forest-800); }
+body.public .ckf-rv-t { font: 600 0.6875rem/1.5 var(--sans); letter-spacing: 0.18em; color: var(--label); }
+body.public .ckf-rv-sum { border-top-color: var(--border-strong); color: var(--text); }
+body.public .ckf-rv-sum .num { font-family: var(--font-sig); font-size: 1.75rem; font-weight: 400; line-height: 1; }
+body.public .gc-box.is-open, body.public .gp-bal-res, body.public .pr-box.is-open { background: none; border-color: var(--border); }
+body.public .pub-free-note { padding: 12px 0; background: none; border-radius: 0; }
+@media (min-width: 880px) {
+  body.public .pub-pay { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 48px; align-items: start; }
+  body.public .pub-order { position: sticky; top: calc(var(--pub-top) + 56px); }
+  body.public .pub-page .pub-card-panel { border-top: 0; }
+  body.public .pub-card-panel .panel-head { padding-top: 22px; }
+}
+@media (max-width: 480px) { body.public .pub-sum-time { font-size: 4rem; } }
 
-/* ---------- Phones: keep the compact sizes from css/public.css (the rules above are sized for wider screens) ---------- */
+/* ---------- After paying: a check mark, "You're booked", one line, two buttons ---------- */
+body.public .pub-done { max-width: 420px; margin: 44px auto 24px; padding: 0; text-align: center; animation: rise var(--t-med) var(--ease-out) both; }
+body.public .pub-done-check { display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 50%; background: var(--c-ink); color: var(--on-dark); }
+body.public .pub-done-check svg { width: 26px; height: 26px; stroke-width: 2; }
+body.public .pub-done-h { margin: 18px 0 6px; font-size: var(--fs-page); font-weight: 500; line-height: 1.15; letter-spacing: -0.025em; }
+body.public .pub-done-line { margin: 0 0 26px; font-size: 1rem; line-height: 1.5; color: var(--text-2); }
+body.public .pub-done-line span { white-space: nowrap; }
+body.public .pub-done-acts { display: grid; gap: 10px; }
+body.public .pub-done-btn { width: 100%; min-height: 54px; justify-content: center; font-size: 1rem; }
+
+/* ---------- Dress code and hours (dialog) ---------- */
+body.public .pub-know-box h3 { margin: 18px 0 6px; font: 600 0.6875rem/1.5 var(--sans); letter-spacing: 0.2em; text-transform: uppercase; color: var(--label); }
+body.public .pub-know-rules { list-style: none; margin: 0; padding: 0; }
+body.public .pub-know-rules li { padding: 10px 0; border-top: 1px solid var(--border); font-weight: 500; }
+body.public .pub-know-rules li:first-child { border-top: 0; padding-top: 0; }
+body.public .pub-know-rules svg { display: none; }
+body.public .pub-know-box .pub-hb-hours { margin: 0; }
+body.public .pub-hb-src { margin: 14px 0 0; font-size: 0.8125rem; color: var(--text-3); }
+
+/* ==========================================================================
+   Sign in and Create account
+   ========================================================================== */
+body.public .pub-auth-page { display: block; max-width: 520px; margin: 0 auto; }
+body.public .pub-auth-intro { padding: 6px 0 12px; text-align: left; }
+body.public .pub-auth-members { margin: 6px 0 0; font-size: 0.84375rem; color: var(--text-3); }
+body.public .pub-page .pub-auth-panel { border-top: 0; }
+body.public .pub-page .pub-auth-panel .panel-body { padding: 0; }
+/* Create account / Sign in: two words with a brass line under the current one */
+body.public .pub-auth-switch.segmented { display: flex; gap: 22px; width: 100%; margin: 0 0 18px; padding: 0; background: none; border: 0; border-radius: 0; box-shadow: inset 0 -1px 0 var(--border); }
+body.public .pub-auth-switch.segmented button { flex: none; min-height: 44px; padding: 1.5px 0 0; border: 0; border-bottom: 1.5px solid transparent; border-radius: 0; background: none; box-shadow: none; color: var(--text-3); font: 500 0.9375rem/1.3 var(--sans); }
+body.public .pub-auth-switch.segmented button.active { background: none; box-shadow: none; color: var(--text); border-bottom-color: var(--accent); }
+body.public .pub-auth-btn { width: 100%; min-height: 52px; margin-top: 8px; justify-content: center; font-size: 1rem; }
+body.public .pub-auth-btn svg { display: none; }
+body.public .pub-optin { margin: 0 0 10px; align-items: flex-start; line-height: 1.45; }
+body.public .pub-optin input { margin-top: 1px; }
+body.public .pub-pw-eye { width: 44px; height: 44px; color: var(--text-3); }
+body.public .pub-pw-eye.on { color: var(--text); }
+body.public .pub-form-acts { justify-content: flex-start; }
+
+/* ==========================================================================
+   My bookings: hairline rows. A date block, the time in the serif, one line of who and how, a status word.
+   ========================================================================== */
+body.public .pub-bk-list { display: block; }
+body.public .pub-page .pub-bk { display: grid; grid-template-columns: 52px minmax(0, 1fr); grid-template-areas: "date main" ". acts"; column-gap: 14px; padding: 16px 0 6px; border-top: 1px solid var(--border); transition: opacity var(--t-med), transform var(--t-med) var(--ease-out); }
+body.public .pub-bk-list > .pub-bk:first-child { border-top: 0; }
+body.public .pub-bk.leaving { opacity: 0; transform: translateX(24px); }
+body.public .pub-bk-date { grid-area: date; display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 2px; }
+body.public .pub-bk-wk { font: 600 0.6875rem/1.2 var(--sans); letter-spacing: 0.18em; text-transform: uppercase; color: var(--label); }
+body.public .pub-bk-n { font-family: var(--font-sig); font-size: 1.625rem; font-weight: 400; line-height: 1; letter-spacing: -0.01em; font-variant-numeric: lining-nums; color: var(--text); }
+body.public .pub-bk-mo { font-size: 0.75rem; line-height: 1.2; color: var(--text-3); }
+body.public .pub-bk-main { grid-area: main; min-width: 0; }
+body.public .pub-bk-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+body.public .pub-bk-time { font-family: var(--font-sig); font-size: 1.625rem; font-weight: 400; line-height: 1; letter-spacing: -0.01em; font-variant-numeric: lining-nums; white-space: nowrap; color: var(--text); }
+body.public .pub-bk .badge { padding: 0; border: 0; border-radius: 0; background: none; font: 600 0.6875rem/1.4 var(--sans); letter-spacing: 0.14em; text-transform: uppercase; white-space: nowrap; color: var(--label); }
+body.public .pub-bk .badge.bad { color: var(--danger); }
+body.public .pub-bk .badge.outline { color: var(--text-3); }
+body.public .pub-bk-meta, body.public .pub-bk-names, body.public .pub-bk-adds, body.public .pub-bk-pay { margin-top: 4px; font-size: 0.8125rem; line-height: 1.45; color: var(--text-3); overflow-wrap: anywhere; }
+body.public .pub-bk-adds svg { display: none; }
+body.public .pub-bk-pay { display: flex; align-items: center; gap: 8px; }
+body.public .pub-bk-pay .pub-mark { width: 34px; height: 22px; }
+body.public .pub-bk-pay .pub-mark .cc-mark { max-width: 28px; }
+body.public .pub-bk-lock, body.public .pub-bk-tip { display: block; margin: 8px 0 0; padding: 0; background: none; font-size: 0.8125rem; line-height: 1.5; color: var(--text-2); }
+body.public .pub-bk-lock svg, body.public .pub-bk-tip svg { display: none; }
+body.public .pub-bk-acts { grid-area: acts; display: flex; flex-wrap: wrap; align-items: center; gap: 0 20px; margin-top: 4px; min-height: 6px; }
+body.public .pub-bk-acts .btn svg { display: none; }
+/* In the list the actions are words; on one booking (My booking) they are buttons */
+body.public .pub-bk:not(.is-focus) .pub-bk-acts .btn:not(.btn-primary) { min-height: 44px; padding: 0; border: 0; border-radius: 0; background: none; color: var(--text); font-size: 0.875rem; font-weight: 500; text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 4px; }
+body.public .pub-bk:not(.is-focus) .pub-bk-acts .btn-danger { color: var(--danger); }
+body.public .pub-bk-one { max-width: 760px; }
+body.public .pub-page .pub-bk.is-focus { grid-template-areas: "date main" "acts acts"; padding-top: 22px; }
+body.public .pub-bk.is-focus .pub-bk-acts .btn-ghost { background: var(--surface); border-color: var(--border-strong); }
+body.public .pub-bk.is-focus .pub-bk-time { font-size: 3.25rem; letter-spacing: -0.02em; }
+body.public .pub-bk.is-focus .pub-bk-time small { font-size: 0.75rem; margin-left: 5px; }
+body.public .pub-bk.is-focus .pub-bk-meta { margin-top: 10px; font-size: 0.9375rem; color: var(--text-2); }
+body.public .pub-bk.is-focus .pub-bk-acts { gap: 10px; margin-top: 18px; padding-bottom: 14px; }
+body.public .pub-bk.is-focus .pub-bk-acts .btn { flex: 1 1 calc(50% - 10px); min-height: 48px; justify-content: center; font-size: 0.9375rem; }
+body.public .pub-bk-all { margin: 6px 0 0; padding-top: 6px; border-top: 1px solid var(--border); max-width: 760px; }
+body.public .pub-bk-all .btn { min-height: 44px; padding: 0; background: none; font-weight: 500; text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 4px; }
+body.public .pub-bk-all .btn svg { display: none; }
+@media (min-width: 640px) {
+  body.public .pub-page .pub-bk:not(.is-focus) { grid-template-columns: 52px minmax(0, 1fr) auto; grid-template-areas: "date main acts"; padding-bottom: 14px; }
+  body.public .pub-bk:not(.is-focus) .pub-bk-acts { justify-content: flex-end; align-self: center; max-width: 320px; margin-top: 0; }
+  body.public .pub-bk.is-focus .pub-bk-acts .btn { flex: 0 1 auto; }
+}
+
+/* ---------- My account ---------- */
+body.public .pub-acc { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; margin-top: 18px; }
+@media (min-width: 880px) { body.public .pub-acc { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 0 56px; align-items: start; } }
+body.public .pub-acc-sum .panel-body { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 14px 40px; padding-top: 18px; }
+body.public .pub-acc-sum .panel-body > div { display: flex; flex-direction: column; gap: 4px; }
+body.public .pub-acc-sum strong { font-family: var(--font-sig); font-size: 2rem; font-weight: 400; line-height: 1; font-variant-numeric: lining-nums; color: var(--text); }
+body.public .pub-acc-sum .btn { margin-left: auto; min-height: 44px; padding: 0; background: none; font-size: 0.9375rem; font-weight: 500; text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 4px; }
+body.public .pub-acc-sum .btn svg { display: none; }
+body.public .pub-lang-line { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+body.public .pub-lang-line .pub-fine { margin: 0; }
+/* Hairline rows in My account: receipts, gift cards bought, rounds, the waitlist */
+body.public .pub-rc-list, body.public .gp-acc-list { list-style: none; margin: 0; padding: 0; }
+body.public .pub-rc-list li, body.public .gp-acc-list li { border: 0; border-top: 1px solid var(--border); }
+body.public .pub-rc-list li:first-child, body.public .gp-acc-list li:first-child { border-top: 0; }
+body.public .pub-rc-row, body.public .gp-acc-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 10px 0; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+body.public .pub-rc-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+body.public .pub-rc-t, body.public .gp-acc-t { font-size: 0.96875rem; font-weight: 500; color: var(--text); }
+body.public .pub-rc-s, body.public .gp-acc-s { font-size: 0.8125rem; color: var(--text-3); overflow-wrap: anywhere; }
+body.public .pub-rc-amt { flex: none; display: flex; flex-direction: column; align-items: flex-end; font-weight: 500; color: var(--text); font-variant-numeric: tabular-nums lining-nums; }
+body.public .pub-rc-amt small { font: 600 0.6875rem/1.4 var(--sans); letter-spacing: 0.14em; text-transform: uppercase; color: var(--label); }
+body.public .pub-rc-go { display: none; }
+body.public .pub-rc-more { padding: 4px 0 0; border-top: 1px solid var(--border); }
+@media (hover: hover) { body.public .pub-rc-row:hover, body.public .gp-acc-row:hover { background: none; } body.public .pub-rc-row:hover .pub-rc-t, body.public .gp-acc-row:hover .gp-acc-t { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 4px; } }
+body.public .pub-receipt-club, body.public .pub-receipt-amt, body.public .pub-receipt-kv dd { color: var(--text); }
+body.public .pub-receipt-amt { font-family: var(--font-sig); font-weight: 400; }
+body.public .pub-receipt-foot { font-style: normal; }
+
+/* ---------- Footer: small and quiet ---------- */
+body.public .pub-footer { border-top: 1px solid var(--border); }
+body.public .pub-footer-inner { max-width: 1184px; margin: 0 auto; padding: 22px var(--pg) 28px; text-align: center; color: var(--text-3); font-size: 0.8125rem; line-height: 1.5; }
+body.public .pub-footer-inner p { margin: 0 0 2px; }
+body.public .pub-footer .flourish { display: none; }
+body.public .pub-footer-name { font-family: var(--sans); font-size: 0.9375rem; font-weight: 500; color: var(--text); }
+body.public .pub-footer a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 2px; color: var(--text); text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 4px; }
+body.public .pub-footer-inner .pub-land { max-width: 640px; margin: 6px auto 0; font-style: normal; color: var(--text-3); }
+body.public .pub-footer-lang { display: flex; justify-content: center; margin-top: 6px; }
+body.public .pub-footer-lang .i18n-row { gap: 14px; }
+
+/* ==========================================================================
+   Become a member (js/public/join.js, css/public/join.css)
+   ========================================================================== */
+body.public .pub-hero { display: grid; gap: 22px; padding: 6px 0 0; background: none; color: var(--text); border-radius: 0; }
+body.public .pub-hero .eyebrow { color: var(--label); }
+body.public .pub-hero h1 { margin: 6px 0 0; font-size: var(--fs-page); font-weight: 500; line-height: 1.15; letter-spacing: -0.025em; color: var(--text); }
+body.public .pub-hero-lead { margin: 6px 0 0; font-size: 0.9375rem; line-height: 1.5; color: var(--text-3); }
+body.public .pub-hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+body.public .pub-hero-actions .btn svg { display: none; }
+body.public .pub-btn-night { background: none; color: var(--text); border-color: var(--border-strong); }
+/* The new-member offer: the page's one dark Fairway panel */
+body.public .join-offer { padding: 24px; background: var(--c-fairway); border: 0; border-radius: var(--radius-card); color: var(--on-dark); }
+body.public .join-offer .label-caps { color: var(--c-oak-soft); }
+body.public .join-offer-t { margin: 6px 0 0; font-size: var(--fs-section); font-weight: 500; color: var(--on-dark); }
+body.public .join-offer li, body.public .join-offer-note { border-color: var(--on-dark-rule); }
+body.public .join-offer-name { font-family: var(--sans); font-size: 1rem; font-weight: 500; color: var(--on-dark); }
+body.public .join-offer-when { font-size: 0.8125rem; color: var(--on-dark-3); }
+body.public .join-offer-note { font-size: 0.8125rem; color: var(--on-dark-3); }
+@media (min-width: 880px) { body.public .pub-hero.join-hero { grid-template-columns: minmax(0, 1.2fr) minmax(320px, 1fr); gap: 56px; align-items: start; } }
+body.public .join-cats { gap: 0 32px; }
+body.public .pub-page .join-cat { padding: 20px 0 22px; border-top: 1px solid var(--border); background: none; }
+body.public .join-cats > .join-cat:first-child { border-top: 0; }
+@media (min-width: 720px) { body.public .join-cats > .join-cat:nth-child(2) { border-top: 0; } }
+@media (min-width: 1100px) { body.public .join-cats > .join-cat:nth-child(-n+4) { border-top: 0; } }
+body.public .join-cat-head h3 { font-size: var(--fs-section); font-weight: 500; letter-spacing: -0.02em; }
+body.public .join-cat-age, body.public .join-dues-per, body.public .join-opt-age { font-size: 0.8125rem; color: var(--text-3); }
+body.public .join-inc li { font-size: 0.875rem; color: var(--text-2); }
+body.public .join-inc svg { color: var(--label); }
+body.public .join-dues-amt, body.public .join-pos-n { font-family: var(--font-sig); font-weight: 400; font-variant-numeric: lining-nums; color: var(--text); }
+body.public .join-dues-amt { font-size: 2.25rem; line-height: 1.05; }
+body.public .join-full-note, body.public .join-note { padding: 0; background: none; font-size: 0.84375rem; color: var(--text-2); }
+body.public .join-full-note svg, body.public .join-note svg { display: none; }
+body.public .join-steps { gap: 0; }
+body.public .join-steps li { align-items: baseline; gap: 14px; padding: 14px 0; background: none; border: 0; border-top: 1px solid var(--border); border-radius: 0; font-size: 0.9375rem; color: var(--text-2); }
+body.public .join-steps li:first-child { border-top: 0; }
+@media (min-width: 880px) { body.public .join-steps { gap: 0 32px; } body.public .join-steps li { border-top: 0; } }
+body.public .join-step-n { flex: none; width: auto; height: auto; background: none; border-radius: 0; font-family: var(--font-sig); font-size: 1.625rem; font-weight: 400; line-height: 1; color: var(--text); }
+body.public .join-call { font-size: 0.875rem; color: var(--text-3); }
+body.public .join-back { display: inline-flex; align-items: center; min-height: 44px; margin: 0; font-size: 0.875rem; font-weight: 500; text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 4px; }
+body.public .join-back svg { display: none; }
+body.public .pub-page .join-form { border-top: 0; }
+body.public .pub-page .join-form .panel-body { padding: 14px 0 0; }
+body.public .join-h { margin: 26px 0 12px; padding-top: 18px; border-top: 1px solid var(--border); font: 600 0.6875rem/1.5 var(--sans); letter-spacing: 0.2em; text-transform: uppercase; color: var(--label); }
+body.public .join-opt-tag { font: 400 0.8125rem/1.4 var(--sans); letter-spacing: normal; text-transform: none; color: var(--text-3); }
+body.public .join-opt { min-height: 72px; padding: 12px; background: none; border: 1px solid var(--border-strong); border-radius: 3px; }
+body.public .join-opt-name { font-family: var(--sans); font-size: 0.96875rem; font-weight: 500; color: var(--text); }
+body.public .join-opt-s { font-size: 0.8125rem; color: var(--text-3); }
+body.public .join-opt.is-full .join-opt-s { color: var(--warn); font-weight: 500; }
+body.public .join-opt.selected { background: var(--c-ink); border-color: var(--c-ink); }
+body.public .join-opt.selected .join-opt-name, body.public .join-opt.selected .join-opt-s, body.public .join-opt.selected .join-opt-age { color: var(--on-dark); }
+body.public .join-opt:focus-within { outline-color: var(--forest-700); }
+@media (hover: hover) { body.public .join-opt:not(.selected):hover { border-color: var(--text); background: none; } }
+body.public .join-hand { min-height: 52px; }
+body.public .join-send { min-height: 54px; font-size: 1rem; }
+body.public .join-send svg { display: none; }
+body.public .join-side-card h3 { font-size: var(--fs-card); }
+body.public .join-side-phone { font-size: 1rem; }
+body.public .join-side-phone svg, body.public .join-done-crest { display: none; }
+body.public .pub-page .join-done { border-top: 0; }
+body.public .join-done-lead { font-style: normal; font-size: 0.9375rem; color: var(--text-2); }
+body.public .join-pos { background: none; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); border-radius: 0; padding: 14px 0; }
+
+/* ==========================================================================
+   Gift cards, Shop, Takeout, Order to the course, waitlist, feedback, Play (shared stylesheets; the tokens above
+   carry the palette, these rules bring the same shapes)
+   ========================================================================== */
+body.public .gcv { border-color: var(--border); border-radius: var(--radius-lg); }
+body.public .gcv-face { background: var(--c-fairway); }
+body.public .gcv-face::after { border-color: var(--c-brass); opacity: 0.7; border-radius: 4px; }
+body.public .gcv-kind { letter-spacing: 0.2em; color: var(--c-oak-soft); }
+body.public .gcv-amt, body.public .gp-bal-amt { font-family: var(--font-sig); font-weight: 400; font-variant-numeric: lining-nums; }
+body.public .gcv-msg { font-family: var(--sans); font-style: normal; }
+body.public .gcv-to strong { font-family: var(--sans); font-weight: 600; }
+body.public .gcv-code { background: none; border-style: solid; border-color: var(--border); border-radius: 3px; }
+body.public .gcv-code-l { letter-spacing: 0.18em; color: var(--label); font-weight: 600; }
+body.public .gp-preview-card .gcv, body.public .gp-done-card .gcv { box-shadow: none; }
+body.public .gp-amt { min-height: 56px; border-radius: 3px; background: none; color: var(--text); font: 400 1.375rem/1 var(--font-sig); font-variant-numeric: lining-nums; }
+body.public .gp-amt-other { font: 500 0.875rem/1.2 var(--sans); }
+body.public .gp-amt.active { background: var(--c-ink); border-color: var(--c-ink); color: var(--on-dark); }
+@media (hover: hover) { body.public .gp-amt:not(.active):hover { border-color: var(--text); } }
+body.public .gp-kv > div { border-bottom-color: var(--border); }
+body.public .gp-kv dt { color: var(--text-3); }
+body.public .gp-kv dd { color: var(--text); font-weight: 500; }
+body.public .gp-grid { margin-top: 18px; }
+@media (min-width: 880px) { body.public .gp-grid { gap: 56px; } body.public .gp-side { top: calc(var(--pub-top) + 24px); } }
+body.public .ckf-prog { border-bottom-color: var(--border); }
+body.public .ckf-pb { font-size: 0.875rem; color: var(--text-3); }
+body.public .ckf-prog .is-current .ckf-pb { color: var(--text); }
+body.public .ckf-prog .is-current .ckf-pn { background: var(--c-ink); border-color: var(--c-ink); color: var(--on-dark); }
+body.public .ckf-prog .is-done .ckf-pb, body.public .ckf-prog .is-done .ckf-pn { color: var(--text-2); border-color: var(--border-strong); }
+body.public .to-pizza { background: var(--c-fairway); border-radius: var(--radius-card); }
+body.public .to-pizza .eyebrow { color: var(--c-oak-soft); }
+body.public .to-pizza h3 { font-family: var(--sans); color: var(--on-dark); }
+body.public .to-pizza .to-add { background: var(--c-mist); border-color: var(--c-mist); color: var(--c-ink); }
+body.public .to-tag { letter-spacing: normal; text-transform: none; font-weight: 500; background: var(--sage-100); color: var(--forest-800); }
+body.public .to-day.active { background: var(--c-ink); border-color: var(--c-ink); color: var(--on-dark); }
+body.public .to-day-n { font-family: var(--font-sig); font-weight: 400; }
+@media (hover: hover) { body.public .to-secbtn:hover, body.public .to-day:hover:not(:disabled) { border-color: var(--text); } }
+body.public .pfb .vf-icon { background: var(--sage-100); color: var(--forest-800); }
+body.public .wl-note { border-radius: var(--radius-card); }
+
+/* ---------- Phones: tap targets (44px for main controls, 40px for compact ones) ---------- */
 @media (max-width: 768px) {
-  body.public .pub-hero-actions .btn { min-height: 44px; font-size: 0.8125rem; gap: 6px; padding: 0 8px; }
-  body.public .pub-book-head h2 { font-size: 1.375rem; }
-  body.public .pub-steps button { font-size: 0.75rem; gap: 6px; }
-  body.public .pub-step-l { font-size: 0.6875rem; letter-spacing: normal; }
-  body.public .pub-step-n { font-size: 0.75rem; }
-  body.public .pub-day { border-radius: 10px; }
-  body.public .pub-day-wk, body.public .pub-day-mo { font-size: 0.6875rem; }
-  body.public .pub-day-n { font-size: 1.375rem; }
-  body.public .pub-day-lab { font-size: 0.625rem; }
-  body.public .pub-day-hol { font-size: 0.5625rem; }
-  body.public .pub-times-head h3 { font-size: 1.1875rem; }
-  body.public .pub-band-name { font-size: 0.6875rem; }
-  body.public .pub-fees-total { font-size: 1.375rem; }
-  body.public .pub-know h2, body.public .pub-sec-head h2 { font-size: 1.1875rem; }
-  body.public .pub-sig-copy, body.public .pub-auth-intro .serif, body.public .pub-page-head .serif { font-size: 0.875rem; }
-  body.public .pub-footer-inner { font-size: 0.8125rem; }
-}
-@media (max-width: 360px) {
-  body.public .pub-steps button { font-size: 0.6875rem; }
-}
-@media (max-width: 768px) {
-  /* Steps take the width their labels need, so "Day and time" stays on one line */
-  body.public .pub-steps { grid-auto-columns: max-content; justify-content: space-between; }
-  body.public .pub-steps button { white-space: nowrap; padding-left: 2px; padding-right: 2px; }
-}
-@media (max-width: 420px) {
-  body.public .pub-hero-actions .btn svg { display: none; }
-}
-/* Phone tap targets: 44px for main controls, 40px for compact ones (quantity steppers, section chips, text links that
-   act as buttons). The checkout step buttons (.ckf-pb) are in css/public/gifts.css. */
-@media (max-width: 768px) {
-  body.public .pub-me-btn { min-width: 44px; justify-content: center; }
   body.public .to-secbtn { min-height: 40px; }
   body.public .to-step button, body.public .sh-step button { width: 40px; height: 40px; }
   body.public .sh-step-lg button { width: 46px; height: 46px; }
-  body.public .sh-keep, body.public .sh-line-name, body.public .join-back, body.public .join-side-phone a,
-  body.public .pub-auth .pub-link { display: inline-flex; align-items: center; min-height: 44px; }
+  body.public .sh-keep, body.public .sh-line-name, body.public .join-side-phone a, body.public .pub-auth .pub-link, body.public .pub-auth-members a, body.public .pub-fine a { display: inline-flex; align-items: center; min-height: 44px; }
   body.public .pub-auth .pub-link { min-width: 44px; justify-content: center; }
+  body.public .ckf-pb { min-height: 44px; }
 }
-
-/* ==========================================================================
-   Public simplified (Nov 21): a booking platform, not a website. The home page is a title, a row of short links and
-   the booking; the payment summary is the day and time large with a short list; paying ends on a success screen with
-   two buttons (js/public/book.js). My booking is one booking in My bookings (js/public/me.js).
-   ========================================================================== */
-body.public .pub-home-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s3) var(--s4); padding: var(--s2) 0 var(--s4); }
-body.public .pub-home-head h1 { font-size: clamp(1.75rem, 4vw, 2.25rem); margin: 0; line-height: 1.15; }
-body.public .pub-quick { display: flex; flex-wrap: wrap; gap: var(--s2); }
-body.public .pub-quick-a { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border: 1px solid var(--border); border-radius: var(--r-round); background: var(--surface); color: var(--forest-800); font: inherit; font-size: 0.875rem; font-weight: 500; cursor: pointer; text-decoration: none; white-space: nowrap; }
-body.public .pub-quick-a svg { width: 16px; height: 16px; color: var(--forest-500); flex: none; }
-@media (hover: hover) { body.public .pub-quick-a:hover { background: var(--sage-50); border-color: var(--forest-500); text-decoration: none; } }
-body.public .pub-page.is-done .pub-home-head, body.public .pub-page.is-booking .pub-quick { display: none; }
-body.public .pub-book { margin-top: 0; }
-
-/* Times: the price is on the rate's heading, so a time is the time, the players and the places left */
-body.public .pub-chip { min-height: 64px; }
-body.public .pub-band-head { align-items: baseline; }
-body.public .pub-page-head p:not(.serif) { color: var(--text-2); margin: 0; }
-
-/* Players */
-body.public .pub-party .panel-head, body.public .pub-adds .panel-head { align-items: center; }
-body.public .pub-opt-word { font-size: 0.875rem; font-weight: 400; }
-
-/* Payment: the booking summary */
-body.public .pub-sum .panel-body { padding: var(--s5) var(--s5) var(--s4); }
-body.public .pub-sum-day { font-size: 1rem; font-weight: 500; color: var(--text-2); }
-body.public .pub-sum-time { font-family: var(--serif); font-weight: 500; font-size: 3rem; line-height: 1.05; color: var(--text); font-variant-numeric: lining-nums tabular-nums; margin-top: 2px; }
-body.public .pub-sum-time small { font-family: var(--sans); font-size: 1rem; font-weight: 500; margin-left: 6px; color: var(--text-2); }
-body.public .pub-sum-join { font-size: 0.875rem; margin-top: 4px; }
-body.public .pub-sum-kv { margin: var(--s4) 0 0; padding: 0; border-top: 1px solid var(--border); }
-body.public .pub-sum-kv > div { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s4); padding: 10px 0; border-bottom: 1px solid var(--border); }
-body.public .pub-sum-kv dt { color: var(--text-2); font-size: 0.9375rem; }
-body.public .pub-sum-kv dd { margin: 0; color: var(--text); font-weight: 500; text-align: right; font-variant-numeric: tabular-nums; }
-body.public .pub-sum-promo dd { color: var(--forest-800); }
-body.public .pub-sum-total { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s4); padding-top: var(--s3); font-weight: 600; }
-body.public .pub-sum-total .serif { font-family: var(--serif); font-size: 1.75rem; font-weight: 500; line-height: 1; }
-body.public .pub-sum .pub-fees-note { margin-top: var(--s3); }
-body.public .pub-card-panel .panel-head { align-items: center; }
-
-/* After paying: one success screen */
-body.public .pub-done { max-width: 480px; margin: var(--s5) auto var(--s4); padding: var(--s6) var(--s5); text-align: center; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); animation: rise var(--t-med) var(--ease-out) both; }
-body.public .pub-done-check { display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 50%; background: var(--forest-800); color: var(--on-dark); }
-body.public .pub-done-check svg { width: 32px; height: 32px; stroke-width: 2.4; }
-body.public .pub-done-h { font-size: 2rem; margin: var(--s4) 0 var(--s2); }
-body.public .pub-done-line { font-size: 1.0625rem; color: var(--text-2); margin: 0 0 var(--s5); }
-body.public .pub-done-line span { white-space: nowrap; }
-body.public .pub-done-acts { display: grid; gap: var(--s3); }
-body.public .pub-done-btn { min-height: 56px; font-size: 1.0625rem; justify-content: center; width: 100%; }
-
-/* Dress code and hours (dialog) */
-body.public .pub-know-box h3 { font-size: 1rem; font-weight: 600; margin: var(--s4) 0 var(--s2); }
-body.public .pub-know-rules { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s2); }
-body.public .pub-know-rules li { display: flex; gap: var(--s2); align-items: flex-start; }
-body.public .pub-know-rules svg { width: 18px; height: 18px; flex: none; margin-top: 3px; color: var(--forest-500); }
-body.public .pub-know-box .pub-hb-hours { margin: 0; }
-
-/* My booking */
-body.public .pub-bk-tip { display: flex; gap: var(--s2); align-items: flex-start; font-size: 0.8125rem; color: var(--text-2); margin: var(--s2) 0 0; }
-body.public .pub-bk-tip svg { width: 16px; height: 16px; flex: none; margin-top: 3px; color: var(--forest-500); }
-body.public .pub-bk-all { margin: var(--s4) 0 0; }
-body.public .pub-bk-dlg { margin-top: 0; }
-
-@media (max-width: 768px) {
-  body.public .pub-home-head { padding: var(--s1) 0 var(--s3); gap: var(--s3); }
-  body.public .pub-home-head h1 { font-size: 1.625rem; width: 100%; }
-  body.public .pub-quick { gap: 6px; }
-  body.public .pub-quick-a { padding: 0 12px; font-size: 0.8125rem; }
-  body.public .pub-sum .panel-body { padding: var(--s4); }
-  body.public .pub-sum-time { font-size: 2.5rem; }
-  body.public .pub-done { margin-top: var(--s3); padding: var(--s6) var(--s4) var(--s5); }
-  body.public .pub-bk.is-focus .pub-bk-acts { flex-wrap: wrap; gap: var(--s2); }
-  body.public .pub-bk.is-focus .pub-bk-acts .btn { flex: 1 1 calc(50% - var(--s2)); min-height: 44px; }
-  body.public .pub-bk-tip { font-size: 0.75rem; }
+@media (max-width: 400px) {
+  body.public .pub-auth .form-grid, body.public .pub-details .form-grid { grid-template-columns: minmax(0, 1fr); }
+  body.public .pub-auth .form-grid .span-2, body.public .pub-details .form-grid .span-2 { grid-column: auto; }
 }
-@media (max-width: 480px) {
-  body.public .pub-quick-a svg { display: none; }
-}
+/* The hold line sits in the page, so toasts keep their usual place (css/holds.css lifts them over the old corner card) */
+html body.public:has(.pub-hold-host .hold-timer.is-in) .toasts { bottom: var(--s5); }
 
-/* Phones and small tablets (owner, Nov 21): the home page's link row moves into the menu (the three lines, top right),
-   like an app. The menu button shows below 880px (css/public.css), so the row hides there. */
-body.public .pub-quick { display: none; }   /* owner, Nov 21: the header and its menu already have these links, on every screen */
-body.public .pub-holes-pick { margin: 0 0 var(--s4); }
-body.public .pub-holes-pick .segmented { width: 100%; max-width: 320px; }
-body.public .pub-holes-pick .segmented button { flex: 1; min-height: 44px; }
+/* ---------- Small finishing rules ---------- */
+/* Words, not icons, on these buttons */
+body.public .pub-sec-head .btn svg, body.public .pub-form-acts .btn svg, body.public .join-cat-foot .btn svg { display: none; }
+body.public .pub-hero-actions .btn { letter-spacing: normal; text-transform: none; }
+/* A category's status (Open, Full) as a small capitals word */
+body.public .join-cat .badge { padding: 0; border: 0; border-radius: 0; background: none; font: 600 0.6875rem/1.4 var(--sans); letter-spacing: 0.14em; text-transform: uppercase; white-space: nowrap; color: var(--label); }
+body.public .join-cat .badge.warn, body.public .join-cat .badge.bad { color: var(--warn); }
+/* The checkout's own steps (Gift cards, Shop, Takeout): words with a brass line, as the booking's */
+body.public .ckf-prog { gap: 0 22px; margin-bottom: 18px; padding: 0; border-bottom: 0; box-shadow: inset 0 -1px 0 var(--border); }
+body.public .ckf-prog li + li::before, body.public .ckf-pn { display: none; }
+body.public .ckf-prog .ckf-pb { min-height: 44px; padding: 1.5px 0 0; border-bottom: 1.5px solid transparent; border-radius: 0; font: 600 0.6875rem/1 var(--sans); letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-3); }
+body.public .ckf-prog .is-current .ckf-pb { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+body.public .ckf-prog .is-done .ckf-pb { color: var(--text-2); }
+@media (max-width: 640px) { body.public .ckf-sticky .ckf-nav { background: var(--bg); border-top-color: var(--border); } }

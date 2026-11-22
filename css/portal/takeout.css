@@ -1,31 +1,131 @@
-/* Members' portal: Takeout (js/portal/takeout.js). The ordering view and order cards come from the public stylesheet. */
+/* Members' portal: Takeout (js/portal/takeout.js). The ordering view and order cards come from the public stylesheet
+   (shared with the public site, js/core/takeout.js); this file sets their look in the portal only: every rule carries
+   body.portal.
+   Redesign (owner-approved, Nov 21; built Nov 22): "Inter with a touch of serif". The menu is a calm list like the
+   printed one: sections under small capitals, the dish, one quiet line, the price in the serif and one action word.
+   Friday Night Pizza is the page's one dark panel. Your order is a hairline list; the pickup day is a strip of words
+   and serif numbers; on phones the total is pinned in the dark bar (Portal.inkBar). No boxes, no pills, no shadows.
+   The order cards, the progress marks, the totals and the confirmation share their rules with the golf shop
+   (css/portal/shop.css). Tokens only. */
 @import url("../public/takeout.css");
 
-body.portal .pt-tabs .tab { position: relative; }
-body.portal .pt-tab-n { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; margin-left: 6px; padding: 0 6px; border-radius: 999px; background: var(--forest-800); color: var(--on-dark); font-size: var(--fs-label); font-weight: 500; }
-body.portal .pt-h { font-family: var(--sans); font-size: var(--fs-card); font-weight: 500; margin: 0 0 12px; }
-body.portal .to-pizza { background: var(--forest-900); border-radius: var(--radius-card); }
-body.portal .to-pizza .eyebrow { color: var(--on-dark-2); }
-body.portal .to-pizza h3 { color: var(--on-dark); font-family: var(--font-title); font-weight: 600; font-size: var(--fs-section); }
-body.portal .to-pizza .to-add { background: var(--on-dark); color: var(--forest-900); border-color: var(--on-dark); }
-body.portal .to-secbtn { border-color: var(--border-strong); background: var(--surface); color: var(--text-2); font-family: var(--sans); min-height: 40px; }
-body.portal .to-sec-head h3 { font-family: var(--sans); font-weight: 500; }
-body.portal .to-item-name { font-weight: 500; }
-body.portal .to-oline-name { font-weight: 500; }
-body.portal .to-day { border-radius: var(--radius-ctl); border-color: var(--border-strong); background: var(--surface); }
-body.portal .to-day.active { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); }
-body.portal .to-day-n { font-family: var(--font-title); font-weight: 600; }
-body.portal .to-card, body.portal .to-done { border-radius: var(--radius-card); border-color: var(--border); background: var(--surface); box-shadow: var(--shadow-card); }
-body.portal .to-card.is-cancelled, body.portal .to-card.is-picked-up { background: var(--bg); box-shadow: none; }
-body.portal .to-mine-h h2 { font-size: var(--fs-section); }
-body.portal .to-step { border-radius: var(--radius-ctl); border-color: var(--border-strong); background: var(--surface); }
-body.portal .to-step button { width: 40px; height: 40px; color: var(--forest-800); }
+body.portal .pt-tab-n { display: inline; min-width: 0; height: auto; margin-left: 5px; padding: 0; border-radius: 0; background: none; color: var(--text-3); font-size: 0.6875rem; font-weight: 500; }
+body.portal .pt-root .pt-h, body.portal .pt-h { margin: 0 0 10px; font-family: var(--sans); font-size: var(--fs-section); font-weight: 500; line-height: 1.3; letter-spacing: -0.02em; color: var(--text); }
+body.portal .pt-blank { padding: 12px 0 0; border-top: 1px solid var(--border); }
+body.portal .pt-blank-t { margin: 0 0 2px; font-size: 1rem; font-weight: 500; color: var(--text); }
+body.portal .pt-blank .p-link { margin-top: 4px; }
+body.portal .to-wrap { margin-top: 0; gap: 34px; }
+body.portal .to-mine-sec { margin: 0 0 30px; max-width: 46rem; }
+body.portal .to-mine-h { margin-bottom: 8px; }
+body.portal .to-mine-h h2 { margin: 0; font-family: var(--sans); font-size: var(--fs-section); font-weight: 500; letter-spacing: -0.02em; }
+body.portal .to-mine-h .p-link { font-size: 0.875rem; }
+
+/* ---------------- Friday Night Pizza: the page's one dark panel ---------------- */
+body.portal .to-pizza { gap: 16px; margin-bottom: 26px; padding: 22px; border-radius: var(--radius-card); background: var(--c-fairway); color: var(--on-dark); }
+body.portal .to-pizza .eyebrow { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.22em; color: var(--c-oak-soft); }
+body.portal .to-pizza h3 { margin: 8px 0 4px; font-family: var(--sans); font-size: 1.5rem; font-weight: 500; line-height: 1.2; letter-spacing: -0.02em; color: var(--on-dark); }
+body.portal .to-pizza p { font-size: 0.875rem; line-height: 1.5; color: var(--on-dark-3); }
+body.portal .to-pizza-price { font-family: var(--font-sig); font-size: 2.25rem; font-weight: 400; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: lining-nums; color: var(--on-dark); }
+body.portal .to-pizza .to-add { min-height: 44px; padding: 0 18px; border: 0; border-radius: 3px; background: var(--c-mist); color: var(--c-ink); font-size: 0.875rem; font-weight: 600; }
+body.portal .to-pizza .to-add svg { display: none; }
+@media (hover: hover) { body.portal .to-pizza .to-add:hover { background: var(--c-paper); color: var(--c-ink); text-decoration: none; } }
+body.portal .to-pizza .to-step { background: none; }
+body.portal .to-pizza .to-step button, body.portal .to-pizza .to-step output { color: var(--on-dark); }
+body.portal .to-pizza .to-step button::before { border-color: var(--on-dark-rule); }
+body.portal .to-pizza :focus-visible { outline-color: var(--on-dark); }
+
+/* ---------------- The menu: sections under small capitals, plain rows ---------------- */
+body.portal .to-secnav { gap: 18px; margin: 0 0 6px; padding: 0; }
+body.portal .to-secbtn { position: relative; min-height: 44px; padding: 0; border: 0; border-radius: 0; background: none; color: var(--text-3); font: 500 0.8125rem/1.4 var(--sans); }
+@media (hover: hover) { body.portal .to-secbtn:hover { color: var(--text); text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 4px; } }
+body.portal .to-secbtn::before { content: ""; position: absolute; top: 0; bottom: 0; left: -9px; right: -9px; }
+body.portal .to-sec { margin-bottom: 22px; }
+body.portal .to-sec-head { padding: 12px 0 8px; border-bottom: 1px solid var(--border); }
+body.portal .to-sec-head h3 { font-family: var(--sans); font-size: 0.6875rem; font-weight: 600; line-height: 1.5; letter-spacing: 0.2em; text-transform: uppercase; color: var(--label); }
+body.portal .to-sec-note { font-size: 0.75rem; color: var(--text-3); }
+body.portal .to-item { align-items: center; gap: 14px; min-height: 56px; padding: 11px 0; border-bottom: 1px solid var(--border); }
+body.portal .to-item-name { gap: 8px; font-size: 0.96875rem; font-weight: 500; line-height: 1.35; color: var(--text); }
+body.portal .to-item.in-order .to-item-name { color: var(--text); font-weight: 600; }
+body.portal .to-item-desc { margin-top: 2px; font-size: 0.8125rem; line-height: 1.45; color: var(--text-3); }
+body.portal .to-tag, body.portal .to-item-diet span { padding: 0; border-radius: 0; background: none; font: 600 0.625rem/1.5 var(--sans); letter-spacing: 0.14em; text-transform: uppercase; color: var(--label); }
+body.portal .to-item-diet { gap: 4px 10px; margin-top: 4px; }
+body.portal .to-item-side { flex-direction: row; align-items: center; gap: 12px; }
+body.portal .to-item.in-order .to-item-side { flex-direction: column; align-items: flex-end; gap: 0; }
+body.portal .to-item-price { font-family: var(--font-sig); font-size: 1.1875rem; font-weight: 400; line-height: 1.15; font-variant-numeric: lining-nums; color: var(--text); white-space: nowrap; }
+/* Add: a word. Quantity: minus, the number, plus (as in the golf shop) */
+body.portal .to-item .to-add, body.portal .to-olines .to-add { min-width: 44px; min-height: 44px; padding: 0; border: 0; background: none; color: var(--text); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.02em; }
+body.portal .to-item .to-add svg { display: none; }
+@media (hover: hover) { body.portal .to-item .to-add:hover { background: none; text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 4px; } }
+body.portal .to-step { border: 0; border-radius: 0; background: none; }
+body.portal .to-step button { position: relative; width: 40px; height: 44px; padding: 0; border-radius: 0; background: none; color: var(--text); font-size: 0; }
+body.portal .to-step button::before { content: ""; position: absolute; left: 50%; top: 50%; width: 24px; height: 24px; margin: -12px 0 0 -12px; border: 1px solid var(--border-strong); border-radius: 50%; }
+body.portal .to-step button::after { content: "+"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font: 400 1rem/1 var(--sans); }
+body.portal .to-step button[data-step="-1"]::after { content: "\2212"; }
+body.portal .to-step button:disabled { color: var(--text-3); }
+body.portal .to-step button:disabled::before { border-color: var(--border); }
+@media (hover: hover) { body.portal .to-step button:hover:not(:disabled) { background: none; } body.portal .to-step button:hover:not(:disabled)::before { border-color: var(--text); } }
+body.portal .to-step output { min-width: 22px; font-size: 0.9375rem; font-weight: 500; color: var(--text); }
+
+/* ---------------- Your order: a hairline list, then the steps in one column ---------------- */
+body.portal .to-order.panel { background: none; border: 0; border-radius: 0; box-shadow: none; }
+body.portal .to-order .panel-head { padding: 0 0 10px; border-bottom: 0; align-items: baseline; gap: 12px; }
+body.portal .to-order .panel-head h3 { margin: 0; font-family: var(--sans); font-size: var(--fs-section); font-weight: 500; line-height: 1.3; letter-spacing: -0.02em; }
+body.portal .to-order .eyebrow { margin-bottom: 4px; font-size: 0.6875rem; letter-spacing: 0.2em; }
+body.portal .to-order .panel-body { padding: 0; }
+body.portal .to-count { font-size: 0.8125rem; color: var(--text-3); font-variant-numeric: tabular-nums; }
+body.portal .to-empty { display: block; margin: 0 0 18px; padding: 12px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); font-size: 0.8125rem; line-height: 1.5; color: var(--text-3); }
+body.portal .to-empty svg { display: none; }
+body.portal .to-olines { border-top: 1px solid var(--border); }
+body.portal .to-olines li { grid-template-columns: minmax(0, 1fr) auto 4.5rem; gap: 8px; min-height: 56px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+body.portal .to-oline-name { font-size: 0.96875rem; font-weight: 500; line-height: 1.35; color: var(--text); }
+body.portal .to-oline-each { font-size: 0.8125rem; color: var(--text-3); }
+body.portal .to-oline-amt { font-family: var(--font-sig); font-size: 1.1875rem; font-weight: 400; font-variant-numeric: lining-nums; color: var(--text); }
+body.portal .to-totals { margin-bottom: 22px; }
+/* Pickup day: a strip of words and serif numbers, brass under the chosen day */
+body.portal .to-when-h { margin-bottom: 2px; }
+body.portal .to-when-h .label-caps { font-size: 0.6875rem; letter-spacing: 0.2em; }
+body.portal .to-when-sum { font-size: 0.8125rem; font-weight: 500; color: var(--text); }
+body.portal .to-days { gap: 2px; margin-bottom: 16px; box-shadow: inset 0 -1px 0 var(--border); }
+body.portal .to-day { position: relative; gap: 2px; min-height: 64px; padding: 8px 0 10px; border: 0; border-radius: 0; background: none; color: var(--text-3); }
+body.portal .to-day::after { content: ""; position: absolute; left: 8px; right: 8px; bottom: 0; height: 1.5px; background: transparent; }
+body.portal .to-day-w { font-size: 0.75rem; letter-spacing: 0; }
+body.portal .to-day-n { font-family: var(--font-sig); font-size: 1.5rem; font-weight: 400; line-height: 1.15; font-variant-numeric: lining-nums; color: var(--text); }
+body.portal .to-day-m { font-size: 0.625rem; opacity: 1; }
+body.portal .to-day.active { background: none; border-color: transparent; color: var(--text); }
+body.portal .to-day.active::after { background: var(--accent); }
+body.portal .to-day.is-off { opacity: 1; }
+body.portal .to-day.is-off, body.portal .to-day.is-off .to-day-n { color: var(--border-strong); }
+body.portal .to-day:focus-visible { outline: 2px solid var(--forest-700); outline-offset: -2px; }
+@media (hover: hover) { body.portal .to-day:hover:not(:disabled) { border-color: transparent; color: var(--text); } }
+body.portal .to-rule { display: block; margin: 8px 0 0; font-size: 0.8125rem; line-height: 1.5; color: var(--text-3); }
+body.portal .to-rule svg { display: none; }
+body.portal .to-rule.is-bad { color: var(--danger); }
+body.portal .to-rule .p-link { min-height: 44px; font-size: 0.8125rem; }
+body.portal .to-order .input, body.portal .to-order .textarea, body.portal .to-order .cs-btn { min-height: 48px; }
+body.portal .to-paywrap { border-top: 0; padding-top: 0; }
+
+/* ---------------- Order placed ---------------- */
+body.portal .to-done .eyebrow { font-size: 0.6875rem; letter-spacing: 0.2em; }
+body.portal .to-done-lines { margin: 16px 0 10px; border-top: 1px solid var(--border); }
+body.portal .to-done-lines li { padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.875rem; color: var(--text-2); }
+body.portal .to-done-lines .to-done-total { align-items: baseline; font-weight: 500; }
+body.portal .to-done-lines .to-done-total > :last-child { font-family: var(--font-sig); font-size: 1.5rem; font-weight: 400; line-height: 1.1; font-variant-numeric: lining-nums; }
+body.portal .to-done-paid { margin: 0 0 18px; font-size: 0.8125rem; color: var(--text-3); }
+
 @media (min-width: 880px) {
+  body.portal .to-wrap { grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr); gap: 46px; }
   body.portal .to-order { top: 96px; }
 }
-/* The header has room for the Takeout link from 1200px (the brand wraps below that); phones have it in the More list. */
-/* Header links that do not fit move into the More menu (fitNav in js/portal/app.js). */
+@media (min-width: 1024px) {
+  body.portal .to-wrap { grid-template-columns: minmax(0, 1fr) minmax(0, 26rem); gap: 72px; }
+}
+@media (max-width: 400px) {
+  body.portal .to-pizza { flex-direction: row; align-items: center; padding: 20px; }
+  body.portal .to-pizza-side { flex-direction: column; align-items: flex-end; }
+  body.portal .to-olines li { grid-template-columns: minmax(0, 1fr) auto 4.5rem; }
+  body.portal .to-oline-amt { grid-column: auto; }
+}
 /* Phone: the clubhouse number in the small print gets a taller hit area without moving the text around it. */
 @media (max-width: 768px) {
-  .to-fine a { display: inline-block; padding: 12px 0; margin: -12px 0; }
+  body.portal .to-fine a { display: inline-block; padding: 12px 0; margin: -12px 0; }
 }

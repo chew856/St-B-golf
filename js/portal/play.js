@@ -5,7 +5,12 @@
    scorecard and keeps it live: the setup (choose a game), each hole, and the finish. Every read and write of round
    state goes through Club.play.sync (js/shared/play-data.js); the game scoring is Club.play.engine.
    Portal hooks: Portal.play.homeCard(m) on Home, Portal.play.detailAction(tt, m) in My tee times.
-   Styles: css/portal/play.css (lv-). French: the "Play (live scorecard)" block at the end of js/i18n/fr-portal.js. */
+   Styles: css/portal/play.css (lv-). French: the "Play (live scorecard)" block and the "Redesign: golf pages" block
+   of js/i18n/fr-portal.js.
+   Redesign (Nov 22): hairlines and words, no cards. The setup is a hairline list of games with the chosen one marked;
+   the hole screen sets the hole number very large in the serif with par, stroke index and yards as a quiet line, each
+   player as a hairline row with the score between a minus and a plus, and the standings as a plain list; the finish
+   is a results list with serif totals and words for the actions. */
 (function () {
   'use strict';
   const S = Club.store, ui = Club.ui, esc = ui.esc, fmt = Club.fmt, P = Club.play;
@@ -57,25 +62,29 @@
   }
 
   /* ---------------- The Play card for a tee time (portal Home, the Play page list, public My bookings) ---------------- */
-  function cardHTML(tt, who, href) {
+  /* "10:30 AM" as the time and a small AM or PM (French "10 h 30" has none) */
+  function timeHTML(t) { const v = fmt.time(t), x = /^(\d{1,2}:\d{2}) ?([AP]M)$/i.exec(v); return x ? esc(x[1]) + '<small>' + esc(x[2].toUpperCase()) + '</small>' : esc(v); }
+  /* solo: the only tee time on the page (the "not open yet" screen), set on the one dark panel. In a list of several
+     tee times each is a plain block between hairlines. */
+  function cardHTML(tt, who, href, solo) {
     const w = P.windowFor(tt), r = P.sync.round(tt.id);
     let act;
     if (r && r.status === 'playing') {
       const h = P.liveHole(tt);
-      act = '<a class="btn btn-primary lv-cta" href="' + esc(href) + '">' + Club.icon('flag') + '<span>Play: back to the scorecard</span></a>' +
+      act = '<a class="btn btn-primary lv-cta" href="' + esc(href) + '">Back to scorecard</a>' +
         '<p class="lv-card-note">' + esc('On hole ' + h + ' · ' + gameText(r.game, r.scoring)) + '</p>';
     } else if (r && r.status === 'finished') {
-      act = '<a class="btn lv-cta" href="' + esc(href) + '">' + Club.icon('scorecard') + '<span>See the scorecard</span></a><p class="lv-card-note">Round complete</p>';
+      act = '<a class="btn btn-primary lv-cta" href="' + esc(href) + '">See the scorecard</a><p class="lv-card-note">Round complete</p>';
     } else if (w.open) {
-      act = '<a class="btn btn-primary lv-cta" href="' + esc(href) + '">' + Club.icon('flag') + '<span>Play: start the scorecard</span></a>' +
-        '<p class="lv-card-note">' + esc('Open from ' + fmt.time(w.opensAt)) + '</p>';
+      act = '<a class="btn btn-primary lv-cta" href="' + esc(href) + '">Start scorecard</a>';
     } else {
-      act = '<button type="button" class="btn lv-cta lv-cta-off" disabled aria-disabled="true" data-opens="' + esc(w.opensAt) + '">' + esc('Play opens at ' + fmt.time(w.opensAt)) + '</button>';
+      act = '<button type="button" class="lv-cta lv-cta-off" disabled aria-disabled="true" data-opens="' + esc(w.opensAt) + '">' + esc('Scorecard opens ' + fmt.time(w.opensAt)) + '</button>';
     }
-    return '<section class="lv-tcard' + (w.open || r ? ' is-open' : '') + '" aria-label="' + esc('Today, ' + fmt.time(tt.time) + ' tee time') + '">' +
+    return '<section class="lv-tcard' + (solo ? ' is-solo' : '') + (w.open || r ? ' is-open' : '') + '" aria-label="' + esc('Today, ' + fmt.time(tt.time) + ' tee time') + '">' +
       '<p class="lv-eb">' + esc('Today · ' + ordinalTee(tt.startTee)) + '</p>' +
-      '<div class="lv-tcard-top"><span class="lv-tcard-time">' + esc(fmt.time(tt.time)) + '</span><span class="lv-pill">' + esc(holesText(+tt.holes === 9 ? 9 : 18)) + '</span></div>' +
-      '<p class="lv-tcard-who">' + esc(playersLine(tt, who)) + '</p>' + act + '</section>';
+      '<p class="lv-tcard-time">' + timeHTML(tt.time) + '</p>' +
+      '<p class="lv-tcard-who"><span>' + esc(holesText(+tt.holes === 9 ? 9 : 18)) + '</span> · <span>' + esc(playersLine(tt, who)) + '</span></p>' +
+      '<div class="lv-tcard-acts">' + act + '</div></section>';
   }
   Club.playCard = cardHTML;
 
@@ -136,9 +145,9 @@
 
     /* ---- Not open yet ---- */
     function closedHTML(tt, w) {
-      return '<div class="lv-root">' + band('Today · ' + fmt.time(tt.time) + ' · ' + holesText(+tt.holes === 9 ? 9 : 18), 'Play') +
-        (w.past ? '<div class="lv-panel"><p class="lv-quiet">Play was open on the day of this tee time only.</p></div>'
-          : cardHTML(tt, who, '#') + '<p class="lv-help">The Play button appears 5 minutes before your tee time. Everyone in your group with an account can then keep score together, on their own phone.</p>') +
+      return '<div class="lv-root">' + band('Live scorecard', 'Play') +
+        (w.past ? '<p class="lv-quiet">Play was open on the day of this tee time only.</p>'
+          : cardHTML(tt, who, '#', true) + '<p class="lv-help lv-help-top">Opens 5 minutes before your tee time. Your group keeps score together, each on their own phone.</p>') +
         '</div>';
     }
     function band(k, h) { return '<header class="lv-band"><p class="lv-band-k">' + esc(k) + '</p><h1 class="lv-band-h">' + esc(h) + '</h1></header>'; }
@@ -152,7 +161,8 @@
       const opt = function (g, extra) {
         const on = d.game === g.id, off = g.id === 'bestball' && !four;
         return '<button type="button" class="lv-opt' + (on ? ' is-on' : '') + '" role="radio" aria-checked="' + on + '" data-game="' + g.id + '" data-fk="game-' + g.id + '"' + (off ? ' disabled aria-disabled="true"' : '') + '>' +
-          '<span class="lv-rd" aria-hidden="true"></span><span class="lv-opt-main"><span class="lv-opt-l">' + esc(g.label) + '</span><span class="lv-opt-s">' + esc(off ? 'Needs 4 players' : g.sub) + '</span></span></button>' + (extra || '');
+          '<span class="lv-opt-main"><span class="lv-opt-l">' + esc(g.label) + '</span><span class="lv-opt-s">' + esc(off ? 'Needs 4 players' : g.sub) + '</span></span>' +
+          (on ? '<span class="lv-opt-k" aria-hidden="true">Selected</span>' : '') + '</button>' + (extra || '');
       };
       const G = E.GAMES;
       const seg = function (name, items, val, label) {
@@ -163,16 +173,15 @@
       const k = tt.date === Club.date.today() ? 'Today · ' : '';
       return '<div class="lv-root lv-setup">' + band(k + fmt.time(tt.time) + ' · ' + holesText(+tt.holes === 9 ? 9 : 18) + (+tt.startTee === 10 ? ' · 10th tee' : ''), editing ? 'Change the game' : 'Choose a game') +
         '<div class="lv-setup-grid"><div class="lv-setup-col">' +
-        '<div class="lv-games" role="radiogroup" aria-label="Game">' + opt(G[0]) + opt(G[1]) + opt(G[2]) +
-          '<div class="lv-g2">' + opt(G[3]) + opt(G[4]) + '</div>' + opt(G[5]) + '</div>' +
-        seg('scoring', [['gross', 'Gross'], ['net', 'Net']], d.scoring, 'Scoring') +
+        '<div class="lv-games" role="radiogroup" aria-label="Game">' + G.map(function (g) { return opt(g); }).join('') + '</div>' +
+        '<div class="lv-q"><span class="lv-q-l">Scoring</span>' + seg('scoring', [['gross', 'Gross'], ['net', 'Net']], d.scoring, 'Scoring') + '</div>' +
         '<div class="lv-q"><span class="lv-q-l" id="lv-tees-l">Tees</span>' + seg('tees', [['black', 'Black'], ['green', 'Green'], ['silver', 'Silver']], d.tees, 'Tees') + '</div>' +
         '</div><div class="lv-setup-col">' +
         '<h2 class="lv-eb lv-sec-h">Players and strokes</h2>' +
         '<ul class="lv-plist">' + players.map(function (p) { return playerSetupRow(tt, p, d); }).join('') + '</ul>' +
         '<p class="lv-note" data-scratch>' + esc(scratchNote(tt, players, d)) + '</p>' +
         (d.game === 'bestball' ? '<p class="lv-help">Tap a team to switch a player between Team A and Team B.</p>' : '') +
-        (editing ? '<div class="lv-acts2"><button type="button" class="btn" data-act="cancel-edit" data-fk="cancel-edit">Back to the scorecard</button><button type="button" class="btn btn-primary" data-act="save-game" data-fk="save-game">Save game</button></div>'
+        (editing ? '<div class="lv-acts2"><button type="button" class="btn btn-primary" data-act="save-game" data-fk="save-game">Save game</button><button type="button" class="lv-link" data-act="cancel-edit" data-fk="cancel-edit">Back to the scorecard</button></div>'
           : '<button type="button" class="btn btn-primary lv-go" data-act="start" data-fk="start">Start on hole ' + P.orderFor(tt)[0] + '</button>') +
         '</div></div></div>';
     }
@@ -188,7 +197,7 @@
       const team = d.team[p.pid] || p.team || 'A';
       const editable = p.kind !== 'member';
       const raw = Object.prototype.hasOwnProperty.call(d.index, p.pid) ? d.index[p.pid] : p.index;
-      return '<li class="lv-prow">' + ui.avatar(p.name, 'sm') +
+      return '<li class="lv-prow">' +
         '<span class="lv-prow-main"><span class="lv-prow-n">' + esc(p.name) + ' ' + pill + '</span>' +
           '<span class="lv-prow-s" data-gets="' + esc(p.pid) + '">' + esc(getsText(tt, p, d)) + '</span></span>' +
         (editable ? '<label class="lv-hcp"><span class="lv-hcp-l">Index</span><input class="input lv-hcp-in" type="text" inputmode="decimal" autocomplete="off" maxlength="5" placeholder="None" data-hcp="' + esc(p.pid) + '" data-fk="hcp-' + esc(p.pid) + '" value="' + esc(raw == null ? '' : raw) + '" aria-label="' + esc('Handicap index for ' + p.name + ', optional') + '"></label>' : '') +
@@ -245,7 +254,7 @@
         else if (p.kind === 'guest') subs.push('Guest');
         else if (!net || !s) subs.push(p.kind === 'public' ? 'Public' : 'Member');
         const cls = !c ? ' is-default' : v < h.par ? ' is-under' : '';
-        return '<li class="lv-pr">' + ui.avatar(p.name, 'sm') +
+        return '<li class="lv-pr">' +
           '<span class="lv-pr-main"><span class="lv-pr-n">' + esc(names[p.pid]) + (net && s > 0 ? '<span class="lv-dot" aria-hidden="true"></span>' : '') + '</span>' +
             '<span class="lv-pr-s">' + esc(subs.join(' · ')) + '</span></span>' +
           '<span class="lv-stp">' +
@@ -257,12 +266,13 @@
       const st = P.standingsOf(round, false);
       const lastHole = i === round.order.length - 1;
       const missing = lastHole ? round.order.filter(function (x) { return x !== n && !round.players.some(function (p) { return g.raw[p.pid] && g.raw[p.pid][x]; }); }) : [];
-      const prev = i > 0 ? '<button type="button" class="btn lv-prev" data-go="' + (i - 1) + '" data-fk="prev">' + Club.icon('chevronLeft') + '<span>Hole ' + round.order[i - 1] + '</span></button>' : '<button type="button" class="btn lv-prev" data-act="card" data-fk="prev">' + Club.icon('scorecard') + '<span>Card</span></button>';
-      const next = lastHole ? '<button type="button" class="btn btn-primary lv-next" data-act="finish" data-fk="next"><span>Finish round</span>' + Club.icon('check') + '</button>'
+      const prev = i > 0 ? '<button type="button" class="lv-prev" data-go="' + (i - 1) + '" data-fk="prev">' + Club.icon('chevronLeft') + '<span>Hole ' + round.order[i - 1] + '</span></button>' : '<button type="button" class="lv-prev" data-act="card" data-fk="prev"><span>Card</span></button>';
+      const next = lastHole ? '<button type="button" class="btn btn-primary lv-next" data-act="finish" data-fk="next"><span>Finish round</span></button>'
         : '<button type="button" class="btn btn-primary lv-next" data-go="' + (i + 1) + '" data-fk="next"><span>Hole ' + round.order[i + 1] + '</span>' + Club.icon('chevronRight') + '</button>';
       return '<div class="lv-root lv-holev">' +
-        '<header class="lv-hhead"><div class="lv-hn"><span class="lv-num" aria-hidden="true">' + n + '</span>' +
-          '<div class="lv-meta"><h1 class="lv-sr">' + esc('Hole ' + n + ' of ' + round.order.length) + '</h1><span>Par ' + h.par + ' · Stroke index ' + h.handicap + '</span><span>' + esc(yards) + '</span></div></div>' +
+        '<header class="lv-hhead"><h1 class="lv-sr">' + esc('Hole ' + n + ' of ' + round.order.length) + '</h1><p class="lv-eb lv-hk" aria-hidden="true">Hole</p>' +
+          '<div class="lv-hn"><span class="lv-num" aria-hidden="true">' + n + '</span>' +
+          '<div class="lv-meta"><span>Par ' + h.par + ' · Stroke index ' + h.handicap + '</span><span>' + esc(yards) + '</span></div></div>' +
           '<div class="lv-dots" aria-hidden="true">' + dots + '</div></header>' +
         '<div class="lv-hole-grid"><div class="lv-hole-main">' +
           (syncLine ? '<p class="lv-sync" aria-live="polite"><i aria-hidden="true"></i><span>' + esc(syncLine) + '</span></p>' : '<p class="lv-sync is-quiet"><span>Anyone in your group can enter or change any score</span></p>') +
@@ -275,9 +285,9 @@
     function stripHTML(round, st, names) {
       const nm = function (r) { return r.members ? r.members.map(function (pid) { return names[pid]; }).join(' and ') : names[r.pid]; };
       return '<button type="button" class="lv-strip" data-act="card" data-fk="strip" aria-haspopup="dialog">' +
-        '<span class="lv-strip-h"><span class="lv-eb">' + esc(gameText(round.game, round.scoring) + (st.thru ? ' · after ' + st.thru : '')) + '</span><span class="lv-strip-c">Tap for the card</span></span>' +
+        '<span class="lv-strip-h"><span class="lv-eb">' + esc(gameText(round.game, round.scoring) + (st.thru ? ' · after ' + st.thru : '')) + '</span><span class="lv-strip-c">Scorecard</span></span>' +
         st.rows.map(function (r, k) {
-          return '<span class="lv-strip-r' + (st.thru && r.rank === 1 ? ' is-lead' : '') + '"><span>' + esc(nm(r)) + '</span><span>' + esc(st.thru ? E.valueText(st.game, r.value) : '–') + '</span></span>';
+          return '<span class="lv-strip-r' + (st.thru && r.rank === 1 ? ' is-lead' : '') + '"><span>' + esc(nm(r)) + '</span><span class="lv-strip-v">' + esc(st.thru ? E.valueText(st.game, r.value) : '–') + '</span></span>';
         }).join('') +
         (st.carry && st.thru ? '<span class="lv-strip-n">' + esc(st.carry + (st.carry === 1 ? ' skin carries' : ' skins carry') + ' to the next hole') + '</span>' : '') +
         '</button>';
@@ -365,9 +375,10 @@
       }).join('');
       const reopen = P.canReopen(round);
       return '<div class="lv-root lv-fin">' + band(gameText(round.game, round.scoring) + ' · ' + holesText(round.order.length), 'Round complete') +
-        '<div class="lv-fin-grid"><div class="lv-panel lv-res-wrap">' + table + '<button type="button" class="lv-link lv-res-card" data-act="card" data-fk="card">' + Club.icon('scorecard') + '<span>See the full card</span></button></div>' +
-        '<div class="lv-fin-side"><section class="lv-panel"><h2 class="lv-eb">Posted to their accounts</h2><ul class="lv-posts">' + posted + '</ul></section>' +
-        '<button type="button" class="btn lv-full" data-act="share" data-fk="share">' + Club.icon('share') + '<span>Share the scorecard</span></button>' +
+        '<div class="lv-fin-grid"><div class="lv-res-wrap">' + table +
+          '<div class="lv-fin-links"><button type="button" class="lv-link" data-act="card" data-fk="card">See the full card</button>' +
+          '<button type="button" class="lv-link" data-act="share" data-fk="share">Share the scorecard</button></div></div>' +
+        '<div class="lv-fin-side"><section class="lv-posted"><h2 class="lv-eb">Posted to their accounts</h2><ul class="lv-posts">' + posted + '</ul></section>' +
         '<a class="btn btn-primary lv-full" href="' + esc(o.doneHref) + '" data-fk="done">Done</a>' +
         (reopen ? '<p class="lv-help lv-reopen">Finished by mistake? <button type="button" class="lv-link" data-act="reopen" data-fk="reopen">Reopen the round</button> (possible for ' + P.REOPEN_MINUTES + ' minutes; the posted scores are taken back).</p>' : '') +
         '</div></div></div>';
@@ -530,7 +541,9 @@
       const list = P.teeTimesToday(who);
       if (list.length === 1) return Club.playView(view, ctx(m, list[0].id));
       if (!list.length) {
-        view.innerHTML = '<div class="lv-root">' + band0('Live scorecard', 'Play') + '<div class="lv-panel">' + ui.empty({ icon: 'scorecard', title: 'No tee time today', text: 'Play opens 5 minutes before a tee time you have booked. Everyone in your group with an account can then keep score together, on their own phone.', action: '<a class="btn btn-primary" href="#/tee-times">' + Club.icon('flag') + '<span>Book a tee time</span></a>' }) + '</div></div>';
+        view.innerHTML = '<div class="lv-root">' + band0('Live scorecard', 'Play') + '<div class="lv-none"><p class="lv-none-t">No tee time today</p>' +
+          '<p class="lv-help">Opens 5 minutes before your tee time. Your group keeps score together, each on their own phone.</p>' +
+          '<a class="btn btn-primary" href="#/tee-times">Book a tee time</a></div></div>';
         return;
       }
       view.innerHTML = '<div class="lv-root">' + band0('Live scorecard', 'Play') + '<div class="lv-list">' + list.map(function (tt) { return cardHTML(tt, who, '#/play/' + encodeURIComponent(tt.id)); }).join('') + '</div></div>';

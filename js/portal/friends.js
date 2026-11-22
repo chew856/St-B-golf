@@ -11,7 +11,11 @@
      friendSharing  { id: 'fs_' + owner + '_' + friend, owner, friend, see: bool, join: bool }   per-friend tee time sharing
      joinRequests   { id, teeTimeId, requesterId, ownerId, party: [players as for a join], status: 'pending'|'approved'|
                       'declined'|'cancelled'|'expired', createdAt, decidedAt, reason }
-   Staff never see conversations; a reported message appears in the staff dashboard "For your attention" list. */
+   Staff never see conversations; a reported message appears in the staff dashboard "For your attention" list.
+
+   Redesign (Nov 22, the owner-approved language; css/portal/friends.css): friends as hairline rows with the handicap
+   as a quiet serif figure, friends golfing as a starter's sheet (the time in the serif, Join as a word), sections as
+   words with a brass underline, no avatars, no cards. The rows Home borrows (rowHTML, requestRowHTML) are unchanged. */
 (function () {
   'use strict';
   const S = Club.store, ui = Club.ui, esc = ui.esc, fmt = Club.fmt;
@@ -42,6 +46,11 @@
     const diff = Math.round((fmt.toDate(td) - fmt.toDate(d)) / 86400000);
     return diff < 7 ? dt.toLocaleDateString('en-US', { weekday: 'short' }) : fmt.dateShort(d);
   }
+  /** "3:57 PM" -> ['3:57', 'PM'] so the figure can sit in the serif with a small AM or PM; French times stay whole. */
+  function timeParts(t) { const s = fmt.time(t), x = /^(\d{1,2}:\d{2}) ?([AP]M)$/i.exec(s); return x ? [x[1], x[2].toUpperCase()] : [s, '']; }
+  function timeBlock(t) { const tp = timeParts(t); return '<span class="fr-g-t">' + esc(tp[0]) + (tp[1] ? '<small>' + esc(tp[1]) + '</small>' : '') + '</span>'; }
+  /** Date block: the weekday in small capitals over the day number. */
+  function dateBlock(d) { const dt = fmt.toDate(d); return '<span class="fr-date" aria-hidden="true"><small>' + esc(dayShort(d)) + '</small><span class="fr-date-n">' + dt.getDate() + '</span></span>'; }
   function ago(iso) { const r = fmt.relative(Club.date.iso(new Date(iso))); return r === 'Today' ? 'today' : r === 'Yesterday' ? 'yesterday' : r.toLowerCase(); }
 
   /* ---------------- Tee times ---------------- */
@@ -251,19 +260,19 @@
     const sub = tees + ' tees · ' + r.holes + ' holes' + (sc.diffText ? ' · Differential ' + sc.diffText(r) : '');
     return '<li' + (hidden ? ' hidden' : '') + '><button type="button" class="fr-round" data-fr="round" data-id="' + esc(r.id) + '" aria-label="' + esc(when + ', ' + sub + ', score ' + r.gross + '. Open scorecard') + '">' +
       '<span class="fr-tee-main"><span class="fr-tee-when">' + esc(when) + '</span><span class="fr-tee-sub">' + esc(sub) + '</span></span>' +
-      '<span class="fr-round-score">' + r.gross + '</span>' + Club.icon('chevronRight', 'fr-go') + '</button></li>';
+      '<span class="fr-round-score">' + r.gross + '</span></button></li>';
   }
 
   /* ---------------- Friend rundown ---------------- */
-  function quiet(text) { return '<p class="fr-quiet">' + Club.icon('eye') + '<span>' + esc(text) + '</span></p>'; }
+  function quiet(text) { return '<p class="fr-quiet"><span>' + esc(text) + '</span></p>'; }
   function profileHTML(me, fid) {
     const m = member(fid); if (!m) return '<p class="fr-quiet">This member is no longer listed.</p>';
     const t = tierOf(m); const pv = privacy(fid); const first = m.firstName; 
-    let h = '<div class="fr-p-head">' + ui.avatar(m.firstName + ' ' + m.lastName, 'lg') +
+    let h = '<div class="fr-p-head">' +
       '<div class="fr-p-id"><h2 class="fr-p-name">' + esc(m.firstName + ' ' + m.lastName) + '</h2><p class="fr-p-sub">' + esc((t ? t.name : 'Member') + (m.memberSince ? ' · Member since ' + String(m.memberSince).slice(0, 4) : '')) + '</p>' +
-      '<p class="fr-p-hand">' + Club.icon('flag') + '<span>' + esc(handText(m)) + '</span></p></div></div>' +
-      '<div class="fr-p-acts"><button type="button" class="btn btn-primary btn-sm" data-fr="message" data-id="' + esc(fid) + '">' + Club.icon('mail') + '<span>Message</span></button>' +
-      '<button type="button" class="btn btn-sm" data-fr="menu" data-id="' + esc(fid) + '" aria-haspopup="dialog">' + Club.icon('more') + '<span>More</span></button></div>' +
+      '<p class="fr-p-hand"><span>' + esc(handText(m)) + '</span></p></div></div>' +
+      '<div class="fr-p-acts"><button type="button" class="btn btn-primary btn-sm" data-fr="message" data-id="' + esc(fid) + '"><span>Message</span></button>' +
+      '<button type="button" class="p-link" data-fr="menu" data-id="' + esc(fid) + '" aria-haspopup="dialog"><span>More</span></button></div>' +
       '';   /* the "Your tee times" sharing row is gone: friends always see and can join (owner, Nov 19) */
 
     /* Handicap */
@@ -287,9 +296,9 @@
     else {
       const tees = upcomingTee(fid);
       const shared = tees.filter(function (x) { return hasPlayer(x, me); });
-      if (shared.length) h += '<p class="fr-shared">' + Club.icon('check') + '<span>You’re both playing ' + esc(shared.slice(0, 2).map(teeLabel).join(' and ')) + (shared.length > 2 ? ' and ' + (shared.length - 2) + ' more' : '') + '</span></p>';
+      if (shared.length) h += '<p class="fr-shared"><span>You’re both playing ' + esc(shared.slice(0, 2).map(teeLabel).join(' and ')) + (shared.length > 2 ? ' and ' + (shared.length - 2) + ' more' : '') + '</span></p>';
       if (!tees.length) h += '<p class="fr-quiet">No upcoming tee times.</p>';
-      else h += '<ul class="p-list fr-golf fr-tees">' + tees.map(function (x, i) { return golfRowHTML(me, { tee: x, friends: [fid] }, true, i >= 4); }).join('') + '</ul>' +
+      else h += '<ul class="fr-rows fr-golf fr-tees">' + tees.map(function (x, i) { return golfRowHTML(me, { tee: x, friends: [fid] }, true, i >= 4); }).join('') + '</ul>' +
         (tees.length > 4 ? '<button type="button" class="p-link fr-more-tees" data-fr="more-tees" aria-expanded="false">Show all (' + tees.length + ')</button>' : '');
     }
     h += '</section>';
@@ -300,11 +309,11 @@
     else if (lr || tr.length || rounds.length) {
       h += '<section class="fr-sec"><h3 class="eyebrow">Scores and results</h3>';
       if (rounds.length) {
-        h += '<h4 class="fr-sub-h">Recent rounds</h4><ul class="p-list fr-rounds">' + rounds.map(function (r, i) { return roundRowHTML(r, i >= ROUNDS_SHOWN); }).join('') + '</ul>' +
+        h += '<h4 class="fr-sub-h">Recent rounds</h4><ul class="fr-rows fr-rounds">' + rounds.map(function (r, i) { return roundRowHTML(r, i >= ROUNDS_SHOWN); }).join('') + '</ul>' +
           (rounds.length > ROUNDS_SHOWN ? '<button type="button" class="p-link fr-more-rounds" data-fr="more-rounds" aria-expanded="false">Show all (' + rounds.length + ')</button>' : '');
       }
       if (lr || tr.length) h += (rounds.length ? '<h4 class="fr-sub-h">League and tournaments</h4>' : '');
-      h += '<ul class="p-list fr-results">';
+      h += '<ul class="fr-rows fr-results">';
       if (lr) h += '<li><span class="fr-tee-main"><span class="fr-tee-when">' + esc(lr.lg.name) + '</span><span class="fr-tee-sub">' + esc((lr.status === 'complete' ? 'Final standing ' : 'Standing ') + lr.row.pos + ' of ' + lr.of + ' · ' + lr.row.total + ' points') + '</span>' +
         (lr.nights.length ? '<span class="fr-tee-sub">Last nights: ' + esc(lr.nights.map(function (n) { return fmt.dateShort(n.date) + ' ' + n.points + (n.points === 1 ? ' pt' : ' pts') + ' (' + n.place + ')'; }).join(', ')) + '</span>' : '') + '</span></li>';
       tr.forEach(function (x) {
@@ -352,15 +361,17 @@
   /** One row: friend name(s), time, holes, spots open, and Join or the reason Dave cannot. */
   function golfRowHTML(me, g, withDay, hidden) {
     const t = g.tee; const who = namesOf(g.friends);
-    const lead = withDay ? teeLabel(t) : fmt.time(t.time) + ' · ' + who;
-    return '<li class="fr-g"' + (hidden ? ' hidden' : '') + '><span class="fr-g-main"><span class="fr-g-who">' + esc(lead) + '</span>' +
+    /* On a friend's page (withDay) the day leads as a date block and the time is the title; in a day's list the
+       time leads in the serif and the friends are the title. */
+    return '<li class="fr-g"' + (hidden ? ' hidden' : '') + '>' + (withDay ? dateBlock(t.date) : timeBlock(t.time)) +
+      '<span class="fr-g-main"><span class="fr-g-who">' + esc(withDay ? fmt.time(t.time) : who) + '</span>' +
       '<span class="fr-g-sub">' + esc(t.holes + ' holes · ' + spotsText(t)) + '</span></span>' +
       '<span class="fr-g-act">' + joinCell(me, t, who, g.friends) + '</span></li>';
   }
   function golfingHTML(me, list, limit) {
     const shown = limit ? list.slice(0, limit) : list; let html = '', day = null;
     shown.forEach(function (g) {
-      if (g.tee.date !== day) { if (day) html += '</ul>'; day = g.tee.date; html += '<h3 class="eyebrow fr-day">' + esc(dayLabel(day)) + '</h3><ul class="p-list fr-golf">'; }
+      if (g.tee.date !== day) { if (day) html += '</ul>'; day = g.tee.date; html += '<h3 class="fr-day">' + esc(dayLabel(day)) + '</h3><ul class="fr-rows fr-golf">'; }
       html += golfRowHTML(me, g);
     });
     return html + (day ? '</ul>' : '');
@@ -574,30 +585,30 @@
       return '<a href="#/friends' + (i[0] ? '/' + i[0] : '') + '"' + (on ? ' class="active" aria-current="page"' : '') + '>' + esc(i[1]) + (i[2] ? '<span class="fr-count" aria-label="' + i[2] + (i[0] === 'messages' ? ' unread' : ' waiting') + '">' + i[2] + '</span>' : '') + '</a>';
     }).join('') + '</nav>';
   }
+  /** A friend: the name, when they next play, and the handicap as a quiet figure on the right. */
   function friendRow(me, fid, selected) {
     const m = member(fid); const pv = privacy(fid);
-    const bits = [];
-    if (pv.handicap && m.handicap != null) bits.push('Handicap ' + fmt.handicap(m.handicap));
-    if (seesTees(me, fid)) { const n = upcomingTee(fid, 1)[0]; if (n) bits.push('Next ' + dayShort(n.date) + ' ' + fmt.time(n.time)); }
-    const sh = sharing(me, fid); const lock = privacy(me).teeTimes && (!sh.see || !sh.join) ? (!sh.see ? 'Hidden' : 'Must ask') : '';
-    return '<li><button type="button" class="fr-row' + (selected ? ' is-selected' : '') + '" data-friend="' + esc(fid) + '"' + (selected ? ' aria-current="true"' : '') + '>' + ui.avatar(m.firstName + ' ' + m.lastName, 'sm') +
-      '<span class="fr-row-main"><span class="fr-row-name">' + esc(m.firstName + ' ' + m.lastName) + '</span>' + (bits.length ? '<span class="fr-row-sub">' + esc(bits.join(' · ')) + '</span>' : '') + '</span>' +
-      (lock ? '<span class="fr-lock" title="Your tee times: ' + esc(lock === 'Hidden' ? 'hidden from ' + m.firstName : m.firstName + ' must ask to join') + '">' + Club.icon('key') + '<span>' + lock + '</span></span>' : '') + Club.icon('chevronRight', 'fr-go') + '</button></li>';
+    const hcp = pv.handicap && m.handicap != null ? fmt.handicap(m.handicap) : '';
+    let next = '';
+    if (seesTees(me, fid)) { const n = upcomingTee(fid, 1)[0]; if (n) next = 'Next ' + dayShort(n.date) + ' ' + fmt.time(n.time); }
+    return '<li><button type="button" class="fr-row' + (selected ? ' is-selected' : '') + '" data-friend="' + esc(fid) + '"' + (selected ? ' aria-current="true"' : '') + '>' +
+      '<span class="fr-row-main"><span class="fr-row-name">' + esc(m.firstName + ' ' + m.lastName) + '</span>' + (next ? '<span class="fr-row-sub">' + esc(next) + '</span>' : '') + '</span>' +
+      (hcp ? '<span class="fr-row-fig"><span class="fr-sr">Handicap</span> ' + esc(hcp) + '</span>' : '') + '</button></li>';
   }
   function searchResults(me) {
     const q = query.trim().toLowerCase();
     const list = S.all('members').filter(function (m) { return m.id !== me && m.status !== 'resigned' && ((m.firstName + ' ' + m.lastName).toLowerCase().indexOf(q) >= 0 || m.lastName.toLowerCase().indexOf(q) === 0); })
       .sort(function (a, b) { return a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName); }).slice(0, 20);
     if (!list.length) return '<p class="fr-quiet">No member matches “' + esc(query.trim()) + '”.</p>';
-    return '<ul class="p-list fr-results-list">' + list.map(function (m) {
+    return '<ul class="fr-rows fr-results-list">' + list.map(function (m) {
       const st = state(me, m.id); const t = tierOf(m); let act;
-      if (st === 'friends') act = '<span class="badge">Friends</span>';
+      if (st === 'friends') act = '<span class="fr-pend">Friends</span>';
       else if (st === 'outgoing') act = '<span class="fr-pend">Pending</span><button type="button" class="p-link" data-fr="cancel" data-id="' + esc(m.id) + '">Cancel</button>';
       else if (st === 'incoming') act = '<a class="p-link" href="#/friends/requests">Respond</a>';
       else if (st === 'blocked') act = '<span class="fr-pend">Blocked</span>';
       else if (st === 'blockedMe' || privacy(m.id).requests === 'none') act = '<span class="fr-pend">Not accepting requests</span>';
-      else act = '<button type="button" class="btn btn-sm" data-fr="add" data-id="' + esc(m.id) + '">' + Club.icon('plus') + '<span>Add friend</span></button>';
-      return '<li>' + ui.avatar(m.firstName + ' ' + m.lastName, 'sm', true) + '<span class="fr-row-main"><span class="fr-row-name">' + esc(m.firstName + ' ' + m.lastName) + '</span><span class="fr-row-sub">' + esc(t ? t.name : 'Member') + '</span></span><span class="fr-act">' + act + '</span></li>';
+      else act = '<button type="button" class="btn btn-sm" data-fr="add" data-id="' + esc(m.id) + '"><span>Add friend</span></button>';
+      return '<li><span class="fr-row-main"><span class="fr-row-name">' + esc(m.firstName + ' ' + m.lastName) + '</span><span class="fr-row-sub">' + esc(t ? t.name : 'Member') + '</span></span><span class="fr-act">' + act + '</span></li>';
     }).join('') + '</ul>';
   }
 
@@ -626,15 +637,15 @@
   function renderFriends(host, me, selected) {
     const fs = friendsOf(me);
     const list = query.trim() ? searchResults(me) :
-      (fs.length ? '<ul class="p-list fr-list">' + fs.map(function (id) { return friendRow(me, id, wide() && id === selected); }).join('') + '</ul>'
+      (fs.length ? '<p class="fr-list-cap" aria-hidden="true">Handicap</p><ul class="fr-rows fr-list">' + fs.map(function (id) { return friendRow(me, id, wide() && id === selected); }).join('') + '</ul>'
         : '<div class="fr-empty">' + ui.empty({ icon: 'members', title: 'No friends yet', text: 'Find a member and send a request. Nothing is shared until they accept.' }) + '</div>');
     const friendsBlock = '<section class="fr-mine" aria-labelledby="fr-mine-h"><h2 class="fr-h" id="fr-mine-h">Your friends</h2><label class="fr-search"><span class="fr-search-l">Find a member</span><span class="fr-search-box">' + Club.icon('search') +
         '<input class="input" type="search" name="q" placeholder="Search by name" autocomplete="off" value="' + esc(query) + '"></span></label>' +
         '<div class="fr-list-wrap" aria-live="polite">' + list + '</div></section>';
-    if (!wide()) { host.innerHTML = golfSection(me) + friendsBlock; return; }
+    if (!wide()) { host.innerHTML = friendsBlock + golfSection(me); return; }
     const prof = selected && state(me, selected) === 'friends';
     host.innerHTML = '<div class="fr-split"><div class="fr-side">' + friendsBlock + '</div>' +
-      '<div class="fr-main fr-panel">' + (prof ? '<button type="button" class="p-link fr-back" data-fr="back-golf">' + Club.icon('chevronLeft') + '<span>Friends golfing</span></button>' + profileHTML(me, selected) : golfSection(me)) + '</div></div>';
+      '<div class="fr-main">' + (prof ? '<button type="button" class="fr-back" data-fr="back-golf">' + Club.icon('chevronLeft') + '<span>Friends golfing</span></button>' + profileHTML(me, selected) : golfSection(me)) + '</div></div>';
   }
 
   function renderRequests(host, me) {
@@ -642,16 +653,16 @@
     const out = outgoing(me);
     const row = function (f, id, acts) {
       const m = member(id); const t = tierOf(m);
-      return '<li>' + ui.avatar(m.firstName + ' ' + m.lastName, 'sm', true) + '<span class="fr-row-main"><span class="fr-row-name">' + esc(m.firstName + ' ' + m.lastName) + '</span><span class="fr-row-sub">' + esc((t ? t.name : 'Member') + ' · Sent ' + ago(f.createdAt)) + '</span></span><span class="fr-act">' + acts + '</span></li>';
+      return '<li><span class="fr-row-main"><span class="fr-row-name">' + esc(m.firstName + ' ' + m.lastName) + '</span><span class="fr-row-sub">' + esc((t ? t.name : 'Member') + ' · Sent ' + ago(f.createdAt)) + '</span></span><span class="fr-act">' + acts + '</span></li>';
     };
     const jr = joinInbox(me);
     host.innerHTML = (Portal.friendLeagues ? Portal.friendLeagues.invitesHTML(me) : '') +
-      (jr.length ? '<section class="fr-block"><h2 class="fr-h">Join requests</h2><ul class="p-list fr-golf fr-jrs">' + jr.map(function (r) { return requestRowHTML(me, r); }).join('') + '</ul></section>' : '') +
+      (jr.length ? '<section class="fr-block"><h2 class="fr-h">Join requests</h2><ul class="fr-rows fr-golf fr-jrs">' + jr.map(function (r) { return requestRowHTML(me, r); }).join('') + '</ul></section>' : '') +
       '<section class="fr-block"><h2 class="fr-h">Friend requests</h2>' +
-        (inc.length ? '<ul class="p-list fr-req">' + inc.map(function (f) { return row(f, f.from, '<button type="button" class="btn btn-primary btn-sm" data-fr="accept" data-doc="' + esc(f.id) + '">Accept</button><button type="button" class="btn btn-sm" data-fr="decline" data-doc="' + esc(f.id) + '">Decline</button>'); }).join('') + '</ul>'
+        (inc.length ? '<ul class="fr-rows fr-req">' + inc.map(function (f) { return row(f, f.from, '<button type="button" class="p-link" data-fr="decline" data-doc="' + esc(f.id) + '">Decline</button><button type="button" class="btn btn-primary btn-sm" data-fr="accept" data-doc="' + esc(f.id) + '">Accept</button>'); }).join('') + '</ul>'
           : '<p class="fr-quiet">No requests waiting.</p>') + '</section>' +
       '<section class="fr-block"><h2 class="fr-h">Sent by you</h2>' +
-        (out.length ? '<ul class="p-list fr-req">' + out.map(function (f) { return row(f, f.to, '<span class="fr-pend">Pending</span><button type="button" class="p-link" data-fr="cancel" data-id="' + esc(f.to) + '">Cancel</button>'); }).join('') + '</ul>'
+        (out.length ? '<ul class="fr-rows fr-req">' + out.map(function (f) { return row(f, f.to, '<span class="fr-pend">Pending</span><button type="button" class="p-link" data-fr="cancel" data-id="' + esc(f.to) + '">Cancel</button>'); }).join('') + '</ul>'
           : '<p class="fr-quiet">No requests waiting on others.</p>') + '</section>';
   }
 
@@ -659,9 +670,9 @@
     const m = member(other); const ok = state(me, other) === 'friends';
     const msgs = thread(me, other);
     return '<div class="fr-chat">' +
-      '<header class="fr-chat-head">' + (wide() ? '' : '<a class="p-link fr-back" href="#/friends/messages">' + Club.icon('chevronLeft') + '<span>Messages</span></a>') +
-        '<div class="fr-chat-who">' + ui.avatar(m.firstName + ' ' + m.lastName, 'sm') + '<h2>' + esc(m.firstName + ' ' + m.lastName) + '</h2></div></header>' +
-      '<p class="fr-privacy">' + Club.icon('key') + '<span>Messages are private between you and ' + esc(m.firstName) + '. Club staff only see a message if it is reported.</span></p>' +
+      '<header class="fr-chat-head">' + (wide() ? '' : '<a class="fr-back" href="#/friends/messages">' + Club.icon('chevronLeft') + '<span>Messages</span></a>') +
+        '<div class="fr-chat-who"><h2>' + esc(m.firstName + ' ' + m.lastName) + '</h2></div></header>' +
+      '<p class="fr-privacy"><span>Messages are private between you and ' + esc(m.firstName) + '. Club staff only see a message if it is reported.</span></p>' +
       '<ol class="fr-msgs" aria-label="Conversation">' + (msgs.length ? msgs.map(function (x) {
         const mine = x.from === me;
         return '<li class="fr-msg' + (mine ? ' is-mine' : '') + '">' + (mine ? '<div class="fr-bubble">' + esc(x.body) + '</div>'
@@ -678,15 +689,15 @@
     const cs = convos(me);
     if (wide() && !other && cs.length) other = cs[0].other;
     if (other && member(other)) markRead(me, other);
-    const list = '<div class="fr-side"><div class="fr-side-head"><h2 class="fr-h">Conversations</h2><button type="button" class="btn btn-sm" data-fr="new">' + Club.icon('plus') + '<span>New message</span></button></div>' +
-      (cs.length ? '<ul class="p-list fr-convos">' + convos(me).map(function (c) {
+    const list = '<div class="fr-side"><div class="fr-side-head"><h2 class="fr-h">Conversations</h2><button type="button" class="p-link" data-fr="new"><span>New message</span></button></div>' +
+      (cs.length ? '<ul class="fr-rows fr-convos">' + convos(me).map(function (c) {
         const m = member(c.other); const sel = c.other === other;
-        return '<li><a class="fr-row' + (sel && wide() ? ' is-selected' : '') + '" href="#/friends/messages/' + encodeURIComponent(c.other) + '">' + ui.avatar(m.firstName + ' ' + m.lastName, 'sm') +
+        return '<li><a class="fr-row' + (sel && wide() ? ' is-selected' : '') + '" href="#/friends/messages/' + encodeURIComponent(c.other) + '">' +
           '<span class="fr-row-main"><span class="fr-row-name">' + esc(m.firstName + ' ' + m.lastName) + '</span><span class="fr-row-sub">' + esc((c.last.from === me ? 'You: ' : '') + preview(c.last.body)) + '</span></span>' +
           '<span class="fr-row-meta"><span>' + esc(msgTime(c.last.at)) + '</span>' + (c.unread ? '<span class="fr-dot"><span class="fr-sr">' + c.unread + ' unread</span></span>' : '') + '</span></a></li>';
       }).join('') + '</ul>' : '<p class="fr-quiet">No conversations yet.</p>') + '</div>';
     if (!wide()) { host.innerHTML = other && member(other) ? chatHTML(me, other) : list; }
-    else host.innerHTML = '<div class="fr-split">' + list + '<div class="fr-main fr-panel">' + (other && member(other) ? chatHTML(me, other) : '<p class="fr-quiet">Choose a conversation.</p>') + '</div></div>';
+    else host.innerHTML = '<div class="fr-split">' + list + '<div class="fr-main">' + (other && member(other) ? chatHTML(me, other) : '<p class="fr-quiet">Choose a conversation.</p>') + '</div></div>';
     const box = host.querySelector('.fr-msgs'); if (box) box.scrollTop = box.scrollHeight;
     if (other && member(other) && !wide()) setTimeout(function () { window.scrollTo(0, document.documentElement.scrollHeight); }, 30);
   }
@@ -736,7 +747,7 @@
   function render(view, params, mem) {
     const me = mem.id;
     if (params[0] === 'leagues' && Portal.friendLeagues) {   /* Friends leagues: js/portal/fleagues.js */
-      view.innerHTML = (params[1] ? '' : '<header class="fr-title"><h1>Friends</h1><p>Tee times, handicaps and results, shared only between friends.</p></header>' + tabs('leagues', me)) + '<div class="fr-body"></div>';
+      view.innerHTML = (params[1] ? '' : '<header class="fr-title"><h1>Friends</h1><p>Shared between friends only.</p></header>' + tabs('leagues', me)) + '<div class="fr-body"></div>';
       const lgDone = Portal.friendLeagues.render(ui.$('.fr-body', view), me, params.slice(1), function () { const t = ui.$('.fr-tabs', view); if (t) t.outerHTML = tabs('leagues', me); updateBadge(); });
       const tab = ui.$('.fr-tabs a.active', view); if (tab) { const nav = tab.parentNode; nav.scrollLeft += tab.getBoundingClientRect().right - nav.getBoundingClientRect().right + 4; }
       updateBadge();
@@ -746,7 +757,7 @@
     const pick = !sub && params[0] && member(params[0]) ? params[0] : null;
     const other = sub === 'messages' ? params[1] : null;
     const inChat = other && !wide();
-    view.innerHTML = (inChat ? '' : '<header class="fr-title"><h1>Friends</h1><p>Tee times, handicaps and results, shared only between friends.</p></header>' + tabs(sub, me)) + '<div class="fr-body"></div>';
+    view.innerHTML = (inChat ? '' : '<header class="fr-title"><h1>Friends</h1><p>Shared between friends only.</p></header>' + tabs(sub, me)) + '<div class="fr-body"></div>';
     const host = ui.$('.fr-body', view);
     let selected = pick;
     function draw() {

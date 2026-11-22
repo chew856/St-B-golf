@@ -7,7 +7,11 @@
      #/friends/leagues/<id>      a league: getting ready (players, invites), standings and the week by week grid
    Portal.friendLeagues = { render(host, me, params, onChange), invitesHTML(me), wire(root, me, after), inviteCount(me) }
    Joining a league shares its scores with the other players, so league pages show league rounds even for players
-   who keep their scores private elsewhere. */
+   who keep their scores private elsewhere.
+
+   Redesign (Nov 22, the owner-approved language; css/portal/fleagues.css): leagues as hairline rows with the status
+   as a word, a league page with one dark Fairway panel (your place, set large), standings as plain tables, and the
+   three steps of Start a league as one clean column. No avatars, no icons in rows, no cards. */
 (function () {
   'use strict';
   const S = Club.store, ui = Club.ui, esc = ui.esc, fmt = Club.fmt, FL = Club.friendLeagues;
@@ -69,12 +73,12 @@
       '<span class="fl-inv-t">' + esc(nameFor(lg.createdBy, me) + ' invited you to ' + lg.name) + '</span>' +
       '<span class="fl-inv-s">' + sub + '</span>' +
       '<a class="p-link fl-inv-more" href="#/friends/leagues/' + encodeURIComponent(lg.id) + '">See details</a></span>' +
-      '<span class="fl-inv-act"><button type="button" class="btn btn-sm" data-fl="decline" data-id="' + esc(lg.id) + '" aria-label="' + esc('Decline the invite to ' + lg.name) + '">Decline</button>' +
+      '<span class="fl-inv-act"><button type="button" class="p-link" data-fl="decline" data-id="' + esc(lg.id) + '" aria-label="' + esc('Decline the invite to ' + lg.name) + '">Decline</button>' +
       '<button type="button" class="btn btn-primary btn-sm" data-fl="accept" data-id="' + esc(lg.id) + '" aria-label="' + esc('Accept the invite to ' + lg.name) + '">Accept</button></span></li>';
   }
   function invitesHTML(me) {
     const list = invitesFor(me); if (!list.length) return '';
-    return '<section class="fr-block fl-invites"><h2 class="fr-h">League invites</h2><ul class="p-list fl-invs">' + list.map(function (lg) { return inviteRowHTML(lg, me); }).join('') + '</ul></section>';
+    return '<section class="fr-block fl-invites"><h2 class="fr-h">League invites</h2><ul class="fr-rows fl-invs">' + list.map(function (lg) { return inviteRowHTML(lg, me); }).join('') + '</ul></section>';
   }
   function accept(me, id) {
     const lg = FL.get(id); if (!lg) return;
@@ -109,11 +113,10 @@
     const e = FL.entry(lg, me) || {}, place = placeText(lg, me);
     const sub2 = e.status === 'invited' ? 'Invited by ' + nameFor(lg.createdBy, me) : place;
     return '<li><a class="fl-row" href="#/friends/leagues/' + encodeURIComponent(lg.id) + '">' +
-      '<span class="fl-row-ic" aria-hidden="true">' + Club.icon('trophy') + '</span>' +
       '<span class="fl-row-main"><span class="fl-row-name">' + esc(lg.name) + '</span>' +
       '<span class="fl-row-sub">' + spans([FL.formatOf(lg).short, playersText(lg)]) + '</span>' +
-      '<span class="fl-row-st">' + statusPill(lg) + (sub2 ? '<span class="fl-row-me">' + esc(sub2) + '</span>' : '') + '</span></span>' +
-      Club.icon('chevronRight', 'fr-go') + '</a></li>';
+      (sub2 ? '<span class="fl-row-sub fl-row-me">' + esc(sub2) + '</span>' : '') + '</span>' +
+      statusPill(lg) + '</a></li>';
   }
   function listHTML(me) {
     const all = FL.listFor(me);
@@ -122,14 +125,14 @@
     const live = mine.filter(function (lg) { const st = FL.status(lg); return st === 'forming' || st === 'waiting' || st === 'active'; });
     const past = mine.filter(function (lg) { return live.indexOf(lg) < 0; });
     let h = '<div class="fl-list-head"><div><h2 class="fr-h">Leagues</h2><p class="fl-intro">A season with friends. League rounds you book or post count.</p></div>' +
-      '<a class="btn btn-primary fl-start" href="#/friends/leagues/new">' + Club.icon('plus') + '<span>Start a league</span></a></div>';
+      '<a class="btn btn-primary fl-start" href="#/friends/leagues/new"><span>Start a league</span></a></div>';
     h += invitesHTML(me);
     if (!live.length && !past.length) {
       h += '<div class="fr-empty fl-empty">' + ui.empty({ icon: 'trophy', title: 'No leagues yet', text: 'Start one and invite friends. Play when it suits you; standings update as scores come in.' }) + '</div>';
       return h;
     }
-    if (live.length) h += '<section class="fr-block"><h2 class="eyebrow fl-eb">Your leagues</h2><ul class="p-list fl-rows">' + live.map(function (lg) { return leagueRowHTML(lg, me); }).join('') + '</ul></section>';
-    if (past.length) h += '<section class="fr-block"><h2 class="eyebrow fl-eb">Finished and cancelled</h2><ul class="p-list fl-rows">' + past.map(function (lg) { return leagueRowHTML(lg, me); }).join('') + '</ul></section>';
+    if (live.length) h += '<section class="fr-block"><h2 class="eyebrow fl-eb">Your leagues</h2><ul class="fr-rows fl-rows">' + live.map(function (lg) { return leagueRowHTML(lg, me); }).join('') + '</ul></section>';
+    if (past.length) h += '<section class="fr-block"><h2 class="eyebrow fl-eb">Finished and cancelled</h2><ul class="fr-rows fl-rows">' + past.map(function (lg) { return leagueRowHTML(lg, me); }).join('') + '</ul></section>';
     return h;
   }
 
@@ -141,7 +144,7 @@
   function personRow(lg, x, me) {
     const editable = FL.editable(lg) && isCreator(lg, me) && x.memberId !== me && (x.status === 'accepted' || x.status === 'invited');
     const st = memberStatusText(lg, x, me), off = x.status === 'declined';
-    return '<li class="fl-person' + (off ? ' is-off' : '') + '">' + ui.avatar(fullName(x.memberId), 'sm', x.status !== 'accepted') +
+    return '<li class="fl-person' + (off ? ' is-off' : '') + '">' +
       '<span class="fl-person-main"><span class="fl-person-name">' + esc(nameFor(x.memberId, me)) + (x.memberId === me ? ' <span class="fl-you">You</span>' : '') + '</span>' +
       '<span class="fl-person-sub">' + esc(st) + '</span></span>' +
       (editable ? '<button type="button" class="p-link fl-remove" data-fl="remove" data-mid="' + esc(x.memberId) + '" aria-label="' + esc('Remove ' + nameFor(x.memberId, me) + ' from the league') + '">Remove</button>' : '') + '</li>';
@@ -150,8 +153,8 @@
     const shown = (lg.members || []).filter(function (x) { return x.status !== 'removed'; });
     const inv = canInvite(lg, me);
     if (lg.mode !== 'teams') {
-      return '<ul class="p-list fl-people">' + shown.map(function (x) { return personRow(lg, x, me); }).join('') + '</ul>' +
-        (inv ? '<button type="button" class="btn fl-invite-btn" data-fl="invite">' + Club.icon('plus') + '<span>Invite a friend</span></button>' : '');
+      return '<ul class="fr-rows fl-people">' + shown.map(function (x) { return personRow(lg, x, me); }).join('') + '</ul>' +
+        (inv ? '<button type="button" class="p-link fl-invite-btn" data-fl="invite"><span>Invite a friend</span></button>' : '');
     }
     return (lg.teams || []).map(function (t) {
       const ppl = shown.filter(function (x) { return x.teamId === t.id; });
@@ -159,10 +162,10 @@
       const open = Math.max(0, lg.teamSize - filled);
       let rows = ppl.map(function (x) { return personRow(lg, x, me); }).join('');
       for (let i = 0; i < open; i++) {
-        rows += '<li class="fl-person is-open"><span class="fl-slot-ic" aria-hidden="true">' + Club.icon('user') + '</span><span class="fl-person-main"><span class="fl-person-name">Open spot</span></span>' +
+        rows += '<li class="fl-person is-open"><span class="fl-person-main"><span class="fl-person-name">Open spot</span></span>' +
           (inv ? '<button type="button" class="btn btn-sm" data-fl="invite" data-team="' + esc(t.id) + '" aria-label="' + esc('Invite a friend to ' + t.name) + '">Invite</button>' : '') + '</li>';
       }
-      return '<div class="fl-team"><h3 class="fl-team-h"><span>' + esc(t.name) + '</span><span class="fl-team-n">' + esc(FL.teamMembers(lg, t.id).length + ' of ' + lg.teamSize + ' in') + '</span></h3><ul class="p-list fl-people">' + rows + '</ul></div>';
+      return '<div class="fl-team"><h3 class="fl-team-h"><span>' + esc(t.name) + '</span><span class="fl-team-n">' + esc(FL.teamMembers(lg, t.id).length + ' of ' + lg.teamSize + ' in') + '</span></h3><ul class="fr-rows fl-people">' + rows + '</ul></div>';
     }).join('');
   }
   function rulesHTML(lg) {
@@ -201,6 +204,18 @@
       '<p class="fl-legend">' + esc(weekly ? 'Points by weekly finish. Each completed week gives points by place.' : (f.higher ? 'Higher is better. ' : 'Lower is better. ') + (s.done ? 'Final totals.' : 'Ranked on the average per game, so catching up never hurts.')) + '</p></section>';
     h += gridHTML(lg, me, s);
     return h;
+  }
+  /** The league page's one dark panel: the member's place, set large, with their figures under it. */
+  function placePanel(lg, me) {
+    const st = FL.status(lg); if (st !== 'active' && st !== 'complete') return '';
+    const s = FL.standings(lg), r = s.rows.find(function (x) { return x.memberId === me; }); if (!r) return '';
+    const weekly = lg.format === 'weekly', ranked = r.pos !== '–';
+    const fig = function (k, v) { return '<div><dt>' + k + '</dt><dd>' + esc(v) + '</dd></div>'; };
+    return '<section class="fl-place" aria-label="Your place">' +
+      '<p class="fl-place-eb"><span>Your place</span>' + (st === 'complete' ? ' · <span>Final</span>' : '') + '</p>' +
+      (ranked ? '<p class="fl-place-n"><span class="fl-place-v">' + esc(r.pos) + '</span><small>' + esc('of ' + s.rows.length) + '</small></p>'
+        : '<p class="fl-place-none">' + esc(r.played ? 'No week is complete yet' : 'No games played yet') + '</p>') +
+      '<dl class="fl-place-figs">' + (weekly ? fig('Points', valText(lg, r.total)) : fig('Per game', valText(lg, r.key)) + fig('Total', valText(lg, r.total))) + fig('Games', r.played + ' of ' + r.of) + '</dl></section>';
   }
   function slotLabel(lg, sl) { return 'Week ' + sl.week + (lg.perWeek > 1 ? ', game ' + sl.game : ''); }
   function slotState(lg, s, sl) {
@@ -260,13 +275,13 @@
 
   function leagueHTML(lg, me) {
     const e = FL.entry(lg, me), st = FL.status(lg), probs = FL.problems(lg), creator = isCreator(lg, me);
-    let h = '<a class="p-link fr-back fl-back" href="#/friends/leagues">' + Club.icon('chevronLeft') + '<span>Leagues</span></a>' +
+    let h = '<a class="fr-back fl-back" href="#/friends/leagues">' + Club.icon('chevronLeft') + '<span>Leagues</span></a>' +
       '<header class="fl-title"><p class="eyebrow">Friends league</p><h1>' + esc(lg.name) + '</h1>' +
       '<p class="fl-sub">' + statusPill(lg) + '<span>' + rulesLine(lg) + '</span></p><p class="fl-sub2">' + spans([datesLine(lg)].concat(lg.mode === 'teams' ? ['Teams of ' + lg.teamSize] : [])) + '</p></header>';
     if (e && e.status === 'invited' && st !== 'cancelled') {
       const team = e.teamId ? teamOf(lg, e.teamId) : null;
       h += '<div class="fl-banner" role="note"><p><strong>' + esc(nameFor(lg.createdBy, me) + ' invited you to this league' + (team ? ', on ' + team.name : '') + '.') + '</strong> ' + esc('Joining shares your league scores with the other players.') + '</p>' +
-        '<div class="fl-banner-acts"><button type="button" class="btn btn-sm" data-fl="decline" data-id="' + esc(lg.id) + '">Decline</button><button type="button" class="btn btn-primary btn-sm" data-fl="accept" data-id="' + esc(lg.id) + '">Accept</button></div></div>';
+        '<div class="fl-banner-acts"><button type="button" class="p-link" data-fl="decline" data-id="' + esc(lg.id) + '">Decline</button><button type="button" class="btn btn-primary btn-sm" data-fl="accept" data-id="' + esc(lg.id) + '">Accept</button></div></div>';
     }
     if (st === 'cancelled') {
       h += '<div class="fl-banner is-quiet" role="note"><p>' + esc(lg.cancelled ? 'This league was cancelled.' : 'This league never started: not enough players joined before the end.') + '</p>' +
@@ -277,19 +292,19 @@
       h += '<div class="fl-cols"><div class="fl-col">';
       if (st !== 'cancelled') {
         h += '<section class="fl-sec"><h2 class="eyebrow fl-eb">' + (probs.length ? 'Before it can start' : 'Ready to go') + '</h2>' +
-          (probs.length ? '<ul class="fl-probs">' + probs.map(function (p) { return '<li>' + Club.icon('clock') + '<span>' + esc(p) + '</span></li>'; }).join('') + '</ul>'
-            : '<p class="fl-ok">' + Club.icon('check') + '<span>' + esc(st === 'forming' ? 'Everyone is in. The league starts ' + dshort(lg.start) + '.' : 'Everyone is in.') + '</span></p>') +
+          (probs.length ? '<ul class="fl-probs">' + probs.map(function (p) { return '<li><span>' + esc(p) + '</span></li>'; }).join('') + '</ul>'
+            : '<p class="fl-ok"><span>' + esc(st === 'forming' ? 'Everyone is in. The league starts ' + dshort(lg.start) + '.' : 'Everyone is in.') + '</span></p>') +
           (st === 'waiting' ? '<p class="fl-note">The start date has passed. Rounds count once every spot is filled with a player who has accepted.</p>' : '') +
           (st === 'forming' && creator ? '<p class="fl-note">You can invite or remove players until ' + esc(dshort(lg.start)) + '. The rules lock when the league starts.</p>' : '') + '</section>';
       }
       h += '<section class="fl-sec"><h2 class="eyebrow fl-eb">Players</h2>' + peopleHTML(lg, me) + '</section></div>' +
         '<div class="fl-col"><section class="fl-sec"><h2 class="eyebrow fl-eb">Rules</h2><div class="fl-card">' + rulesHTML(lg) + '</div></section>' +
-        (creator && (st === 'forming' || st === 'waiting') ? '<section class="fl-sec fl-danger"><button type="button" class="btn btn-danger" data-fl="cancel">Cancel league</button></section>' : '') +
+        (creator && (st === 'forming' || st === 'waiting') ? '<section class="fl-sec fl-danger"><button type="button" class="p-link" data-fl="cancel">Cancel league</button></section>' : '') +
         '</div></div>';
       return h;
     }
-    h += standingsHTML(lg, me);
-    h += '<section class="fl-sec">' + Portal.accordion({ id: 'fl-rules-' + lg.id, icon: 'info', title: 'League rules', summary: FL.formatOf(lg).label, body: rulesHTML(lg) }) + '</section>';
+    h += placePanel(lg, me) + standingsHTML(lg, me);
+    h += '<section class="fl-sec fl-sec-rules">' + Portal.accordion({ id: 'fl-rules-' + lg.id, title: 'League rules', summary: FL.formatOf(lg).label, body: rulesHTML(lg) }) + '</section>';
     return h;
   }
 
@@ -314,7 +329,7 @@
     function draw() {
       const lg = FL.get(id), e = lg && FL.entry(lg, me);
       if (!lg || !e || e.status === 'removed') {
-        host.innerHTML = '<a class="p-link fr-back fl-back" href="#/friends/leagues">' + Club.icon('chevronLeft') + '<span>Leagues</span></a>' +
+        host.innerHTML = '<a class="fr-back fl-back" href="#/friends/leagues">' + Club.icon('chevronLeft') + '<span>Leagues</span></a>' +
           '<div class="fr-empty">' + ui.empty({ icon: 'trophy', title: 'This league is not available', text: 'It may have been removed, or you are not in it.' }) + '</div>';
         return;
       }
@@ -358,11 +373,11 @@
     function frame(inner) {
       const i = stepIndex();
       return '<div class="fl-flow">' +
-        (i > 0 ? '<button type="button" class="p-link fr-back fl-back" data-act="back">' + Club.icon('chevronLeft') + '<span>Back</span></button>'
-          : '<a class="p-link fr-back fl-back" href="#/friends/leagues">' + Club.icon('chevronLeft') + '<span>Leagues</span></a>') +
+        (i > 0 ? '<button type="button" class="fr-back fl-back" data-act="back">' + Club.icon('chevronLeft') + '<span>Back</span></button>'
+          : '<a class="fr-back fl-back" href="#/friends/leagues">' + Club.icon('chevronLeft') + '<span>Leagues</span></a>') +
         '<h1 class="fl-flow-h">Start a league</h1>' +
         '<ol class="fl-steps" aria-label="Steps">' + STEPS.map(function (s, k) {
-          return '<li class="' + (k < i ? 'is-done' : k === i ? 'is-now' : '') + '"' + (k === i ? ' aria-current="step"' : '') + '><span class="fl-step-n" aria-hidden="true">' + (k < i ? Club.icon('check') : k + 1) + '</span><span class="fl-step-l">' + s.label + '</span></li>';
+          return '<li class="' + (k < i ? 'is-done' : k === i ? 'is-now' : '') + '"' + (k === i ? ' aria-current="step"' : '') + '><span class="fl-step-n" aria-hidden="true">' + (k + 1) + '</span><span class="fl-step-l">' + s.label + '</span></li>';
         }).join('') + '</ol>' +
         '<div class="fl-err" role="alert"' + (st.err.length ? '' : ' hidden') + '>' + Club.icon('alert') + '<div>' + st.err.map(function (x) { return '<p>' + esc(x) + '</p>'; }).join('') + '</div></div>' +
         '<div class="fl-step-body">' + inner + '</div></div>';
@@ -389,16 +404,16 @@
     /* ---- Step 2: players ---- */
     function placedOn(id) { return st.teams.findIndex(function (t) { return t.members.indexOf(id) >= 0; }); }
     function personMini(id, sub) {
-      return ui.avatar(fullName(id), 'sm') + '<span class="fl-pick-main"><span class="fl-pick-l">' + esc(fullName(id)) + (id === me ? ' <span class="fl-you">You</span>' : '') + '</span>' + (sub ? '<span class="fl-pick-s">' + esc(sub) + '</span>' : '') + '</span>';
+      return '<span class="fl-pick-main"><span class="fl-pick-l">' + esc(fullName(id)) + (id === me ? ' <span class="fl-you">You</span>' : '') + '</span>' + (sub ? '<span class="fl-pick-s">' + esc(sub) + '</span>' : '') + '</span>';
     }
     function hcpText(id) { const m = member(id); return m && m.handicap != null ? 'Handicap ' + fmt.handicap(m.handicap) : ''; }
     function playersStep() {
       let h = '<div class="fl-q"><span class="pk-label" id="fl-mode-l">How do you want to play?</span><div class="segmented fl-seg" role="radiogroup" aria-labelledby="fl-mode-l">' +
         [['individual', 'Individual'], ['teams', 'Teams']].map(function (x) { return '<button type="button" role="radio" data-mode="' + x[0] + '" aria-checked="' + (st.mode === x[0]) + '"' + (st.mode === x[0] ? ' class="active"' : '') + '>' + x[1] + '</button>'; }).join('') + '</div>' +
         '<p class="fl-hint">' + (st.mode === 'teams' ? 'Teams add up their players’ scores. Every team has the same number of players.' : 'Everyone plays for themselves.') + '</p></div>';
-      if (!fs.length) return h + '<div class="fl-card">' + ui.empty({ icon: 'members', title: 'Add friends first', text: 'Leagues are with friends. Send a friend request, and once it is accepted you can invite them.', action: '<a class="btn" href="#/friends">Find friends</a>' }) + '</div>';
+      if (!fs.length) return h + '<div class="fr-empty">' + ui.empty({ icon: 'members', title: 'Add friends first', text: 'Leagues are with friends. Send a friend request, and once it is accepted you can invite them.', action: '<a class="btn" href="#/friends">Find friends</a>' }) + '</div>';
       if (st.mode === 'individual') {
-        h += '<div class="fl-q"><span class="pk-label" id="fl-inv-l">Invite friends</span><ul class="p-list fl-picks" role="group" aria-labelledby="fl-inv-l">' +
+        h += '<div class="fl-q"><span class="pk-label" id="fl-inv-l">Invite friends</span><ul class="fr-rows fl-picks" role="group" aria-labelledby="fl-inv-l">' +
           '<li><span class="fl-pick is-fixed">' + personMini(me, 'Organiser') + '<span class="fl-check is-on" aria-hidden="true">' + Club.icon('check') + '</span></span></li>' +
           fs.map(function (id) {
             const on = st.picks.indexOf(id) >= 0;
@@ -416,14 +431,14 @@
           const id = t.members[k];
           slots += id
             ? '<li class="fl-slot">' + personMini(id, '') + '<button type="button" class="btn btn-icon btn-sm fl-slot-x" data-unplace="' + esc(id) + '" aria-label="' + esc('Take ' + (id === me ? 'yourself' : fullName(id)) + ' off ' + teamName(i)) + '">' + Club.icon('close') + '</button></li>'
-            : '<li class="fl-slot is-open"><button type="button" class="fl-slot-add" data-place="' + i + '">' + Club.icon('plus') + '<span>Add a player</span></button></li>';
+            : '<li class="fl-slot is-open"><button type="button" class="fl-slot-add" data-place="' + i + '"><span>Add a player</span></button></li>';
         }
         return '<div class="fl-tcard"><div class="fl-tcard-head"><label class="fr-sr" for="fl-tn-' + i + '">Name of team ' + (i + 1) + '</label>' +
           '<input class="input fl-tname" id="fl-tn-' + i + '" data-tname="' + i + '" maxlength="30" autocomplete="off" placeholder="Team ' + (i + 1) + '" value="' + esc(t.name) + '">' +
           (st.teams.length > 2 ? '<button type="button" class="p-link" data-delteam="' + i + '" aria-label="' + esc('Remove the team ' + teamName(i)) + '">Remove</button>' : '') + '</div>' +
           '<ul class="fl-slots">' + slots + '</ul></div>';
       }).join('') + '</div>' +
-        (st.teams.length < MAX_TEAMS ? '<button type="button" class="btn fl-addteam" data-act="add-team">' + Club.icon('plus') + '<span>Add a team</span></button>' : '');
+        (st.teams.length < MAX_TEAMS ? '<button type="button" class="p-link fl-addteam" data-act="add-team"><span>Add a team</span></button>' : '');
       return h;
     }
     /* ---- Step 3: review ---- */

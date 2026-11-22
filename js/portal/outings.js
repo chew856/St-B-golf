@@ -11,7 +11,12 @@
    packageUnsure, so it appears in staff Group Outings > Pipeline with a "Members' portal" badge and every staff action
    works on it as on a hand-entered one. The member follows the stage here (read only) and can withdraw while it is
    still new: that closes it as Lost with the reason "Withdrawn by member", which staff can reopen.
-   Styles: css/portal/outings.css (.po-*). French: js/i18n/fr-portal.js (Group outings block). */
+   Styles: css/portal/outings.css (.po-*). French: js/i18n/fr-portal.js (Group outings block).
+
+   Redesign (Nov 22): no cards. The packages read like a printed rate card (the name, the price per player in the
+   serif, what is included as a plain list, Enquire as a text link); My enquiries are hairline rows with a date block
+   and the status as a word; the form is one column of sections under small capitals, with the package as a hairline
+   list and the format as words. */
 (function () {
   'use strict';
   if (!window.Portal || !Club.shared || !Club.shared.outings) return;
@@ -116,17 +121,17 @@
     return '<article class="po-pkg" data-reveal>' +
       '<div class="po-pkg-head"><span class="eyebrow">' + esc(range(p)) + '</span><h3>' + esc(p.name) + '</h3></div>' +
       '<div class="po-price"><span class="po-price-n">' + esc(fmt.money0(p.perPlayer)) + '</span><span class="po-price-u">per player</span></div>' +
-      '<p class="po-pkg-fmt">' + Club.icon('flag') + '<span>' + esc('Format: ' + p.format) + '</span></p>' +
-      '<p class="po-pkg-when">' + Club.icon('calendar') + '<span>' + esc(p.availability) + '</span></p>' +
-      '<ul class="po-incl">' + (p.includes || []).map(function (x) { return '<li>' + Club.icon('check') + '<span>' + esc(x) + '</span></li>'; }).join('') + '</ul>' +
-      '<a class="btn po-pkg-go" href="#/outings/enquire/' + esc(p.id) + '">Enquire about this package</a>' +
+      '<p class="po-pkg-fmt"><span>' + esc('Format: ' + p.format) + '</span></p>' +
+      '<p class="po-pkg-when"><span>' + esc(p.availability) + '</span></p>' +
+      '<ul class="po-incl">' + (p.includes || []).map(function (x) { return '<li><span>' + esc(x) + '</span></li>'; }).join('') + '</ul>' +
+      '<a class="p-link po-pkg-go" href="#/outings/enquire/' + esc(p.id) + '">Enquire about this package</a>' +
     '</article>';
   }
   function contactsHTML() {
     return '<ul class="po-people">' + O.PDF.contacts.map(function (c) {
-      return '<li>' + ui.avatar(c.name, '', true) + '<div class="po-person"><span class="po-person-n">' + esc(c.name) + '</span><span class="po-person-r">' + esc(c.title) + '</span>' +
-        '<span class="po-person-links"><a class="p-link" href="' + esc(tel(Club.info.phone, c.ext)) + '">' + Club.icon('phone') + '<span>' + esc(Club.info.phone + ' ext. ' + c.ext) + '</span></a>' +
-        '<a class="p-link" href="mailto:' + esc(c.email) + '">' + Club.icon('mail') + '<span>' + esc(c.email) + '</span></a></span></div></li>';
+      return '<li><div class="po-person"><span class="po-person-n">' + esc(c.name) + '</span><span class="po-person-r">' + esc(c.title) + '</span>' +
+        '<span class="po-person-links"><a class="p-link" href="' + esc(tel(Club.info.phone, c.ext)) + '"><span>' + esc(Club.info.phone + ' ext. ' + c.ext) + '</span></a>' +
+        '<a class="p-link" href="mailto:' + esc(c.email) + '"><span>' + esc(c.email) + '</span></a></span></div></li>';
     }).join('') + '</ul>';
   }
   function infoHTML() {
@@ -136,43 +141,45 @@
     const buffetPkgs = pkgs().filter(function (p) { return p.buffet; }).map(function (p) { return p.name; });
     const carvery = addOns().find(function (a) { return a.id === 'ao_carvery'; });
     return '<div class="po-accs">' +
-      Portal.accordion({ id: 'po-addons', icon: 'dining', title: 'Food and beverage add-ons', summary: addOns().length + ' options, priced per player or per item',
+      Portal.accordion({ id: 'po-addons', title: 'Food and beverage add-ons', summary: addOns().length + ' options, priced per player or per item',
         body: Object.keys(groups).map(function (g) {
           return '<h4 class="po-acc-h">' + esc(g) + '</h4><ul class="po-rows">' + groups[g].map(function (a) {
             return '<li><span class="po-row-main"><span class="po-row-t">' + esc(a.name) + '</span>' + (a.desc ? '<span class="po-row-s">' + esc(a.desc) + '</span>' : '') + '</span><span class="po-row-p"><span>' + esc(fmt.money(a.price)) + '</span><small>' + esc(unit(a)) + '</small></span></li>';
           }).join('') + '</ul>';
         }).join('') + '<p class="po-fine">All pricing is surcharge inclusive.</p>' }) +
-      Portal.accordion({ id: 'po-buffet', icon: 'dining', title: 'Build your own buffet', summary: buffetPkgs.length ? 'Included with the ' + buffetPkgs.join(' and ') : '',
+      Portal.accordion({ id: 'po-buffet', title: 'Build your own buffet', summary: buffetPkgs.length ? 'Included with the ' + buffetPkgs.join(' and ') : '',
         body: '<p class="po-p">' + esc(B.includes) + '.</p>' +
           [['Salads', 'salad', 'Choose 1'], ['Hot items', 'hot', 'Choose 2'], ['Vegetables', 'vegetable', 'Choose 1'], ['Starch', 'starch', 'Choose 1']].map(function (g) {
             return '<h4 class="po-acc-h"><span>' + esc(g[0]) + '</span><span class="po-acc-n">' + esc(g[2]) + '</span></h4><p class="po-p">' + esc(B[g[1]].join(', ')) + '</p>';
           }).join('') +
           (carvery ? '<h4 class="po-acc-h"><span>' + esc(carvery.name) + '</span><span class="po-acc-n">' + esc(fmt.money(carvery.price) + ' per player') + '</span></h4><p class="po-p">' + esc(B.carvery.join(', ')) + '</p>' : '') }) +
-      Portal.accordion({ id: 'po-terms', icon: 'info', title: 'Tournament terms', summary: 'Deposits, payment, numbers and food and beverage',
+      Portal.accordion({ id: 'po-terms', title: 'Tournament terms', summary: 'Deposits, payment, numbers and food and beverage',
         body: '<dl class="po-terms">' + O.PDF.terms.map(function (t) { return '<div><dt>' + esc(t[0]) + '</dt><dd>' + esc(t[1]) + '</dd></div>'; }).join('') + '</dl>' }) +
-      Portal.accordion({ id: 'po-contacts', icon: 'phone', title: 'Tournament contacts', summary: O.PDF.contacts.map(function (c) { return c.name; }).join(' and '), body: contactsHTML() }) +
+      Portal.accordion({ id: 'po-contacts', title: 'Tournament contacts', summary: O.PDF.contacts.map(function (c) { return c.name; }).join(' and '), body: contactsHTML() }) +
     '</div>';
   }
 
   /* ---------------- #/outings ---------------- */
   function enquiryRow(o) {
     const p = pkg(o.packageId);
-    return '<li><button type="button" class="po-enq" data-enq="' + esc(o.id) + '">' +
+    const d = fmt.toDate(o.date);
+    return '<li><button type="button" class="po-enq" data-enq="' + esc(o.id) + '" aria-label="' + esc(o.organization + ', ' + fmt.date(o.date)) + '">' +
+      '<span class="po-dblock" aria-hidden="true"><small>' + esc(d.toLocaleDateString('en-US', { month: 'short' })) + '</small><span class="po-dblock-n">' + d.getDate() + '</span></span>' +
       '<span class="po-enq-main"><span class="po-enq-t" data-i18n-skip>' + esc(o.organization) + '</span>' +
-      '<span class="po-enq-s">' + esc(fmt.dateShort(o.date)) + ' · ' + esc(o.players + ' players') + (p && !unsureYet(o) ? ' · ' + esc(p.name) : '') + '</span></span>' +
-      badge(o) + Club.icon('chevronRight', 'po-enq-go') + '</button></li>';
+      '<span class="po-enq-s">' + esc(o.players + ' players') + (p && !unsureYet(o) ? ' · ' + esc(p.name) : '') + '</span></span>' +
+      badge(o) + '</button></li>';
   }
   function renderMain(view, m) {
     const list = mine(m);
     view.innerHTML = '<section class="p-hero po-hero" data-reveal><div class="eyebrow">Tournaments and corporate golf</div><h1>Group outings</h1>' +
         '<p>' + esc(firstSentence(O.PDF.blurb)) + '</p>' +
-        '<div class="po-hero-acts"><a class="btn btn-primary" href="#/outings/enquire">' + Club.icon('plus') + '<span>Plan an outing</span></a></div></section>' +
+        '<div class="po-hero-acts"><a class="btn btn-primary" href="#/outings/enquire">Plan an outing</a></div></section>' +
       '<div class="po-main">' +
         '<section class="po-mine" data-reveal><div class="p-section-head"><h2>My enquiries</h2></div>' +
-          (list.length ? '<ul class="p-list po-enqs">' + list.map(enquiryRow).join('') + '</ul>'
+          (list.length ? '<ul class="po-enqs">' + list.map(enquiryRow).join('') + '</ul>'
             : '<div class="po-empty"><p>Your enquiries and their progress show here.</p><a class="p-link" href="#/outings/enquire">Send an enquiry</a></div>') +
         '</section>' +
-        '<section class="po-pkgs-sec"><div class="p-section-head"><h2>Packages</h2></div><div class="po-pkgs" tabindex="0" role="region" aria-label="Packages">' + pkgs().map(pkgCard).join('') + '</div>' +
+        '<section class="po-pkgs-sec"><div class="p-section-head"><h2>Packages</h2></div><div class="po-pkgs">' + pkgs().map(pkgCard).join('') + '</div>' +
           '<p class="po-fine">All pricing is surcharge inclusive. From the club’s 2026 tournament package.</p></section>' +
         '<section class="po-info" data-reveal><div class="p-section-head"><h2>Good to know</h2></div>' + infoHTML() + '</section>' +
       '</div>';
@@ -192,7 +199,7 @@
       '<div class="po-sheet-top">' + badge(o) + '<p>' + esc(st.text) + '</p></div>' +
       (lost ? '' : '<ol class="po-steps">' + STEPS.map(function (s, i) {
         const cls = i < steps || (i === steps && o.stage === 'Completed') ? 'done' : i === steps ? 'current' : '';
-        return '<li class="' + cls + '"><span class="po-step-dot">' + (cls === 'done' ? Club.icon('check') : '') + '</span><span>' + esc(s[1]) + '</span></li>';
+        return '<li class="' + cls + '"' + (cls === 'current' ? ' aria-current="step"' : '') + '><span class="po-step-n" aria-hidden="true">' + (i + 1) + '</span><span>' + esc(s[1]) + '</span></li>';
       }).join('') + '</ol>') +
       '<dl class="po-kv">' +
         '<div><dt>Group</dt><dd data-i18n-skip>' + esc(o.organization) + '</dd></div>' +
@@ -268,7 +275,7 @@
     const days = seasonDays(), ms = months();
     const choice = function (id, title, sub) {
       const on = draft.packageId === id;
-      return '<button type="button" role="radio" class="po-choice' + (on ? ' active' : '') + '" aria-checked="' + on + '" data-pkg="' + esc(id) + '"><span class="po-choice-dot" aria-hidden="true"></span><span class="po-choice-main"><span class="po-choice-t">' + esc(title) + '</span><span class="po-choice-s">' + [].concat(sub).map(function (x) { return '<span>' + esc(x) + '</span>'; }).join(' · ') + '</span></span></button>';
+      return '<button type="button" role="radio" class="po-choice' + (on ? ' active' : '') + '" aria-checked="' + on + '" data-pkg="' + esc(id) + '"><span class="po-choice-main"><span class="po-choice-t">' + esc(title) + '</span><span class="po-choice-s">' + [].concat(sub).map(function (x) { return '<span>' + esc(x) + '</span>'; }).join(' · ') + '</span></span><span class="po-choice-k" aria-hidden="true">Selected</span></button>';
     };
     view.innerHTML = '<a class="po-back" href="#/outings">' + Club.icon('chevronLeft') + '<span>Group outings</span></a>' +
       '<section class="p-hero po-hero" data-reveal><h1>Plan a group outing</h1><p>Tell us your group and dates. The club replies with availability and a quote.</p></section>' +
@@ -294,7 +301,7 @@
         '</div><p class="field-hint">From your profile. Change if someone else should be contacted.</p></section>' +
         '<section class="po-card"><h2 class="po-h">Food and notes</h2>' +
           '<div class="field"><label for="po-notes">Food, drinks and anything else (optional)</label><textarea class="textarea" id="po-notes" name="notes" maxlength="1000" rows="4" placeholder="Meal ideas, prizes, hole sponsors, contests, special requests">' + esc(draft.notes) + '</textarea><span class="field-hint">The food and beverage add-ons and the buffet are listed on the Group outings page.</span></div></section>' +
-        '<div class="po-send-row"><button type="submit" class="btn btn-primary po-send">' + Club.icon('send') + '<span>Send enquiry</span></button></div>' +
+        '<div class="po-send-row"><button type="submit" class="btn btn-primary po-send">Send enquiry</button></div>' +
       '</form><aside class="po-side"><div class="po-card po-summary" aria-live="polite"></div></aside></div>';
 
     const form = ui.$('.po-form', view);
@@ -311,7 +318,7 @@
     function paint() {
       ui.$('.po-summary', view).innerHTML = summaryHTML();
       const a = advice();
-      ui.$('.po-advice', view).innerHTML = a.length ? '<div class="po-note">' + Club.icon('info') + '<ul>' + a.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>' : '';
+      ui.$('.po-advice', view).innerHTML = a.length ? '<div class="po-note"><ul>' + a.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>' : '';
       if (draft.altDate) addClear(); else { const c = ui.$('.po-clear', view); if (c) c.remove(); }
       if (window.innerWidth < 1024) Portal.actionBar.show({ summary: barSummary(), label: 'Send enquiry', onClick: send });
       else Portal.actionBar.hide();

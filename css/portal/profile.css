@@ -1,103 +1,106 @@
 /* ==========================================================================
-   Portal: Profile (pp-), v2. Tokens only; loaded before portal-theme.css.
+   Portal: Profile (pp-). Redesign (owner-approved, Nov 21; built Nov 22): "Inter with a touch of serif".
+   The title, the member's name in the serif (the page's one signature element) and one quiet line; then plain grouped
+   rows under small capitals: a label on the left, what is set now on the right. Each row opens its sheet. No card
+   picture, no icons, no boxes, no shadows. Tokens only; this file loads before portal-theme.css, so page rules carry
+   body.portal.
    ========================================================================== */
-.pp-title { margin-bottom: 16px; }
-.pp-title h1 { margin: 0; }
+body.portal .pp-root { max-width: 35rem; min-width: 0; }
+body.portal .pp-head { margin: 0 0 6px; }
+body.portal .pp-root .pp-title { margin: 6px 0 14px; font-family: var(--sans); font-size: 2.125rem; font-weight: 500; line-height: 1.15; letter-spacing: -0.025em; color: var(--text); }
+body.portal .pp-name { margin: 0; font-family: var(--font-sig); font-style: italic; font-weight: 400; font-size: 2.125rem; line-height: 1.15; letter-spacing: -0.01em; color: var(--text); overflow-wrap: anywhere; }
+body.portal .pp-meta { margin: 6px 0 0; font-size: 0.8125rem; line-height: 1.5; color: var(--text-3); font-variant-numeric: tabular-nums; }
 
-/* ---------------- Member card: credit-card proportions, deep forest ---------------- */
-.pp-card {
-  position: relative; overflow: hidden; isolation: isolate;
-  width: 100%; aspect-ratio: 1.586; min-height: 0;
-  display: flex; flex-direction: column; justify-content: space-between; gap: 16px;
-  padding: 20px 22px; border-radius: var(--radius-lg); color: var(--on-dark);
-  background: linear-gradient(135deg, var(--forest-900) 0%, var(--forest-950) 70%);
-  box-shadow: none;
-}
-/* Soft sheen along the top edge */
-.pp-card::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--on-dark) 12%, transparent) 0%, transparent 28%),
-              radial-gradient(120% 60% at 20% 0%, color-mix(in srgb, var(--on-dark) 8%, transparent), transparent 60%); }
-.pp-card::after { content: ""; position: absolute; left: 16px; right: 16px; top: 0; height: 1px; background: color-mix(in srgb, var(--on-dark) 22%, transparent); }
-/* Very faint fine grain */
-.pp-card-grain { position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: 0.03;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
-.pp-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-.pp-card-crest.stb-logo, .pp-card-crest { height: 34px; width: auto; color: var(--on-dark); flex: none; }
-.pp-card-eyebrow { font-size: var(--fs-label); font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--on-dark-2); }
-.pp-card-holder { font-family: var(--font-title); font-weight: 600; font-size: var(--fs-section); line-height: 1.25; color: var(--on-dark); }
-.pp-card-meta { display: flex; flex-wrap: wrap; gap: 2px 16px; margin-top: 6px; font-size: var(--fs-meta); line-height: 1.45; color: var(--on-dark-2); font-variant-numeric: tabular-nums lining-nums; }
-@media (prefers-reduced-motion: no-preference) {
-  .pp-card { animation: pp-in 200ms var(--ease-ui) both; }
-  @keyframes pp-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-}
-
-/* ---------------- Membership accordion and settings rows ---------------- */
-.pp-member { margin: 16px 0 12px; }
-.pp-tier-d { margin: 0; font-size: var(--fs-meta); color: var(--text-2); }
-.pp-status { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 10px 0 0; font-size: var(--fs-meta); color: var(--text-2); }
-.pp-status a, .pp-note a { color: var(--forest-800); font-weight: 500; text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 3px; white-space: nowrap; }
-body.portal .p-list.pp-settings > li { padding: 0; min-height: 0; display: block; }
-.pp-set { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 8px 14px 8px 16px; background: none; border: 0; font: inherit; color: var(--text); text-align: left; text-decoration: none; cursor: pointer; }
-@media (hover: hover) { .pp-set:hover { background: var(--sage-50); text-decoration: none; } }
-.pp-set-ic { width: 20px; height: 20px; flex: none; color: var(--forest-500); }
-.pp-set-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
-.pp-set-l { font-size: 1rem; font-weight: 500; }
-.pp-set-s { font-size: var(--fs-meta); color: var(--text-2); overflow-wrap: anywhere; }
-.pp-set-go { width: 18px; height: 18px; flex: none; color: var(--text-3); }
-.pp-set-out .pp-set-l { font-weight: 400; color: var(--danger); }
-.pp-set-out .pp-set-ic { color: var(--danger); }
+/* ---------------- Groups and rows ---------------- */
+body.portal .pp-settings { display: grid; grid-template-columns: minmax(0, 1fr); }
+body.portal .pp-col { min-width: 0; }
+body.portal .pp-group { border-bottom: 1px solid var(--border); }
+body.portal .pp-root .pp-group-h { margin: 24px 0 2px; font-family: var(--sans); font-size: 0.6875rem; font-weight: 600; line-height: 1.6; letter-spacing: 0.2em; text-transform: uppercase; color: var(--label); }
+body.portal .pp-set { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; min-height: 48px; padding: 12px 0; border: 0; border-top: 1px solid var(--border); border-radius: 0; background: none; color: var(--text); font: inherit; text-align: left; text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+body.portal .pp-group-h + .pp-set, body.portal .pp-group-h + .pp-member .pk-acc { border-top: 0; }
+body.portal .pp-set-l { flex: 0 1 auto; min-width: 0; font-size: 0.96875rem; font-weight: 500; line-height: 1.35; color: var(--text); }
+body.portal .pp-set-s { flex: 1 1 0; min-width: 34%; font-size: 0.84375rem; font-weight: 400; line-height: 1.35; color: var(--text-3); text-align: right; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+body.portal .pp-set:focus-visible { outline: 2px solid var(--forest-700); outline-offset: -2px; }
+@media (hover: hover) { body.portal .pp-set:hover { background: none; text-decoration: none; } body.portal .pp-set:hover .pp-set-l { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 4px; } }
+body.portal .pp-set-out .pp-set-l { font-weight: 500; color: var(--text-2); }
+/* Rows built by other pages in the same shape (Golf Canada rows, js/portal/scores.js): label over one quiet line */
+body.portal .p-list.pp-settings { display: block; border-top: 0; overflow: visible; }
+body.portal .p-list.pp-settings > li { display: block; padding: 0; min-height: 0; border: 0; }
+body.portal .pp-set-ic, body.portal .pp-set-go { display: none; }
+body.portal .pp-set-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+body.portal .pp-set-main .pp-set-s { flex: none; min-width: 0; margin-top: 2px; text-align: left; }
+/* Your membership: the same row, opening in place */
+body.portal .pp-member .pk-acc { margin: 0; overflow: visible; background: none; border: 0; border-top: 1px solid var(--border); border-radius: 0; box-shadow: none; }
+body.portal .pp-member .pk-acc-head { min-height: 48px; padding: 12px 0; gap: 12px; }
+@media (hover: hover) { body.portal .pp-member .pk-acc-head:hover { background: none; } }
+body.portal .pp-member .pk-acc-text { flex-direction: row; align-items: center; justify-content: space-between; gap: 16px; }
+body.portal .pp-member .pk-acc-title { font-size: 0.96875rem; font-weight: 500; line-height: 1.35; }
+body.portal .pp-member .pk-acc-sum { flex: 1 1 0; font-size: 0.84375rem; color: var(--text-3); text-align: right; }
+body.portal .pp-member .pk-acc-chev { width: 16px; height: 16px; color: var(--text-3); }
+body.portal .pp-member .pk-acc-body { padding: 0 0 14px; border-top: 0; }
+body.portal .pp-tier-d { margin: 0; font-size: 0.875rem; line-height: 1.5; color: var(--text-2); }
+body.portal .pp-status { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; margin: 10px 0 0; font-size: 0.8125rem; line-height: 1.5; color: var(--text-2); }
+body.portal .pp-word { font: 600 0.6875rem/1.4 var(--sans); letter-spacing: 0.14em; text-transform: uppercase; color: var(--warn); }
+body.portal .pp-status a, body.portal .pp-note a { position: relative; color: var(--text); font-weight: 500; text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; white-space: nowrap; }
+body.portal .pp-status a::after, body.portal .pp-note a::after { content: ""; position: absolute; left: -4px; right: -4px; top: -14px; bottom: -14px; }
+/* Language: the label and EN | FR as words */
+body.portal .pp-lang.i18n-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 48px; padding: 2px 0; border-top: 0; color: var(--text); font-size: 0.96875rem; font-weight: 500; }
+body.portal .pp-lang .i18n-switch { padding: 0; gap: 0; border: 1px solid var(--border); border-radius: 3px; }
+body.portal .pp-lang .i18n-switch .i18n-opt { position: relative; min-width: 46px; height: 34px; padding: 0 14px; border-radius: 0; color: var(--text-3); font: 500 0.8125rem/1 var(--sans); letter-spacing: 0.06em; }
+body.portal .pp-lang .i18n-switch .i18n-opt[aria-pressed=true] { background-color: var(--c-ink); color: var(--on-dark); }
+body.portal .pp-lang .i18n-switch .i18n-opt::before { content: ""; position: absolute; left: 0; right: 0; top: -6px; bottom: -6px; }   /* a 44px tap area around the slim control */
 
 /* ---------------- Sheet contents ---------------- */
 .pp-form { display: flex; flex-direction: column; gap: 14px; padding-top: 8px; }
 .pp-form .field { margin: 0; }
 .pp-form .input, .pp-form .select, .pp-form .textarea { width: 100%; }
-.pp-label { display: block; margin-bottom: 6px; font-size: var(--fs-meta); font-weight: 500; color: var(--text-2); }
-body.portal .pp-seg { display: flex; width: 100%; }
-body.portal .segmented.pp-seg button { flex: 1 1 0; min-height: 44px; }
-.pp-kv { margin: 0 0 12px; }
-.pp-kv > div { padding: 10px 0; border-bottom: 1px solid var(--border); }
-.pp-kv dt { font-size: var(--fs-meta); color: var(--text-3); }
-.pp-kv dd { margin: 2px 0 0; font-size: var(--fs-body); font-weight: 500; color: var(--text); }
-.pp-note { display: flex; gap: 10px; align-items: flex-start; margin: 12px 0 0; padding: 10px 12px; background: var(--sage-50); border-radius: var(--radius-ctl); font-size: var(--fs-meta); color: var(--text-2); }
-.pp-note .icon { width: 18px; height: 18px; color: var(--forest-500); flex: none; margin-top: 1px; }
-.pp-comm { list-style: none; margin: 0; padding: 0; }
-.pp-comm li { display: flex; align-items: center; gap: 12px; padding: 10px 0; min-height: 64px; }
-.pp-comm li + li { border-top: 1px solid var(--border); }
-.pp-comm-text { flex: 1; min-width: 0; display: flex; flex-direction: column; cursor: pointer; }
-.pp-comm-l { font-size: 1rem; font-weight: 500; color: var(--text); }
-.pp-comm-s { font-size: var(--fs-meta); color: var(--text-2); line-height: 1.4; }
-.pp-comm-ctl { display: flex; align-items: center; gap: 8px; flex: none; min-height: 44px; cursor: pointer; }
-.pp-state { font-size: var(--fs-meta); color: var(--text-2); min-width: 1.8em; text-align: right; }
+body.portal .pp-label { display: block; margin-bottom: 8px; font-size: 0.6875rem; font-weight: 600; line-height: 1.4; letter-spacing: 0.18em; text-transform: uppercase; color: var(--label); }
+/* A choice of two or three: a slim outlined control, the chosen one in Ink (as 18 / 9 on Tee times) */
+body.portal .segmented.pp-seg { display: flex; width: 100%; gap: 0; padding: 0; overflow: visible; background: none; border: 1px solid var(--border-strong); border-radius: 3px; }
+body.portal .segmented.pp-seg button { flex: 1 1 0; min-height: 44px; padding: 0 10px; border: 0; border-radius: 0; background: none; box-shadow: none; color: var(--text-2); font: 500 0.875rem/1.2 var(--sans); white-space: normal; }
+body.portal .segmented.pp-seg button + button { border-left: 1px solid var(--border); }
+body.portal .segmented.pp-seg button.active { background: var(--c-ink); color: var(--on-dark); box-shadow: none; }
+body.portal .pp-kv { margin: 0; border-bottom: 1px solid var(--border); }
+body.portal .pp-kv > div { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 4px 16px; min-height: 48px; padding: 12px 0; border-top: 1px solid var(--border); }
+body.portal .pp-kv > div:first-child { border-top: 0; }
+body.portal .pp-kv dt { font-size: 0.9375rem; color: var(--text-2); }
+body.portal .pp-kv dd { margin: 0; font-size: 0.9375rem; font-weight: 500; color: var(--text); text-align: right; }
+body.portal .pp-note { display: block; margin: 14px 0 0; padding: 0; background: none; border-radius: 0; font-size: 0.8125rem; line-height: 1.5; color: var(--text-3); }
+body.portal .pp-comm { list-style: none; margin: 0; padding: 0; border-bottom: 1px solid var(--border); }
+body.portal .pp-comm li { display: flex; align-items: center; gap: 14px; min-height: 64px; padding: 11px 0; }
+body.portal .pp-comm li + li { border-top: 1px solid var(--border); }
+body.portal .pp-comm-text { flex: 1; min-width: 0; display: flex; flex-direction: column; cursor: pointer; }
+body.portal .pp-comm-l { font-size: 0.96875rem; font-weight: 500; line-height: 1.35; color: var(--text); }
+body.portal .pp-comm-s { margin-top: 2px; font-size: 0.8125rem; line-height: 1.4; color: var(--text-3); }
+body.portal .pp-comm-ctl { display: flex; align-items: center; gap: 10px; flex: none; min-height: 44px; cursor: pointer; }
+body.portal .pp-state { min-width: 1.9em; font: 600 0.6875rem/1.4 var(--sans); letter-spacing: 0.14em; text-transform: uppercase; color: var(--label); text-align: right; }
 .pp-toggle { flex: none; display: inline-block; }
-.pp-golf-top { display: flex; flex-direction: column; margin: 8px 0 8px; }
-.pp-golf-l { font-size: var(--fs-meta); color: var(--text-3); }
-.pp-hcp { font-family: var(--font-title); font-weight: 600; font-size: var(--fs-num-lg); line-height: 1.2; color: var(--text); font-variant-numeric: tabular-nums lining-nums; }
-.pp-trend { font-size: var(--fs-meta); color: var(--text-2); }
-.pp-chart { margin: 4px 0 12px; }
-.pp-chart-h { margin: 0 0 6px; font-size: var(--fs-body); }
+body.portal .pp-toggle input:checked + span { background: var(--c-ink); }
+body.portal .pp-golf-top { display: flex; flex-direction: column; margin: 6px 0 10px; }
+body.portal .pp-golf-l { font-size: 0.6875rem; font-weight: 600; line-height: 1.4; letter-spacing: 0.18em; text-transform: uppercase; color: var(--label); }
+body.portal .pp-hcp { margin-top: 6px; font-family: var(--font-sig); font-weight: 400; font-size: 3rem; line-height: 1; letter-spacing: -0.02em; color: var(--text); font-variant-numeric: lining-nums; }
+body.portal .pp-trend { margin-top: 6px; font-size: 0.8125rem; color: var(--text-3); }
+.pp-chart { margin: 14px 0 12px; }
+body.portal .pp-chart-h { margin: 0 0 6px; font-family: var(--sans); font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--label); }
 .pp-spark .chart { width: 100% !important; }
-.pp-chart-empty { margin: 0 0 12px; font-size: var(--fs-meta); color: var(--text-2); }
-
-.pp-intro { margin: 4px 0 4px; font-size: var(--fs-meta); color: var(--text-2); }
-.pp-req { margin-top: 14px; }
-.pp-blocked { margin-top: 16px; }
-.pp-blocked .pp-comm li { min-height: 52px; }
+body.portal .pp-chart-empty { margin: 12px 0; font-size: 0.8125rem; color: var(--text-3); }
+body.portal .pp-intro { margin: 2px 0 6px; font-size: 0.8125rem; line-height: 1.5; color: var(--text-3); }
+.pp-req { margin-top: 18px; }
+.pp-blocked { margin-top: 18px; }
+body.portal .pp-blocked .pp-comm li { min-height: 48px; }
+body.portal .pp-lb-open { margin-top: 6px; }
 
 /* ==========================================================================
-   Tablet (>= 768) and desktop (>= 1024): member card on the left, settings on the right.
+   Tablet and wider: the same rows in two calm columns
    ========================================================================== */
 @media (min-width: 768px) {
-  .pp-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); grid-template-areas: "card list" "member list"; grid-template-rows: auto 1fr; gap: 1rem 1.5rem; align-items: start; }
-  .pp-card { grid-area: card; }
-  .pp-member { grid-area: member; margin: 0; }
-  .pp-settings { grid-area: list; }
+  body.portal .pp-root { max-width: none; }
+  body.portal .pp-root .pp-title { margin-top: 2px; }
+  body.portal .pp-settings { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 46px; align-items: start; }
 }
 @media (min-width: 1024px) {
-  .pp-layout { grid-template-columns: minmax(0, 26rem) minmax(0, 40rem); gap: 1.25rem 2.5rem; }
-  .pp-card { padding: 1.5rem 1.75rem; }
-  .pp-card-holder { font-size: 1.625rem; }
-  .pp-card-meta { font-size: var(--fs-meta); }
-  .pp-set { min-height: 4rem; padding: 0.625rem 1.25rem; }
+  body.portal .pp-root { max-width: 68rem; }
+  body.portal .pp-settings { column-gap: 72px; }
 }
 
 /* Which hand the member plays: the sign-in question (a locked sheet) and the row in Profile > Golf */

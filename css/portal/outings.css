@@ -1,168 +1,217 @@
-/* Members' portal: Group outings (js/portal/outings.js). Packages, My enquiries, the enquiry form and its confirmation.
-   Theme tokens only (css/portal-theme.css). Phone layout is the base; wider layouts are added in min-width queries. */
-body.portal .po-hero .eyebrow { margin-bottom: 6px; }
-body.portal .po-hero-acts { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 8px; }
+/* Members' portal: Group outings (po-), js/portal/outings.js. Packages, My enquiries, the enquiry form and its
+   confirmation. Theme tokens only (css/portal-theme.css).
+   Redesign (Nov 22, the members' app language): hairlines and words, no cards, no shadows.
+   - The packages read like a printed rate card: the players in small capitals, the name, the price per player in the
+     serif, what is included as a plain list, Enquire as a text link. Stacked on a phone; three calm columns with
+     hairlines between them on a computer.
+   - My enquiries: hairline rows with a date block and the status as a word in small capitals.
+   - The form: one column of sections under small capitals; the package as a hairline list (the chosen one on a Paper
+     band with a brass line and the word Selected), the format as words with a brass underline.
+   Contrast (WCAG 2.1, computed): --text on Mist 14.1:1; --text-2 6.5:1; --text-3 5.2:1; --label 5.1:1; --warn 5.9:1;
+   --danger 6.3:1. Brass is a line colour only. Phone layout is the base; wider layouts are added in min-width queries. */
+
+/* ---------- Small spaced capitals ---------- */
+body.portal .po-page .po-h, body.portal .po-acc-h, body.portal .po-dblock small, body.portal .po-est-l, body.portal .po-page .po-fmt .pk-label,
+body.portal .po-page .dp-label, body.portal .badge.po-status, body.portal .po-kv dt, body.portal .po-step-n {
+  font-family: var(--sans); font-size: 0.6875rem; font-weight: 600; line-height: 1.4; letter-spacing: 0.18em; text-transform: uppercase; color: var(--label);
+}
+/* the status of an enquiry: a word, not a pill */
+body.portal .badge.po-status { flex: none; padding: 0; border: 0; border-radius: 0; background: none; letter-spacing: 0.14em; white-space: nowrap; }
+body.portal .badge.po-status.good { color: var(--text); }
+
+/* ---------- Title ---------- */
+body.portal .po-hero { margin-bottom: 8px; }
+body.portal .po-hero .eyebrow { margin: 6px 0 4px; font-size: 0.6875rem; }
+body.portal .po-hero h1 { margin: 0 0 2px; font-size: 2.125rem; font-weight: 500; line-height: 1.15; letter-spacing: -0.025em; }
+body.portal .po-hero p { margin: 0; padding: 6px 0 4px; max-width: 34rem; font-size: 0.875rem; line-height: 1.5; color: var(--text-2); }
+body.portal .po-hero-acts { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; }
 body.portal .po-hero-acts .btn { min-height: 48px; }
-body.portal .po-hero-acts .btn svg { width: 18px; height: 18px; }
-body.portal .po-main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; }
-body.portal .po-main > * { min-width: 0; }
-body.portal .po-fine { font-size: var(--fs-meta); color: var(--text-3); margin: 12px 0 0; }
-body.portal .po-p { margin: 0 0 12px; color: var(--text-2); font-size: var(--fs-body); }
-body.portal .po-muted { color: var(--text-3); }
+body.portal .po-main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; }
+body.portal .po-main > * { min-width: 0; margin-top: 30px; }
+body.portal .po-main .p-section-head { margin: 0 0 10px; }
+body.portal .po-main .p-section-head h2 { margin: 0; font-size: 1.375rem; font-weight: 500; line-height: 1.3; letter-spacing: -0.02em; }
+body.portal .po-fine { margin: 12px 0 0; font-size: 0.8125rem; line-height: 1.5; color: var(--text-3); }
+body.portal .po-p { margin: 0 0 12px; color: var(--text-2); font-size: 0.875rem; line-height: 1.55; }
+body.portal .po-muted { color: var(--text-2); font-weight: 400; }
 
-/* My enquiries */
-body.portal .po-empty { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 16px; }
-body.portal .po-empty p { margin: 0 0 4px; color: var(--text-2); font-size: var(--fs-body); }
-body.portal .p-list.po-enqs > li { padding: 0; }
-body.portal .po-enq { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 10px 16px; background: none; border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
-@media (hover: hover) { body.portal .po-enq:hover { background: var(--sage-50); } }
-body.portal .po-enq-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-body.portal .po-enq-t { font-weight: 500; color: var(--text); overflow-wrap: anywhere; }
-body.portal .po-enq-s { font-size: var(--fs-meta); color: var(--text-3); }
-body.portal .po-enq .badge { flex: none; }
-body.portal .po-enq-go { width: 18px; height: 18px; flex: none; color: var(--text-3); }
-body.portal .po-status { white-space: nowrap; }
+/* ---------- My enquiries: hairline rows ---------- */
+body.portal .po-empty { padding: 12px 0 4px; border: 0; border-top: 1px solid var(--border); border-radius: 0; background: none; box-shadow: none; }
+body.portal .po-empty p { margin: 0; color: var(--text-2); font-size: 0.9375rem; }
+body.portal .po-enqs { list-style: none; margin: 0; padding: 0; border-bottom: 1px solid var(--border); }
+body.portal .po-enqs > li { border-top: 1px solid var(--border); }
+body.portal .po-enq { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; align-items: center; gap: 14px; width: 100%; min-height: 64px; padding: 12px 0; background: none; border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+body.portal .po-dblock { display: flex; flex-direction: column; align-items: center; }
+body.portal .po-dblock small { margin: 0 -0.18em 4px 0; line-height: 1.2; }
+body.portal .po-dblock-n { font-family: var(--font-sig); font-size: 1.625rem; font-weight: 400; line-height: 1; letter-spacing: -0.01em; font-variant-numeric: lining-nums; color: var(--text); }
+body.portal .po-enq-main { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+body.portal .po-enq-t { font-size: 0.96875rem; font-weight: 500; line-height: 1.35; color: var(--text); overflow-wrap: anywhere; }
+body.portal .po-enq-s { font-size: 0.8125rem; line-height: 1.4; color: var(--text-2); font-variant-numeric: tabular-nums; }
+@media (hover: hover) { body.portal .po-enq:hover .po-enq-t { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 4px; } }
 
-/* Packages */
-body.portal .po-pkgs { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
-body.portal .po-pkg { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 16px; display: flex; flex-direction: column; min-width: 0; }
-body.portal .po-pkg-head h3 { font-family: var(--font-title); font-weight: 600; font-size: var(--fs-section); margin: 2px 0 0; color: var(--text); }
-body.portal .po-price { display: flex; align-items: baseline; gap: 6px; margin: 8px 0 10px; }
-body.portal .po-price-n { font-family: var(--font-title); font-weight: 600; font-size: var(--fs-num); color: var(--forest-800); font-variant-numeric: tabular-nums; }
-body.portal .po-price-u { font-size: var(--fs-meta); color: var(--text-3); }
-body.portal .po-pkg-fmt, body.portal .po-pkg-when { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 6px; font-size: var(--fs-body); color: var(--text-2); }
-body.portal .po-pkg-fmt svg, body.portal .po-pkg-when svg { width: 18px; height: 18px; flex: none; margin-top: 1px; color: var(--forest-500); }
-body.portal .po-incl { list-style: none; margin: 8px 0 14px; padding: 10px 0 0; border-top: 1px solid var(--border); display: grid; gap: 6px; }
-body.portal .po-incl li { display: flex; align-items: flex-start; gap: 8px; font-size: var(--fs-body); color: var(--text); }
-body.portal .po-incl svg { width: 16px; height: 16px; flex: none; margin-top: 3px; color: var(--forest-800); }
-body.portal .po-pkg-go { margin-top: auto; justify-content: center; min-height: 44px; }
+/* ---------- Packages: a rate card ---------- */
+body.portal .po-pkgs { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; border-bottom: 1px solid var(--border); }
+body.portal .po-pkg { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 16px; align-items: end; min-width: 0; padding: 18px 0 8px; border: 0; border-top: 1px solid var(--border); border-radius: 0; background: none; box-shadow: none; }
+body.portal .po-pkg > * { grid-column: 1 / -1; }
+body.portal .po-pkg > .po-pkg-head { grid-column: 1; }
+body.portal .po-pkg > .po-price { grid-column: 2; }
+body.portal .po-pkg-head .eyebrow { display: block; font-size: 0.6875rem; }
+body.portal .po-pkg-head h3 { margin: 4px 0 0; font-family: var(--sans); font-size: 1.125rem; font-weight: 500; line-height: 1.3; letter-spacing: -0.01em; color: var(--text); }
+body.portal .po-price { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; margin: 0; text-align: right; }
+body.portal .po-price-n { font-family: var(--font-sig); font-weight: 400; font-size: 2.25rem; line-height: 0.95; letter-spacing: -0.02em; color: var(--text); font-variant-numeric: lining-nums; white-space: nowrap; }
+body.portal .po-price-u { font-size: 0.75rem; color: var(--text-3); white-space: nowrap; }
+body.portal .po-pkg-fmt, body.portal .po-pkg-when { display: block; margin: 0; font-size: 0.8125rem; line-height: 1.5; color: var(--text-2); }
+body.portal .po-pkg-fmt { margin-top: 12px; }
+body.portal .po-incl { list-style: none; margin: 12px 0 0; padding: 0; border-top: 0; display: block; }
+body.portal .po-incl li { display: block; padding: 9px 0; border-top: 1px solid var(--border); font-size: 0.875rem; line-height: 1.4; color: var(--text); }
+body.portal .po-pkg-go { margin-top: 4px; justify-self: start; font-size: 0.875rem; }
 
-/* Good to know: accordions */
-body.portal .po-accs { display: grid; gap: 8px; }
-body.portal .po-acc-h { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 14px 0 6px; font: 500 var(--fs-meta)/1.3 var(--sans); color: var(--text-3); text-transform: uppercase; letter-spacing: 0.04em; }
-body.portal .po-acc-h:first-child { margin-top: 0; }
-body.portal .po-acc-n { text-transform: none; letter-spacing: normal; font-weight: 400; }
+/* ---------- Good to know: hairline rows that open ---------- */
+body.portal .po-accs { display: block; border-top: 1px solid var(--border); }
+body.portal .po-accs .pk-acc { margin: 0; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; background: none; box-shadow: none; }
+body.portal .po-accs .pk-acc-head { min-height: 64px; padding: 8px 0; background: none; }
+body.portal .po-accs .pk-acc-title { font-size: 0.96875rem; font-weight: 500; }
+body.portal .po-accs .pk-acc-sum { font-size: 0.8125rem; color: var(--text-2); }
+body.portal .po-accs .pk-acc-chev { width: 16px; height: 16px; color: var(--text-3); }
+body.portal .po-accs .pk-acc-body { padding: 0 0 16px; border-top: 0; }
+body.portal .po-acc-h { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 18px 0 6px; }
+body.portal .po-acc-h:first-child { margin-top: 4px; }
+body.portal .po-acc-n { font-size: 0.8125rem; font-weight: 400; letter-spacing: normal; text-transform: none; color: var(--text-2); }
 body.portal .po-rows { list-style: none; margin: 0; padding: 0; }
-body.portal .po-rows li { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--border); }
-body.portal .po-rows li:first-child { border-top: 0; }
+body.portal .po-rows li { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); }
 body.portal .po-row-main { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-body.portal .po-row-t { color: var(--text); font-size: var(--fs-body); }
-body.portal .po-row-s { color: var(--text-3); font-size: var(--fs-meta); }
-body.portal .po-row-p { flex: none; text-align: right; font-variant-numeric: tabular-nums; color: var(--text); }
-body.portal .po-row-p small { display: block; font-size: var(--fs-label); color: var(--text-3); }
-body.portal .po-terms { margin: 0; display: grid; gap: 12px; }
-body.portal .po-terms dt { font-weight: 500; color: var(--text); margin-bottom: 2px; }
-body.portal .po-terms dd { margin: 0; color: var(--text-2); font-size: var(--fs-body); }
-body.portal .po-people { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
-body.portal .po-people li { display: flex; gap: 12px; align-items: flex-start; }
+body.portal .po-row-t { color: var(--text); font-size: 0.9375rem; font-weight: 500; }
+body.portal .po-row-s { color: var(--text-2); font-size: 0.8125rem; line-height: 1.45; }
+body.portal .po-row-p { flex: none; text-align: right; font-size: 1.0625rem; font-variant-numeric: tabular-nums lining-nums; color: var(--text); }
+body.portal .po-row-p small { display: block; font-size: 0.75rem; color: var(--text-3); }
+body.portal .po-terms { margin: 0; display: block; }
+body.portal .po-terms > div { padding: 12px 0; border-top: 1px solid var(--border); }
+body.portal .po-terms dt { font-size: 0.9375rem; font-weight: 500; color: var(--text); margin-bottom: 2px; }
+body.portal .po-terms dd { margin: 0; color: var(--text-2); font-size: 0.875rem; line-height: 1.55; }
+body.portal .po-people { list-style: none; margin: 0; padding: 0; display: block; }
+body.portal .po-people li { display: block; padding: 10px 0; border-top: 1px solid var(--border); }
 body.portal .po-person { min-width: 0; display: flex; flex-direction: column; }
-body.portal .po-person-n { font-weight: 500; color: var(--text); }
-body.portal .po-person-r { font-size: var(--fs-meta); color: var(--text-3); }
-body.portal .po-person-links { display: flex; flex-wrap: wrap; column-gap: 16px; }
-body.portal .po-person-links .p-link { overflow-wrap: anywhere; }
-body.portal .po-person-links svg { width: 16px; height: 16px; flex: none; }
+body.portal .po-person-n { font-size: 0.9375rem; font-weight: 500; color: var(--text); }
+body.portal .po-person-r { font-size: 0.8125rem; color: var(--text-2); }
+body.portal .po-person-links { display: flex; flex-wrap: wrap; column-gap: 20px; }
+body.portal .po-person-links .p-link { font-size: 0.875rem; overflow-wrap: anywhere; }
 
-/* Enquiry form */
-body.portal .po-back { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; color: var(--forest-800); font-weight: 500; text-decoration: none; margin: -8px 0 4px; }
-body.portal .po-back svg { width: 18px; height: 18px; }
-body.portal .po-form > * + * { margin-top: 16px; }
-body.portal .po-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 16px; min-width: 0; }
-body.portal .po-h { font-family: var(--sans); font-size: var(--fs-card); font-weight: 500; margin: 0 0 12px; color: var(--text); }
+/* ---------- The enquiry form: one column of sections under small capitals ---------- */
+body.portal .po-back { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; margin: -6px 0 0; color: var(--text-2); font-size: 0.875rem; font-weight: 500; text-decoration: none; }
+body.portal .po-back svg { width: 16px; height: 16px; }
+@media (hover: hover) { body.portal .po-back:hover { color: var(--text); text-decoration: none; } }
+body.portal .p-cols.po-cols { gap: 0; }
+body.portal .po-form { min-width: 0; max-width: 36rem; }
+body.portal .po-form > * + * { margin-top: 0; }
+body.portal .po-card { min-width: 0; margin: 0; padding: 22px 0; border: 0; border-top: 1px solid var(--border); border-radius: 0; background: none; box-shadow: none; }
+body.portal .po-page .po-h { margin: 0 0 14px; }
 body.portal .po-card > .field-hint { display: block; margin-top: 8px; }
-body.portal .po-dates { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
-body.portal .po-date { min-width: 0; }
-body.portal .po-date .dp-label { display: block; }
-body.portal .po-date .field-error { display: block; margin-top: 6px; }
-body.portal .po-date.po-invalid .dp-field { border-color: var(--danger); }
-body.portal .po-dp-empty .dp-field-text { color: var(--text-3); }
-body.portal .po-clear { min-height: 40px; font-size: var(--fs-meta); }
+body.portal .po-dates { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; margin-top: -8px; }
+body.portal .po-date { min-width: 0; padding: 4px 0; border-bottom: 1px solid var(--border); }
+/* each date: its label on the left, the day as plain text on the right */
+body.portal .po-date .dp { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 12px; }
+body.portal .po-date .dp-label { display: block; flex: none; }
+body.portal .po-date .dp-row { flex: 1 1 auto; min-width: 0; justify-content: flex-end; gap: 0; }
+body.portal .po-date .dp-field { flex: 0 1 auto; min-height: 48px; padding: 0 6px 0 0; gap: 6px; border: 0; border-radius: 0; background: none; font-size: 0.96875rem; font-weight: 500; }
+body.portal .po-date .dp-field > .icon:first-child { display: none; }
+body.portal .po-date .dp-field .dp-chev { width: 16px; height: 16px; color: var(--text-3); }
+body.portal .po-date .dp-step { width: 44px; min-height: 48px; border: 0; border-radius: 0; background: none; color: var(--text); }
+body.portal .po-date .dp-step:disabled { background: none; color: var(--border-strong); }
+body.portal .po-date .dp-step:last-child { margin-right: -12px; }
+body.portal .po-date .field-error { display: block; margin: 0 0 8px; }
+body.portal .po-date.po-invalid { border-bottom-color: var(--danger); }
+body.portal .po-dp-empty .dp-field-text { color: var(--text-2); font-weight: 400; }
+body.portal .po-clear { min-height: 40px; font-size: 0.8125rem; }
 body.portal .po-date-hint { margin-top: 10px; }
-body.portal .po-choices { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
-body.portal .po-choices.po-invalid .po-choice { border-color: var(--danger); }
-body.portal .po-choice { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-ctl); font: inherit; color: var(--text); text-align: left; cursor: pointer; transition: border-color var(--t-ui) var(--ease-ui), background-color var(--t-ui) var(--ease-ui); }
-@media (hover: hover) { body.portal .po-choice:hover { background: var(--sage-50); } }
-body.portal .po-choice.active { border-color: var(--forest-800); background: var(--sage-50); box-shadow: inset 0 0 0 1px var(--forest-800); }
-body.portal .po-choice-dot { width: 20px; height: 20px; flex: none; border-radius: 50%; border: 2px solid var(--border-strong); background: var(--surface); }
-body.portal .po-choice.active .po-choice-dot { border-color: var(--forest-800); box-shadow: inset 0 0 0 4px var(--surface); background: var(--forest-800); }
-body.portal .po-choice-main { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-body.portal .po-choice-t { font-weight: 500; }
-body.portal .po-choice-s { font-size: var(--fs-meta); color: var(--text-3); }
-body.portal .po-fmt { margin-top: 16px; }
-body.portal .po-fmt .pk-label { display: block; margin-bottom: 6px; }
-body.portal .po-seg { display: flex; width: 100%; }
-body.portal .po-seg button { flex: 1 1 0; min-width: 0; white-space: normal; line-height: 1.2; padding: 6px 8px; }
-body.portal .po-note { display: flex; gap: 10px; align-items: flex-start; margin-top: 14px; padding: 12px 14px; border-radius: var(--radius-ctl); background: var(--sage-50); border: 1px solid var(--border); color: var(--text-2); font-size: var(--fs-meta); }
-body.portal .po-note svg { width: 18px; height: 18px; flex: none; color: var(--warn); margin-top: 1px; }
+/* the package: a hairline list */
+body.portal .po-choices { display: block; margin-top: -4px; border-bottom: 1px solid var(--border); }
+body.portal .po-choices.po-invalid { border-bottom-color: var(--danger); }
+body.portal .po-choice { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 60px; padding: 10px 0; background: none; border: 0; border-top: 1px solid var(--border); border-radius: 0; box-shadow: none; font: inherit; color: var(--text); text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+body.portal .po-choice:first-child { border-top-color: transparent; }
+body.portal .po-choice-main { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+body.portal .po-choice-t { font-size: 0.96875rem; font-weight: 500; line-height: 1.35; }
+body.portal .po-choice-s { font-size: 0.8125rem; line-height: 1.4; color: var(--text-2); font-variant-numeric: tabular-nums; }
+body.portal .po-choice-k { display: none; flex: none; font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.02em; white-space: nowrap; color: var(--warn); }
+body.portal .po-choice.active { border-top-color: var(--accent); background: var(--surface); box-shadow: -16px 0 0 var(--surface), 16px 0 0 var(--surface), -16px -1px 0 var(--accent), 16px -1px 0 var(--accent); }
+body.portal .po-choice.active .po-choice-t { font-weight: 600; }
+body.portal .po-choice.active .po-choice-k { display: block; }
+@media (hover: hover) { body.portal .po-choice:not(.active):hover .po-choice-t { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 4px; } }
+/* the format: words, a brass underline on the chosen one */
+body.portal .po-fmt { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 12px; min-height: 60px; margin-top: 0; border-bottom: 1px solid var(--border); }
+body.portal .po-fmt .pk-label { display: block; margin: 0; }
+body.portal .po-page .po-seg { display: flex; width: auto; gap: 6px; margin: 0 -6px; padding: 0; border-radius: 0; background: none; overflow: visible; }
+body.portal .po-page .po-seg button { position: relative; flex: none; min-width: 44px; min-height: 44px; padding: 0 6px; border-radius: 0; background: none; box-shadow: none; font-size: 0.875rem; font-weight: 500; line-height: 1.2; color: var(--text-2); white-space: nowrap; }
+body.portal .po-page .po-seg button.active { background: none; box-shadow: none; color: var(--text); }
+body.portal .po-page .po-seg button.active::after { content: ""; position: absolute; left: 6px; right: 6px; bottom: 8px; height: 2px; background: var(--accent); }
+body.portal .po-note { margin-top: 14px; padding: 0; border: 0; border-radius: 0; background: none; color: var(--warn); font-size: 0.8125rem; line-height: 1.5; }
 body.portal .po-note ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
 body.portal .po-form textarea { min-height: 112px; }
 body.portal .po-send-row { display: none; }
-body.portal .po-send svg { width: 18px; height: 18px; }
 
-/* Summary (beside the form on desktop, after it on phones) and the enquiry sheet */
-body.portal .po-kv { margin: 0; display: grid; gap: 10px; }
-body.portal .po-kv > div { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr); gap: 12px; align-items: baseline; }
-body.portal .po-kv dt { font-size: var(--fs-meta); color: var(--text-3); }
-body.portal .po-kv dd { margin: 0; color: var(--text); overflow-wrap: anywhere; }
-body.portal .po-kv .po-kv-wide { grid-template-columns: minmax(0, 1fr); gap: 2px; }
-body.portal .po-est { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 2px; }
-body.portal .po-est-l { font-size: var(--fs-meta); color: var(--text-3); }
-body.portal .po-est-n { font-family: var(--font-title); font-weight: 600; font-size: var(--fs-num); color: var(--forest-800); font-variant-numeric: tabular-nums; }
-body.portal .po-est-s { font-size: var(--fs-meta); color: var(--text-2); }
-body.portal .po-sheet-top { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; margin-bottom: 14px; }
-body.portal .po-sheet-top p { margin: 0; color: var(--text-2); }
-body.portal .po-steps { list-style: none; margin: 0 0 16px; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
-body.portal .po-steps li { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: var(--fs-meta); color: var(--text-3); text-align: center; }
-body.portal .po-steps li::before { content: ""; position: absolute; top: 11px; right: 50%; width: 100%; height: 2px; background: var(--border); z-index: 0; }
-body.portal .po-steps li:first-child::before { display: none; }
-body.portal .po-steps li.done::before, body.portal .po-steps li.current::before { background: var(--forest-800); }
-body.portal .po-step-dot { position: relative; z-index: 1; width: 24px; height: 24px; border-radius: 50%; background: var(--surface); border: 2px solid var(--border-strong); display: flex; align-items: center; justify-content: center; }
-body.portal .po-steps li.done .po-step-dot { background: var(--forest-800); border-color: var(--forest-800); color: var(--on-dark); }
-body.portal .po-steps li.done .po-step-dot svg { width: 14px; height: 14px; }
-body.portal .po-steps li.current .po-step-dot { border-color: var(--forest-800); box-shadow: inset 0 0 0 4px var(--surface); background: var(--forest-800); }
-body.portal .po-steps li.done, body.portal .po-steps li.current { color: var(--text); }
+/* ---------- The summary (beside the form on a computer, after it on phones) and the enquiry sheet ---------- */
+body.portal .po-side { min-width: 0; max-width: 36rem; }
+body.portal .po-kv { margin: 0; display: block; border-top: 1px solid var(--border); }
+body.portal .po-kv > div { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr); gap: 12px; align-items: baseline; padding: 11px 0; border-bottom: 1px solid var(--border); }
+body.portal .po-kv dt { letter-spacing: 0.14em; }
+body.portal .po-kv dd { margin: 0; color: var(--text); font-size: 0.9375rem; font-weight: 500; overflow-wrap: anywhere; }
+body.portal .po-kv .po-kv-wide { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+body.portal .po-kv .po-kv-wide dd { font-weight: 400; }
+body.portal .po-est { margin-top: 0; padding: 14px 0; border-top: 0; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 2px; }
+body.portal .po-est-n { margin: 6px 0 4px; font-family: var(--font-sig); font-weight: 400; font-size: 2.5rem; line-height: 1; letter-spacing: -0.02em; color: var(--text); font-variant-numeric: lining-nums; }
+body.portal .po-est-s { font-size: 0.8125rem; line-height: 1.5; color: var(--text-2); }
+body.portal .po-sheet-top { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin-bottom: 12px; }
+body.portal .po-sheet-top p { margin: 0; font-size: 0.9375rem; color: var(--text-2); }
+/* where the enquiry stands: four words, brass under the current one */
+body.portal .po-steps { list-style: none; margin: 0 0 14px; padding: 0; display: flex; flex-wrap: wrap; gap: 0 20px; }
+body.portal .po-steps li { position: relative; display: inline-flex; flex-direction: row; align-items: baseline; gap: 5px; min-height: 40px; padding: 10px 0 8.5px; border-bottom: 1.5px solid transparent; font-size: 0.875rem; font-weight: 500; line-height: 1.4; color: var(--text-3); text-align: left; }
+body.portal .po-steps li::before { display: none; }
+body.portal .po-steps li.done { color: var(--text-2); }
+body.portal .po-steps li.current { color: var(--text); border-bottom-color: var(--accent); }
+body.portal .po-step-n { letter-spacing: 0; }
 body.portal .po-sheet-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
 body.portal .po-sheet-acts .btn { flex: 1 1 auto; justify-content: center; min-height: 48px; }
 body.portal .po-withdraw { color: var(--danger); border-color: var(--border-strong); }
-body.portal .po-confirm h3 { font-family: var(--sans); font-weight: 500; font-size: var(--fs-card); margin: 0 0 8px; }
+body.portal .po-confirm h3 { font-family: var(--sans); font-weight: 500; font-size: 1.375rem; letter-spacing: -0.02em; margin: 0 0 8px; }
 body.portal .po-confirm p { margin: 0; color: var(--text-2); }
 
-/* Confirmation */
-body.portal .po-done { max-width: 620px; margin: 8px auto 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 24px 16px; text-align: center; }
-body.portal .po-done-mark { width: 56px; height: 56px; margin: 0 auto 12px; border-radius: 50%; background: var(--forest-800); color: var(--on-dark); display: flex; align-items: center; justify-content: center; }
-body.portal .po-done-mark svg { width: 28px; height: 28px; }
-body.portal .po-done h1 { font-size: 1.625rem; margin: 0 0 8px; }
-body.portal .po-done > p { color: var(--text-2); margin: 0 auto 18px; max-width: 46ch; }
-body.portal .po-done-kv { text-align: left; padding: 14px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-body.portal .po-done-acts { display: flex; flex-direction: column; align-items: stretch; gap: 4px; margin-top: 18px; }
+/* ---------- Confirmation: plain words, the details between hairlines ---------- */
+body.portal .po-done { max-width: 36rem; margin: 8px 0 0; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; text-align: left; }
+body.portal .po-done-mark { width: 40px; height: 40px; margin: 0 0 14px; border: 1px solid var(--border-strong); border-radius: 50%; background: none; color: var(--text); display: flex; align-items: center; justify-content: center; }
+body.portal .po-done-mark svg { width: 20px; height: 20px; }
+body.portal .po-done h1 { margin: 0 0 6px; font-size: 2.125rem; font-weight: 500; line-height: 1.15; letter-spacing: -0.025em; }
+body.portal .po-done > p { color: var(--text-2); margin: 0 0 18px; max-width: 46ch; font-size: 0.9375rem; }
+body.portal .po-done-kv { text-align: left; padding: 0; }
+body.portal .po-done-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 24px; margin-top: 20px; }
 body.portal .po-done-acts .btn { justify-content: center; min-height: 48px; }
-body.portal .po-done-acts .p-link { align-self: center; }
 @media (prefers-reduced-motion: no-preference) {
   body.portal .po-done-mark { animation: po-pop 420ms var(--ease-ui) both; }
   @keyframes po-pop { from { transform: scale(0.6); opacity: 0; } to { transform: none; opacity: 1; } }
 }
+body.portal .po-call { min-height: 0; display: inline; }
 
-/* Phones: the packages sit side by side in a row that scrolls sideways (the next card peeks in), so the page stays short. */
-@media (max-width: 767px) {
-  body.portal .po-pkgs { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding: 0 20px; margin: 0 -20px; padding: 2px 20px 10px; scrollbar-width: none; overscroll-behavior-x: contain; }
-  body.portal .po-pkgs::-webkit-scrollbar { display: none; }
-  body.portal .po-pkg { flex: 0 0 84%; scroll-snap-align: start; }
-  body.portal .po-pkgs:focus-visible { outline: none; box-shadow: var(--focus); border-radius: var(--radius-card); }
-}
-@media (min-width: 600px) {
-  body.portal .po-dates { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  body.portal .po-choices { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+@media (max-width: 599.98px) {
+  body.portal .po-done-acts .btn { flex: 1 1 100%; }
+  /* My enquiries: the status sits under the group's name, so a long name keeps the row's width */
+  body.portal .po-enq { grid-template-columns: 52px minmax(0, 1fr); row-gap: 4px; }
+  body.portal .po-enq .po-dblock { grid-row: 1 / span 2; }
+  body.portal .po-enq .po-status { grid-column: 2; justify-self: start; }
 }
 @media (min-width: 768px) {
-  body.portal .po-pkgs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  body.portal .po-done { padding: 32px; }
+  body.portal .po-mine, body.portal .po-info { max-width: 36rem; }
+  /* the rate card: three calm columns, a hairline between them */
+  body.portal .po-pkgs { grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--border); }
+  body.portal .po-pkg { align-content: start; padding: 20px 24px 12px; border-top: 0; border-left: 1px solid var(--border); }
+  body.portal .po-pkg:first-child { padding-left: 0; border-left: 0; }
+  body.portal .po-pkg:last-child { padding-right: 0; }
+  body.portal .po-pkg > .po-pkg-head, body.portal .po-pkg > .po-price { grid-column: 1 / -1; }
+  body.portal .po-price { flex-direction: row; align-items: baseline; gap: 8px; margin-top: 14px; text-align: left; }
 }
 @media (min-width: 1024px) {
-  body.portal .po-main { grid-template-columns: minmax(0, 1.6fr) minmax(320px, 1fr); grid-template-areas: "pkgs pkgs" "info mine"; column-gap: 32px; row-gap: 32px; }
-  body.portal .po-pkgs-sec { grid-area: pkgs; }
+  body.portal .po-main { grid-template-columns: minmax(0, 36rem) minmax(0, 26rem); grid-template-areas: "pkgs pkgs" "info mine"; column-gap: 5rem; justify-content: start; }
+  body.portal .po-pkgs-sec { grid-area: pkgs; max-width: 62rem; }
   body.portal .po-info { grid-area: info; }
   body.portal .po-mine { grid-area: mine; }
-  body.portal .po-send-row { display: flex; justify-content: flex-end; }
-  body.portal .po-send { min-height: 48px; padding: 0 24px; }
-  body.portal .po-side { position: sticky; top: 96px; }
+  body.portal .p-cols.po-cols { grid-template-columns: minmax(0, 36rem) minmax(16rem, 24rem); gap: 5rem; justify-content: start; }
+  body.portal .po-send-row { display: flex; justify-content: flex-start; padding: 22px 0 0; border-top: 1px solid var(--border); }
+  body.portal .po-send { min-height: 48px; padding: 0 28px; }
+  body.portal .po-side { position: sticky; top: 104px; padding-top: 22px; }
 }
-body.portal .po-call { min-height: 0; display: inline; }

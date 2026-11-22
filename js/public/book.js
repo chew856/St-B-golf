@@ -56,6 +56,7 @@
       view.innerHTML = headHTML() +
         '<section class="pub-book" id="book" data-reveal>' +
           '<ol class="pub-steps" aria-label="Booking steps"></ol>' +
+          '<div class="pub-hold-host"></div>' +   /* the hold countdown sits here as one quiet line (Club.holds.timer) */
           '<div class="pub-stage"></div>' +
         '</section>';
 
@@ -71,7 +72,7 @@
         const cur = st.step === 3 && st.review ? 4 : st.step;
         return ['Day and time', 'Players', 'Payment', 'Review'].map(function (l, i) {
           const n = i + 1; const cls = n === cur ? 'active' : n < cur ? 'done' : '';
-          return '<li class="' + cls + '"><button type="button" data-step="' + n + '"' + (n < cur ? '' : ' disabled') + (n === cur ? ' aria-current="step"' : '') + '><span class="pub-step-n serif">' + (n < cur ? Club.icon('check') : n) + '</span><span class="pub-step-l">' + l + '</span></button></li>';
+          return '<li class="' + cls + '"><button type="button" data-step="' + n + '"' + (n < cur ? '' : ' disabled') + (n === cur ? ' aria-current="step"' : '') + '><span class="pub-step-l">' + l + '</span></button></li>';   /* redesign (Nov 22): the steps are words; a brass line marks the current one */
         }).join('');
       }
       /* ---- Holds (Club.holds): a chosen time is held for a few minutes while the golfer books, with a countdown ---- */
@@ -99,7 +100,10 @@
         let h = Club.holds.holding(st.date, st.time);
         if (!h && !st.held) { const s = slotNow(); if (s && Pub.bookable(s)) { takeHold(s); h = Club.holds.holding(st.date, st.time); } }
         if (!h) { holdEnded(); return false; }
-        if (!holdTimer || !holdTimer.el.isConnected) holdTimer = Club.holds.timer({ hold: h, what: fmt.time(st.time) + ', ' + fmt.dateShort(st.date), onExpire: function () { holdTimer = null; holdEnded(); } });
+        if (!holdTimer || !holdTimer.el.isConnected) {
+          holdTimer = Club.holds.timer({ hold: h, what: fmt.time(st.time) + ', ' + fmt.dateShort(st.date), onExpire: function () { holdTimer = null; holdEnded(); } });
+          const hh = ui.$('.pub-hold-host', view); if (hh) hh.appendChild(holdTimer.el);
+        }
         return true;
       }
       function paint(scroll) {
@@ -137,12 +141,9 @@
             const s = sums[d]; const dt = fmt.toDate(d);
             const lab = s.closed ? 'Closed' : !s.pub.length ? 'Members' : s.avail ? Pub.plural(s.avail, 'time') : (s.over ? 'Play over' : 'Fully booked');
             const hol = rules.holidayName(d);
-            return '<button type="button" role="option" class="pub-day' + (d === st.date ? ' active' : '') + (!s.avail ? ' is-none' : '') + (s.mine ? ' has-mine' : '') + '" data-date="' + d + '" aria-selected="' + (d === st.date) + '" aria-label="' + esc(Pub.longDate(d) + ', ' + lab) + '" style="--i:' + i + '">' +
+            return '<button type="button" role="option" class="pub-day' + (d === st.date ? ' active' : '') + (!s.avail ? ' is-none' : '') + (s.mine ? ' has-mine' : '') + '" data-date="' + d + '" aria-selected="' + (d === st.date) + '" aria-label="' + esc(Pub.longDate(d) + ', ' + lab + (hol ? ', ' + hol : '')) + '">' +
               '<span class="pub-day-wk">' + (i === 0 ? 'Today' : esc(fmt.weekday(d))) + '</span>' +
-              '<span class="pub-day-n serif">' + dt.getDate() + '</span>' +
-              '<span class="pub-day-mo">' + esc(dt.toLocaleDateString('en-CA', { month: 'short' }).replace('.', '')) + '</span>' +
-              '<span class="pub-day-lab">' + esc(lab) + '</span>' +
-              (hol ? '<span class="pub-day-hol" title="' + esc(hol) + '">Holiday</span>' : '') +
+              '<span class="pub-day-n">' + dt.getDate() + '</span>' +
             '</button>';
           }).join('') + '</div></div>' +
           (st.notice ? '<p class="hold-ended" role="status">' + Club.icon('clock') + '<span>' + esc(st.notice) + '</span></p>' : '') +
@@ -160,9 +161,9 @@
         const d = st.date;
         const wx = (Club.weather.forecast || []).find(function (w) { return w.date === d; });
         const hol = rules.holidayName(d);
-        const head = '<div class="pub-times-head"><h3>' + esc(Pub.longDate(d)) + '</h3>' +
-          (wx ? '<span class="pub-wx">' + Club.icon(wx.icon) + esc(wx.cond) + ', ' + esc(wx.hi) + '°C' + (wx.rain >= 50 ? ' · ' + esc(wx.rain) + '% rain' : '') + '</span>' : '') + '</div>' +
-          (hol ? '<p class="pub-hol-note">' + Club.icon('star') + '<span>' + esc(hol) + ': weekend and holiday times and rates apply.</span></p>' : '');
+        const dayLine = '<h3 class="pub-day-line"><span>' + esc(Pub.longDate(d)) + '</span>' +
+          (wx ? '<span class="pub-wx">' + esc(wx.cond) + ', ' + esc(wx.hi) + '°C' + (wx.rain >= 50 ? ' · ' + esc(wx.rain) + '% rain' : '') + '</span>' : '') + '</h3>';
+        const holNote = hol ? '<p class="pub-hol-note"><span>' + esc(hol) + ': weekend and holiday times and rates apply.</span></p>' : '';
         /* 18 or 9 holes is chosen here (owner, Nov 21): it filters the times (a group already out for the other length is
            hidden) and sets the price shown. */
         const holesBar = '<div class="pub-holes-pick">' + ui.segmented([{ value: '18', label: '18 holes' }, { value: '9', label: '9 holes' }], String(st.holes), 'pub-holes-day').replace('class="segmented"', 'class="segmented" role="group" aria-label="Holes"') + '</div>';
@@ -177,26 +178,29 @@
         } else {
           const bands = [];
           sum.pub.forEach(function (s) { let g = bands.find(function (b) { return b.band === s.pub.band; }); if (!g) { g = { band: s.pub.band, label: s.pub.label, rate: s.pub.rate, slots: [] }; bands.push(g); } g.slots.push(s); });
-          let idx = 0;
           body = bands.map(function (g) {
             const shown = g.slots.filter(function (s) { return (Pub.bookable(s) && (!s.tt || (+s.tt.holes || 18) === st.holes)) || s.state === 'mine'; });
             if (!shown.length) return '';   /* nothing to book at this rate: say nothing */
-            return '<div class="pub-band"><div class="pub-band-head"><span class="pub-band-name">' + esc(g.label) + '</span><span class="pub-band-rate serif">' + fmt.money(rules.greenFee(d, g.slots[0].time, st.holes), false) + '<small> per golfer</small></span></div>' +
-              '<div class="pub-chips">' + shown.map(function (s) { return chipHTML(s, idx++); }).join('') + '</div>' +
+            return '<div class="pub-band"><div class="pub-band-head"><span class="pub-band-name">' + esc(g.label) + '</span><span class="pub-band-rate">' + fmt.money(rules.greenFee(d, g.slots[0].time, st.holes), false) + '<small> per golfer</small></span></div>' +
+              '<div class="pub-chips">' + shown.map(function (s) { return chipHTML(s); }).join('') + '</div>' +
             '</div>';
           }).join('');
         }
         if (body === '' && sum.pub.length && sum.avail)
           body = ui.empty({ icon: 'flag', title: 'No ' + st.holes + '-hole times left', text: '', action: nextDayBtn(d) });
-        el.innerHTML = head + (sum.closed || !sum.pub.length ? '' : holesBar) + body;
+        el.innerHTML = '<div class="pub-times-head">' + dayLine + (sum.closed || !sum.pub.length ? '' : holesBar) + '</div>' + holNote + body;
       }
-      function chipHTML(s, i) {
+      /* Redesign (Nov 22): a row of the starter's sheet. The time in the serif, four round marks (taken ones filled),
+         the places, and one action word. */
+      function chipHTML(s) {
         const tp = Pub.timeParts(s.time);
         const sub = s.state === 'mine' ? 'Your booking' : s.state === 'partial' ? Pub.plural(s.places, 'place') + ' left' : Pub.plural(s.places, 'place');   /* the price is on the rate's heading */
-        return '<button type="button" class="pub-chip st-' + s.state + (s.time === st.time ? ' selected' : '') + '" data-time="' + s.time + '" aria-label="' + esc(fmt.time(s.time) + ', ' + sub + ', ' + fmt.money(s.pub.rate, false) + ' per golfer') + '" style="--i:' + Math.min(i, 30) + '">' +
-          '<span class="pub-chip-t serif">' + tp.t + '<small>' + tp.ap + '</small></span>' +
-          Club.teeHeads(4 - s.places) +
-          '<span class="pub-chip-p">' + esc(sub) + '</span></button>';
+        const go = s.state === 'mine' ? 'View' : s.state === 'partial' ? 'Join' : 'Book';
+        let marks = '<span class="pub-spots" aria-hidden="true">'; for (let k = 0; k < 4; k++) marks += '<i' + (k < 4 - s.places ? ' class="f"' : '') + '></i>'; marks += '</span>';
+        return '<button type="button" class="pub-chip st-' + s.state + (s.time === st.time ? ' selected' : '') + '" data-time="' + s.time + '" aria-label="' + esc(fmt.time(s.time) + ', ' + sub + ', ' + fmt.money(s.pub.rate, false) + ' per golfer') + '">' +
+          '<span class="pub-chip-t"><span class="pub-chip-h">' + tp.t + '</span><small>' + (tp.ap || '') + '</small></span>' +
+          '<span class="pub-chip-mid">' + marks + '<span class="pub-chip-p">' + esc(sub) + '</span></span>' +
+          '<span class="pub-chip-go">' + go + '</span></button>';
       }
       ui.on(view, 'click', '.segmented[data-name=pub-holes-day] button', function (e, b) {
         if (+b.dataset.value === st.holes) return;
@@ -233,8 +237,8 @@
       function selBar() {
         const tp = Pub.timeParts(st.time); const ps = rules.publicSlot(st.date, st.time);
         /* The rate per golfer, and "Joining a group" when the time already has a group (its places left are on the players list). */
-        return '<div class="pub-sel" data-reveal><div class="pub-sel-when"><span class="pub-sel-time serif">' + tp.t + '<small>' + tp.ap + '</small></span><div><div class="pub-sel-day">' + esc(Pub.longDate(st.date)) + '</div><div class="muted"><span>' + esc(fmt.money(rules.greenFee(st.date, st.time, st.holes), false)) + '</span> <span>per golfer</span> · <span>' + st.holes + ' holes</span>' + (st.joinId ? ' · <span>Joining a group</span>' : '') + '</div></div></div>' +
-          '<button type="button" class="btn btn-ghost btn-sm" data-act="change-time">Change</button></div>';
+        return '<div class="pub-sel" data-reveal><div class="pub-sel-when"><span class="pub-sel-time">' + tp.t + '<small>' + (tp.ap || '') + '</small></span><div><div class="pub-sel-day">' + esc(Pub.longDate(st.date)) + '</div><div class="muted"><span>' + esc(fmt.money(rules.greenFee(st.date, st.time, st.holes), false)) + '</span> <span>per golfer</span> · <span>' + st.holes + ' holes</span>' + (st.joinId ? ' · <span>Joining a group</span>' : '') + '</div></div></div>' +
+          '<button type="button" class="pub-link pub-sel-change" data-act="change-time">Change</button></div>';
       }
       function ensureParty(p) {
         if (!st.party) st.party = [{ self: true, name: p.firstName + ' ' + p.lastName, cart: false, adds: [] }];
@@ -271,36 +275,35 @@
           '<section class="panel pub-party" data-reveal><div class="panel-head"><h3>Players</h3><span class="muted pub-party-count"></span></div><div class="panel-body">' +
             '<ul class="pub-pl-list"></ul>' +
             '<div class="pub-add-wrap"></div>' +
-            (noCarts ? '<p class="pub-rule">' + Club.icon('info') + 'No carts today.</p>' : Pub.cartRuleFor(st.date) !== 'Normal' ? '<p class="pub-rule">' + Club.icon('info') + 'Carts are ' + esc(Pub.cartRuleFor(st.date).toLowerCase()) + ' today.</p>' : '') +
-            '<div class="pub-opts"><div class="field"><label>Holes</label>' + '<div class="pub-locked">' + st.holes + ' holes</div>' + '</div>' +
-              (noCarts ? '' : '<div class="pub-cart-note"><span class="label-caps">Cart</span><span>' + esc(fmt.money(Pub.cartFee(st.holes))) + ' per rider</span></div>') + '</div>' +
+            (noCarts ? '<p class="pub-rule">No carts today.</p>' : Pub.cartRuleFor(st.date) !== 'Normal' ? '<p class="pub-rule">Carts are ' + esc(Pub.cartRuleFor(st.date).toLowerCase()) + ' today.</p>' : '') +
+            '<div class="pub-opts"><span class="pub-locked">' + st.holes + ' holes</span>' +
+              (noCarts ? '' : '<span class="pub-cart-note"><span class="pub-cart-k">Cart</span> <span>' + esc(fmt.money(Pub.cartFee(st.holes))) + ' per rider</span></span>') + '</div>' +
           '</div></section>' +
           (Pub.addonList().length ? '<section class="panel pub-adds" data-reveal aria-labelledby="pub-adds-h"><div class="panel-head"><h3 id="pub-adds-h">Extras <span class="muted pub-opt-word">(optional)</span></h3><span class="muted pub-adds-sum"></span></div>' +
             '<div class="panel-body"><ul class="pub-adds-list"></ul></div></section>' : '') +
           '<section class="pub-fees" data-reveal></section>' +
-          '<div class="pub-actions" data-reveal><button type="button" class="btn btn-ghost" data-act="back-1">' + Club.icon('chevronLeft') + '<span>Back</span></button><button type="button" class="btn btn-primary pub-cta" data-act="to-pay"><span>Continue to payment</span>' + Club.icon('chevronRight') + '</button></div>';
+          '<div class="pub-actions" data-reveal><button type="button" class="pub-link pub-back" data-act="back-1"><span>Back</span></button><button type="button" class="btn btn-primary pub-cta" data-act="to-pay"><span>Continue to payment</span></button></div>';
         drawParty(max, noCarts);
       }
       function drawParty(max, noCarts) {
         const list = ui.$('.pub-pl-list', stage); if (!list) return;
         list.innerHTML = st.party.map(function (x, i) {
           return '<li class="pub-pl' + (x.self ? ' is-self' : ' is-guest') + (x.fresh ? ' is-fresh' : '') + '" data-i="' + i + '">' +
-            '<span class="pub-pl-n serif">' + (i + 1) + '</span>' +
-            '<div class="pub-pl-who">' + (x.self ? '<div class="person-name">' + esc(x.name) + '</div><div class="person-sub">You</div>'
-              : '<div class="pub-guest-f">' +
+            '<div class="pub-pl-who">' + (x.self ? '<div class="pub-pl-k">You</div><div class="person-name">' + esc(x.name) + '</div>'
+              : '<div class="pub-pl-k">Guest ' + i + '</div><div class="pub-guest-f">' +
                   '<div class="field"><input class="input pub-guest" data-i="' + i + '" data-k="first" placeholder="First name" aria-label="Guest ' + i + ' first name" maxlength="30" autocomplete="off" value="' + esc(x.first || '') + '"></div>' +
                   '<div class="field"><input class="input pub-guest" data-i="' + i + '" data-k="last" placeholder="Last name" aria-label="Guest ' + i + ' last name" maxlength="30" autocomplete="off" value="' + esc(x.last || '') + '"></div>' +
                   '<div class="field pub-guest-email"><input class="input pub-guest" type="email" data-i="' + i + '" data-k="email" placeholder="Email address" aria-label="Guest ' + i + ' email address" maxlength="80" autocomplete="off" inputmode="email" value="' + esc(x.email || '') + '"></div>' +
-                '</div><div class="person-sub">Guest ' + i + '</div>') + '</div>' +
+                '</div>') + '</div>' +
             '<div class="pub-pl-ride">' + (noCarts ? '<span class="pub-walk">Walking</span>' : '<div class="segmented pub-ride" data-i="' + i + '" role="group" aria-label="' + esc((x.self ? 'Your' : 'Guest ' + i) + ' transport') + '"><button type="button" data-value="walk" class="' + (x.cart ? '' : 'active') + '">Walk</button><button type="button" data-value="cart" class="' + (x.cart ? 'active' : '') + '">Cart</button></div>') + '</div>' +
-            (x.self ? '<span class="pub-pl-x-spacer"></span>' : '<button type="button" class="btn btn-ghost btn-sm btn-icon pub-pl-x" data-act="remove" data-i="' + i + '" aria-label="Remove guest ' + i + '" title="Remove guest">' + Club.icon('close') + '</button>') +
+            (x.self ? '' : '<button type="button" class="pub-link pub-pl-x" data-act="remove" data-i="' + i + '" aria-label="Remove guest ' + i + '">Remove</button>') +
           '</li>';
         }).join('');
         st.party.forEach(function (x) { delete x.fresh; });
         drawAdds();
         ui.$('.pub-party-count', stage).textContent = st.party.length + ' of ' + max + (max < 4 ? ' places left' : ' players');
         ui.$('.pub-add-wrap', stage).innerHTML = st.party.length < max
-          ? '<button type="button" class="pub-add-btn" data-act="add-guest">' + Club.icon('plus') + '<span>Add a guest</span></button>'
+          ? '<button type="button" class="pub-link pub-add-btn" data-act="add-guest"><span>Add a guest</span></button>'
           : '<p class="muted pub-full">' + (max === 4 ? 'Group full.' : 'No more places at this time.') + '</p>';
         drawFees();
       }
@@ -317,7 +320,7 @@
             const n = st.extras[a.id] || 0;
             return '<li class="pub-addon is-qty" data-addon="' + esc(a.id) + '">' + head +
               '<div class="pub-qty" role="group" aria-label="' + esc(a.name) + '"><button type="button" class="pub-qty-b" data-act="addon-qty" data-d="-1" aria-label="One fewer"' + (n <= 0 ? ' disabled' : '') + '><span aria-hidden="true">&minus;</span></button>' +
-              '<output class="pub-qty-v serif" aria-live="polite">' + n + '</output>' +
+              '<output class="pub-qty-v" aria-live="polite">' + n + '</output>' +
               '<button type="button" class="pub-qty-b" data-act="addon-qty" data-d="1" aria-label="One more"' + (n >= max ? ' disabled' : '') + '><span aria-hidden="true">+</span></button></div></li>';
           }
           return '<li class="pub-addon" data-addon="' + esc(a.id) + '">' + head +
@@ -346,8 +349,9 @@
       function drawFees() {
         const el = ui.$('.pub-fees', stage); if (!el) return;
         const q = fees();
-        el.innerHTML = '<div class="pub-fees-card"><div class="pub-fees-top"><span class="label-caps">Total</span><span class="pub-fees-total serif">' + esc(fmt.money(q.total)) + '</span></div>' +
+        el.innerHTML = '<div class="pub-fees-card">' +
           '<ul class="pub-fees-lines">' + q.lines.map(function (l) { return '<li><span>' + esc(l.label) + '</span><span class="num">' + esc(fmt.money(l.amount)) + '</span></li>'; }).join('') + '</ul>' +
+          '<div class="pub-fees-top"><span class="label-caps">Total</span><span class="pub-fees-total">' + esc(fmt.money(q.total)) + '</span></div>' +
           '<p class="pub-fees-note">Tax included.</p></div>';
       }
       ui.on(view, 'click', '[data-act=change-time], [data-act=back-1], [data-action=pick-again]', function () { dropHold(); st.step = 1; st.alert = null; paint(true); });
@@ -426,13 +430,13 @@
                total (the fee lines were on the Players step). */
             '<section class="panel pub-order pub-sum" data-reveal aria-label="Your booking"><div class="panel-body">' +
               '<div class="pub-sum-day">' + esc(Pub.longDate(st.date)) + '</div>' +
-              '<div class="pub-sum-time serif">' + tp.t + '<small>' + tp.ap + '</small></div>' +
+              '<div class="pub-sum-time">' + tp.t + '<small>' + (tp.ap || '') + '</small></div>' +
               (st.joinId ? '<div class="pub-sum-join muted">Joining a group</div>' : '') +
               '<dl class="pub-sum-kv"></dl>' +
-              '<div class="pub-sum-total"><span>Total</span><span class="serif num pub-sum-amt"></span></div>' +
+              '<div class="pub-sum-total"><span class="label-caps">Total</span><span class="num pub-sum-amt"></span></div>' +
               '<p class="pub-fees-note">' + esc('Tax included. Cancel up to ' + Pub.REFUND_HOURS + ' hours before for a full refund.') + '</p>' +
             '</div></section>' +
-            '<section class="panel pub-card-panel" data-reveal><div class="panel-head"><h3 class="pub-pay-h">Payment</h3><span class="pub-secure">' + Club.icon('key') + 'Secure</span></div><div class="panel-body">' +
+            '<section class="panel pub-card-panel" data-reveal><div class="panel-head"><h3 class="pub-pay-h">Payment</h3><span class="pub-secure">Secure</span></div><div class="panel-body">' +
               '<div class="pub-alert" role="alert" hidden></div>' +
               '<div class="pub-flow"></div>' +
               '<p class="pub-fine">Dress code and soft spikes apply.</p>' +
@@ -440,7 +444,7 @@
           '</div>';
         /* The booking's own indicator above shows Payment and Review as steps 3 and 4; Back on Payment returns to Players. */
         flow = Club.checkout.steps(ui.$('.pub-flow', stage), { site: 'public', progress: false,
-          back: { html: '<button type="button" class="btn btn-ghost ckf-back" data-act="back-2">' + Club.icon('chevronLeft') + '<span>Edit players</span></button>' },
+          back: { html: '<button type="button" class="pub-link ckf-back" data-act="back-2"><span>Edit players</span></button>' },
           steps: [
             { id: 'pay', label: 'Payment', next: 'Continue to review',
               html: '<div class="pr-apply-host"></div><p class="pub-free-note" hidden>' + Club.icon('tag') + '<span>Your promo code covers this booking. There is nothing to pay.</span></p><div class="pub-ck"></div>' },
@@ -618,8 +622,8 @@
             '<h2 class="pub-done-h">You’re booked</h2>' +
             '<p class="pub-done-line"><span>' + esc(Pub.longDate(tt.date)) + '</span> · <span>' + esc(fmt.time(tt.time)) + '</span> · <span>' + esc(Pub.plural(n, 'player')) + '</span></p>' +
             '<div class="pub-done-acts">' +
-              '<button type="button" class="btn btn-primary pub-done-btn" data-act="done-mine" data-id="' + esc(tt.id) + '" data-pay="' + esc(pay.id) + '">' + Club.icon('calendar') + '<span>My booking</span></button>' +
-              '<button type="button" class="btn pub-done-btn" data-act="done-home">' + Club.icon('flag') + '<span>Home</span></button>' +
+              '<button type="button" class="btn btn-primary pub-done-btn" data-act="done-mine" data-id="' + esc(tt.id) + '" data-pay="' + esc(pay.id) + '"><span>My booking</span></button>' +
+              '<button type="button" class="btn pub-done-btn" data-act="done-home"><span>Home</span></button>' +
             '</div>' +
           '</div>';
       }

@@ -1,0 +1,215 @@
+/* Members' portal: the online golf shop (#/shop, js/portal/shop.js). The shop itself is shared with the public site
+   (Club.shop.mount in js/core/shop.js, css/shop.css); this file sets its look in the portal only: every rule carries
+   body.portal, and member.html is the only page that loads it (after css/shop.css).
+   Redesign (owner-approved, Nov 21; built Nov 22): "Inter with a touch of serif". The catalogue is a calm image-free
+   list (two columns of rows on wide screens): the brand in small capitals, the name, the price in the serif and one
+   action word. The sections and the categories are words with a brass underline. The basket is a hairline list, the
+   checkout one column, and on phones the total is pinned in the dark bar (Portal.inkBar). No tiles, no boxes inside
+   boxes, no shadows. Tokens only. */
+
+body.portal .sh { margin-top: 0; }
+body.portal .sh-body { margin-top: 20px; }
+body.portal .sh .panel { background: none; border: 0; border-radius: 0; box-shadow: none; }
+body.portal .sh .panel-head { padding: 0 0 10px; border-bottom: 0; align-items: baseline; }
+body.portal .sh .panel-body { padding: 0; }
+body.portal .sh .panel-head h3, body.portal .sh .sh-h, body.portal .sh .sh-more h3 { margin: 0; font-family: var(--sans); font-size: var(--fs-section); font-weight: 500; line-height: 1.3; letter-spacing: -0.02em; color: var(--text); }
+body.portal .sh .sh-h, body.portal .sh .sh-more h3 { margin-bottom: 10px; }
+body.portal .sh .eyebrow { margin-bottom: 4px; font-size: 0.6875rem; letter-spacing: 0.2em; }
+body.portal .sh .empty { padding: 20px 0; text-align: left; align-items: flex-start; }
+body.portal .sh .empty svg { display: none; }
+
+/* ---------------- Shop, Basket, My orders: words, brass under the current one ---------------- */
+body.portal .sh-nav { gap: 22px; border-bottom: 0; box-shadow: inset 0 -1px 0 var(--border); }
+body.portal .sh-navlink { position: relative; min-height: 44px; margin: 0; padding: 10px 0 10.5px; gap: 5px; border-bottom: 1.5px solid transparent; font: 500 0.875rem/1.4 var(--sans); color: var(--text-3); }
+body.portal .sh-navlink::before { content: ""; position: absolute; top: 0; bottom: 0; left: -9px; right: -9px; }
+body.portal .sh-navlink.active { color: var(--text); border-bottom-color: var(--accent); }
+@media (hover: hover) { body.portal .sh-navlink:hover { color: var(--text); text-decoration: none; } }
+body.portal .sh-n { min-width: 0; height: auto; padding: 0; border-radius: 0; background: none; color: var(--text-3); font-size: 0.6875rem; font-weight: 500; }
+@media (max-width: 767.98px) { body.portal .sh-nav { margin-left: -20px; margin-right: -20px; padding: 0 20px; } }
+
+/* ---------------- Browse: one quiet line, the search, the categories as words ---------------- */
+body.portal .sh-browse { gap: 30px; }
+body.portal .sh-notice { display: block; margin: 0 0 14px; font-size: 0.8125rem; line-height: 1.45; color: var(--text-3); }
+body.portal .sh-notice svg { display: none; }
+body.portal .sh-tools { gap: 14px; margin-bottom: 4px; }
+body.portal .sh-search { max-width: 26rem; }
+body.portal .sh-search .input { min-height: 48px; background-color: transparent; border-radius: 3px; }
+body.portal .sh-count { font-size: 0.8125rem; color: var(--text-3); font-variant-numeric: tabular-nums; }
+body.portal .sh-cats { gap: 20px; margin: 0; padding: 0; box-shadow: inset 0 -1px 0 var(--border); }
+body.portal .sh-chip { position: relative; min-height: 44px; padding: 10px 0 10.5px; border: 0; border-bottom: 1.5px solid transparent; border-radius: 0; background: none; color: var(--text-3); font: 500 0.875rem/1.4 var(--sans); }
+body.portal .sh-chip svg { display: none; }
+body.portal .sh-chip::before { content: ""; position: absolute; top: 0; bottom: 0; left: -8px; right: -8px; }
+body.portal .sh-chip.active { background: none; border-color: transparent; border-bottom-color: var(--accent); color: var(--text); }
+@media (hover: hover) { body.portal .sh-chip:hover { border-color: transparent; color: var(--text); } body.portal .sh-chip.active:hover { border-bottom-color: var(--accent); } }
+
+/* ---------------- The catalogue: image-free rows. Brand, name, serif price, one action word ---------------- */
+body.portal .sh-grid { display: block; }
+body.portal .sh-tile { display: none; }
+body.portal .sh-card { display: flex; flex-direction: row; align-items: center; gap: 14px; min-height: 64px; padding: 10px 0; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; background: none; box-shadow: none; }
+body.portal .sh-card-link { flex: 1 1 auto; gap: 2px; min-height: 44px; justify-content: center; }
+body.portal .sh-card-brand { font-size: 0.6875rem; font-weight: 600; line-height: 1.4; letter-spacing: 0.16em; color: var(--label); }
+body.portal .sh-card-name { display: block; -webkit-line-clamp: unset; overflow: visible; font-size: 0.96875rem; font-weight: 500; line-height: 1.35; color: var(--text); }
+@media (hover: hover) { body.portal .sh-card:hover { border-color: var(--border); } body.portal .sh-card-link:hover .sh-card-name { color: var(--text); text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 4px; } }
+body.portal .sh-card-foot { flex: none; flex-wrap: nowrap; align-items: center; gap: 14px; }
+body.portal .sh-card-price { align-items: flex-end; font-family: var(--font-sig); font-size: 1.1875rem; font-weight: 400; line-height: 1.15; font-variant-numeric: lining-nums; color: var(--text); white-space: nowrap; }
+body.portal .sh-card-low { margin-top: 3px; font-family: var(--sans); font-size: 0.6875rem; font-weight: 500; line-height: 1.3; color: var(--warn); }
+body.portal .sh-card.is-out .sh-card-price, body.portal .sh-card.is-out .sh-card-name { color: var(--text-3); }
+body.portal .sh-card-ctl { margin-left: 0; min-width: 44px; display: flex; justify-content: flex-end; }
+/* Add: a word */
+body.portal .sh-card .sh-add, body.portal .sh-card .sh-add.btn-sm { min-width: 44px; min-height: 44px; padding: 0; border: 0; background: none; color: var(--text); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.02em; }
+body.portal .sh-card .sh-add svg { display: none; }
+@media (hover: hover) { body.portal .sh-card .sh-add:hover { background: none; text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 4px; } }
+body.portal .sh-soldout { min-height: 0; padding: 0; border-radius: 0; background: none; color: var(--text-3); font: 600 0.6875rem/1.4 var(--sans); letter-spacing: 0.14em; text-transform: uppercase; }
+/* Quantity: minus, the number, plus, as on Tee times */
+body.portal .sh-step { border: 0; border-radius: 0; background: none; }
+body.portal .sh-step button { position: relative; width: 40px; height: 44px; padding: 0; border-radius: 0; background: none; color: var(--text); font-size: 0; }
+body.portal .sh-step button::before { content: ""; position: absolute; left: 50%; top: 50%; width: 24px; height: 24px; margin: -12px 0 0 -12px; border: 1px solid var(--border-strong); border-radius: 50%; }
+body.portal .sh-step button::after { content: "+"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font: 400 1rem/1 var(--sans); }
+body.portal .sh-step button[data-sh-step="-1"]::after, body.portal .sh-step button[data-sh-dq="-1"]::after { content: "\2212"; }
+body.portal .sh-step button:disabled { opacity: 1; color: var(--text-3); }
+body.portal .sh-step button:disabled::before { border-color: var(--border); }
+@media (hover: hover) { body.portal .sh-step button:hover:not(:disabled) { background: none; } body.portal .sh-step button:hover:not(:disabled)::before { border-color: var(--text); background: var(--surface); } }
+body.portal .sh-step output { min-width: 22px; font-size: 0.9375rem; font-weight: 500; color: var(--text); }
+/* "View all 40 items": a last row */
+body.portal .sh-all { display: flex; align-items: center; justify-content: flex-start; width: 100%; min-height: 48px; padding: 12px 0; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; background: none; color: var(--text); font: 500 0.96875rem/1.35 var(--sans); text-align: left; }
+@media (hover: hover) { body.portal .sh-all:hover { background: none; text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 4px; } }
+
+/* ---------------- The basket beside the list (wide screens) ---------------- */
+body.portal .sh-mini .panel-body { padding: 0; }
+body.portal .sh-mini-n { font-size: 0.8125rem; color: var(--text-3); }
+body.portal .sh-mini-lines { border-top: 1px solid var(--border); }
+body.portal .sh-mini-lines li { padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.875rem; color: var(--text); }
+body.portal .sh-mini-go { margin-top: 16px; min-height: 48px; }
+body.portal .sh-mini-go svg { display: none; }
+body.portal .sh-empty-line { display: block; padding-top: 12px; border-top: 1px solid var(--border); font-size: 0.8125rem; line-height: 1.5; color: var(--text-3); }
+body.portal .sh-empty-line svg { display: none; }
+
+/* ---------------- One item ---------------- */
+body.portal .sh-back { min-height: 44px; margin: -6px 0 6px -4px; color: var(--text-2); font: 500 0.875rem/1.3 var(--sans); text-decoration: none; }
+body.portal .sh-item { display: block; max-width: 36rem; }
+body.portal .sh-item .sh-item-name { margin: 4px 0 2px; font-family: var(--sans); font-size: 1.75rem; font-weight: 500; line-height: 1.2; letter-spacing: -0.025em; color: var(--text); }
+body.portal .sh-item-brand { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.18em; color: var(--label); }
+body.portal .sh-item-price { margin: 16px 0 2px; }
+body.portal .sh-item-price .num { font-family: var(--font-sig); font-size: 2.5rem; font-weight: 400; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: lining-nums; color: var(--text); }
+body.portal .sh-item-tax { font-size: 0.8125rem; color: var(--text-3); }
+body.portal .sh-avail { margin: 6px 0 14px; font: 600 0.6875rem/1.4 var(--sans); letter-spacing: 0.14em; text-transform: uppercase; color: var(--label); }
+body.portal .sh-avail.is-low { color: var(--warn); }
+body.portal .sh-avail.is-out { color: var(--danger); }
+body.portal .sh-item-blurb { font-size: 0.9375rem; line-height: 1.55; color: var(--text-2); }
+body.portal .sh-dctl { margin: 18px 0; padding-top: 16px; border-top: 1px solid var(--border); }
+body.portal .sh-dadd svg { display: none; }
+body.portal .sh-dadd, body.portal .sh-dgo { flex: 0 1 auto; min-height: 48px; padding: 0 22px; }
+body.portal .sh-in-note { font-size: 0.8125rem; color: var(--text-3); }
+body.portal .sh-in-note svg { display: none; }
+body.portal .sh-out-note { padding: 12px 0; border-top: 1px solid var(--danger); border-radius: 0; background: none; font-size: 0.875rem; color: var(--danger); }
+body.portal .sh-out-note svg { display: none; }
+body.portal .sh-facts { margin-top: 18px; padding-top: 14px; border-color: var(--border); gap: 6px; }
+body.portal .sh-facts li { font-size: 0.8125rem; line-height: 1.5; color: var(--text-3); }
+body.portal .sh-facts svg { display: none; }
+body.portal .sh-more { margin-top: 34px; }
+body.portal .sh-more .sh-grid { border-top: 1px solid var(--border); }
+
+/* ---------------- Basket and checkout: one column, hairline rows ---------------- */
+body.portal .sh-checkout { display: block; max-width: 36rem; }
+body.portal .sh-checkout > .sh-pay { position: static; margin-top: 34px; }
+body.portal .sh-keep { font-size: 0.875rem; }
+body.portal .sh-lines { border-top: 1px solid var(--border); }
+body.portal .sh-lines li { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "main amt" "ctl ctl"; gap: 2px 14px; align-items: start; padding: 12px 0 6px; border-bottom: 1px solid var(--border); }
+body.portal .sh-line-name { position: relative; display: inline; min-height: 0; font-size: 0.96875rem; font-weight: 500; line-height: 1.35; color: var(--text); }
+@media (hover: hover) { body.portal .sh-line-name:hover { color: var(--text); text-decoration-color: var(--accent); text-underline-offset: 4px; } }
+body.portal .sh-line-name::after { content: ""; position: absolute; left: 0; right: 0; top: -12px; bottom: -12px; }
+body.portal .sh-line-sub { position: relative; margin-top: 2px; font-size: 0.8125rem; color: var(--text-3); }
+body.portal .sh-line-amt { font-family: var(--font-sig); font-size: 1.1875rem; font-weight: 400; line-height: 1.2; font-variant-numeric: lining-nums; color: var(--text); }
+body.portal .sh-line-ctl { margin-left: -8px; gap: 4px; }
+body.portal .sh-line-rm { width: 44px; height: 44px; border-radius: 0; color: var(--text-3); }
+@media (hover: hover) { body.portal .sh-line-rm:hover { background: none; color: var(--danger); } }
+body.portal .sh-totals, body.portal .to-totals { margin: 6px 0 0; }
+body.portal .sh-totals > div, body.portal .to-totals > div { padding: 6px 0; font-size: 0.875rem; color: var(--text-2); }
+body.portal .sh-totals .sh-total, body.portal .to-totals .to-total { align-items: baseline; padding-top: 10px; font-size: 0.9375rem; font-weight: 500; color: var(--text); }
+body.portal .sh-totals .sh-total dd, body.portal .to-totals .to-total dd { font-family: var(--font-sig); font-size: 1.5rem; font-weight: 400; line-height: 1.1; font-variant-numeric: lining-nums; }
+body.portal .sh-totals .sh-disc dd { color: var(--text); }
+body.portal .sh-fine, body.portal .to-fine { margin: 14px 0 0; font-size: 0.8125rem; line-height: 1.5; color: var(--text-3); }
+body.portal .sh-fine a { position: relative; }
+body.portal .sh-fine a::after { content: ""; position: absolute; left: -4px; right: -4px; top: -14px; bottom: -14px; }
+body.portal .sh-fine a, body.portal .to-fine a { color: var(--text); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+/* Pickup: plain words between two hairlines */
+body.portal .sh-pickup { gap: 0; margin: 0 0 18px; padding: 12px 0; border: 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); border-radius: 0; background: none; }
+body.portal .sh-pickup.sh-pickup-pay { background: none; border-color: var(--border); border-top-color: var(--accent); }
+body.portal .sh-pickup svg { display: none; }
+body.portal .sh-pickup strong { font-size: 0.96875rem; font-weight: 500; color: var(--text); }
+body.portal .sh-pickup span { margin-top: 3px; font-size: 0.8125rem; line-height: 1.5; color: var(--text-3); }
+body.portal .sh-who-name, body.portal .to-who-name { gap: 0; font-size: 0.96875rem; font-weight: 500; color: var(--text); }
+body.portal .sh-who-name svg, body.portal .to-who-name svg { display: none; }
+body.portal .sh-sum { margin-top: 0; padding-top: 14px; border-top: 1px solid var(--border); font-size: 0.9375rem; font-weight: 500; color: var(--text); }
+body.portal .sh-sum strong { font-family: var(--font-sig); font-size: 1.625rem; font-weight: 400; line-height: 1.1; font-variant-numeric: lining-nums; }
+body.portal .sh-place svg, body.portal .to-place svg { display: none; }
+body.portal .sh-paylater { display: block; margin: 10px 0 0; padding: 0; border-radius: 0; background: none; font-size: 0.8125rem; line-height: 1.5; color: var(--text-2); }
+body.portal .sh-paylater svg { display: none; }
+body.portal .sh-paylater strong { font-weight: 600; color: var(--text); }
+
+/* ---------------- Orders: hairline blocks, a small status word, three marks for the progress ---------------- */
+body.portal .sh-osec { margin: 0 0 30px; max-width: 46rem; }
+body.portal .sh-ocards, body.portal .to-cards { display: block; }
+body.portal .sh-ocard, body.portal .to-card { padding: 14px 0; border: 0; border-top: 1px solid var(--border); border-radius: 0; background: none; box-shadow: none; }
+body.portal .sh-ocard.is-ready, body.portal .to-card.is-ready { border-color: var(--accent); box-shadow: none; }
+body.portal .sh-ocard.is-cancelled, body.portal .sh-ocard.is-picked-up, body.portal .to-card.is-cancelled, body.portal .to-card.is-picked-up { background: none; }
+body.portal .sh-ocards > :last-child, body.portal .to-cards > :last-child { border-bottom: 1px solid var(--border); }
+body.portal .sh-ocard-head h4, body.portal .to-card-head h4 { margin: 2px 0 0; font-family: var(--sans); font-size: 0.96875rem; font-weight: 500; line-height: 1.35; color: var(--text); }
+body.portal .sh-ocard-no, body.portal .to-card-no { font-size: 0.8125rem; letter-spacing: 0; color: var(--text-3); font-variant-numeric: tabular-nums; }
+body.portal .sh-ocard-head .badge, body.portal .to-card-head .badge { padding: 0; border: 0; border-radius: 0; background: none; color: var(--label); font: 600 0.6875rem/1.6 var(--sans); letter-spacing: 0.14em; text-transform: uppercase; }
+body.portal .sh-ocard-head .badge.bad, body.portal .to-card-head .badge.bad { color: var(--danger); }
+body.portal .sh-ocard-items { gap: 2px; }
+body.portal .sh-ocard-items li, body.portal .to-card-items { font-size: 0.875rem; line-height: 1.5; color: var(--text-2); }
+body.portal .sh-ocard-note, body.portal .to-card-notes { font-style: normal; font-size: 0.8125rem; color: var(--text-3); }
+body.portal .sh-ocard-foot, body.portal .to-card-foot { margin-top: 8px; padding-top: 0; border-top: 0; }
+body.portal .sh-ocard-pay, body.portal .to-card-pay { font-size: 0.8125rem; color: var(--text-3); }
+body.portal .sh-ocard-acts, body.portal .to-card-acts { gap: 4px 18px; }
+body.portal .sh-ocard-acts .p-link, body.portal .to-card-acts .p-link { min-height: 44px; font-size: 0.8125rem; }
+body.portal .sh-ocancel, body.portal .to-cancel { min-height: 44px; padding: 0; border: 0; background: none; color: var(--danger); font-size: 0.8125rem; font-weight: 500; }
+@media (hover: hover) { body.portal .sh-ocancel:hover, body.portal .to-cancel:hover { background: none; text-decoration: underline; text-underline-offset: 4px; } }
+body.portal .sh-track, body.portal .to-track { display: flex; gap: 18px; margin: 10px 0 8px; }
+body.portal .sh-track li, body.portal .to-track li { flex-direction: row; align-items: center; gap: 7px; font: 600 0.6875rem/1.4 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-3); text-align: left; }
+body.portal .sh-track li::before, body.portal .to-track li::before { display: none; }
+body.portal .sh-track-dot, body.portal .to-track-dot { width: 9px; height: 9px; border: 1.2px solid var(--text-3); background: none; }
+body.portal .sh-track-dot svg, body.portal .to-track-dot svg { display: none; }
+body.portal .sh-track li.done .sh-track-dot, body.portal .sh-track li.now .sh-track-dot, body.portal .to-track li.done .to-track-dot, body.portal .to-track li.now .to-track-dot { background: var(--c-ink); border-color: var(--c-ink); }
+body.portal .sh-track li.done, body.portal .to-track li.done { color: var(--text-2); font-weight: 600; }
+body.portal .sh-track li.now, body.portal .to-track li.now { color: var(--text); font-weight: 600; }
+body.portal .sh-track-off, body.portal .to-track-off { gap: 0; margin: 8px 0; font: 600 0.6875rem/1.4 var(--sans); letter-spacing: 0.14em; text-transform: uppercase; color: var(--danger); }
+body.portal .sh-track-off svg, body.portal .to-track-off svg { display: none; }
+
+/* ---------------- Order placed: a plain confirmation, left aligned ---------------- */
+body.portal .sh-done-wrap, body.portal .to-done-wrap { display: block; align-items: stretch; }
+body.portal .sh-done, body.portal .to-done { width: min(36rem, 100%); padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; text-align: left; }
+body.portal .sh-done-icon, body.portal .to-done-icon { display: none; }
+body.portal .sh-done h2, body.portal .to-done h2 { margin: 4px 0 6px; font-family: var(--sans); font-size: 1.75rem; font-weight: 500; line-height: 1.2; letter-spacing: -0.025em; }
+body.portal .sh-done-where, body.portal .to-done-where { margin: 0; max-width: none; font-size: 0.9375rem; line-height: 1.5; color: var(--text-2); }
+body.portal .sh-done .sh-pickup { margin: 18px 0 0; }
+body.portal .sh-done .sh-pickup + .sh-pickup { border-top: 0; }
+body.portal .sh-done-rc { margin: 20px 0; border: 0; border-radius: 0; overflow: visible; }
+body.portal .sh-done-rc .rc { margin: 0; }
+body.portal .sh-done-acts, body.portal .to-done-acts { justify-content: flex-start; gap: 8px; }
+body.portal .sh-done-acts .btn svg, body.portal .to-done-acts .btn svg { display: none; }
+body.portal .sh-done-cancel { margin: 8px 0 0; }
+body.portal .sh-panel-empty { padding: 0; }
+
+@media (min-width: 768px) {
+  body.portal .sh-osec { margin-bottom: 34px; }
+}
+@media (min-width: 880px) {
+  body.portal .sh-browse { grid-template-columns: minmax(0, 1fr) 18rem; gap: 46px; }
+  body.portal .sh-mini { top: 96px; }
+}
+@media (min-width: 1200px) {
+  /* two columns of rows */
+  body.portal .sh-browse { grid-template-columns: minmax(0, 1fr) 19rem; gap: 72px; }
+  body.portal .sh-main .sh-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 46px; }
+  body.portal .sh-main .sh-grid > .sh-all, body.portal .sh-main .sh-grid > .sh-grid-empty { grid-column: 1 / -1; }
+}
+@media (max-width: 400px) {
+  body.portal .sh-card { padding: 10px 0; gap: 10px; }
+  body.portal .sh-card-foot { flex-direction: row; align-items: center; gap: 10px; }
+  body.portal .sh-card-ctl .sh-add, body.portal .sh-card-ctl .sh-step, body.portal .sh-card-ctl .sh-soldout { width: auto; }
+  body.portal .sh-nav { gap: 20px; }
+  body.portal .sh-navlink { padding-left: 0; padding-right: 0; }
+}

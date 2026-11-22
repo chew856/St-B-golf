@@ -1,5 +1,6 @@
-/* Portal: Profile. Member card, a membership accordion and one row per section; each row opens a sheet
-   (personal details, family, notifications, preferences, golf).
+/* Portal: Profile. The member's name, then plain grouped rows (a label and its current value); each row opens a sheet
+   (personal details, family, notifications, preferences, golf). Redesign (Nov 22, REDESIGN-PLAN.md step 7): no card
+   picture here (the Membership card has its own page), no icons, hairline rows as on More.
    Contact and preference edits write to the members collection with the same shape and validation as
    the staff member form (js/modules/members.js). Communication opt-ins live in getObj('portalPrefs').
    "Members' leaderboards" (golfers, while staff show the boards): members.leaderboardHidden true takes the member off
@@ -37,18 +38,13 @@
   function hcpHistory(id) { return S.all('handicapHistory').filter(function (h) { return h.memberId === id && typeof h.index === 'number'; }).sort(function (a, b) { return a.date.localeCompare(b.date); }); }
   function isGolfer(m) { const t = tierOf(m); return t ? !!t.golf : m.handicap != null; }
 
-  /* ---------------- Membership card ---------------- */
-  function card(m) {
+  /* ---------------- Head: the name (the page's one serif element) and one quiet line ---------------- */
+  function headHTML(m) {
     const t = tierOf(m); const st = STATUS[m.status];
-    return '<div class="pp-card" role="group" aria-label="Membership card">' +
-        '<span class="pp-card-grain" aria-hidden="true"></span>' +
-        '<div class="pp-card-top">' + Portal.crest('pp-card-crest') + '<span class="pp-card-eyebrow">Member</span></div>' +
-        '<div class="pp-card-bottom">' +
-          '<div class="pp-card-holder">' + esc(m.firstName + ' ' + m.lastName) + '</div>' +
-          '<div class="pp-card-meta"><span>' + esc(t ? t.name : 'Member') + (st ? ' · ' + esc(st[0]) : '') + '</span>' +
-            '<span class="num">No. ' + esc(m.memberNo) + '</span>' +
-            (m.memberSince ? '<span>Member since ' + esc(String(m.memberSince).slice(0, 4)) + '</span>' : '') + '</div>' +
-        '</div></div>';
+    return '<header class="pp-head"><h1 class="pp-title">Profile</h1>' +
+      '<p class="pp-name" data-i18n-skip>' + esc(m.firstName + ' ' + m.lastName) + '</p>' +
+      '<p class="pp-meta"><span>' + esc(t ? t.name : 'Member') + (st ? ' · ' + esc(st[0]) : '') + '</span> · <span class="num">No. ' + esc(m.memberNo) + '</span>' +
+        (m.memberSince ? ' · <span>Member since ' + esc(String(m.memberSince).slice(0, 4)) + '</span>' : '') + '</p></header>';
   }
 
   /* ---------------- Sheet contents ---------------- */
@@ -62,7 +58,7 @@
   function familyBody(m) {
     return '<dl class="pp-kv"><div><dt>Spouse or partner</dt><dd>' + (m.spouse ? esc(m.spouse) : 'None listed') + '</dd></div>' +
       '<div><dt>Children</dt><dd>' + (m.children ? esc(m.children + (m.children === 1 ? ' child' : ' children')) + ', with junior privileges' : 'None listed') + '</dd></div></dl>' +
-      '<p class="pp-note">' + Club.icon('info') + '<span>To add or change family members, call the club office at <a href="tel:' + esc(Club.info.phone.replace(/[^\d+]/g, '')) + '">' + esc(Club.info.phone) + '</a>.</span></p>';
+      '<p class="pp-note"><span>To add or change family members, call the club office at <a href="tel:' + esc(Club.info.phone.replace(/[^\d+]/g, '')) + '">' + esc(Club.info.phone) + '</a>.</span></p>';
   }
   function commBody(m) {
     const p = commPrefs(m.id);
@@ -71,7 +67,7 @@
         return '<li><label for="' + id + '" class="pp-comm-text"><span class="pp-comm-l">' + esc(c.label) + '</span><span class="pp-comm-s">' + esc(c.text) + '</span></label>' +
           '<label class="pp-comm-ctl" for="' + id + '"><span class="pp-state" aria-hidden="true">' + (p[c.key] ? 'On' : 'Off') + '</span><span class="toggle pp-toggle"><input type="checkbox" id="' + id + '" data-chan="' + c.key + '"' + (p[c.key] ? ' checked' : '') + '><span></span></span></label></li>';
       }).join('') + '</ul>' +
-      '<p class="pp-note">' + Club.icon('info') + '<span>Saves as you go. Statements and account notices always go by email.</span></p>';
+      '<p class="pp-note"><span>Saves as you go. Statements and account notices always go by email.</span></p>';
   }
   function prefsForm(m) {
     const pr = m.preferences || {};
@@ -122,7 +118,7 @@
       (demoChart || (vals.length > 1 && allPos ? '<div class="pp-chart"><h3 class="pp-chart-h">Your index over time</h3>' + frAxis(Club.charts.line({ labels: hist.map(function (h) { return fmt.toDate(h.date).toLocaleDateString('en-US', { month: 'short' }); }), series: [{ name: 'Index', values: vals, color: 'var(--forest-800)' }], height: 180 })) + '</div>'
         : vals.length > 1 ? '<div class="pp-chart pp-spark">' + Club.charts.sparkline(vals.map(function (v) { return -v; }), { width: 320, height: 60, color: 'var(--forest-800)' }) + '</div>'
           : '<p class="pp-chart-empty">Your index history will show here as scores are posted.</p>')) +
-      '<p class="pp-note">' + Club.icon('info') + '<span>The golf shop updates your index from posted scores, and can help with lockers.</span></p>';
+      '<p class="pp-note"><span>The golf shop updates your index from posted scores, and can help with lockers.</span></p>';
   }
 
   /* ---------------- Friends and privacy (memberPrivacy collection, owned by friends.js) ---------------- */
@@ -147,9 +143,9 @@
           return '<button type="button" role="radio" data-req="' + o[0] + '" aria-checked="' + (p.requests === o[0]) + '"' + (p.requests === o[0] ? ' class="active"' : '') + '>' + o[1] + '</button>';
         }).join('') + '</div></div>' +
       (blocked.length ? '<div class="pp-blocked"><span class="pp-label">Blocked members</span><ul class="pp-comm">' + blocked.map(function (b) {
-        return '<li><span class="pp-comm-text"><span class="pp-comm-l">' + esc(Portal.friends.nameOf(b)) + '</span></span><button type="button" class="btn btn-sm" data-unblock="' + esc(b) + '">Unblock</button></li>';
+        return '<li><span class="pp-comm-text"><span class="pp-comm-l">' + esc(Portal.friends.nameOf(b)) + '</span></span><button type="button" class="p-link" data-unblock="' + esc(b) + '">Unblock</button></li>';
       }).join('') + '</ul></div>' : '') +
-      '<p class="pp-note">' + Club.icon('info') + '<span>Changes save as you go.</span></p>';
+      '<p class="pp-note"><span>Changes save as you go.</span></p>';
   }
 
   /* ---------------- Members' leaderboards: show me or not (members.leaderboardHidden: true when off) ----------------
@@ -160,8 +156,8 @@
     return '<ul class="pp-comm"><li><label for="pp_lb" class="pp-comm-text"><span class="pp-comm-l">Show me on the members\' leaderboards</span>' +
         '<span class="pp-comm-s">Your name, place and scores, seen by members.</span></label>' +
         '<label class="pp-comm-ctl" for="pp_lb"><span class="pp-state" aria-hidden="true">' + (on ? 'On' : 'Off') + '</span><span class="toggle pp-toggle"><input type="checkbox" id="pp_lb" data-lb-show' + (on ? ' checked' : '') + '><span></span></span></label></li></ul>' +
-      '<p class="pp-note">' + Club.icon('info') + '<span>Saves as you go. Club staff always see every round.</span></p>' +
-      '<a class="pp-set pp-lb-open" href="#/leaderboards">' + Club.icon('trophy', 'pp-set-ic') + '<span class="pp-set-main"><span class="pp-set-l">Open Leaderboards</span></span>' + Club.icon('chevronRight', 'pp-set-go') + '</a>';
+      '<p class="pp-note"><span>Saves as you go. Club staff always see every round.</span></p>' +
+      '<a class="p-link pp-lb-open" href="#/leaderboards">Open Leaderboards</a>';
   }
 
   /* ---------------- Saves (same validation and store writes as before) ---------------- */
@@ -194,34 +190,42 @@
   /* ---------------- Page ---------------- */
   function render(view, member) {
     const id = member.id;
+    /* Rows in groups under small capitals: the label on the left, what is set now on the right. */
     function rowsHTML(m) {
       const p = commPrefs(m.id); const on = CHANNELS.filter(function (c) { return p[c.key]; }).map(function (c) { return c.label; });
       const pr = m.preferences || {};
-      const row = function (act, icon, label, sub, href) {
-        const inner = Club.icon(icon, 'pp-set-ic') + '<span class="pp-set-main"><span class="pp-set-l">' + esc(label) + '</span>' + (sub ? '<span class="pp-set-s">' + esc(sub) + '</span>' : '') + '</span>' + (act === 'signout' ? '' : Club.icon('chevronRight', 'pp-set-go'));
-        return '<li>' + (href ? '<a class="pp-set" href="' + href + '">' + inner + '</a>' : '<button type="button" class="pp-set' + (act === 'signout' ? ' pp-set-out' : '') + '" data-go="' + act + '" aria-haspopup="dialog">' + inner + '</button>') + '</li>';
+      const t = tierOf(m); const st = STATUS[m.status];
+      const years = m.memberSince ? new Date().getFullYear() - +String(m.memberSince).slice(0, 4) : 0;
+      const row = function (act, label, sub, href) {
+        const inner = '<span class="pp-set-l">' + esc(label) + '</span>' + (sub ? '<span class="pp-set-s">' + esc(sub) + '</span>' : '');
+        return href ? '<a class="pp-set" href="' + href + '">' + inner + '</a>' : '<button type="button" class="pp-set' + (act === 'signout' ? ' pp-set-out' : '') + '" data-go="' + act + '" aria-haspopup="dialog">' + inner + '</button>';
       };
-      return row('contact', 'user', 'Personal details', m.email || 'Email, phone and address') +
-        row('family', 'members', 'Family on your membership', m.spouse || m.children ? [m.spouse, m.children ? m.children + (m.children === 1 ? ' child' : ' children') : ''].filter(Boolean).join(' · ') : 'None listed') +
-        row('comm', 'bell', 'Notifications', on.length === CHANNELS.length ? 'Email, text and portal: all on' : on.length ? on.join(', ') + ' on' : 'All off') +
-        (Portal.friends ? row('privacy', 'key', 'Friends and privacy', privacySummary(m.id)) : '') +
-        row('prefs', 'star', 'Preferences', [isGolfer(m) ? CART_LABEL[pr.cart || 'Cart'] : '', diningPref(pr.dining)].filter(Boolean).join(' · ')) +
-        (isGolfer(m) ? row('golf', 'flag', 'Golf', 'Handicap ' + fmt.handicap(m.handicap) + (m.locker ? ' · Locker ' + m.locker : '')) : '') +
-        (isGolfer(m) && lbOn() ? row('leaderboards', 'trophy', 'Members\' leaderboards', m.leaderboardHidden ? 'You are hidden from other members' : 'Other members can see you') : '') +
-        row('', 'billing', 'Statements', 'Balance, charges and payments', '#/account') +
-        (Club.i18n ? '<li>' + Club.i18n.switchRow('pp-lang', Club.icon('globe', 'pp-set-ic')) + '</li>' : '') +
-        row('signout', 'logout', 'Sign out');
+      const group = function (title, rows) { return '<section class="pp-group"><h2 class="pp-group-h">' + title + '</h2>' + rows + '</section>'; };
+      return '<div class="pp-col">' +
+        group('Membership',
+          (t ? '<div class="pp-member">' + Portal.accordion({ id: 'pp-tier', title: 'Your membership', summary: t.name + (years >= 1 ? ' · ' + years + (years === 1 ? ' year' : ' years') : ''),
+            body: (t.description ? '<p class="pp-tier-d">' + esc(t.description) + '</p>' : '') +
+              (st ? '<p class="pp-status">' + '<span class="pp-word">' + esc(st[0]) + '</span><span>Questions? Call the club office at <a href="tel:' + esc(Club.info.phone.replace(/[^\d+]/g, '')) + '">' + esc(Club.info.phone) + '</a>.</span></p>' : '') }) + '</div>' : '') +
+          row('', 'Membership card', 'No. ' + m.memberNo, '#/card') +
+          row('family', 'Family on your membership', m.spouse || m.children ? [m.spouse, m.children ? m.children + (m.children === 1 ? ' child' : ' children') : ''].filter(Boolean).join(' · ') : 'None listed') +
+          row('', 'Statements', 'Balance, charges and payments', '#/account')) +
+        group('Contact',
+          row('contact', 'Personal details', m.email || 'Email, phone and address') +
+          row('comm', 'Notifications', on.length === CHANNELS.length ? 'Email, text and portal: all on' : on.length ? on.join(', ') + ' on' : 'All off') +
+          (Portal.friends ? row('privacy', 'Friends and privacy', privacySummary(m.id)) : '')) +
+      '</div><div class="pp-col">' +
+        group('Preferences',
+          row('prefs', 'Preferences', [isGolfer(m) ? CART_LABEL[pr.cart || 'Cart'] : '', diningPref(pr.dining)].filter(Boolean).join(' · ')) +
+          (isGolfer(m) ? row('golf', 'Golf', 'Handicap ' + fmt.handicap(m.handicap) + (m.locker ? ' · Locker ' + m.locker : '')) : '') +
+          (isGolfer(m) && lbOn() ? row('leaderboards', 'Members\' leaderboards', m.leaderboardHidden ? 'You are hidden from other members' : 'Other members can see you') : '')) +
+        group('Settings',
+          (Club.i18n ? Club.i18n.switchRow('pp-lang', '') : '') +
+          row('signout', 'Sign out')) +
+      '</div>';
     }
     const m0 = fresh(id) || member;
-    const t = tierOf(m0); const st = STATUS[m0.status];
-    const years = m0.memberSince ? new Date().getFullYear() - +String(m0.memberSince).slice(0, 4) : 0;
-    view.innerHTML =
-      '<header class="pp-title"><h1>Profile</h1></header>' +
-      '<div class="pp-layout">' + card(m0) +
-      (t ? '<div class="pp-member">' + Portal.accordion({ id: 'pp-tier', icon: 'crest', title: 'Your membership', summary: t.name + (years >= 1 ? ' · ' + years + (years === 1 ? ' year' : ' years') : ''),
-        body: (t.description ? '<p class="pp-tier-d">' + esc(t.description) + '</p>' : '') +
-          (st ? '<p class="pp-status">' + ui.badge(st[0], st[1]) + '<span>Questions? Call the club office at <a href="tel:' + esc(Club.info.phone.replace(/[^\d+]/g, '')) + '">' + esc(Club.info.phone) + '</a>.</span></p>' : '') }) + '</div>' : '') +
-      '<ul class="p-list pp-settings" aria-label="Profile settings">' + rowsHTML(m0) + '</ul></div>';
+    view.innerHTML = '<div class="pp-root">' + headHTML(m0) +
+      '<div class="pp-settings" aria-label="Profile settings">' + rowsHTML(m0) + '</div></div>';
     function refresh() { const l = ui.$('.pp-settings', view); if (l) l.innerHTML = rowsHTML(fresh(id) || member); }
 
     ui.on(view, 'click', '[data-go]', function (e, b) {

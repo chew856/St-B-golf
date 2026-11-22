@@ -11,7 +11,10 @@
    Course data (par, stroke index, yards) comes from the store's 'holes' collection (the club's scorecard). There are
    no course or slope ratings for this course in the data: anything that needs them uses DEMO_RATINGS below and is
    marked as demo in the UI (DEMO_RATINGS, now in js/core/whs.js). Playing conditions (PCC) are "Calculated by Golf Canada"
-   and count as 0 here. */
+   and count as 0 here.
+
+   Redesign (Nov 22): the handicap index is the page's one big serif figure; rounds are hairline rows (a date block,
+   the tees, the score in the serif); the posting flow is one clean column with its three steps as words. No cards. */
 (function () {
   'use strict';
 
@@ -134,7 +137,7 @@
   function dayShort(d) { return fmt.toDate(d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }); }
   function dayLong(d) { return fmt.toDate(d).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }); }
   function bannerHTML(short) {
-    return '<div class="gc-banner" role="note">' + Club.icon('info', 'gc-banner-ic') + '<p>' +
+    return '<div class="gc-banner" role="note"><p>' +
       (short ? '<span class="gc-banner-k">Demo.</span> Not connected to Golf Canada. Scores stay in this demo.' : esc(BANNER)) + '</p></div>';
   }
   function demoPill(txt) { return '<span class="gc-pill">' + esc(txt || 'Demo') + '</span>'; }
@@ -142,24 +145,41 @@
   function dec1(x) { const s = x < 0 ? '+' + Math.abs(x).toFixed(1) : (+x).toFixed(1); return Club.i18n && Club.i18n.lang && Club.i18n.lang() === 'fr' ? s.replace('.', ',') : s; }
   function diffText(p) { return dec1(p.differential); }
 
+  /* A date block: the weekday in small capitals over the day number */
+  function dblock(d) {
+    const x = fmt.toDate(d);
+    return '<span class="gc-dblock"><small>' + esc(x.toLocaleDateString('en-US', { weekday: 'short' })) + '</small><span class="gc-dblock-n">' + x.getDate() + '</span></span>';
+  }
+  function monthLabel(d) {
+    const x = fmt.toDate(d), o = { month: 'long' };
+    if (x.getFullYear() !== new Date().getFullYear()) o.year = 'numeric';
+    return x.toLocaleDateString('en-US', o);
+  }
   function historyRows(posts) {
     return posts.map(function (p) {
       const att = p.attestedBy ? memberName(p.attestedBy) : '';
       const label = dayLong(p.date) + ', ' + teeLabel(p.tees) + ' tees, ' + p.holes + ' holes. Gross ' + p.gross + ', adjusted ' + p.adjusted +
         ', differential ' + diffText(p) + '. ' + (att ? 'Attested by ' + att : 'Not attested') + '. Open details';
       return '<li><button type="button" class="gc-hrow" data-post="' + esc(p.id) + '" aria-label="' + esc(label) + '">' +
-        '<span class="gc-h-date">' + esc(dayShort(p.date)) + '</span>' +
-        '<span class="gc-h-sub"><span class="gc-h-tees">' + esc(teeLabel(p.tees)) + (+p.holes === 9 ? ' · 9 holes' : '') + '</span>' +
-          '<span class="gc-h-att' + (att ? '' : ' is-none') + '">' + (att ? '<span class="gc-long">' + esc(att) + '</span><span class="gc-short" aria-hidden="true">' + esc(shortName(p.attestedBy)) + '</span>' : 'Not attested') + '</span></span>' +
-        '<span class="gc-h-score">' + p.gross + '<span class="gc-slash">/</span>' + p.adjusted + '</span>' +
-        '<span class="gc-h-diff"><span class="gc-h-dk">Diff </span>' + esc(diffText(p)) + '</span>' +
-        Club.icon('chevronRight', 'gc-go') + '</button></li>';
+        dblock(p.date) +
+        '<span class="gc-h-main"><span class="gc-h-tees"><span>' + esc(teeLabel(p.tees) + ' tees') + '</span>' + (+p.holes === 9 ? ' · <span>9 holes</span>' : '') + '</span>' +
+          '<span class="gc-h-sub">' + (p.adjusted !== p.gross ? '<span>Adjusted</span> ' + p.adjusted + ' · ' : '') +
+            (att ? '<span>Attested by</span> <span class="gc-long" data-i18n-skip>' + esc(att) + '</span><span class="gc-short" aria-hidden="true" data-i18n-skip>' + esc(shortName(p.attestedBy)) + '</span>' : '<span>Not attested</span>') + '</span></span>' +
+        '<span class="gc-h-fig"><span class="gc-h-score">' + p.gross + '</span><span class="gc-h-diff"><span class="gc-h-dk">Diff </span>' + esc(diffText(p)) + '</span></span>' +
+        '</button></li>';
     }).join('');
   }
+  /* The history: a month in small capitals, then that month's rounds as hairline rows */
   function historyHTML(posts, shown) {
-    if (!posts.length) return '<div class="gc-empty"><p>No scores yet. Scores you post in this demo will be listed here.</p></div>';
-    return '<div class="gc-hlist-wrap"><div class="gc-hhead" aria-hidden="true"><span>Date</span><span>Tees</span><span>Gross / adjusted</span><span>Differential</span><span>Attested by</span></div>' +
-      '<ul class="p-list gc-hlist" aria-label="Score history, newest first">' + historyRows(posts.slice(0, shown)) + '</ul></div>' +
+    if (!posts.length) return '<p class="gc-empty">No scores yet. Scores you post in this demo will be listed here.</p>';
+    const groups = [];
+    posts.slice(0, shown).forEach(function (p) {
+      const k = p.date.slice(0, 7), g = groups[groups.length - 1];
+      if (g && g.k === k) g.list.push(p); else groups.push({ k: k, label: monthLabel(p.date), list: [p] });
+    });
+    return '<div class="gc-hlist-wrap">' + groups.map(function (g) {
+      return '<h3 class="gc-month">' + esc(g.label) + '</h3><ul class="gc-hlist" aria-label="Score history, newest first">' + historyRows(g.list) + '</ul>';
+    }).join('') + '</div>' +
       (posts.length > shown ? '<button type="button" class="p-link gc-showall" data-act="show-all">Show all (' + posts.length + ')</button>' : '');
   }
 
@@ -215,26 +235,26 @@
     view.innerHTML =
       '<section class="p-hero gc-hero"><h1>Scores</h1></section>' +
       bannerHTML(false) +
-      '<div class="p-cols gc-cols">' +
-        '<aside class="gc-side">' +
-          '<div class="gc-tiles">' +
-            '<div class="gc-tile"><span class="gc-tile-k">Handicap index</span><span class="gc-tile-v">' + esc(fmt.handicap(m.handicap)) + '</span><span class="gc-tile-s">Your club record</span></div>' +
-            '<div class="gc-tile"><span class="gc-tile-k">Demo estimate</span><span class="gc-tile-v">' + (est ? esc(fmt.handicap(est.index)) : '–') + '</span><span class="gc-tile-s">' + (est ? 'Best ' + est.used + ' of ' + est.of : 'Needs 3 scores') + '</span></div>' +
-          '</div>' +
+      '<div class="gc-cols">' +
+        '<div class="gc-side">' +
+          '<section class="gc-idx" aria-label="Handicap index"><p class="gc-idx-k">Handicap index</p>' +
+            '<p class="gc-idx-v">' + esc(fmt.handicap(m.handicap)) + '</p><p class="gc-idx-s">Your club record</p></section>' +
+          '<p class="gc-est"><span class="gc-est-k">Demo estimate</span><span class="gc-est-s">' + (est ? 'Best ' + est.used + ' of ' + est.of : 'Needs 3 scores') + '</span>' +
+            '<span class="gc-est-v">' + (est ? esc(fmt.handicap(est.index)) : '–') + '</span></p>' +
           '<section class="gc-sec gc-due" aria-labelledby="gc-d-h"><div class="gc-sec-head"><h2 id="gc-d-h">Rounds to post</h2>' +
               (due.length > 2 ? '<button type="button" class="p-link" data-act="all-due" aria-haspopup="dialog">View all (' + due.length + ')</button>' : '') + '</div>' +
-            '<ul class="p-list gc-duelist">' + due.slice(0, 2).map(dueRow).join('') +
-              '<li><a class="gc-due-row gc-due-manual" href="#/scores/post">' + Club.icon('plus', 'gc-due-ic') + '<span class="gc-due-main"><span class="gc-due-t">Post a score for another round</span><span class="gc-due-s">A round not booked in the app</span></span>' + Club.icon('chevronRight', 'gc-go') + '</a></li>' +
+            '<ul class="gc-duelist">' + due.slice(0, 2).map(dueRow).join('') +
+              '<li><a class="gc-due-row gc-due-manual" href="#/scores/post"><span class="gc-due-main"><span class="gc-due-t">Post a score for another round</span><span class="gc-due-s">A round not booked in the app</span></span></a></li>' +
             '</ul>' + (due.length ? '' : '<p class="gc-hint">Your rounds from the last two weeks are all posted.</p>') +
           '</section>' +
-        '</aside>' +
+        '</div>' +
         '<div class="gc-main">' +
           '<section class="gc-sec" aria-labelledby="gc-h-h"><div class="gc-sec-head"><h2 id="gc-h-h">Score history</h2><span class="gc-count">' + posts.length + (posts.length === 1 ? ' score' : ' scores') + '</span></div>' +
             '<div class="gc-history">' + historyHTML(posts, shown) + '</div></section>' +
         '</div>' +
       '</div>';
     ui.on(view, 'click', '[data-post]', function (e, b) { openPost(b.dataset.post); });
-    ui.on(view, 'click', '[data-act=show-all]', function () { shown = 1e6; ui.$('.gc-history', view).innerHTML = historyHTML(postsOf(m.id), shown); const f = ui.$('.gc-hlist li:nth-child(11) button', view); if (f) f.focus(); });
+    ui.on(view, 'click', '[data-act=show-all]', function () { shown = 1e6; ui.$('.gc-history', view).innerHTML = historyHTML(postsOf(m.id), shown); if (Club.i18n) Club.i18n.translate(ui.$('.gc-history', view)); const f = ui.$$('.gc-hrow', view)[10]; if (f) f.focus(); });
     ui.on(view, 'click', '[data-act=all-due]', function () {
       Portal.openSheet({ title: 'Rounds to post', size: 'full', rows: due.map(function (t) { return { value: t.id, label: dayShort(t.date) + ' · ' + fmt.time(t.time), sub: roundSub(t, m.id), href: '#/scores/post/' + encodeURIComponent(t.id) }; }) });
     });
@@ -245,8 +265,9 @@
   }
   function dueRow(t) {
     const m = Portal.member();
-    return '<li><a class="gc-due-row" href="#/scores/post/' + encodeURIComponent(t.id) + '"><span class="gc-due-main"><span class="gc-due-t">' + esc(dayShort(t.date) + ' · ' + fmt.time(t.time)) + '</span>' +
-      '<span class="gc-due-s">' + esc(roundSub(t, m.id, true)) + '</span></span><span class="gc-due-cta">Post score</span>' + Club.icon('chevronRight', 'gc-go') + '</a></li>';
+    return '<li><a class="gc-due-row" href="#/scores/post/' + encodeURIComponent(t.id) + '" aria-label="' + esc('Post score for ' + dayShort(t.date) + ' at ' + fmt.time(t.time)) + '">' + dblock(t.date) +
+      '<span class="gc-due-main"><span class="gc-due-t">' + esc(fmt.time(t.time)) + '</span>' +
+      '<span class="gc-due-s">' + esc(roundSub(t, m.id, true)) + '</span></span><span class="gc-due-cta">Post score</span></a></li>';
   }
 
   /* ---------------- #/scores/post[/teeTimeId]: one decision at a time ---------------- */
@@ -293,10 +314,10 @@
           : '<a class="p-link gc-back" href="' + (tt ? '#/tee-times/mine' : '#/scores') + '">' + Club.icon('chevronLeft') + '<span>' + (tt ? 'My tee times' : 'Scores') + '</span></a>') + demoPill() + '</div>' +
         '<h1 class="gc-flow-h">Post a score</h1>' +
         '<ol class="gc-steps" aria-label="Steps">' + STEPS.map(function (s, k) {
-          return '<li class="' + (k < i ? 'is-done' : k === i ? 'is-now' : '') + '"' + (k === i ? ' aria-current="step"' : '') + '><span class="gc-step-n" aria-hidden="true">' + (k < i ? Club.icon('check') : k + 1) + '</span><span class="gc-step-l">' + s.label + '</span></li>';
+          return '<li class="' + (k < i ? 'is-done' : k === i ? 'is-now' : '') + '"' + (k === i ? ' aria-current="step"' : '') + '><span class="gc-step-n" aria-hidden="true">' + (k + 1) + '</span><span class="gc-step-l">' + s.label + '</span></li>';
         }).join('') + '</ol>' +
         '<div class="gc-step-body">' + inner + '</div>' +
-        '<p class="gc-flow-foot">' + Club.icon('info') + '<span>Demo only. Nothing is sent to Golf Canada.</span></p>' +
+        '<p class="gc-flow-foot"><span>Demo only. Nothing is sent to Golf Canada.</span></p>' +
       '</div>';
     }
 
@@ -304,20 +325,20 @@
     function roundHTML() {
       const others = tt ? partners(tt, m.id) : [];
       const head = tt
-        ? '<div class="gc-round"><span class="gc-round-ic">' + Club.icon('flag') + '</span><div><p class="gc-round-t">' + esc(dayLong(tt.date)) + '</p>' +
+        ? '<div class="gc-round">' + dblock(tt.date) + '<div><p class="gc-round-t">' + esc(dayLong(tt.date)) + '</p>' +
             '<p class="gc-round-s">' + esc(fmt.time(tt.time) + ' · ' + tt.holes + ' holes') + '</p>' +
             '<p class="gc-round-s">' + esc(others.length ? 'With ' + niceList(others.map(partnerName)) : 'A solo round') + '</p></div></div>'
         : '<div class="gc-q gc-date"></div>' +
-          '<div class="gc-q"><span class="pk-label" id="gc-holes-l">Holes</span><div class="segmented gc-seg" role="radiogroup" aria-labelledby="gc-holes-l">' +
+          '<div class="gc-q gc-q-row"><span class="pk-label" id="gc-holes-l">Holes</span><div class="segmented gc-seg" role="radiogroup" aria-labelledby="gc-holes-l">' +
             [18, 9].map(function (n) { return '<button type="button" role="radio" data-holes="' + n + '" aria-checked="' + (st.holes === n) + '"' + (st.holes === n ? ' class="active"' : '') + '>' + n + ' holes</button>'; }).join('') + '</div></div>';
-      const nine = st.holes === 9 ? '<div class="gc-q"><span class="pk-label" id="gc-nine-l">Which nine</span><div class="segmented gc-seg" role="radiogroup" aria-labelledby="gc-nine-l">' +
+      const nine = st.holes === 9 ? '<div class="gc-q gc-q-row"><span class="pk-label" id="gc-nine-l">Which nine</span><div class="segmented gc-seg" role="radiogroup" aria-labelledby="gc-nine-l">' +
         [['front', 'Front 9 (holes 1 to 9)'], ['back', 'Back 9 (holes 10 to 18)']].map(function (x) { return '<button type="button" role="radio" data-nine="' + x[0] + '" aria-checked="' + (st.nine === x[0]) + '"' + (st.nine === x[0] ? ' class="active"' : '') + '>' + x[1].replace(/ \(.*/, '') + '<span class="gc-sr"> ' + x[1].replace(/.*\(|\)/g, '') + '</span></button>'; }).join('') + '</div></div>' : '';
       const h = holesFor(st.holes, st.nine);
-      const tees = '<div class="gc-q"><span class="pk-label" id="gc-tees-l">Tees</span><div class="gc-opts" role="radiogroup" aria-labelledby="gc-tees-l">' + TEES.map(function (t) {
+      const tees = '<div class="gc-q gc-q-list"><span class="pk-label" id="gc-tees-l">Tees</span><div class="gc-opts" role="radiogroup" aria-labelledby="gc-tees-l">' + TEES.map(function (t) {
         const on = st.tees === t.id;
         return '<button type="button" class="gc-opt" role="radio" data-tee="' + t.id + '" aria-checked="' + on + '"><span class="gc-dot gc-dot-' + t.id + '" aria-hidden="true"></span>' +
           '<span class="gc-opt-main"><span class="gc-opt-l">' + t.label + '</span><span class="gc-opt-s">' + yardsOf(h, t.id).toLocaleString('en-CA') + ' yards · Par ' + parOf(h) + '</span></span>' +
-          '<span class="gc-radio" aria-hidden="true"></span></button>';
+          '<span class="gc-opt-k" aria-hidden="true">Selected</span></button>';
       }).join('') + '</div><p class="gc-hint">Yardage and par from the club scorecard.</p></div>';
       return head + nine + tees;
     }
@@ -339,7 +360,7 @@
       const h = hs(), c = ch(), t = totals(), strokes = strokesPerHole(h, c);
       const mode = '<div class="segmented gc-seg gc-mode" role="radiogroup" aria-label="How to enter your score">' +
         [['hole', 'Hole by hole'], ['total', 'Total only']].map(function (x) { return '<button type="button" role="radio" data-mode="' + x[0] + '" aria-checked="' + (st.mode === x[0]) + '"' + (st.mode === x[0] ? ' class="active"' : '') + '>' + x[1] + '</button>'; }).join('') + '</div>';
-      const explain = Portal.accordion({ id: 'gc-ndb', icon: 'info', title: 'Adjusted gross score', summary: 'Net double bogey, course handicap ' + c + ' (demo)',
+      const explain = Portal.accordion({ id: 'gc-ndb', title: 'Adjusted gross score', summary: 'Net double bogey, course handicap ' + c + ' (demo)',
         body: '<p class="gc-acc-p">Each hole counts at most net double bogey: par plus 2, plus any strokes you receive there. Your course handicap from the ' + teeLabel(st.tees) + ' tees is ' + c +
           ' (from your index ' + esc(fmt.handicap(index)) + ' and placeholder demo ratings), so you receive ' + (c > 0 ? 'a stroke on the ' + (c === 1 ? 'hardest hole' : c + ' hardest holes') + ' by stroke index' : 'no strokes') + '.</p>' });
       if (st.mode === 'total') {
@@ -387,8 +408,7 @@
       const opt = function (o) {
         const on = (st.attest || '') === o.id && o.ok;
         return '<button type="button" class="gc-opt" role="radio" data-att="' + esc(o.id) + '" aria-checked="' + on + '"' + (o.ok ? '' : ' disabled aria-disabled="true"') + '>' +
-          (o.id ? ui.avatar(o.label, 'sm', !o.ok) : '<span class="gc-opt-ic">' + Club.icon('user') + '</span>') +
-          '<span class="gc-opt-main"><span class="gc-opt-l">' + esc(o.label) + '</span><span class="gc-opt-s">' + esc(o.why) + '</span></span><span class="gc-radio" aria-hidden="true"></span></button>';
+          '<span class="gc-opt-main"><span class="gc-opt-l">' + esc(o.label) + '</span><span class="gc-opt-s">' + esc(o.why) + '</span></span><span class="gc-opt-k" aria-hidden="true">Selected</span></button>';
       };
       return '<p class="gc-lead">A playing partner can attest your score. This is optional.</p>' +
         '<div class="gc-opts" role="radiogroup" aria-label="Who attests your score">' + opt({ id: '', label: 'No attestation', ok: true, why: 'Post without a marker' }) + opts.map(opt).join('') + '</div>' +

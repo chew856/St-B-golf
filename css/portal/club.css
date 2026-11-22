@@ -1,161 +1,197 @@
 /* ==========================================================================
-   Portal: The club (pc-), v2. Tokens only; loaded before portal-theme.css.
+   Portal: The club (pc-), js/portal/club.js. Tokens only; loaded before portal-theme.css and kit.css, so rules that
+   meet theirs carry body.portal and one more class.
+   Redesign (Nov 22, the owner-approved language): the Mist page, hairlines, no cards, no shadows, no avatars.
+   - Title, one quiet line, then Course / News / Directory / Club info as words with the brass underline.
+   - Course: one dark Fairway panel (open or closed; the temperature is the page's one serif figure; Book a tee time),
+     then Carts, Greens, Pins and Holes as a quiet label and value list, and rows that open for the hole status and
+     the forecast.
+   - News: a reading list. A date block (the month in small capitals over the day), the title, how long ago, and a
+     small brass dot while unread.
+   - Directory: hairline rows under a letter in small capitals. Club info: hours and contacts as plain lists.
+   Contrast (WCAG 2.1, computed): --text on Mist 14.1:1; --text-2 on Mist 6.5:1; --text-3 on Mist 5.2:1; --label on
+   Mist 5.1:1; --warn on Mist 5.9:1; --danger on Mist 6.3:1; --on-dark on Fairway 12.1:1; --on-dark-3 on Fairway
+   8.4:1; --c-oak-soft on Fairway 6.7:1; Ink on Brass 5.0:1 (the unread count). Brass is otherwise a line and dot.
    ========================================================================== */
-.pc-title { margin-bottom: 16px; }
-.pc-title h1 { margin: 0; }
-.pc-title p { margin: 4px 0 0; font-size: var(--fs-body); color: var(--text-2); }
-.pc-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 16px; }
-.pc-section { margin-top: 28px; }
-.pc-section-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px 16px; margin-bottom: 8px; }
-.pc-section-head h2 { margin: 0; }
-.pc-section-head p { margin: 0; font-size: var(--fs-meta); color: var(--text-2); }
-.pc-chev { width: 18px; height: 18px; flex: none; color: var(--text-3); margin-left: auto; }
-.pc-row-ic { width: 20px; height: 20px; flex: none; color: var(--forest-500); align-self: flex-start; margin-top: 2px; }
+.pc-vh { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ---------- Title, the quiet line, the sections as words ---------- */
+.pc-title { margin: 0 0 4px; }
+body.portal .pc-title h1 { margin: 6px 0 2px; font-size: 2.125rem; font-weight: 500; line-height: 1.15; letter-spacing: -0.025em; }
+body.portal .pc-title p { margin: 0; padding: 6px 0 10px; font-size: var(--fs-meta); line-height: 1.45; color: var(--text-2); }
+.pc-subnav { display: flex; gap: 22px; margin: 0 0 24px; border: 0; box-shadow: inset 0 -1px 0 var(--border); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.pc-subnav::-webkit-scrollbar { display: none; }
+body.portal .pc-subnav a { position: relative; flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 10px 0 10.5px; border-bottom: 1.5px solid transparent; font: 500 0.875rem/1.4 var(--sans); color: var(--text-3); white-space: nowrap; text-decoration: none; }
+@media (hover: hover) { body.portal .pc-subnav a:hover { color: var(--text); text-decoration: none; } }
+body.portal .pc-subnav a.active { color: var(--text); border-bottom-color: var(--accent); }
+/* unread notices: a small brass badge with Ink figures, as on Tee times */
+.pc-count { min-width: 18px; padding: 1px 6px; border-radius: 999px; background: var(--accent); color: var(--c-ink); font-size: 0.6875rem; font-weight: 600; line-height: 1.45; text-align: center; font-variant-numeric: tabular-nums; }
+
+/* ---------- Shared pieces ---------- */
+body.portal .pc-h { margin: 0 0 10px; font-family: var(--sans); font-size: 1.375rem; font-weight: 500; line-height: 1.3; letter-spacing: -0.02em; color: var(--text); }
+/* small spaced capitals: the labels of this page */
+body.portal .pc-caps, .pc-facts dt, .pc-search-l, body.portal .pc-letter-head h3, .pc-notice-d small, body.portal .pc-letter-meta {
+  font-family: var(--sans); font-size: 0.6875rem; font-weight: 600; line-height: 1.4; letter-spacing: 0.18em; text-transform: uppercase; color: var(--label);
+}
+.pc-sec { margin-top: 32px; }
+.pc-list { list-style: none; margin: 0; padding: 0; border-bottom: 1px solid var(--border); }
+.pc-list > li { border-top: 1px solid var(--border); }
+body.portal .pc-quiet { margin: 0; padding: 12px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); font-size: 0.9375rem; color: var(--text-2); }
+body.portal .pc-empty .empty { padding: 36px 0 28px; }
+body.portal .pc-empty .empty svg { display: none; }
 .pc-row-main { flex: 1 1 auto; min-width: 0; }
-.pc-row-main h3 { margin: 0; font-size: 1rem; }
-.pc-row-main p { margin: 2px 0 0; font-size: var(--fs-meta); color: var(--text-2); }
+body.portal .pc-row-main h3 { margin: 0; font-size: 0.96875rem; font-weight: 500; line-height: 1.35; }
+.pc-row-main p { margin: 2px 0 0; font-size: 0.8125rem; line-height: 1.45; color: var(--text-2); }
 body.portal .pc-more { min-height: 0; padding: 12px 2px; margin: -12px 0; font-size: var(--fs-meta); vertical-align: baseline; display: inline; }
 /* "More" was under 44px wide: wider tap area, same place (the .p-link rule in portal-theme.css wins over the line above) */
 body.portal .p-link.pc-more { padding: 0 8px; margin: 0 -8px; }
+/* Rows that open (hole status, forecast, benefits, dress code): a hairline row, not a card */
+.pc-accs { border-bottom: 1px solid var(--border); }
+body.portal .pc-accs .pk-acc { margin: 0; border: 0; border-top: 1px solid var(--border); border-radius: 0; background: none; box-shadow: none; }
+body.portal .pc-accs .pk-acc-head { min-height: 56px; padding: 8px 0; background: none; }
+body.portal .pc-accs .pk-acc-text { flex-direction: row; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 12px; }
+body.portal .pc-accs .pk-acc-title { font-size: 0.96875rem; font-weight: 500; }
+body.portal .pc-accs .pk-acc-sum { font-size: var(--fs-meta); color: var(--text-3); font-variant-numeric: tabular-nums; }
+body.portal .pc-accs .pk-acc-chev { width: 16px; height: 16px; color: var(--text-3); }
+body.portal .pc-accs .pk-acc-body { padding: 0 0 16px; border-top: 0; }
 
-/* ---------------- Section tabs: 15px, 2px underline, scroll rather than wrap ---------------- */
-.pc-subnav { display: flex; gap: 24px; border-bottom: 1px solid var(--border); margin-bottom: 20px; overflow-x: auto; scrollbar-width: none; }
-.pc-subnav::-webkit-scrollbar { display: none; }
-.pc-subnav a { position: relative; flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 10px 0; font-size: var(--fs-body); font-weight: 500; color: var(--text-2); white-space: nowrap; text-decoration: none; }
-@media (hover: hover) { .pc-subnav a:hover { color: var(--text); text-decoration: none; } }
-.pc-subnav a.active { color: var(--text); }
-.pc-subnav a.active::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--forest-800); }
-.pc-count { min-width: 20px; padding: 0 6px; border-radius: 999px; background: var(--sage-100); color: var(--forest-800); font-size: var(--fs-meta); font-weight: 500; line-height: 20px; text-align: center; font-variant-numeric: tabular-nums; }
-
-/* ---------------- Course today ---------------- */
-.pc-cond { padding: 0; overflow: hidden; }
-.pc-cond-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 12px 20px; padding: 16px; }
-.pc-cond-state { margin: 0; }
-.pc-cond.is-closed .pc-cond-state { color: var(--danger); }
-.pc-stamp { margin: 2px 0 0; font-size: var(--fs-meta); color: var(--text-3); }
-.pc-now { display: flex; align-items: flex-start; gap: 8px; margin: 0; font-size: var(--fs-body); font-weight: 500; color: var(--text); font-variant-numeric: tabular-nums; }
-.pc-now > .icon { width: 22px; height: 22px; color: var(--forest-500); flex: none; }
-.pc-now-c { font-size: var(--fs-meta); font-weight: 400; color: var(--text-2); }
-.pc-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: var(--border); border-top: 1px solid var(--border); }
-.pc-tile { display: flex; flex-direction: column; gap: 2px; padding: 14px 16px; background: var(--surface); min-width: 0; }
-.pc-tile-l { font-size: var(--fs-meta); color: var(--text-3); }
-.pc-tile-v { font-size: var(--fs-body); font-weight: 500; color: var(--text); font-variant-numeric: tabular-nums; }
-.pc-tile-n { font-size: var(--fs-meta); line-height: 1.4; color: var(--text-2); }
-.pc-accs { margin-top: 12px; }
+/* ---------- Course today: the dark panel ---------- */
+.pc-today { margin: 0; padding: 22px 22px 20px; background: var(--c-fairway); color: var(--on-dark); border: 0; border-radius: var(--radius-card); box-shadow: none; overflow: visible; }
+body.portal .pc-today .pc-stamp { margin: 0; font-size: 0.6875rem; font-weight: 600; line-height: 1.5; letter-spacing: 0.22em; text-transform: uppercase; color: var(--c-oak-soft); }
+.pc-today-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-top: 14px; }
+.pc-today-b { min-width: 0; }
+body.portal .pc-today .pc-cond-state { margin: 0 0 6px; font-size: 1.75rem; font-weight: 500; line-height: 1.15; letter-spacing: -0.025em; color: var(--on-dark); }
+body.portal .pc-today .pc-now { display: block; margin: 0; font-size: 0.875rem; font-weight: 400; line-height: 1.5; color: var(--on-dark-3); font-variant-numeric: tabular-nums; }
+.pc-today .pc-now-c { font-size: inherit; font-weight: 400; color: inherit; }
+/* the temperature: the page's one figure in the serif */
+body.portal .pc-temp { flex: none; margin: 0 0 -4px; font-family: var(--font-sig); font-size: clamp(3.5rem, 19vw, 4.75rem); font-weight: 400; line-height: 0.9; letter-spacing: -0.03em; color: var(--on-dark); font-variant-numeric: lining-nums; white-space: nowrap; }
+.pc-today-rule { height: 1px; margin: 18px 0 14px; background: var(--on-dark-rule); }
+.pc-cta { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px 16px; min-height: 44px; margin: 0; }
+body.portal .pc-today-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 18px; border-radius: 3px; background: var(--c-mist); color: var(--c-ink); font-size: 0.875rem; font-weight: 600; line-height: 1.2; text-decoration: none; }
+@media (hover: hover) { body.portal .pc-today-btn:hover { background: var(--c-paper); text-decoration: none; } }
+body.portal .pc-today-link { display: inline-flex; align-items: center; min-height: 44px; margin-left: auto; color: var(--on-dark); font-size: 0.875rem; text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 5px; }
+@media (hover: hover) { body.portal .pc-today-link:hover { text-decoration-color: var(--on-dark); } }
+.pc-today :focus-visible { outline-color: var(--on-dark); }
+/* Carts, Greens, Pins, Holes: a quiet label and value list */
+.pc-facts { margin: 8px 0 0; padding: 0; }
+.pc-facts > div { display: grid; grid-template-columns: minmax(4.75rem, 24%) minmax(0, 1fr); gap: 12px; align-items: baseline; padding: 13px 0; border-bottom: 1px solid var(--border); }
+.pc-facts dt { line-height: 1.7; }
+.pc-facts dd { margin: 0; min-width: 0; }
+.pc-fact-v { display: block; font-size: 0.96875rem; font-weight: 500; line-height: 1.4; color: var(--text); font-variant-numeric: tabular-nums; }
+.pc-fact-n { display: block; margin-top: 1px; font-size: 0.8125rem; line-height: 1.45; color: var(--text-3); }
+.pc-on-course > .pc-accs { margin-top: 0; }
 .pc-hole-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(max(1.75rem, calc((100% - 32px) / 9)), 1fr)); gap: 4px; }
-.pc-hole-grid li { min-height: 32px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: var(--radius-ctl); font-size: var(--fs-meta); color: var(--text-2); background: var(--surface); font-variant-numeric: tabular-nums; }
-.pc-hole-grid li.h-GUR { background: var(--sage-50); border: 1px dashed var(--warn); color: var(--warn); font-weight: 500; }
-.pc-hole-grid li.h-closed { background: var(--sage-50); border: 1px solid var(--danger); color: var(--danger); text-decoration: line-through; font-weight: 500; }
+.pc-hole-grid li { min-height: 32px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 3px; font-size: var(--fs-meta); color: var(--text-2); background: none; font-variant-numeric: tabular-nums; }
+.pc-hole-grid li.h-GUR { border: 1px dashed var(--warn); color: var(--warn); font-weight: 500; }
+.pc-hole-grid li.h-closed { border: 1px solid var(--danger); color: var(--danger); text-decoration: line-through; font-weight: 500; }
 .pc-legend { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: var(--fs-meta); color: var(--text-2); }
 .pc-legend li { display: inline-flex; align-items: center; gap: 6px; }
-.pc-legend i { width: 14px; height: 14px; border-radius: 4px; display: inline-block; background: var(--surface); border: 1px solid var(--border); }
-.pc-legend i.h-GUR { background: var(--sage-50); border: 1px dashed var(--warn); }
-.pc-legend i.h-closed { background: var(--sage-50); border: 1px solid var(--danger); }
+.pc-legend i { width: 14px; height: 14px; border-radius: 3px; display: inline-block; border: 1px solid var(--border); }
+.pc-legend i.h-GUR { border: 1px dashed var(--warn); }
+.pc-legend i.h-closed { border: 1px solid var(--danger); }
 .pc-holes-note { margin: 10px 0 0; font-size: var(--fs-meta); color: var(--text); }
-/* Grounds-crew note: a flat accordion inside the conditions card */
-body.portal .pc-note .pk-acc { border: 0; border-top: 1px solid var(--border); border-radius: 0; box-shadow: none; background: var(--sage-50); }
-.pc-note-p { margin: 0; font-size: var(--fs-body); color: var(--text); }
+.pc-note-p { margin: 0; font-size: 0.9375rem; line-height: 1.55; color: var(--text); }
+/* The forecast: plain rows */
+.pc-fc { list-style: none; margin: 0; padding: 0; }
+.pc-fc > li { display: grid; grid-template-columns: 3.75rem minmax(0, 1fr) auto; grid-template-areas: "day cond t" "day rain t"; align-items: center; gap: 0 12px; min-height: 52px; padding: 7px 0; border-top: 1px solid var(--border); }
+.pc-fc-day { grid-area: day; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--label); }
+.pc-fc-cond { grid-area: cond; font-size: 0.9375rem; font-weight: 500; color: var(--text); min-width: 0; }
+.pc-fc-rain { grid-area: rain; font-size: 0.8125rem; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.pc-fc-t { grid-area: t; text-align: right; font-family: var(--font-sig); font-size: 1.125rem; font-weight: 400; color: var(--text); font-variant-numeric: lining-nums; white-space: nowrap; }
+.pc-fc-t span { margin-left: 4px; color: var(--text-3); }
 
-/* Forecast list inside its accordion */
-.pc-fc { list-style: none; margin: -4px 0 0; padding: 0; }
-.pc-fc > li { display: grid; grid-template-columns: 3.5rem minmax(0, 1fr) auto; grid-template-areas: "day cond t" "day rain t"; align-items: center; gap: 0 12px; min-height: 52px; padding: 6px 0; }
-.pc-fc > li + li { border-top: 1px solid var(--border); }
-.pc-fc-day { grid-area: day; font-size: var(--fs-body); font-weight: 500; }
-.pc-fc li.today .pc-fc-day { color: var(--forest-800); }
-.pc-fc-cond { grid-area: cond; display: flex; align-items: center; gap: 8px; font-size: var(--fs-body); color: var(--text); min-width: 0; }
-.pc-fc-cond .icon { width: 20px; height: 20px; color: var(--forest-500); flex: none; }
-.pc-fc-rain { grid-area: rain; padding-left: 28px; font-size: var(--fs-meta); color: var(--text-2); font-variant-numeric: tabular-nums; }
-.pc-fc-t { grid-area: t; text-align: right; font-size: var(--fs-body); font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.pc-fc-t span { font-weight: 400; color: var(--text-2); }
-.pc-cta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
-.pc-cta .btn { flex: 1 1 160px; }
-
-/* ---------------- Club news: one-line rows ---------------- */
-body.portal .p-list.pc-news > li { display: block; padding: 0; min-height: 0; }
-.pc-notice { width: 100%; display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 8px 14px 8px 16px; text-align: left; background: none; border: 0; font: inherit; color: var(--text); cursor: pointer; }
-@media (hover: hover) { .pc-notice:hover { background: var(--sage-50); } }
-.pc-notice-date { flex: none; width: 3.5rem; font-size: var(--fs-meta); color: var(--text-3); font-variant-numeric: tabular-nums; }
-.pc-notice-title { flex: 1 1 auto; min-width: 0; font-size: var(--fs-body); font-weight: 500; line-height: 1.35; }
+/* ---------- Club news: a reading list ---------- */
+.pc-list.pc-news > li { display: block; }
+.pc-notice { width: 100%; display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; align-items: center; gap: 14px; min-height: 64px; padding: 14px 0; text-align: left; background: none; border: 0; font: inherit; color: var(--text); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.pc-notice-d { display: block; text-align: center; }
+.pc-notice-d small { display: block; margin: 0 -0.18em 4px 0; line-height: 1.2; }
+.pc-notice-n { display: block; font-family: var(--font-sig); font-size: 1.625rem; font-weight: 400; line-height: 1; letter-spacing: -0.01em; color: var(--text); font-variant-numeric: lining-nums; }
+.pc-notice-b { display: block; min-width: 0; }
+.pc-notice-title { display: block; font-size: 0.96875rem; font-weight: 500; line-height: 1.35; color: var(--text); overflow-wrap: break-word; }
 .pc-notice:not(.unread) .pc-notice-title { font-weight: 400; }
-.pc-new { flex: none; }
+.pc-notice-date { display: block; margin-top: 2px; font-size: 0.8125rem; line-height: 1.4; color: var(--text-3); font-variant-numeric: tabular-nums; }
+@media (hover: hover) { .pc-notice:hover .pc-notice-title, .pc-links a:hover span { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 4px; } }
+/* unread: a small brass dot */
+.pc-new { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
 
 /* The notice in the drawer */
-.pc-letter-meta { margin: 0 0 6px; font-size: var(--fs-meta); color: var(--text-3); }
-.pc-letter-title { margin: 0 0 14px; }
-.pc-letter-body { font-size: 1rem; line-height: 1.6; color: var(--text); }
+body.portal .pc-letter-meta { margin: 0 0 8px; letter-spacing: 0.14em; }
+body.portal .pc-letter-title { margin: 0 0 16px; font-size: 1.5rem; font-weight: 500; line-height: 1.2; letter-spacing: -0.02em; }
+.pc-letter-body { font-size: 1rem; line-height: 1.65; color: var(--text); }
 .pc-letter-body p { margin: 0 0 12px; }
 .pc-letter-body ul { margin: 0 0 12px; padding-left: 1.2em; }
 .pc-sign { margin: 16px 0 0; font-weight: 500; }
 .pc-letter-foot { margin: 16px 0 0; padding-top: 12px; border-top: 1px solid var(--border); font-size: var(--fs-meta); color: var(--text-2); }
-.pc-letter-foot a { color: var(--forest-800); font-weight: 500; }
+.pc-letter-foot a { color: var(--text); font-weight: 500; }
 
-/* ---------------- Directory ---------------- */
-.pc-dir-head { display: grid; gap: 10px; margin-bottom: 16px; }
-.pc-search { display: grid; gap: 6px; max-width: 560px; }
-.pc-search-l { font-size: var(--fs-meta); font-weight: 500; color: var(--text-2); }
+/* ---------- Directory ---------- */
+.pc-dir-head { display: grid; gap: 8px; margin-bottom: 18px; }
+.pc-search { display: grid; gap: 6px; max-width: 36rem; }
 .pc-search-box { position: relative; display: block; }
-.pc-search-box .icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; color: var(--text-3); pointer-events: none; }
-body.portal .pc-search .input { width: 100%; padding-left: 44px; }
-.pc-privacy { display: flex; gap: 8px; align-items: flex-start; margin: 0; padding: 10px 12px; background: var(--sage-50); border-radius: var(--radius-ctl); font-size: var(--fs-meta); color: var(--text-2); }
-.pc-privacy .icon { width: 18px; height: 18px; color: var(--forest-500); flex: none; margin-top: 1px; }
-.pc-dir-count { margin: 0 0 8px 4px; font-size: var(--fs-meta); color: var(--text-3); }
-body.portal .p-list.pc-dir-list > .pc-letter-head { min-height: 0; padding: 8px 16px 6px; background: var(--sage-50); }
-.pc-letter-head h3 { margin: 0; }
-body.portal .p-list.pc-dir-list > .pc-dir-row { min-height: 56px; }
-.pc-dir-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.pc-dir-main .person-name { font-size: 1rem; font-weight: 500; }
-.pc-dir-more { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; padding: 16px 0 0; }
-.pc-dir-more .muted { font-size: var(--fs-meta); }
+.pc-search-box .icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--text-3); pointer-events: none; }
+body.portal .pc-search .input { width: 100%; padding-left: 42px; }
+.pc-privacy { display: block; margin: 0; padding: 0; background: none; border-radius: 0; font-size: var(--fs-meta); line-height: 1.5; color: var(--text-3); }
+.pc-dir-count { margin: 0 0 6px; font-size: var(--fs-meta); color: var(--text-3); font-variant-numeric: tabular-nums; }
+.pc-list.pc-dir-list > .pc-letter-head { padding: 18px 0 6px; border-top: 0; }
+.pc-list.pc-dir-list > .pc-letter-head:first-child { padding-top: 6px; }
+body.portal .pc-letter-head h3 { margin: 0; }
+.pc-dir-row { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 0 16px; min-height: 48px; padding: 12px 0; }
+.pc-dir-main { flex: 1 1 9rem; min-width: 0; }
+body.portal .pc-dir-row .person-name { font-size: 0.96875rem; font-weight: 500; line-height: 1.35; color: var(--text); }
+body.portal .pc-dir-row .person-name .muted { font-weight: 400; color: var(--text-3); }
+body.portal .pc-dir-row .person-sub { flex: 0 1 auto; margin-left: auto; font-size: 0.8125rem; line-height: 1.4; color: var(--text-3); text-align: right; font-variant-numeric: tabular-nums; }
+/* "Show more": a last row, how many are showing on the right */
+.pc-all { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; min-height: 48px; padding: 12px 0; border: 0; border-bottom: 1px solid var(--border); background: none; color: var(--text); font: 500 0.96875rem/1.35 var(--sans); text-align: left; cursor: pointer; }
+.pc-all-n { font-size: 0.8125rem; font-weight: 400; color: var(--text-3); font-variant-numeric: tabular-nums; }
+@media (hover: hover) { .pc-all:hover > span:first-child { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 4px; } }
 
-/* ---------------- Club information: about card, then accordions ---------------- */
-.pc-about h2 { margin: 0 0 6px; }
-.pc-about-p { margin: 0; font-size: var(--fs-body); color: var(--text); }
-.pc-about .pc-call { margin-top: 4px; }
-.pc-rows { list-style: none; margin: 0; padding: 0; }
-.pc-rows > li { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; }
-.pc-rows > li + li { border-top: 1px solid var(--border); }
-.pc-hour-line { color: var(--text) !important; }
-.pc-hour-line span { color: var(--text-3); }
-p.pc-hour-note { font-size: var(--fs-meta) !important; color: var(--text-3) !important; }
-.pc-rows a:not(.p-link) { color: var(--forest-800); font-weight: 500; text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 3px; white-space: nowrap; }
-.pc-people .avatar { flex: none; width: 40px; height: 40px; font-size: var(--fs-body); }
-p.pc-person-role { color: var(--forest-500) !important; font-size: var(--fs-meta) !important; }
-body.portal .pc-call { font-variant-numeric: tabular-nums; }
-.pc-call .icon { width: 18px; height: 18px; }
+/* ---------- Club info: about, hours, contacts as plain lists ---------- */
+.pc-about { margin: 0; padding: 0; background: none; border: 0; box-shadow: none; }
+.pc-about-p { margin: 0; font-size: 0.9375rem; line-height: 1.6; color: var(--text); }
+body.portal .pc-about .pc-call { margin-top: 4px; }
+body.portal .pc-call { font-variant-numeric: tabular-nums; font-size: 0.875rem; }
 .pc-call span { white-space: nowrap; }
-.pc-links > li { padding: 0 !important; }
-body.portal .pc-links a { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; color: var(--text); font-size: var(--fs-body); font-weight: 400; text-decoration: none; white-space: normal; }
-.pc-links a > .icon:first-child { width: 20px; height: 20px; color: var(--forest-500); flex: none; }
-.pc-benefits { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 2px 20px; }
-.pc-benefits li { display: flex; align-items: flex-start; gap: 10px; padding: 4px 0; font-size: var(--fs-body); color: var(--text); }
-.pc-benefits .icon { width: 18px; height: 18px; color: var(--forest-500); flex: none; margin-top: 2px; }
+body.portal .pc-hours .pc-caps { margin: 18px 0 2px; }
+body.portal .pc-hours .pc-h + .pc-caps { margin-top: 6px; }
+.pc-kv { margin: 0; padding: 0; border-bottom: 1px solid var(--border); }
+.pc-kv > div { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 0 16px; padding: 10px 0; border-top: 1px solid var(--border); }
+.pc-kv > div:first-child { border-top: 0; }
+.pc-kv dt { font-size: 0.9375rem; font-weight: 400; color: var(--text-2); }
+.pc-kv dd { margin: 0 0 0 auto; font-size: 0.9375rem; font-weight: 500; color: var(--text); text-align: right; font-variant-numeric: tabular-nums; }
+.pc-kv dd a, .pc-hour-note a, .pc-quiet a { color: var(--text); font-weight: 500; text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 4px; white-space: nowrap; }
+body.portal .pc-hour-note { margin: 8px 0 0; font-size: var(--fs-meta); line-height: 1.5; color: var(--text-3); }
+.pc-hour-src { margin: 16px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; font-size: var(--fs-meta); color: var(--text-2); }
+body.portal .pc-hour-src .p-link { font-size: var(--fs-meta); }
+/* Who to contact: the name, the role and what to ask them; the number on the right */
+.pc-list.pc-people > li { display: flex; align-items: center; flex-wrap: wrap; gap: 0 16px; padding: 12px 0; }
+.pc-people .pc-row-main { flex: 1 1 12rem; }
+body.portal .pc-people .pc-person-role { color: var(--text-2); }
+body.portal .pc-people .pc-person-note { color: var(--text-3); }
+body.portal .pc-people .pc-call { flex: none; margin-left: auto; }
+.pc-info-side > .pc-accs { margin-top: 32px; }
+.pc-rows { list-style: none; margin: 0; padding: 0; }
+.pc-rows > li { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-top: 1px solid var(--border); }
+.pc-rows > li:first-child { border-top: 0; padding-top: 0; }
+.pc-benefits { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 0 28px; }
+.pc-benefits li { padding: 9px 0; border-top: 1px solid var(--border); font-size: 0.9375rem; line-height: 1.4; color: var(--text); }
+.pc-list.pc-links > li { padding: 0; }
+body.portal .pc-links a { display: flex; align-items: center; width: 100%; min-height: 48px; padding: 12px 0; color: var(--text); font-size: 0.96875rem; font-weight: 500; text-decoration: none; }
 
 /* ==========================================================================
-   Tablet (>= 768) and desktop (>= 1024)
+   Tablet (>= 768) and desktop (>= 1024): calm columns
    ========================================================================== */
 @media (min-width: 768px) {
-  .pc-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .pc-subnav { gap: 2rem; }
-  .pc-title p { max-width: 60ch; }
-  .pc-cta .btn { flex: 0 0 auto; }
+  .pc-body { max-width: 40rem; }
+  .pc-today { padding: 26px 28px 24px; }
+  body.portal .pc-temp { font-size: 5.375rem; }
+  body.portal .pc-today .pc-cond-state { font-size: 2rem; }
 }
 @media (min-width: 1024px) {
-  /* Course: conditions card and actions on the left, hole status and forecast open on the right */
-  .pc-on-course { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(20rem, 1fr); grid-template-areas: "cond accs" "cta accs"; grid-template-rows: auto 1fr; gap: 1.25rem 2rem; align-items: start; }
-  .pc-on-course > .pc-cond { grid-area: cond; }
-  .pc-on-course > .pc-accs { grid-area: accs; margin-top: 0; }
-  .pc-on-course > .pc-cta { grid-area: cta; margin-top: 0; }
-  .pc-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  /* Club news: a wider list with roomier rows, kept to a readable width */
-  .pc-on-news > .pc-news { max-width: 56rem; }
-  .pc-on-news .pc-notice { min-height: 3.5rem; padding: 0.625rem 1.25rem; gap: 1.25rem; }
-  .pc-on-news .pc-notice-date { width: 4.5rem; }
-  .pc-on-news .pc-notice-title { font-size: 1rem; }
-  /* Directory: search and privacy note beside the list */
-  .pc-on-directory > .pc-dirwrap { display: grid; grid-template-columns: minmax(18rem, 22rem) minmax(0, 40rem); gap: 2rem; align-items: start; }
-  .pc-on-directory .pc-dir-head { position: sticky; top: 5rem; margin: 0; }
-  /* Club info: about card beside the accordions */
-  .pc-on-info { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 2rem; align-items: start; }
-  .pc-on-info > .pc-accs { margin-top: 0; }
+  .pc-body { max-width: none; }
+  .pc-on-news, .pc-on-directory > .pc-dirwrap { max-width: 40rem; }
+  /* Course: the panel and the conditions on the left; hole status and the forecast open on the right */
+  .pc-on-course, .pc-on-info { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr); column-gap: 72px; align-items: start; }
+  .pc-on-course > .pc-empty { grid-column: 1 / -1; }
+  .pc-info-side > .pc-sec:first-child { margin-top: 0; }
   .pc-about-p { max-width: 65ch; }
 }

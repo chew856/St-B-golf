@@ -6,7 +6,12 @@
    the fee exactly as the staff Enroll does ('Academy: <name>', Lessons, source lessons, refId program id).
    Lesson packages (Nov 17, js/shared/lessonpacks-data.js): the Packages tab lists the member's packages and those on
    sale; buying one posts one account charge with a receipt. Booking a lesson a package covers uses it automatically
-   (price 0, packageId), and cancelling gives the lesson back. Staff lesson notes (lessonNotes) are never shown here. */
+   (price 0, packageId), and cancelling gives the lesson back. Staff lesson notes (lessonNotes) are never shown here.
+
+   Redesign (Nov 22): Book, My lessons, Packages and Clinics are words with a brass underline. Book is one column of
+   hairline rows (the label in small capitals, the choice on the right), the open times as a list with the time in
+   the serif, and the professionals as a hairline list. My lessons are rows with a date block; a package shows the
+   lessons left as a figure; a clinic is a hairline row that opens. No cards. Styles: css/portal/lessons.css (pl-). */
 (function () {
   'use strict';
   const S = Club.store, U = Club.ui, F = Club.fmt, esc = U.esc;
@@ -143,11 +148,11 @@
       /* Several lessons on the next day: one card with a row for each (each row opens its lesson). */
       const day = n ? upcoming().filter(function (l) { return l.date === n.date; }) : [];
       if (day.length > 1) return '<section class="p-hero pl-hero" data-reveal><h1>Lessons</h1>' +
-        '<div class="pl-next-day"><p class="pl-next-day-h">' + Club.icon('lesson') + '<span><span class="pl-next-k">Next</span> ' + esc(dayShort(n.date)) + ' · ' + day.length + ' lessons</span></p>' +
+        '<div class="pl-next-day"><p class="pl-next-day-h"><span><span class="pl-next-k">Next</span> ' + esc(dayShort(n.date)) + ' · ' + day.length + ' lessons</span></p>' +
           day.map(function (l) { return '<button type="button" class="pl-next pl-next-row" data-les="' + esc(l.id) + '"><span class="pl-next-text">' + esc(F.time(l.time) + ' · ' + l.type + ' · ' + proFirst(l.proId)) + '</span>' + Club.icon('chevronRight', 'pl-go') + '</button>'; }).join('') +
         '</div></section>';
       return '<section class="p-hero pl-hero" data-reveal><h1>Lessons</h1>' +
-        (n ? '<button type="button" class="pl-next" data-les="' + esc(n.id) + '">' + Club.icon('lesson') +
+        (n ? '<button type="button" class="pl-next" data-les="' + esc(n.id) + '">' +
           '<span class="pl-next-text"><span class="pl-next-k">Next</span> ' + esc(dayShort(n.date) + ' · ' + F.time(n.time) + ' · ' + n.type + ' · ' + proFirst(n.proId)) + '</span>' + Club.icon('chevronRight', 'pl-go') + '</button>'
           : '<p class="pl-hero-line">Private lessons with our CPGA professionals, plus clinics through the season.</p>') +
         '</section>';
@@ -200,16 +205,16 @@
       lastTab = 'book';
       const blocked = member.status === 'suspended';
       const days = []; for (let i = 0; i < 21; i++) days.push(Club.date.fromToday(i));
-      panel.innerHTML = '<div class="p-cols pl-cols"><div class="pl-main">' + (blocked ? '<div class="pl-alert">' + Club.icon('alert') + '<span>You can’t book online right now. Please call the golf shop at ' + telLink() + '.</span></div>' : '') +
-        '<div class="pl-card" data-reveal>' +
-          '<div class="pl-pro-sel"></div><div class="pl-type-sel"></div>' +
-          '<div class="pl-dur"><span class="pk-label" id="pl-dur-l">Length</span>' + U.segmented(DURATIONS.map(function (d) { return { value: String(d), label: d + ' min' }; }), String(draft.duration), 'duration') + '</div>' +
-          '<div class="pl-dp"></div>' +
+      panel.innerHTML = '<div class="p-cols pl-cols"><div class="pl-main">' + (blocked ? '<div class="pl-alert"><span>You can’t book online right now. Please call the golf shop at ' + telLink() + '.</span></div>' : '') +
+        '<div class="pl-form" data-reveal>' +
+          '<div class="pl-f pl-pro-sel"></div><div class="pl-f pl-type-sel"></div>' +
+          '<div class="pl-f pl-dur"><span class="pk-label" id="pl-dur-l">Length</span>' + U.segmented(DURATIONS.map(function (d) { return { value: String(d), label: d + ' min' }; }), String(draft.duration), 'duration') + '</div>' +
+          '<div class="pl-f pl-dp"></div>' +
           '<div class="pl-period"></div><div class="pl-times" aria-live="polite"></div>' +
         '</div>' +
-        Portal.accordion({ id: 'pl-note', icon: 'edit', title: 'Note for your professional', summary: 'Optional', body:
+        Portal.accordion({ id: 'pl-note', title: 'Note for your professional', summary: 'Optional', body:
           '<form class="pl-notes-form" novalidate>' + U.field({ label: 'Note', name: 'notes', type: 'textarea', value: draft.notes, placeholder: 'What you want to work on, or clubs to bring' }) + '</form>' }) +
-        '</div><aside class="pl-side" aria-label="Your professional"></aside></div>';
+        '</div><aside class="pl-side" aria-label="Our professionals"></aside></div>';
       U.$('.pl-dur .segmented', panel).setAttribute('aria-labelledby', 'pl-dur-l');
 
       function slotMap(date) {
@@ -233,9 +238,9 @@
       const proRows = [{ value: 'any', label: 'First available', sub: 'Any professional who is free at your time' }].concat(P.map(function (p) {
         return { value: p.id, label: p.firstName + ' ' + p.lastName, sub: p.role + ' · ' + (SPECIALTY[p.id] || 'Private lessons for all abilities.'), meta: 'from ' + F.money0(priceFor('Private lesson', p.id, 60)) };
       }));
-      const proSel = Portal.selectField(U.$('.pl-pro-sel', panel), { label: 'Professional', title: 'Choose a professional', icon: 'user', rows: proRows, value: draft.pro,
+      const proSel = Portal.selectField(U.$('.pl-pro-sel', panel), { label: 'Professional', title: 'Choose a professional', rows: proRows, value: draft.pro,
         onChange: function (v) { draft.pro = v; draft.time = null; draft.assigned = null; refreshDays(); drawPeriods(); drawSide(); } });
-      const typeSel = Portal.selectField(U.$('.pl-type-sel', panel), { label: 'Lesson', title: 'Choose a lesson', icon: 'lesson', value: draft.type,
+      const typeSel = Portal.selectField(U.$('.pl-type-sel', panel), { label: 'Lesson', title: 'Choose a lesson', value: draft.type,
         rows: TYPES.map(function (t) { return { value: t, label: t, sub: TYPE_LINE[t], meta: F.money0(rates().rates[t]) + '/hr' }; }),
         onChange: function (v) {
           draft.type = v; draft.duration = TYPE_DUR[v] || 60;
@@ -264,7 +269,7 @@
         else if (!times.length) note = 'No ' + draft.duration + '-minute times left on this day. Try another day or a shorter lesson.';
         if (note) { host.innerHTML = ''; U.$('.pl-times', panel).innerHTML = '<p class="pl-none">' + esc(note) + '</p>'; syncBar(); return; }
         host.innerHTML = '<div class="segmented pl-seg" data-name="period" role="group" aria-label="Time of day">' + PERIODS.map(function (g, i) {
-          return '<button type="button" data-value="' + g[0] + '" class="' + (g[0] === draft.period ? 'active' : '') + (counts[i] ? '' : ' is-empty') + '"><span>' + g[0] + '</span><small>' + counts[i] + ' open</small></button>';
+          return '<button type="button" data-value="' + g[0] + '" aria-pressed="' + (g[0] === draft.period) + '" class="' + (g[0] === draft.period ? 'active' : '') + (counts[i] ? '' : ' is-empty') + '"><span>' + g[0] + '</span><small>' + counts[i] + ' open</small></button>';
         }).join('') + '</div>';
         drawChips(map, times);
       }
@@ -274,10 +279,12 @@
         const ts = times.filter(function (t) { return toMin(t) >= g[1] && toMin(t) < g[2]; });
         U.$('.pl-times', panel).innerHTML = ts.length ? '<div class="pl-chiprow" role="radiogroup" aria-label="' + g[0] + ' times">' + ts.map(function (t) {
           const on = t === draft.time;
-          return '<button type="button" class="pl-chip' + (on ? ' on' : '') + '" data-time="' + t + '" role="radio" aria-checked="' + on + '"' + (blocked ? ' disabled' : '') + '><span class="pl-chip-t">' + esc(F.time(t)) + '</span>' + (draft.pro === 'any' ? '<small>' + esc(proFirst(map[t])) + '</small>' : '') + '</button>';
+          const tp = F.time(t).split(' ');   /* "7:00" and a small "AM" (French "7 h" has none) */
+          return '<button type="button" class="pl-chip' + (on ? ' on' : '') + '" data-time="' + t + '" role="radio" aria-checked="' + on + '"' + (blocked ? ' disabled' : '') + '>' +
+            '<span class="pl-chip-t"><span class="pl-chip-h">' + esc(tp[0]) + '</span><small>' + esc(tp[1] || '') + '</small></span>' +
+            '<span class="pl-chip-who">' + (draft.pro === 'any' ? esc(proFirst(map[t])) : '') + '</span>' +
+            (blocked ? '' : '<span class="pl-chip-go" aria-hidden="true"><span class="pl-chip-a">Choose</span><span class="pl-chip-b">Selected</span></span>') + '</button>';
         }).join('') + '</div>' : '<p class="pl-none">Nothing open in the ' + g[0].toLowerCase() + '. Try another time of day or date.</p>';
-        const row = U.$('.pl-chiprow', panel), on = row && U.$('.pl-chip.on', row);
-        if (row && on) row.scrollLeft = Math.max(0, on.offsetLeft - row.offsetLeft - (row.clientWidth - on.offsetWidth) / 2);
         syncBar();
       }
       function syncBar() {
@@ -291,20 +298,20 @@
       function drawSide() {
         const one = draft.pro !== 'any' ? P.find(function (p) { return p.id === draft.pro; }) : null;
         const list = one ? [one] : P;
-        U.$('.pl-side', panel).innerHTML = '<div class="pl-side-card"><div class="eyebrow">' + (one ? 'Your professional' : 'Our professionals') + '</div>' +
+        U.$('.pl-side', panel).innerHTML = '<section class="pl-side-sec"><h3 class="pl-side-h">' + (one ? 'Your professional' : 'Our professionals') + '</h3>' +
           '<ul class="pl-side-pros">' + list.map(function (p) {
-            return '<li>' + U.avatar(p.firstName + ' ' + p.lastName) + '<div class="pl-side-pro"><span class="pl-side-name">' + esc(p.firstName + ' ' + p.lastName) + '</span><span class="pl-side-role">' + esc(p.role) + ' · ' + esc(F.money0(priceFor(draft.type, p.id, draft.duration))) + ' for ' + draft.duration + ' min</span>' +
+            return '<li><div class="pl-side-pro"><span class="pl-side-name">' + esc(p.firstName + ' ' + p.lastName) + '</span><span class="pl-side-role">' + esc(p.role) + ' · ' + esc(F.money0(priceFor(draft.type, p.id, draft.duration))) + ' for ' + draft.duration + ' min</span>' +
               '<span class="pl-side-spec">' + esc(SPECIALTY[p.id] || 'Private lessons for all abilities.') + '</span></div>' +
               (one ? '' : '<button type="button" class="p-link" data-pick-pro="' + esc(p.id) + '" aria-label="Choose ' + esc(p.firstName) + '">Choose</button>') + '</li>';
-          }).join('') + '</ul>' + (one ? '<button type="button" class="p-link" data-pick-pro="any">Any professional instead</button>' : '') + '</div>' +
-          '<div class="pl-side-card pl-side-policy"><h3>Good to know</h3><p>' + esc(POLICY) + '</p><p>Please arrive 10 minutes early and check in at the golf shop.</p></div>';
+          }).join('') + '</ul>' + (one ? '<button type="button" class="p-link pl-side-any" data-pick-pro="any">Any professional instead</button>' : '') + '</section>' +
+          '<section class="pl-side-sec pl-side-policy"><h3 class="pl-side-h">Good to know</h3><p>' + esc(POLICY) + '</p><p>Please arrive 10 minutes early and check in at the golf shop.</p></section>';
       }
       U.on(panel, 'click', '[data-pick-pro]', function (e, b) { draft.pro = b.dataset.pickPro; draft.time = null; draft.assigned = null; proSel.set(draft.pro); refreshDays(); drawPeriods(); drawSide(); });
 
       U.on(panel, 'click', '.segmented[data-name=duration] button', function (e, b) {
         draft.duration = +b.dataset.value; U.$$('.segmented[data-name=duration] button', panel).forEach(function (x) { x.classList.toggle('active', x === b); }); refreshDays(); drawPeriods(); drawSide();
       });
-      U.on(panel, 'click', '.segmented[data-name=period] button', function (e, b) { draft.period = b.dataset.value; U.$$('.segmented[data-name=period] button', panel).forEach(function (x) { x.classList.toggle('active', x === b); }); drawChips(); });
+      U.on(panel, 'click', '.segmented[data-name=period] button', function (e, b) { draft.period = b.dataset.value; U.$$('.segmented[data-name=period] button', panel).forEach(function (x) { x.classList.toggle('active', x === b); x.setAttribute('aria-pressed', x === b); }); drawChips(); });
       U.on(panel, 'click', '.pl-chip', function (e, b) {
         if (blocked) return;   /* suspended: the times are shown for information; the alert above says to call */
         draft.time = b.dataset.time;
@@ -329,7 +336,7 @@
             '<div><dt>With</dt><dd>' + esc(proId ? proName(proId) : 'First available') + '</dd></div>' +
             '<div><dt>When</dt><dd>' + esc(F.dateLong(draft.date)) + ', ' + esc(range(draft.time, draft.duration)) + '</dd></div>' +
             '<div><dt>Fee</dt><dd>' + (pk0 ? esc('Covered by ' + pk0.name + ' (' + LP.remaining(pk0) + ' of ' + pk0.lessons + ' left)') : proId ? F.money0(priceFor(draft.type, proId, draft.duration)) : '') + '</dd></div></dl>' +
-            (pk0 ? '<p class="pl-sheet-note pl-pk-use">' + Club.icon('check') + '<span>One lesson comes out of your package, so nothing is charged.</span></p>' : '') +
+            (pk0 ? '<p class="pl-sheet-note pl-pk-use"><span>One lesson comes out of your package, so nothing is charged.</span></p>' : '') +
             '<p class="pl-sheet-note">' + esc(POLICY) + '</p><div class="pl-sum-err" role="alert" hidden></div>',
           footer: '<button type="button" class="btn btn-primary" data-action="confirm">Confirm</button>'
         });
@@ -373,18 +380,20 @@
       const offers = LP ? LP.defs().filter(function (p) { return p.onSale && +p.lessons > 0; }) : [];
       const canBuy = member.status === 'active';
       panel.innerHTML = '<div class="pl-pk-cols">' +
-        '<section class="pl-card pl-pk-card" data-reveal aria-labelledby="pl-pk-h1"><h2 class="pl-pk-h" id="pl-pk-h1">Your packages</h2>' +
+        '<section class="pl-pk-sec" data-reveal aria-labelledby="pl-pk-h1"><h2 class="pl-pk-h" id="pl-pk-h1">Your packages</h2>' +
           (mine.length ? '<ul class="pl-pk-list">' + mine.map(function (mp) {
-            const exp = LP.expired(mp), left = LP.remaining(mp), pct = mp.lessons ? left / mp.lessons * 100 : 0;
-            return '<li class="pl-pk' + (exp ? ' is-exp' : !left ? ' is-done' : '') + '"><div class="pl-pk-top"><span class="pl-pk-name">' + esc(mp.name) + '</span>' + (exp ? U.badge('Expired', 'warn') : !left ? U.badge('Used up', 'outline') : '') + '</div>' +
-              '<div class="pl-pk-meter"><span class="bar" aria-hidden="true"><span style="width:' + pct + '%"></span></span><span class="pl-pk-n">' + esc(left + ' of ' + mp.lessons + ' left') + '</span></div>' +
+            const exp = LP.expired(mp), left = LP.remaining(mp);
+            return '<li class="pl-pk' + (exp ? ' is-exp' : !left ? ' is-done' : '') + '"><div class="pl-pk-main"><div class="pl-pk-top"><span class="pl-pk-name">' + esc(mp.name) + '</span>' + (exp ? U.badge('Expired', 'warn') : !left ? U.badge('Used up', 'outline') : '') + '</div>' +
               '<p class="pl-pk-sub"><span>' + esc(LP.heldText(mp.covers)) + '</span> · <span>' + esc(mp.expiresOn ? (exp ? 'expired ' : 'expires ') + F.date(mp.expiresOn) : 'no expiry') + '</span></p>' +
-              Portal.receiptLink(Portal.receiptsFor('lessons', mp.id, member.id)) + '</li>';
+              Portal.receiptLink(Portal.receiptsFor('lessons', mp.id, member.id)) + '</div>' +
+              /* the lessons left, as the row's figure */
+              '<div class="pl-pk-fig" role="img" aria-label="' + esc(left + ' of ' + mp.lessons + ' left') + '"><span class="pl-pk-n" aria-hidden="true"><span class="pl-pk-n-v">' + left + '</span> <span class="pl-pk-n-of">' + esc('of ' + mp.lessons) + '</span></span><span class="pl-pk-k" aria-hidden="true">Lessons left</span></div></li>';
           }).join('') + '</ul>' : '<p class="pl-pk-none">You have no lesson packages yet.</p>') +
-        '<h3 class="pl-pk-h2" id="pl-pk-h2">Buy a package</h3>' +
+        '</section>' +
+        '<section class="pl-pk-sec" aria-labelledby="pl-pk-h2"><h2 class="pl-pk-h" id="pl-pk-h2">Buy a package</h2>' +
           (offers.length ? '<ul class="pl-pk-offers">' + offers.map(function (p) {
             return '<li><button type="button" class="pl-offer" data-buy="' + esc(p.id) + '"' + (canBuy ? '' : ' disabled') + '><span class="pl-offer-main"><span class="pl-offer-name">' + esc(p.name) + '</span><span class="pl-offer-sub">' + esc(LP.offerText(p)) + '</span></span>' +
-              '<span class="pl-offer-price">' + esc(F.money(p.price)) + '</span><span class="btn btn-sm pl-offer-buy" aria-hidden="true">Buy</span></button></li>';
+              '<span class="pl-offer-price">' + esc(F.money(p.price)) + '</span><span class="pl-offer-buy" aria-hidden="true">Buy</span></button></li>';
           }).join('') + '</ul>' : '<p class="pl-pk-none">No packages are on sale right now.</p>') +
           (canBuy ? '<p class="pl-pk-note">Charged to your member account. Booking a covered lesson uses one automatically.</p>' : '<p class="pl-pk-note">To buy a package, please call the golf shop at ' + telLink() + '.</p>') +
         '</section></div>';
@@ -425,13 +434,23 @@
       const past = all.filter(function (l) { return !isUpcoming(l); }).sort(function (a, b) { return (b.date + b.time).localeCompare(a.date + a.time); }).slice(0, 12);
       const row = function (l) {
         const d = F.toDate(l.date);
-        return '<li><button type="button" class="pl-row" data-les="' + esc(l.id) + '"><span class="pl-dblock"><span>' + esc(d.toLocaleDateString('en-US', { weekday: 'short' })) + '</span><b>' + d.getDate() + '</b><span>' + esc(d.toLocaleDateString('en-US', { month: 'short' })) + '</span></span>' +
-          '<span class="pl-row-main"><span class="pl-row-t">' + esc(F.time(l.time) + ' · ' + l.type) + '</span><span class="pl-row-s">' + esc((+l.duration || 60) + ' min · ' + proName(l.proId)) + '</span></span>' + Club.icon('chevronRight', 'pl-go') + '</button></li>';
+        return '<li><button type="button" class="pl-row" data-les="' + esc(l.id) + '"><span class="pl-dblock"><span class="pl-dblock-wd">' + esc(d.toLocaleDateString('en-US', { weekday: 'short' })) + '</span><span class="pl-dblock-n">' + d.getDate() + '</span></span>' +
+          '<span class="pl-row-main"><span class="pl-row-t">' + esc(F.time(l.time) + ' · ' + l.type) + '</span><span class="pl-row-s">' + esc((+l.duration || 60) + ' min · ' + proName(l.proId)) + '</span></span>' +
+          (l.packageId ? '<span class="pl-row-k">Package</span>' : '') + '</button></li>';
       };
-      panel.innerHTML = '<div class="p-cols pl-mine-cols"><div>' + (up.length ? '<ul class="p-list pl-les-list" data-reveal>' + up.slice(0, 5).map(row).join('') +
-          (up.length > 5 ? '<li><button type="button" class="pl-row pl-row-all" data-action="all">View all upcoming (' + up.length + ')' + Club.icon('chevronRight', 'pl-go') + '</button></li>' : '') + '</ul>'
-          : '<div class="panel" data-reveal>' + U.empty({ icon: 'lesson', title: 'No lessons booked', text: 'When you book a lesson, it appears here.', action: U.btn('Book a lesson', { kind: 'primary', action: 'go-book' }) }) + '</div>') +
-        '</div><div class="pl-past-acc">' + Portal.accordion({ id: 'pl-past', icon: 'clock', title: 'Past lessons', summary: past.length ? past.length + (past.length === 1 ? ' lesson' : ' lessons') : 'None yet',
+      /* a month in small capitals, then that month's lessons as hairline rows */
+      const months = [];
+      up.slice(0, 5).forEach(function (l) {
+        const k = l.date.slice(0, 7), g = months[months.length - 1];
+        if (g && g.k === k) g.list.push(l);
+        else { const x = F.toDate(l.date), o = { month: 'long' }; if (x.getFullYear() !== new Date().getFullYear()) o.year = 'numeric'; months.push({ k: k, label: x.toLocaleDateString('en-US', o), list: [l] }); }
+      });
+      panel.innerHTML = '<div class="p-cols pl-mine-cols"><div class="pl-up">' + (up.length ? '<div data-reveal>' + months.map(function (g) {
+            return '<h3 class="pl-month">' + esc(g.label) + '</h3><ul class="pl-les-list">' + g.list.map(row).join('') + '</ul>';
+          }).join('') +
+          (up.length > 5 ? '<button type="button" class="pl-row pl-row-all" data-action="all">View all upcoming (' + up.length + ')</button>' : '') + '</div>'
+          : '<div class="pl-empty" data-reveal>' + U.empty({ icon: 'lesson', title: 'No lessons booked', text: 'When you book a lesson, it appears here.', action: U.btn('Book a lesson', { kind: 'primary', action: 'go-book' }) }) + '</div>') +
+        '</div><div class="pl-past-acc">' + Portal.accordion({ id: 'pl-past', title: 'Past lessons', summary: past.length ? past.length + (past.length === 1 ? ' lesson' : ' lessons') : 'None yet',
           body: past.length ? '<ul class="pl-past">' + past.map(function (l) {
             const b = l.status === 'completed' ? U.badge('Completed', 'outline') : l.status === 'cancelled' ? U.badge('Cancelled', 'bad') : U.badge('Awaiting sign-off', 'warn');
             return '<li><span class="pl-past-main"><span class="pl-past-t">' + esc(l.type) + '</span><span class="pl-past-s">' + esc(F.date(l.date) + ' at ' + F.time(l.time) + ' · ' + proName(l.proId)) + '</span>' +
@@ -455,7 +474,6 @@
         const st = programState(p); const n = (p.enrolled || []).length; const cap = +p.capacity || 0; const left = Math.max(0, cap - n);
         const mine = (p.enrolled || []).indexOf(member.id) >= 0; const coach = Club.staff.get(p.coach);
         const invite = /invitation/i.test(p.level || '');
-        const pct = cap ? Math.min(100, n / cap * 100) : 0;
         let act;
         if (mine) act = st.key === 'finished' ? '<span class="pl-prog-inv">Finished. Thank you for joining.</span>' : U.btn('Withdraw', { kind: 'danger', action: 'withdraw', id: p.id });
         else if (st.key === 'finished') act = '<span class="pl-prog-inv">Registration closed</span>';
@@ -464,12 +482,12 @@
         else if (member.status !== 'active') act = '<span class="pl-prog-inv">To enroll, call the golf shop</span>';
         else act = U.btn('Enroll', { kind: 'primary', icon: 'plus', action: 'enroll', id: p.id });
         const sum = (mine ? 'Enrolled · ' : '') + p.day + 's, ' + F.time(p.time) + ' · ' + (left <= 0 ? 'Full' : spots(left) + ' left') + ' · ' + F.money0(p.price);
-        return Portal.accordion({ id: 'pl-prog-' + p.id, icon: mine ? 'check' : 'lesson', title: p.name, summary: sum, body:
+        return Portal.accordion({ id: 'pl-prog-' + p.id, title: p.name, summary: sum, body:
           (p.description ? '<p class="pl-prog-desc">' + esc(p.description) + '</p>' : '') +
           '<dl class="pl-prog-kv"><div><dt>When</dt><dd>' + esc(p.day) + 's, ' + esc(F.time(p.time)) + ' · ' + (p.duration || 60) + ' min</dd></div><div><dt>Coach</dt><dd>' + esc(coach ? coach.firstName + ' ' + coach.lastName : 'To be confirmed') + '</dd></div><div><dt>Level</dt><dd>' + esc(p.level || 'All abilities') + '</dd></div><div><dt>Length</dt><dd>' + p.weeks + ' weeks from ' + esc(F.dateShort(p.startDate)) + ' · ' + esc(st.label) + '</dd></div></dl>' +
-          '<div class="pl-prog-cap"><span>' + (cap ? (n + ' of ' + cap + ' spots filled') : 'Spots to be confirmed') + (left > 0 ? ' · ' + spots(left) + ' left' : '') + '</span><div class="bar"><span style="width:' + pct + '%"></span></div></div>' +
+          '<div class="pl-prog-cap"><span>' + (cap ? (n + ' of ' + cap + ' spots filled') : 'Spots to be confirmed') + (left > 0 ? ' · ' + spots(left) + ' left' : '') + '</span></div>' +
           '<div class="pl-prog-foot"><span class="pl-prog-price">' + F.money0(p.price) + ' <small>for the program</small></span>' + act + '</div>' });
-      }).join('') + '</div>' : '<div class="panel">' + U.empty({ icon: 'lesson', title: 'No clinics or programs right now', text: 'New clinics are being planned. Please check back soon.' }) + '</div>';
+      }).join('') + '</div>' : '<div class="pl-empty">' + U.empty({ icon: 'lesson', title: 'No clinics or programs right now', text: 'New clinics are being planned. Please check back soon.' }) + '</div>';
       if (panel.dataset.wired) return; panel.dataset.wired = '1';
       U.on(panel, 'click', '[data-action]', function (e, b) {
         const p = S.find('programs', b.dataset.id); if (!p) return;

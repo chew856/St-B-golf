@@ -1,7 +1,8 @@
 /* Portal: Rate your visits (#/feedback). The member's rounds, meals and lessons from the last 14 days, each with a
    one-tap 1 to 5 rating and an optional comment (Club.feedback, js/core/feedback.js). The client was clear that this
    must never pop up: the page is only reached from My account and the menu, and nothing on it opens by itself.
-   Ratings can be changed any time inside the 14 days. Styles: css/portal/feedback.css (.vf-*). */
+   Ratings can be changed any time inside the 14 days. Styles: css/portal/feedback.css (.vf-*).
+   Redesign (Nov 22): one calm column of visits between hairlines; All / Rounds / Meals / Lessons as words. */
 (function () {
   'use strict';
   const ui = Club.ui, esc = ui.esc, F = Club.feedback;
@@ -30,7 +31,7 @@
                 return '<button type="button" data-show="' + s[0] + '" class="' + (s[0] === show ? 'active' : '') + '" aria-pressed="' + (s[0] === show) + '">' + esc(s[1]) + '</button>';
               }).join('') + '</div>' : '') + '<p class="vf-count" aria-live="polite">' + esc(countLine(all)) + '</p></div>' +
               '<div class="vf-list">' + list.map(function (v) { return F.cardHTML(v); }).join('') + '</div>'
-            : '<section class="panel" data-reveal>' + ui.empty({ icon: 'star', title: 'Nothing to rate right now', text: 'Rounds, meals and lessons show here for ' + F.WINDOW_DAYS + ' days.' }) + '</section>') +
+            : '<section class="vf-empty" data-reveal>' + ui.empty({ icon: 'star', title: 'Nothing to rate right now', text: 'Rounds, meals and lessons show here for ' + F.WINDOW_DAYS + ' days.' }) + '</section>') +
           '<p class="vf-fine">Only the club team sees your ratings.</p>';
       }
       draw();

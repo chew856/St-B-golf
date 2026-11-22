@@ -7,7 +7,10 @@
    The rounds and ranking are the staff Leaderboard's own (Club.leaderboard in js/shared/leaderboard-data.js), so the
    numbers match. Members who turned off "Show me on the members' leaderboards" (Profile, members.leaderboardHidden)
    are left out here and the places close up. Nothing sensitive is shown: no member numbers, handicap indexes,
-   attesters or notes, only names, dates, tees and scores. French: js/i18n/fr-portal.js ("Members' leaderboards"). */
+   attesters or notes, only names, dates, tees and scores. French: js/i18n/fr-portal.js ("Members' leaderboards").
+
+   Redesign (Nov 22): the period and the board are words with a brass underline, the ranking is a plain list (the
+   place and the value in the serif), and the member's own row carries a brass line instead of a filled box. */
 (function () {
   'use strict';
   if (!window.Portal || !Portal.register || !Club.leaderboard) return;
@@ -47,7 +50,7 @@
 
       let h = '';
       if (periods.length > 1) {
-        h += '<div class="segmented plb-period" role="radiogroup" aria-label="Period">' + periods.map(function (k) {
+        h += '<div class="plb-period" role="radiogroup" aria-label="Period">' + periods.map(function (k) {
           const on = k === st.period, p = LB.period(k);
           return '<button type="button" role="radio" data-period="' + k + '" aria-checked="' + on + '"' + (on ? ' class="active"' : '') + ' tabindex="' + (on ? 0 : -1) + '">' + esc(p.label) + '</button>';
         }).join('') + '</div>';
@@ -56,18 +59,18 @@
       }
       if (boards.length > 1) {
         h += '<div class="plb-chips" role="group" aria-label="Boards">' + boards.map(function (b) {
-          return '<button type="button" class="plb-chip" data-board="' + b.id + '" aria-pressed="' + (b.id === st.board) + '">' + esc(b.label) + '</button>';
+          return '<button type="button" class="plb-chip" data-board="' + b.id + '" aria-pressed="' + (b.id === st.board) + '"><span>' + esc(b.label) + '</span></button>';
         }).join('') + '</div>';
       }
       h += '<div class="plb-head"><h2 class="label-caps">' + esc(boardTitle(mb)) + '</h2>' +
-        (!mb.board.key && s.scores === 'both' ? '<div class="segmented plb-gn" role="radiogroup" aria-label="Scores">' + ['gross', 'net'].map(function (k) {
+        (!mb.board.key && s.scores === 'both' ? '<div class="plb-gn" role="radiogroup" aria-label="Scores">' + ['gross', 'net'].map(function (k) {
           const on = mb.score === k;
           return '<button type="button" role="radio" data-score="' + k + '" aria-checked="' + on + '"' + (on ? ' class="active"' : '') + ' tabindex="' + (on ? 0 : -1) + '">' + (k === 'gross' ? 'Gross' : 'Net') + '</button>';
         }).join('') + '</div>' : '') + '</div>';
 
       /* The member's own standing */
       if (mb.me.hidden) {
-        h += '<p class="plb-note">' + Club.icon('info') + '<span><span>You are hidden from the members\' leaderboards, so other members do not see you here.</span> <a href="#/profile">Change this in Profile</a></span></p>';
+        h += '<p class="plb-note"><span><span>You are hidden from the members\' leaderboards, so other members do not see you here.</span> <a href="#/profile">Change this in Profile</a></span></p>';
       } else if (mb.me.need > 0 && isGolfer(me)) {
         h += '<div class="plb-need"><span class="plb-need-n">' + esc(mb.me.need + ' more ' + (mb.me.need === 1 ? 'round' : 'rounds') + ' to qualify') + '</span>' +
           '<span class="plb-need-s">' + esc('You have ' + mb.me.n + ' ' + (mb.me.n === 1 ? 'round' : 'rounds') + ' ' + periodWords(mb.p) + '. Post your scores in Scores to count them.') + '</span></div>';
@@ -75,8 +78,8 @@
 
       if (mb.rows.length) {
         const mine = mb.me.row && mb.rows.indexOf(mb.me.row) < 0 ? mb.me.row : null;
-        h += '<ol class="p-list plb-list" aria-label="' + esc(boardTitle(mb)) + '">' + mb.rows.map(function (x) { return rowHTML(mb, x); }).join('') + '</ol>' +
-          (mine ? '<p class="plb-gap" aria-hidden="true">···</p><ol class="p-list plb-list plb-mine" aria-label="Your place">' + rowHTML(mb, mine) + '</ol>' : '');
+        h += '<ol class="plb-list" aria-label="' + esc(boardTitle(mb)) + '">' + mb.rows.map(function (x) { return rowHTML(mb, x); }).join('') + '</ol>' +
+          (mine ? '<p class="plb-gap" aria-hidden="true">···</p><ol class="plb-list plb-mine" aria-label="Your place">' + rowHTML(mb, mine) + '</ol>' : '');
       } else {
         h += '<div class="plb-empty">' + ui.empty({ icon: 'trophy',
           title: mb.qualified ? 'Nobody on this board yet' : 'No golfer has qualified yet',
@@ -92,9 +95,9 @@
     function rowHTML(mb, x) {
       const g = x.g, you = g.id === meId, v = num(x.v, mb.key);
       return '<li class="plb-li' + (you ? ' is-you' : '') + '"><button type="button" class="plb-row" data-golfer="' + esc(g.id) + '" aria-haspopup="dialog" aria-label="' + esc('Place ' + x.pos + ', ' + (you ? 'You, ' : '') + g.name + ', ' + v + '. See the rounds') + '">' +
-        '<span class="plb-pos">' + x.pos + '</span>' + ui.avatar(g.name, 'sm', true) +
+        '<span class="plb-pos">' + x.pos + '</span>' +
         '<span class="plb-name">' + (you ? '<b>You</b><span class="plb-dot" aria-hidden="true"> · </span>' : '') + '<span>' + esc(g.name) + '</span></span>' +
-        '<span class="plb-val">' + esc(v) + '</span>' + Club.icon('chevronRight', 'plb-go') + '</button></li>';
+        '<span class="plb-val">' + esc(v) + '</span></button></li>';
     }
     draw();
 
@@ -135,7 +138,7 @@
     const tile = function (k, v) { return '<div class="plb-tile"><span class="plb-tile-k">' + esc(k) + '</span><span class="plb-tile-v">' + esc(v) + '</span></div>'; };
     const x = mb.list.filter(function (r) { return r.g.id === id; })[0];
     const body = '<div class="plb-sheet">' +
-      '<div class="plb-who">' + ui.avatar(g.name, '', true) + '<div><p class="plb-who-n">' + (you ? '<b>You</b><span aria-hidden="true"> · </span>' : '') + '<span>' + esc(g.name) + '</span></p>' +
+      '<div class="plb-who"><div><p class="plb-who-n">' + (you ? '<b>You</b><span aria-hidden="true"> · </span>' : '') + '<span>' + esc(g.name) + '</span></p>' +
         '<p class="plb-who-s">' + esc(boardTitle(mb)) + '</p>' + (x ? '<p class="plb-who-s">' + esc('Place ' + x.pos + ' · ' + num(x.v, mb.key)) + '</p>' : '') + '</div></div>' +
       '<div class="plb-tiles">' +
         tile('Rounds', String(g.n)) +
@@ -145,7 +148,7 @@
       '</div>' +
       (mb.board.id === 'improved' && g.imp ? '<p class="plb-lead">' + esc('Handicap index down ' + num(g.imp.drop, 'improved') + ' ' + periodWords(mb.p) + '.') + '</p>' : '') +
       '<h3 class="plb-sh">' + esc(head) + '</h3>' +
-      (list.length ? '<ul class="p-list plb-rounds">' + list.map(function (r) {
+      (list.length ? '<ul class="plb-rounds">' + list.map(function (r) {
         const best = r === mark;
         return '<li><button type="button" class="plb-round" data-round="' + esc(r.key) + '" aria-haspopup="dialog" aria-label="' + esc(fmt.date(r.date) + ', ' + roundLabel(r) + ', gross ' + r.gross + ', net ' + r.net + (best ? ', best round' : '') + '. Open the scorecard') + '">' +
           '<span class="plb-r-main"><span class="plb-r-d">' + esc(fmt.dateShort(r.date)) + '</span><span class="plb-r-s"><span>' + esc(roundLabel(r)) + '</span>' + (r.n === 9 ? '<span> · </span><span>9 holes</span>' : '') + (r.scores ? '' : '<span> · </span><span>Total only</span>') + '</span></span>' +
@@ -153,7 +156,7 @@
           (b.set === 'cards' ? '<span class="plb-r-k"><span class="plb-r-kn">' + (mb.key === 'eagles' ? r.eagles : r.birdies) + '</span><span class="plb-r-kl">' + esc(mb.key === 'eagles' ? 'Eagles' : 'Birdies') + '</span></span>' : '') +
           '<span class="plb-r-k"><span class="plb-r-kn">' + r.gross + '</span><span class="plb-r-kl">Gross</span></span>' +
           '<span class="plb-r-k"><span class="plb-r-kn">' + r.net + '</span><span class="plb-r-kl">Net</span></span>' +
-          Club.icon('chevronRight', 'plb-go') + '</button></li>';
+          '</button></li>';
       }).join('') + '</ul>' : '<p class="plb-quiet">No rounds to show.</p>') +
       '<p class="plb-quiet">Net is gross less the course handicap of the round.</p>' +
     '</div>';

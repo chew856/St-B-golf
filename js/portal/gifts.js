@@ -1,6 +1,9 @@
 /* Members' portal: Gift cards. Buy one for green fees, the pro shop and the Gallery Taphouse & Grill, charged to the member
    account or paid by card; print or save it; see the cards bought and received; check any card's balance.
-   Gift cards live in Club.giftcards (js/core/giftcards.js). */
+   Gift cards live in Club.giftcards (js/core/giftcards.js).
+   Redesign (Nov 22, REDESIGN-PLAN.md step 7): a title and one quiet line, the three sections as words, buying as a
+   single column of plain sections (the amount as serif figures with a brass underline on the chosen one), the cards
+   bought and received as hairline rows, and the step's main button pinned in the dark bar on phones and tablets. */
 (function () {
   'use strict';
   if (!window.Portal || !Club.giftcards) return;
@@ -18,7 +21,8 @@
     const st = G.settings();
     let pay = null, tabs = null, flow = null;
     const startTab = ['buy', 'mine', 'balance'].indexOf(params[0]) >= 0 ? params[0] : lastTab;
-    view.innerHTML = '<section class="p-hero pg-hero" data-reveal><h1>Gift cards</h1><p>For green fees, the pro shop and the Gallery Taphouse &amp; Grill.</p></section><div class="pg-tabs"></div>';
+    const BAR = Portal.inkBar || Portal.actionBar;
+    view.innerHTML = '<div class="pg-root"><header class="pg-hero"><h1 class="pg-title">Gift cards</h1><p class="pg-sub">For green fees, the pro shop and the Gallery Taphouse &amp; Grill.</p></header><div class="pg-tabs"></div></div>';
 
     function bought() { return G.all().filter(function (c) { return c.buyer && c.buyer.memberId === m.id; }).sort(function (a, b) { return String(b.createdAt).localeCompare(String(a.createdAt)); }); }
     function received() { const e = String(m.email || '').toLowerCase(); return e ? G.all().filter(function (c) { return c.recipient && c.recipient.email === e && !(c.buyer && c.buyer.memberId === m.id); }) : []; }
@@ -28,9 +32,9 @@
     function buyLabel() { const a = +draft.amount; return a >= st.min && a <= st.max ? 'Buy gift card · ' + F.money(a) : 'Buy gift card'; }
     /* Phones and tablets: the bar carries the step's main button (Continue to payment, Continue to review, Buy). */
     function showBar() {
-      if (lastTab !== 'buy' || done || !flow || window.innerWidth >= 880) { Portal.actionBar.hide(); return; }
+      if (lastTab !== 'buy' || done || !flow || window.innerWidth >= 880) { BAR.hide(); return; }
       const a = +draft.amount, ok = a >= st.min && a <= st.max;
-      Portal.actionBar.show({ summary: ok ? money(a) + ' gift card' : 'Choose an amount', label: flow.at() === 'review' ? buyLabel() : flow.label(), disabled: false, onClick: buy });
+      BAR.show({ summary: ok ? money(a) + ' gift card' : 'Choose an amount', label: flow.at() === 'review' ? buyLabel() : flow.label(), disabled: false, onClick: buy });
     }
     function paintBuy() { const b = U.$('.pg-buy span', view); if (b && !busy) b.textContent = buyLabel(); }
     /** Step 3: the gift card, who it is for, and how it is paid. */
@@ -47,24 +51,24 @@
       lastTab = 'buy'; pay = null;
       const card = done ? G.get(done) : null;
       if (card) {
-        Portal.actionBar.hide();
+        BAR.hide();
         const rc = card.payment && card.payment.receiptId ? Club.receipts.get(card.payment.receiptId) : null;
-        panel.innerHTML = '<div class="p-cols pg-done"><div class="pg-done-card">' + G.cardHTML(card) + '</div>' +
-          '<div class="pg-done-side"><h2>Your gift card is ready</h2><p class="muted">Print it or save it as a PDF to give to ' + esc(card.recipient.name) + '. ' + esc(card.payment ? card.payment.label : '') + '.</p>' +
-          '<div class="pg-done-acts">' + U.btn('Print or save the gift card', { kind: 'primary', icon: 'print', action: 'pg-print', id: card.id }) +
-            (rc ? Portal.receiptLink([rc], { btn: true, label: 'View receipt' }) : '') +
-            '<button type="button" class="p-link" data-action="pg-again">Buy another gift card</button></div></div></div>';
+        panel.innerHTML = '<div class="pg-cols pg-done"><div class="pg-done-side"><h2 class="p-h">Your gift card is ready</h2><p class="pg-quiet">Print it or save it as a PDF to give to ' + esc(card.recipient.name) + '. ' + esc(card.payment ? card.payment.label : '') + '.</p>' +
+          '<div class="pg-done-acts">' + U.btn('Print or save the gift card', { kind: 'primary', action: 'pg-print', id: card.id }) +
+            (rc ? Portal.receiptLink([rc], { label: 'View receipt' }) : '') +
+            '<button type="button" class="p-link" data-action="pg-again">Buy another gift card</button></div></div>' +
+          '<div class="pg-done-card">' + G.cardHTML(card) + '</div></div>';
         return;
       }
-      panel.innerHTML = '<div class="p-cols pg-cols"><form class="pg-form" novalidate><div class="pg-flow"></div></form>' +
-        '<aside class="pg-side"><div class="pk-label">Preview</div><div class="pg-preview">' + preview() + '</div></aside></div>';
+      panel.innerHTML = '<div class="pg-cols"><form class="pg-form" novalidate><div class="pg-flow"></div></form>' +
+        '<aside class="pg-side"><div class="pg-side-l">Preview</div><div class="pg-preview">' + preview() + '</div></aside></div>';
       /* Buying in steps (Club.checkout.steps): 1 Details (amount and recipient), 2 Payment, 3 Review. */
       flow = Club.checkout.steps(U.$('.pg-flow', panel), { site: 'portal',
         steps: [
           { id: 'details', label: 'Details', next: 'Continue to payment', html: detailsHTML() },
           { id: 'pay', label: 'Payment', next: 'Continue to review', html: '<section class="pg-card"><h2 class="pg-h">Payment</h2><div class="pg-pay"></div></section>' },
           { id: 'review', label: 'Review', html: '<section class="pg-card pg-review"></section>',
-            action: '<button type="button" class="btn btn-primary pg-buy" data-action="pg-buy">' + Club.icon('gift') + '<span>' + esc(buyLabel()) + '</span></button>' }
+            action: '<button type="button" class="btn btn-primary pg-buy" data-action="pg-buy"><span>' + esc(buyLabel()) + '</span></button>' }
         ],
         leave: function (id) {
           if (id === 'details') return detailsOk();
@@ -142,7 +146,7 @@
       if (res.method === 'account' && (m.status === 'suspended' || m.status === 'resigned')) { toPay('Your account cannot take new charges right now. Please pay by card, or call the club office at ' + Club.info.phone + '.'); return; }
       busy = true;
       const bb = U.$('.pg-buy', view); if (bb) { bb.disabled = true; bb.classList.add('is-busy'); U.$('span', bb).textContent = res.method === 'card' ? 'Processing payment' : 'Buying'; }
-      if (window.innerWidth < 880) Portal.actionBar.show({ summary: money(a) + ' gift card', label: res.method === 'card' ? 'Processing payment' : 'Buying', disabled: true });
+      if (window.innerWidth < 880) BAR.show({ summary: money(a) + ' gift card', label: res.method === 'card' ? 'Processing payment' : 'Buying', disabled: true });
       setTimeout(function () {
         let out = null;
         try {
@@ -166,15 +170,17 @@
     /* ---------- My gift cards ---------- */
     function rowHTML(c, sub) {
       const s = G.state(c);
-      return '<button type="button" class="pg-row" data-gc-open="' + esc(c.id) + '"><span class="pg-row-icon">' + Club.icon('gift') + '</span><span class="pg-row-main"><span class="pg-row-t">' + esc(money(c.amount)) + ' · ' + esc(sub) + '</span>' +
-        '<span class="pg-row-s">' + esc(F.date(c.date)) + ' · ' + esc(G.label(c)) + '</span></span><span class="pg-row-bal">' + (s === 'void' ? 'Void' : s === 'used' ? 'Used' : esc(F.money(c.balance)) + '<small>left</small>') + '</span>' + Club.icon('chevronRight', 'pg-row-go') + '</button>';
+      const d = F.toDate(c.date);
+      return '<button type="button" class="pg-row" data-gc-open="' + esc(c.id) + '"><span class="pg-date" aria-hidden="true"><small>' + esc(d.toLocaleDateString('en-US', { month: 'short' })) + '</small><span class="pg-date-n">' + d.getDate() + '</span></span>' +
+        '<span class="pg-row-main"><span class="pg-row-t">' + esc(money(c.amount)) + ' · ' + esc(sub) + '</span>' +
+        '<span class="pg-row-s">' + esc(F.date(c.date)) + ' · ' + esc(G.label(c)) + '</span></span><span class="pg-row-bal' + (s === 'void' || s === 'used' ? ' is-word' : '') + '">' + (s === 'void' ? 'Void' : s === 'used' ? 'Used' : esc(F.money(c.balance)) + '<small>left</small>') + '</span></button>';
     }
     function drawMine(panel) {
-      lastTab = 'mine'; Portal.actionBar.hide();
+      lastTab = 'mine'; BAR.hide();
       const b = bought(), r = received();
       panel.innerHTML = (r.length ? '<section class="pg-list"><h2 class="pg-h">Gift cards for you</h2><div class="pg-rows">' + r.map(function (c) { return rowHTML(c, 'from ' + (c.from || c.buyer.name || 'a friend')); }).join('') + '</div></section>' : '') +
         '<section class="pg-list"><h2 class="pg-h">Gift cards you bought</h2>' + (b.length ? '<div class="pg-rows">' + b.map(function (c) { return rowHTML(c, 'for ' + c.recipient.name); }).join('') + '</div>'
-          : U.empty({ icon: 'gift', title: 'No gift cards yet', text: 'Gift cards you buy are kept here with their balances.', action: U.btn('Buy a gift card', { kind: 'primary', action: 'pg-tobuy' }) })) + '</section>';
+          : '<div class="pg-blank"><p class="pg-blank-t">No gift cards yet</p><p class="pg-quiet">Gift cards you buy are kept here with their balances.</p><button type="button" class="p-link" data-action="pg-tobuy">Buy a gift card</button></div>') + '</section>';
     }
     U.on(view, 'click', '[data-gc-open]', function (e, b) { cardSheet(b.dataset.gcOpen); });
     U.on(view, 'click', '[data-action=pg-tobuy]', function () { tabs.activate('buy'); });
@@ -185,13 +191,13 @@
       const sh = Portal.openSheet({ title: G.label(c), content: '<div class="pg-sheet">' + G.cardHTML(c) +
         '<dl class="pg-kv"><div><dt>Balance</dt><dd>' + (c.status === 'void' ? 'Void' : esc(F.money(c.balance))) + '</dd></div><div><dt>Bought</dt><dd>' + esc(F.date(c.date)) + '</dd></div></dl>' +
         (hist.length ? '<ul class="pg-hist">' + hist.map(function (e) { return '<li><span>' + esc(F.dateShort(e.date)) + ' · ' + esc(e.type === 'refund' ? 'Returned to the card' : e.type === 'void' ? 'Voided' : G.WHERE[e.where] || 'Used') + '</span><span class="num">' + (e.amount > 0 ? '+' : '−') + esc(F.money(Math.abs(e.amount))) + '</span></li>'; }).join('') + '</ul>' : '<p class="muted">Not used yet.</p>') +
-        '<div class="pg-sheet-acts">' + U.btn('Print or save', { icon: 'print', action: 'pg-print', id: c.id }) + (rc ? Portal.receiptLink([rc], { btn: true }) : '') + '</div></div>' });
+        '<div class="pg-sheet-acts">' + U.btn('Print or save', { action: 'pg-print', id: c.id }) + (rc ? Portal.receiptLink([rc]) : '') + '</div></div>' });
       U.on(sh.body, 'click', '[data-action=pg-print]', function () { G.open(c.id); });
     }
 
     /* ---------- Check a balance ---------- */
     function drawBalance(panel) {
-      lastTab = 'balance'; Portal.actionBar.hide();
+      lastTab = 'balance'; BAR.hide();
       panel.innerHTML = '<section class="pg-card pg-bal"><h2 class="pg-h">Check a balance</h2><form class="gp-bal-form" novalidate><div class="field"><label for="pg-bal-code">Gift card code</label><div class="gp-bal-row"><input class="input gp-bal-in" id="pg-bal-code" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="16" placeholder="XXXX XXXX XXXX"><button type="submit" class="btn btn-primary">Check</button></div></div></form><div class="gp-bal-out" aria-live="polite"></div></section>';
       const form = U.$('form', panel), inp = U.$('.gp-bal-in', panel), out = U.$('.gp-bal-out', panel);
       inp.addEventListener('input', function () { inp.value = inp.value.toUpperCase(); inp.classList.remove('invalid'); const er = form.querySelector('.field-error'); if (er) er.remove(); });
@@ -212,5 +218,6 @@
     ], startTab);
   }
 
-  Portal.register({ id: 'gifts', label: 'Gift cards', short: 'Gifts', icon: 'gift', order: 55, tab: false, render: render });
+  Portal.register({ id: 'gifts', label: 'Gift cards', short: 'Gifts', icon: 'gift', order: 55, tab: false,
+    render: function (view, params, member) { render(view, params, member); return Portal.inkBar ? Portal.inkBar.release : null; } });
 })();

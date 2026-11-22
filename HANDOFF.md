@@ -270,7 +270,7 @@ Owner answers (Nov 20): meeting room charges are separate from the F&B credit; t
 the staff account shows "Duane" (`Club.user` in `js/core/club.js`) until real names are added. Everything still open
 is listed in `QUESTIONS.md`.
 
-## Members' portal redesign (Nov 21, NOT DEPLOYED YET)
+## Members' portal redesign (Nov 21, deployed Nov 22)
 Plan: `REDESIGN-PLAN.md`; approved concept: `shots/redesign-concept-mix.png`. Inter for all text, Bodoni Moda
 (`--font-sig`, `.sig`) only for big times, date numbers, the greeting name, figures and restaurant names; palette tokens
 `--c-ink`, `--c-fairway`, `--c-mist`, `--c-paper`, `--c-rule`, `--c-oak-ink` (`--label`), `--c-brass` (`--accent`) in

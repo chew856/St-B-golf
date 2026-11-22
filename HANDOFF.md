@@ -277,9 +277,30 @@ Plan: `REDESIGN-PLAN.md`; approved concept: `shots/redesign-concept-mix.png`. In
 `css/portal-theme.css`; hairlines instead of shadows. Rebuilt so far: navigation (light header; phone tab bar is words:
 Home, Tee times, Dining, Card, More; `#/more` page; top bar from 768px), Home (next-round panel, "This week" list),
 Tee times (starter's-sheet list, pinned Continue bar, text tabs Book / My tee times / Weekend ballot), Membership card
-(dark page, engraved card), Dining (printed menu, hairline lists). Still in the old layout with the new foundations:
-Events, Lessons, Friends, Leaderboards, Scores, My account, Profile, Handbook, The club, Gift cards, Shop, Takeout,
-Group outings; then the public site. Tested in Chromium only; needs Safari.
+(dark page, engraved card), Dining (printed menu, hairline lists). Tested in Chromium only; needs Safari.
+
+## Redesign, the rest of the site (built Nov 22, NOT deployed yet: needs the owner's OK)
+Step 7 of `REDESIGN-PLAN.md`, same language as above. Built by four agents, each owning its files:
+- Golf pages: Play (shared with the public site; big serif hole number, hairline player rows with 48px minus/plus),
+  Scores (handicap as the one big figure), Leaderboards (words for period/board, brass line for "You"), Lessons
+  (word tabs, times as a list), Group outings (rate card).
+- Club pages: Events (dark "next event" panel, date-block rows, pinned Register bar), Friends and friends leagues
+  (hairline rows, serif handicap, "Your place" panel; league classes renamed `plg-`), The club (course panel, news as
+  a reading list), Handbook (details only), Rate your visits.
+- Account and shopping: My account (balance on the dark panel, word tabs, document-style statements and receipts),
+  Profile (grouped rows; no card picture, links to the card page), Gift cards, Shop (new `css/portal/shop.css`),
+  Takeout, Order to the course. `Portal.inkBar` (in `js/portal/account.js`) is the shared pinned dark bar.
+- Public site: `css/public-theme.css` rewritten with the portal's token names on `body.public`; light header; the
+  drawer as a hairline list; Book a tee time as a starter's-sheet list with steps as words; the hold timer is a
+  line in the page (no floating card); Lora dropped, Bodoni Moda added in `public.html`.
+- Order to the course uses one style block for both sites (`body:is(.portal, .public)` in `css/portal/cart.css`).
+- A member's own chat messages are marked `data-i18n-skip` so French does not rewrite typed text.
+- French blocks "Redesign: ... (Nov 22)" at the end of `fr-portal.js` and `fr-public.js`.
+- Suites updated for the new markup: `tests/webkit/xphone.mjs`, `xe-checkout.mjs`, `xpo-test.mjs`.
+- Known, not from this work: `xrg-public` join checks fail because the suite never picks the required "Which hand do
+  you play?" field; console-error checks fail in the cloud sandbox on a blocked outside request.
+- Tested in Chromium only (390, 820, 1440; English and French). Needs Safari. The staff site keeps its own look
+  (owner decision, see `REDESIGN-PLAN.md`).
 
 ## Future: live location on the course
 The owner plans live location for golfers. The tee sheet's "On pace", hole and finish estimate are computed from the

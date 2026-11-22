@@ -317,6 +317,8 @@ body.portal .pk-bar.ax-bar .pk-bar-btn:focus-visible { outline: 2px solid var(--
 body.portal .pk-bar.ax-bar .pa-mark { width: 30px; height: 20px; border: 0; background: var(--c-mist); }
 body.portal .pk-bar.ax-bar .pa-mark .cc-mark { max-width: 24px; }
 @media (min-width: 768px) { body.portal .pk-bar.ax-bar { bottom: 0; } }
+/* the page's last lines (the footer) stay readable above the pinned bar */
+body.portal.has-bar:has(.pk-bar.ax-bar) .p-footer { padding-bottom: 96px; }
 
 /* ---------------- The receipt (Club.receipts, css/receipts.css) as a clean document in the portal ---------------- */
 body.portal .rc { border-radius: var(--radius-card); box-shadow: none; }

@@ -44,7 +44,7 @@ features, French, phone rules (16px inputs, 44px taps) and the design-token rule
   prices without dollar signs; diet filters as words with a brass underline.
 - Reservations and takeout in the same list style.
 
-## Step 7. Everything else
+## Step 7. Everything else (built Nov 22, waiting for the owner's OK to deploy)
 - Events, Lessons, Friends, Leaderboards, Scores, My account, Profile, Handbook, The club, Gift cards, Shop,
   Takeout, Group outings: the Step 1 foundations plus the list style, page by page.
 - Then the public site gets the same foundations so both feel like one club.

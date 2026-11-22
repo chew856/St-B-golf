@@ -225,9 +225,7 @@
             : q ? '<div class="co-step" role="group" aria-label="' + esc(m.name) + ' quantity"><button type="button" data-dec="' + esc(m.id) + '" aria-label="One fewer ' + esc(m.name) + '">' + '<span aria-hidden="true">−</span></button><output aria-live="polite">' + q + '</output><button type="button" data-inc="' + esc(m.id) + '" aria-label="One more ' + esc(m.name) + '"' + (q >= 20 ? ' disabled' : '') + '><span aria-hidden="true">+</span></button></div>'
             : '<button type="button" class="co-add" data-inc="' + esc(m.id) + '" aria-label="Add ' + esc(m.name) + '">' + Club.icon('plus') + '<span>Add</span></button>';
           return '<li class="co-item' + (m.soldOut ? ' is-out' : '') + (q ? ' is-in' : '') + '"><span class="co-item-main"><span class="co-item-n">' + esc(m.name) + '</span>' +
-            (ctx.site === 'portal'   /* the portal sets the price apart, in the serif (css/portal/cart.css) */
-              ? (m.size ? '<span class="co-item-s">' + esc(m.size) + '</span>' : '') + (m.alcohol ? '<span class="co-item-s">ID may be checked</span>' : '') + '</span><span class="co-item-p num">' + esc(fmt.money(m.price)) + '</span>'
-              : '<span class="co-item-s">' + esc((m.size ? m.size + ' · ' : '') + fmt.money(m.price)) + '</span>' + (m.alcohol ? '<span class="co-item-s">ID may be checked</span>' : '') + '</span>') + ctl + '</li>';
+            (m.size ? '<span class="co-item-s">' + esc(m.size) + '</span>' : '') + (m.alcohol ? '<span class="co-item-s">ID may be checked</span>' : '') + '</span><span class="co-item-p num">' + esc(fmt.money(m.price)) + '</span>' + ctl + '</li>';
         }).join('') + '</ul>';
     }
 

@@ -302,7 +302,7 @@ Step 7 of `REDESIGN-PLAN.md`, same language as above. Built by four agents, each
 - Tested in Chromium only (390, 820, 1440; English and French). Needs Safari. The staff site keeps its current look
   (owner decided Nov 23 after seeing mockups: do not redesign it).
 
-## Profit report and monthly costs (built Nov 23, NOT deployed yet: needs the owner's OK)
+## Profit report and monthly costs (built and deployed Nov 23)
 - Accounting > Monthly costs (`js/modules/accounting-costs.js`, deep link `#/accounting/costs/YYYY-MM`): the bookkeeper
   types each month's costs by department (default lines from `Club.costs.DEPTS`, extra lines allowed), Copy last month,
   Undo on save and clear. Pro shop "Stock sold" comes from the till at product cost when the till covers the month.

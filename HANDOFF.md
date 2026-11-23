@@ -279,7 +279,7 @@ Home, Tee times, Dining, Card, More; `#/more` page; top bar from 768px), Home (n
 Tee times (starter's-sheet list, pinned Continue bar, text tabs Book / My tee times / Weekend ballot), Membership card
 (dark page, engraved card), Dining (printed menu, hairline lists). Tested in Chromium only; needs Safari.
 
-## Redesign, the rest of the site (built Nov 22, NOT deployed yet: needs the owner's OK)
+## Redesign, the rest of the site (built Nov 22, deployed Nov 23)
 Step 7 of `REDESIGN-PLAN.md`, same language as above. Built by four agents, each owning its files:
 - Golf pages: Play (shared with the public site; big serif hole number, hairline player rows with 48px minus/plus),
   Scores (handicap as the one big figure), Leaderboards (words for period/board, brass line for "You"), Lessons

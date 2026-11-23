@@ -26,7 +26,8 @@
      totals(month) -> null | { golf, proShop, dining, events, lessons, shared, total, stockAuto, example }
                                    null when the month has no record. proShop includes the automatic stock line when the
                                    record has no typed "Stock sold" line and the till covers the month.
-     example(month) -> depts       example figures for the demo (golf season or winter shape); never real club figures. */
+     example(month) -> depts       example figures for the demo, shaped by month between winter and the busy season;
+                                   never real club figures. */
 (function () {
   'use strict';
   const S = Club.store;
@@ -101,13 +102,15 @@
   /* Example figures for the demo only: a busy golf season month and a quiet winter month. Not the club's costs. */
   const EX_SEASON = { dining: [52000, 61000, 10500], golf: [62000, 34000, 9000, 6800], events: [11500, 12500], proShop: [0, 5200], lessons: [5200], shared: [9200, 6200, 3100, 3800] };
   const EX_WINTER = { dining: [27000, 39000, 8500], golf: [21000, 9500, 3000, 2600], events: [6500, 8000], proShop: [0, 1800], lessons: [600], shared: [11800, 6200, 3100, 3800] };
+  /* How far each month sits between the winter and the busy season shape, January to December (example only). */
+  const EX_SHAPE = [0, 0, 0, 0.3, 0.85, 1, 1, 1, 0.9, 0.5, 0.05, 0.1];
   function example(month) {
-    const mo = +month.slice(5, 7), season = Club.season && Club.season.inSeasonMonth ? Club.season.inSeasonMonth(month) : (mo >= 4 && mo <= 10);
-    const src = season ? EX_SEASON : EX_WINTER, out = {};
+    const f = EX_SHAPE[(+month.slice(5, 7) || 1) - 1], out = {};
     DEPTS.forEach(function (d) {
       out[d.key] = d.lines.map(function (label, i) {
-        let amount = src[d.key][i] || 0;
-        if (d.key === 'proShop' && label === STOCK) { const st = stockSold(month); amount = st.covered ? 0 : Math.round((season ? 14000 : 1500)); }
+        const w = EX_WINTER[d.key][i] || 0, sv = EX_SEASON[d.key][i] || 0;
+        let amount = Math.round((w + (sv - w) * f) / 100) * 100;
+        if (d.key === 'proShop' && label === STOCK) { const st = stockSold(month); amount = st.covered ? 0 : Math.round((1500 + 12500 * f) / 100) * 100; }
         return { label: label, amount: amount };
       }).filter(function (l) { return !(d.key === 'proShop' && l.label === STOCK && !l.amount); });
     });

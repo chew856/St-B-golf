@@ -349,7 +349,8 @@
     const losers = d.depts.filter(function (r) { return r.profit < 0; });
     const take = [];
     if (best && best.margin > 0) take.push(best.label + ' make' + (/s$/.test(best.label) ? '' : 's') + ' the most for each dollar taken (' + Math.round(best.margin * 100) + '%).');
-    if (losers.length) take.push(H.joinAnd(losers.map(function (r) { return r.label.toLowerCase() + ' lost ' + ms(-r.profit); })).replace(/^./, function (s) { return s.toUpperCase(); }) + ': ' + (losers.length === 1 ? 'costs were' : 'their costs were') + ' more than ' + (losers.length === 1 ? 'it brought' : 'they brought') + ' in.');
+    if (losers.length > 2) { const w = losers.slice().sort(function (x, y) { return x.profit - y.profit; })[0]; take.push(H.numWord(losers.length).replace(/^./, function (c) { return c.toUpperCase(); }) + ' departments ran at a loss, ' + w.label.toLowerCase() + ' the most at ' + ms(-w.profit) + '.'); }
+    else if (losers.length) take.push(H.joinAnd(losers.map(function (r) { return r.label.toLowerCase() + ' lost ' + ms(-r.profit); })).replace(/^./, function (s) { return s.toUpperCase(); }) + ': ' + (losers.length === 1 ? 'costs were' : 'their costs were') + ' more than ' + (losers.length === 1 ? 'it brought' : 'they brought') + ' in.');
     else if (withCosts.length) take.push('Every department with costs made money.');
     const cl = countsLine(d);
     return { id: 'profit-depts', title: 'Profit by department', take: H.sents(take.concat([cl])), body: deptTableHTML(d),

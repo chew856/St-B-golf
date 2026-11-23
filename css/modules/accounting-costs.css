@@ -81,6 +81,11 @@
 .mc-add-row .btn { flex: none; }
 .mc-add-row .mc-link { flex: none; padding: 0 4px; min-height: 40px; }
 
+/* "These are the club's real costs" switch (drafts that started from example figures) */
+.mc-real { display: flex; align-items: center; gap: var(--s3); padding: var(--s3) 0; border-top: 1px solid var(--rule); cursor: pointer; font-size: var(--fs-13); color: var(--ink); }
+.mc-real-text { display: flex; flex-direction: column; gap: 2px; }
+.mc-real-text > span:first-child { font-weight: 500; }
+
 /* Footer */
 .mc-foot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--s3); padding: 18px 0; border-top: 1px solid var(--rule-strong); }
 .mc-total { font-size: var(--fs-13); color: var(--ink); display: flex; align-items: baseline; gap: var(--s2); flex-wrap: wrap; }
@@ -118,4 +123,5 @@
   html body.staff .mc-x { width: 40px; height: 40px; }
   html body.staff .mc .mc-label { min-height: 40px; }
   html body.staff .mc-month .cs-btn { min-height: 44px; }
+  html body.staff .mc-real { min-height: 44px; }
 }

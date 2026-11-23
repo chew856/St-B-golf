@@ -41,7 +41,7 @@
 
   /* ---------------- State (lives across tab switches) ---------------- */
   let uidSeq = 0;
-  const state = { month: null, draft: null, base: '', err: {}, adding: null, addErr: '', addName: '', warn: '', params: null, copiedFrom: null };
+  const state = { month: null, draft: null, base: '', err: {}, adding: null, addErr: '', addName: '', warn: '', params: null, copiedFrom: null, fromExample: false, markReal: false };
 
   /** A draft from a saved record (or none). copy: filling from another month, so the till's stock figure always wins. */
   function makeDraft(month, doc, copy) {
@@ -77,8 +77,12 @@
     state.draft = makeDraft(month, C().get(month), false);
     state.base = sig(state.draft);
     state.err = {}; state.adding = null; state.addErr = ''; state.addName = ''; state.copiedFrom = null;
+    /* Example figures stay flagged as examples until staff say they are the club's real costs. */
+    const doc = C().get(month);
+    state.fromExample = !!(doc && doc.example); state.markReal = false;
   }
-  function dirty() { return !!state.draft && sig(state.draft) !== state.base; }
+  function dirty() { return !!state.draft && (sig(state.draft) !== state.base || (state.fromExample && state.markReal)); }
+  function keepExample() { return state.fromExample && !state.markReal; }
   function findLine(uid) {
     let out = null;
     C().DEPTS.forEach(function (d) { state.draft.depts[d.key].forEach(function (l) { if (l.uid === uid) out = { dept: d.key, line: l }; }); });
@@ -241,6 +245,8 @@
           (doc ? '<button type="button" class="mc-link mc-clear" data-action="mc-clear">Clear this month</button>' : '') + '</div>' +
         '<div class="mc-warn" role="alert"' + (state.warn ? '' : ' hidden') + '>' + Club.icon('alert') + '<span>' + esc(state.warn) + '</span></div>' +
         '<form class="mc-form" novalidate onsubmit="return false">' + costs.DEPTS.map(deptHTML).join('') + '</form>' +
+        (state.fromExample ? '<label class="mc-real"><span class="toggle"><input type="checkbox" id="mc-real"' + (state.markReal ? ' checked' : '') + '><span></span></span>' +
+          '<span class="mc-real-text"><span>These are the club\u2019s real costs</span><span class="mc-why">' + esc(state.markReal ? 'Saving makes them ' + name + '\u2019s real costs.' : 'Off: they stay marked as example figures (demo).') + '</span></span></label>' : '') +
         '<div class="mc-foot"><div class="mc-total"><span>Total for ' + esc(name) + '</span> <strong class="num" data-total="all">' + esc(money(grandTotal())) + '</strong></div>' +
           '<div class="mc-actions"><button type="button" class="btn" data-action="mc-cancel"' + (isDirty ? '' : ' disabled') + '>Cancel</button>' +
           '<button type="button" class="btn btn-primary" data-action="mc-save"' + (isDirty ? '' : ' disabled') + '>' + esc('Save ' + name + ' costs') + '</button></div></div>' +
@@ -316,6 +322,13 @@
     });
     panel.addEventListener('change', function (e) {
       const t = e.target;
+      if (t.id === 'mc-real') {
+        state.markReal = t.checked;
+        const w = ui.$('.mc-real .mc-why', panel);
+        if (w) w.textContent = state.markReal ? 'Saving makes them ' + monthName(state.month) + '\u2019s real costs.' : 'Off: they stay marked as example figures (demo).';
+        live();
+        return;
+      }
       if (t.id === 'mc-month') {
         const want = t.value;
         if (want === state.month) return;
@@ -374,6 +387,7 @@
       const prev = costs.lastBefore(state.month); if (!prev) return;
       state.draft = makeDraft(state.month, prev, true);
       state.err = {}; state.adding = null; state.copiedFrom = { month: prev.month, example: !!prev.example };
+      state.fromExample = !!prev.example; state.markReal = false;
       warn('');
       draw();
     });
@@ -383,8 +397,9 @@
     ui.on(panel, 'click', '[data-action=mc-save]', function () {
       if (!validateAll()) { draw('.mc-form .invalid'); return; }
       const m = state.month, name = monthName(m), had = !!costs.get(m);
-      undoRun(function () { return costs.save(m, toDepts(), { example: false }); }, {
-        message: monthLabel(m) + ' costs saved',
+      const ex = keepExample();
+      undoRun(function () { return costs.save(m, toDepts(), { example: ex }); }, {
+        message: monthLabel(m) + (ex ? ' saved, still marked as example figures (demo)' : ' costs saved'),
         undone: had ? name + ' costs put back as they were' : name + ' costs removed',
         after: function () { if (state.month === m) reloadIfClean(); }
       });

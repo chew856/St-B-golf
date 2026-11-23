@@ -125,3 +125,5 @@ div.rpf-colbtn { cursor: default; }
   .rpf-v:not(.is-ext) { visibility: visible; }
   .rpf-note { border-color: var(--text-3); }
 }
+/* Four figures to a printed row: a size that fits "$399.9K" without being cut off. */
+@media print { #rp-sec-profit .rp-kpi .v { font-size: 1.375rem; } }

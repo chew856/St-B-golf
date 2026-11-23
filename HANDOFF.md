@@ -299,8 +299,8 @@ Step 7 of `REDESIGN-PLAN.md`, same language as above. Built by four agents, each
 - Suites updated for the new markup: `tests/webkit/xphone.mjs`, `xe-checkout.mjs`, `xpo-test.mjs`.
 - Known, not from this work: `xrg-public` join checks fail because the suite never picks the required "Which hand do
   you play?" field; console-error checks fail in the cloud sandbox on a blocked outside request.
-- Tested in Chromium only (390, 820, 1440; English and French). Needs Safari. The staff site keeps its own look
-  (owner decision, see `REDESIGN-PLAN.md`).
+- Tested in Chromium only (390, 820, 1440; English and French). Needs Safari. The staff site keeps its current look
+  (owner decided Nov 23 after seeing mockups: do not redesign it).
 
 ## Future: live location on the course
 The owner plans live location for golfers. The tee sheet's "On pace", hole and finish estimate are computed from the

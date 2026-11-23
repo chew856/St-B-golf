@@ -54,4 +54,4 @@ features, French, phone rules (16px inputs, 44px taps) and the design-token rule
 - No page errors, no sideways scroll, 44px taps, readable contrast (brass is for marks, not small text).
 
 ## Open decisions
-- Whether the staff site gets the same look later, or stays as a working tool.
+- Decided Nov 23: the staff site keeps its current look (the owner saw mockups and chose not to redesign it).

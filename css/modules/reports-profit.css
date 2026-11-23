@@ -1,1 +1,127 @@
-/* placeholder: being built (Nov 23) */
+/* Reports > Profit (js/modules/reports-profit.js): the department table with a diverging loss | profit bar, the
+   diverging monthly columns, Money left on the table (the .ideas list from reports-extra.css) and Costs still to enter.
+   Tokens only: profit in --good, loss in --danger. */
+
+/* Example costs note, above the headline figures */
+.rpf-note { margin: 0 0 var(--s5); padding: 10px var(--s4); border: 1px dashed var(--border-strong); border-radius: var(--radius-ctl); background: var(--sage-50); font-size: 0.8125rem; color: var(--text-2); max-width: none; }
+
+/* ---------- Profit by department ---------- */
+.rpf-tw { margin: 0; }
+.rpf-table { width: 100%; font-size: 0.875rem; }
+.rpf-table th { font-size: 0.8125rem; font-weight: 500; color: var(--text-2); white-space: nowrap; }
+.rpf-table th, .rpf-table td { padding: 12px var(--s2); vertical-align: middle; }
+.rpf-table th:first-child, .rpf-table td:first-child { padding-left: 0; }
+.rpf-table th:last-child, .rpf-table td:last-child { padding-right: 0; }
+.rpf-table td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rpf-row { cursor: pointer; }
+@media (hover: hover) {
+  .rpf-row:hover td { background: var(--sage-50); }
+  .rpf-row:hover .rpf-name { text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 4px; }
+}
+.rpf-dept { min-width: 12rem; }
+.rpf-name { appearance: none; background: none; border: 0; padding: 0; margin: 0; font: 600 0.875rem/1.35 var(--sans); color: var(--text); cursor: pointer; text-align: left; border-radius: 2px; }
+span.rpf-name { cursor: default; }
+.rpf-lines { display: block; margin-top: 2px; font-size: 0.8125rem; line-height: 1.4; color: var(--text-3); max-width: 42ch; }
+.rpf-lines:empty { display: none; }
+.rpf-p strong { font-weight: 600; color: var(--text); }
+.rpf-p.is-loss strong { color: var(--danger); }
+.rpf-m { color: var(--text-2); }
+.rpf-shared td { border-top: 1px solid var(--border); }
+.rpf-total td { border-top: 1px solid var(--border-strong); font-weight: 600; color: var(--text); }
+.rpf-total .rpf-name { font-weight: 600; }
+.rpf-total .rpf-m { color: var(--text); }
+
+/* Diverging bar: loss to the left of the line in --danger, profit to the right in --good */
+.rpf-barh { text-align: center; width: 30%; }
+.rpf-barh span { display: inline-block; padding: 0 6px; }
+.rpf-barh span:first-child { border-right: 1px solid var(--text-3); }
+.rpf-barc { width: 30%; min-width: 9rem; }
+.rpf-bar { display: flex; align-items: center; height: 14px; }
+.rpf-half { flex: 1 1 50%; display: flex; height: 100%; }
+.rpf-half.l { justify-content: flex-end; }
+.rpf-half.r { border-left: 1px solid var(--border-strong); }
+.rpf-half i { display: block; height: 100%; min-width: 2px; }
+.rpf-half.l i { background: var(--danger); border-radius: 3px 0 0 3px; }
+.rpf-half.r i { background: var(--good); border-radius: 0 3px 3px 0; }
+
+/* ---------- Profit by month: diverging columns ---------- */
+.rpf-chart { overflow-x: clip; padding-top: var(--s1); }
+.rpf-cols { display: grid; grid-template-columns: repeat(var(--n, 12), minmax(0, 1fr)); gap: 0 2px; container-type: inline-size; }
+.rpf-col { display: flex; flex-direction: column; align-items: stretch; min-width: 0; }
+.rpf-colbtn { appearance: none; background: none; border: 0; margin: 0; padding: 0; font: inherit; color: inherit; display: flex; flex-direction: column; width: 100%; border-radius: 6px; cursor: pointer; }
+div.rpf-colbtn { cursor: default; }
+.rpf-up { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; border-bottom: 1px solid var(--border-strong); }
+.rpf-dn { display: flex; flex-direction: column; justify-content: flex-start; align-items: center; }
+.rpf-col i { display: block; width: min(44px, 62%); flex: none; transition: opacity 150ms var(--ease-ui); }
+.rpf-col i.gain { background: var(--good); border-radius: 4px 4px 0 0; }
+.rpf-col i.loss { background: var(--danger); border-radius: 0 0 4px 4px; }
+.rpf-col i.gain.part { background: var(--good); background: repeating-linear-gradient(45deg, var(--good) 0 3px, color-mix(in srgb, var(--good) 35%, var(--surface)) 3px 6px); }
+.rpf-col i.loss.part { background: var(--danger); background: repeating-linear-gradient(45deg, var(--danger) 0 3px, color-mix(in srgb, var(--danger) 35%, var(--surface)) 3px 6px); }
+.rpf-v { font-size: 0.75rem; line-height: 18px; color: var(--text-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.rpf-up .rpf-v { margin-bottom: 2px; }
+.rpf-col.is-loss .rpf-v { color: var(--danger); }
+.rpf-v.is-ext { font-weight: 600; color: var(--text); }
+.rpf-none { font-size: 0.75rem; line-height: 1.2; color: var(--text-3); text-align: center; padding-bottom: 6px; white-space: nowrap; }
+.rpf-lbl { margin-top: 6px; text-align: center; font-size: 0.75rem; color: var(--text-3); white-space: nowrap; }
+.rpf-yr { text-align: center; font-size: 0.6875rem; color: var(--text-3); min-height: 1em; }
+.rpf-yr:empty { visibility: hidden; }
+@media (hover: hover) {
+  .rpf-cols:hover .rpf-col:not(:hover) i { opacity: 0.35; }
+  button.rpf-colbtn:hover + .rpf-lbl { color: var(--text); }
+}
+.rpf-colbtn:focus-visible { outline: 2px solid var(--forest-700); outline-offset: 2px; }
+@container (max-width: 640px) {
+  .rpf-v:not(.is-ext) { visibility: hidden; }
+  .rpf-none { writing-mode: vertical-rl; transform: rotate(180deg); padding: 0 0 6px; }
+  .rpf-lbl { font-size: 0.6875rem; }
+  .rpf-yr0 { visibility: hidden; }
+}
+
+/* ---------- Money left on the table ---------- */
+.rpf-acts { display: flex; flex-wrap: wrap; gap: 4px var(--s4); }
+.rpf-missed .idea-est b { font-size: 1rem; }
+
+/* ---------- Costs still to enter, and no costs yet ---------- */
+.rpf-chipsl { list-style: none; margin: 0 0 var(--s4); padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.rpf-chipsl li { font-size: 0.8125rem; color: var(--text-2); background: var(--sage-50); border: 1px solid var(--border); border-radius: 999px; padding: 2px 10px; font-variant-numeric: tabular-nums; }
+.rpf-enter { display: flex; align-items: center; justify-content: space-between; gap: var(--s4); }
+.rpf-enter p { margin: 0; color: var(--text-2); font-size: 0.875rem; max-width: 72ch; }
+.rpf-enter .btn { flex: none; text-decoration: none; }
+.rpf-emptyp .rp-ph h2 { font-size: 1.0625rem; }
+
+/* The section's own ideas panel is left out when there is nothing to suggest (no costs yet). */
+#rp-sec-profit [data-panel="profit-ideas"]:has(.rp-empty) { display: none; }
+
+/* ---------- Phones: each department becomes a small card ---------- */
+@media (max-width: 640px) {
+  .rpf-table thead { display: none; }
+  .rpf-table, .rpf-table tbody, .rpf-table tfoot { display: block; }
+  .rpf-table tr { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-areas: "name name name name" "bar bar bar bar" "in cost profit margin"; gap: 6px var(--s2); padding: 12px 0; border-top: 1px solid var(--border); }
+  .rpf-table tbody tr:first-child { border-top: 0; padding-top: 0; }
+  .rpf-table tr.rpf-total { border-top: 1px solid var(--border-strong); grid-template-areas: "name name name name" "in cost profit margin"; }
+  .rpf-table td { display: block; padding: 0 !important; border: 0 !important; text-align: left; min-width: 0; }
+  .rpf-table td.num { text-align: left; white-space: normal; }
+  .rpf-table td[data-label]::before { content: attr(data-label); display: block; font-size: 0.75rem; font-weight: 400; color: var(--text-3); }
+  .rpf-dept { grid-area: name; min-width: 0; }
+  .rpf-name { min-height: 40px; display: inline-flex; align-items: center; font-size: 0.9375rem; }
+  .rpf-lines { margin-top: 0; max-width: none; }
+  .rpf-barc { grid-area: bar; width: auto; min-width: 0; }
+  .rpf-total .rpf-barc { display: none !important; }
+  .rpf-table td:nth-child(2) { grid-area: in; }
+  .rpf-table td:nth-child(3) { grid-area: cost; }
+  .rpf-table td:nth-child(5) { grid-area: profit; }
+  .rpf-table td:nth-child(6) { grid-area: margin; }
+  .rpf-enter { flex-direction: column; align-items: stretch; }
+  .rpf-enter .btn { min-height: 44px; justify-content: center; }
+  .rpf-acts .rp-link { min-height: 40px; display: inline-flex; align-items: center; }
+  .rpf-missed .idea-main .rp-link { margin-top: 0; }
+}
+
+/* ---------- Print ---------- */
+@media print {
+  .rpf-enter .btn { display: none !important; }
+  .rpf-row { cursor: default; }
+  .rpf-cols { break-inside: avoid; }
+  .rpf-v:not(.is-ext) { visibility: visible; }
+  .rpf-note { border-color: var(--text-3); }
+}

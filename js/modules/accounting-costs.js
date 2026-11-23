@@ -41,7 +41,7 @@
 
   /* ---------------- State (lives across tab switches) ---------------- */
   let uidSeq = 0;
-  const state = { month: null, draft: null, base: '', err: {}, adding: null, addErr: '', addName: '', warn: '', params: null, copiedFrom: null, fromExample: false, markReal: false };
+  const state = { month: null, draft: null, base: '', err: {}, adding: null, addErr: '', addName: '', warn: '', params: null, linkedAt: 0, copiedFrom: null, fromExample: false, markReal: false };
 
   /** A draft from a saved record (or none). copy: filling from another month, so the till's stock figure always wins. */
   function makeDraft(month, doc, copy) {
@@ -217,7 +217,11 @@
     const params = (ctx && ctx.params) || [];
     if (params !== state.params) {
       state.params = params;
-      const want = params[0] === 'costs' && validMonth(params[1]) ? params[1] : defaultMonth();
+      const linked = params[0] === 'costs' && validMonth(params[1]);
+      /* The Accounting page can draw itself twice on a first visit (its demo seed) after it has already taken the month
+         off the address, so a link's month is kept for a moment rather than reset to the default. */
+      const want = linked ? params[1] : (state.linkedAt && Date.now() - state.linkedAt < 600 ? state.month : defaultMonth());
+      if (linked) state.linkedAt = Date.now();
       if (want !== state.month && !dirty()) load(want);
     }
     if (!state.month || !validMonth(state.month)) load(defaultMonth());

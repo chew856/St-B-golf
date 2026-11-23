@@ -92,7 +92,7 @@
         m.lines = {};
         keys.forEach(function (x) {
           const list = ((doc.depts && doc.depts[x]) || []).map(function (l) { return { label: l.label, amount: num(l.amount) * m.frac }; });
-          if (x === 'proShop' && t.stockAuto > 0) list.push({ label: 'Stock sold (from product costs)', amount: t.stockAuto * m.frac });
+          if (x === 'proShop' && t.stockAuto > 0) list.push({ label: (C.STOCK || 'Stock sold'), amount: t.stockAuto * m.frac });
           m.lines[x] = list;
         });
       });

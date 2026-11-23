@@ -302,6 +302,19 @@ Step 7 of `REDESIGN-PLAN.md`, same language as above. Built by four agents, each
 - Tested in Chromium only (390, 820, 1440; English and French). Needs Safari. The staff site keeps its current look
   (owner decided Nov 23 after seeing mockups: do not redesign it).
 
+## Profit report and monthly costs (built Nov 23, NOT deployed yet: needs the owner's OK)
+- Accounting > Monthly costs (`js/modules/accounting-costs.js`, deep link `#/accounting/costs/YYYY-MM`): the bookkeeper
+  types each month's costs by department (default lines from `Club.costs.DEPTS`, extra lines allowed), Copy last month,
+  Undo on save and clear. Pro shop "Stock sold" comes from the till at product cost when the till covers the month.
+- Data: `js/shared/costs-data.js` (`Club.costs`, collection `monthlyCosts`, one doc per month). Nothing is seeded: the
+  club's real costs are unknown. A demo box fills clearly marked example costs (`example: true`); example months stay
+  flagged unless someone ticks "These are the club's real costs".
+- Reports > Profit (`js/modules/reports-profit.js`, order 25): Money in, Costs, Profit, Missed money; profit by
+  department and by month (only months with costs count; part months prorated by day); "Money left on the table"
+  (empty tee times on quiet weekdays, members who spend nothing beyond dues, open event and clinic places, balances
+  over 60 days, promo discounts, unpaid no-shows, golfers turned away); costs still to enter; ideas to improve profit.
+- Tested in Chromium only. The cost headings are a guess: the club's bookkeeper may want them to match the books.
+
 ## Future: live location on the course
 The owner plans live location for golfers. The tee sheet's "On pace", hole and finish estimate are computed from the
 4h 15m target today (js/modules/teesheet.js starter column); switch them to real positions when live location exists.
